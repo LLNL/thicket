@@ -1,0 +1,10 @@
+# Always ignored
+*__pycache__/
+*.ipynb_checkpoints
+
+# Profiling
+*.pstats
+
+# Testing
+*tests.*
+*out*.txt
