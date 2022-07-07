@@ -14,4 +14,7 @@ setup(
         "thicket.tests",
         "thicket.notebooks",
     ],
+    install_requires=[
+        "llnl-hatchet",
+    ],
 )

@@ -1,0 +1,46 @@
+stages:
+  - format
+  - build
+  - test
+
+.load_python_venv:
+  before_script:
+    - . /usr/workspace/wsb/asde/virtualenv-hatchet-1c36a6e2/bin/activate
+
+lint-format-check:
+ tags:
+   - batch
+   - quartz
+ stage: format
+ extends: .load_python_venv
+ script:
+   - python -m flake8
+   - python -m black --check --diff .
+
+check-license-headers:
+ tags:
+   - batch
+   - quartz
+ stage: format
+ extends: .load_python_venv
+ script:
+   - python license.py verify
+
+build-py37:
+ tags:
+   - batch
+   - quartz
+ stage: build
+ extends: .load_python_venv
+ script:
+   - python -m pip install -r requirements.txt
+   - python setup.py install
+
+test-py37:
+ tags:
+   - batch
+   - quartz
+ stage: test
+ extends: .load_python_venv
+ script:
+   - PYTHONPATH=. python -m pytest
