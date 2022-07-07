@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "llnl-thicket"
+version = "2023.1.0"
+description = "A Python-based toolkit for analyzing ensemble performance data."
+license = "MIT"
+
+[tool.black]
+line-length = 88
+target-version = ['py27', 'py35', 'py36', 'py37', 'py38']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
