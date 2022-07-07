@@ -8,7 +8,7 @@ import os
 import pandas as pd
 
 from hatchet import GraphFrame
-from thicket.helpers import print_graph, all_equal
+from .helpers import print_graph, all_equal
 
 
 def store_thicket_input_profile(func):
