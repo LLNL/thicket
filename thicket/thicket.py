@@ -17,6 +17,7 @@ def store_thicket_input_profile(func):
     Arguments:
         func (Function): Function to decorate
     """
+
     def profile_assign(first_arg, *args, **kwargs):
         """Decorator workhorse.
 
@@ -47,6 +48,7 @@ def store_thicket_input_profile(func):
             th.dataframe.reset_index(inplace=True)
             th.dataframe.set_index(index_names, inplace=True)
         return th
+
     return profile_assign
 
 
@@ -87,19 +89,23 @@ class thicket(GraphFrame):
         self.profile = profile
         self.profile_mapping = profile_mapping
         self.statsframe = pd.DataFrame(
-            data=None, index=dataframe.index.get_level_values('node').drop_duplicates())
+            data=None, index=dataframe.index.get_level_values("node").drop_duplicates()
+        )
 
     def __str__(self):
-        return ''.join([f"graph: {print_graph(self.graph)}\n",
-                        f"dataframe:\n{self.dataframe}\n",
-                        f"exc_metrics: {self.exc_metrics}\n",
-                        f"inc_metrics: {self.inc_metrics}\n",
-                        f"default_metric: {self.default_metric}\n",
-                        f"metadata:\n{self.metadata}\n",
-                        f"profile: {self.profile}\n",
-                        f"profile_mapping: {self.profile_mapping}\n",
-                        f"statsframe:\n{self.statsframe}\n",
-                        ])
+        return "".join(
+            [
+                f"graph: {print_graph(self.graph)}\n",
+                f"dataframe:\n{self.dataframe}\n",
+                f"exc_metrics: {self.exc_metrics}\n",
+                f"inc_metrics: {self.inc_metrics}\n",
+                f"default_metric: {self.default_metric}\n",
+                f"metadata:\n{self.metadata}\n",
+                f"profile: {self.profile}\n",
+                f"profile_mapping: {self.profile_mapping}\n",
+                f"statsframe:\n{self.statsframe}\n",
+            ]
+        )
 
     @staticmethod
     @store_thicket_input_profile
@@ -132,18 +138,18 @@ class thicket(GraphFrame):
         Args:
             obj (list or str): obj to read from.
         """
-        if (type(obj) == list):  # if a list of files
+        if type(obj) == list:  # if a list of files
             ens_list = []
             for file in obj:
                 ens_list.append(thicket._from_caliperreader(file))
             return thicket.unify_ensemble(ens_list)
-        elif (os.path.isdir(obj)):  # if directory of files
+        elif os.path.isdir(obj):  # if directory of files
             ens_list = []
             for file in os.listdir(obj):
                 f = os.path.join(obj, file)
                 ens_list.append(thicket._from_caliperreader(f))
             return thicket.unify_ensemble(ens_list)
-        elif (os.path.isfile(obj)):  # if file
+        elif os.path.isfile(obj):  # if file
             return thicket._from_caliperreader(obj)
         else:
             raise TypeError(f"{type(obj)} is not a valid type.")
@@ -166,8 +172,7 @@ class thicket(GraphFrame):
         self.dataframe.reset_index(inplace=True)
         other.dataframe.reset_index(inplace=True)
 
-        self.dataframe["node"] = self.dataframe["node"].apply(
-            lambda x: node_map[id(x)])
+        self.dataframe["node"] = self.dataframe["node"].apply(lambda x: node_map[id(x)])
         other.dataframe["node"] = other.dataframe["node"].apply(
             lambda x: node_map[id(x)]
         )
@@ -193,7 +198,7 @@ class thicket(GraphFrame):
         """
         if not all_equal([th.graph for th in th_list]):
             for i in range(len(th_list)):
-                for j in range(i+1, len(th_list)):
+                for j in range(i + 1, len(th_list)):
                     th_list[i].unify(th_list[j])
                     print(f"Unifying ({i}, {j})...")
 

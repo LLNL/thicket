@@ -3,4 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+# make flake8 unused names in this file.
+# flake8: noqa: F401
+
 from .thicket import thicket

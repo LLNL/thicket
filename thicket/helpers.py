@@ -41,10 +41,10 @@ def all_equal(iterable):
 
 def check_distinct_graphs(th_list):
     """Take a list of objects with hatchet "graph" as an attribute and see if any of the graphs in the list match another."""
-    if (len(th_list) <= 1):
+    if len(th_list) <= 1:
         return True
     for i in range(len(th_list)):
-        for j in range(i+1, len(th_list)):
+        for j in range(i + 1, len(th_list)):
             if all_equal([th_list[i].graph, th_list[j].graph]):
                 return False
     return True
