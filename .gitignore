@@ -6,5 +6,5 @@
 *.pstats
 
 # Testing
-*tests.*
+*tests*
 *out*.txt
