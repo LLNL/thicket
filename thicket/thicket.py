@@ -17,6 +17,7 @@ def store_thicket_input_profile(func):
     Arguments:
         func (Function): Function to decorate
     """
+
     def profile_assign(first_arg, *args, **kwargs):
         """Decorator workhorse.
 
@@ -47,6 +48,7 @@ def store_thicket_input_profile(func):
             th.dataframe.reset_index(inplace=True)
             th.dataframe.set_index(index_names, inplace=True)
         return th
+
     return profile_assign
 
 
@@ -86,20 +88,28 @@ class Thicket(GraphFrame):
         )
         self.profile = profile
         self.profile_mapping = profile_mapping
-        self.statsframe = GraphFrame(graph=self.graph, dataframe=pd.DataFrame(
-            data=None, index=dataframe.index.get_level_values('node').drop_duplicates()))
+        self.statsframe = GraphFrame(
+            graph=self.graph,
+            dataframe=pd.DataFrame(
+                data=None,
+                index=dataframe.index.get_level_values("node").drop_duplicates(),
+            ),
+        )
 
     def __str__(self):
-        return ''.join([f"graph: {print_graph(self.graph)}\n",
-                        f"dataframe:\n{self.dataframe}\n",
-                        f"exc_metrics: {self.exc_metrics}\n",
-                        f"inc_metrics: {self.inc_metrics}\n",
-                        f"default_metric: {self.default_metric}\n",
-                        f"metadata:\n{self.metadata}\n",
-                        f"profile: {self.profile}\n",
-                        f"profile_mapping: {self.profile_mapping}\n",
-                        f"statsframe:\n{print_graph(self.statsframe.graph)}\n{self.statsframe.dataframe}\n",
-                        ])
+        return "".join(
+            [
+                f"graph: {print_graph(self.graph)}\n",
+                f"dataframe:\n{self.dataframe}\n",
+                f"exc_metrics: {self.exc_metrics}\n",
+                f"inc_metrics: {self.inc_metrics}\n",
+                f"default_metric: {self.default_metric}\n",
+                f"metadata:\n{self.metadata}\n",
+                f"profile: {self.profile}\n",
+                f"profile_mapping: {self.profile_mapping}\n",
+                f"statsframe:\n{print_graph(self.statsframe.graph)}\n{self.statsframe.dataframe}\n",
+            ]
+        )
 
     @staticmethod
     @store_thicket_input_profile
@@ -132,31 +142,36 @@ class Thicket(GraphFrame):
         Args:
             obj (list or str): obj to read from.
         """
-        if (type(obj) == list):  # if a list of files
+        if type(obj) == list:  # if a list of files
             ens_list = []
             for file in obj:
                 ens_list.append(Thicket._from_caliperreader(file))
             return Thicket.unify_ensemble(ens_list)
-        elif (os.path.isdir(obj)):  # if directory of files
+        elif os.path.isdir(obj):  # if directory of files
             ens_list = []
             for file in os.listdir(obj):
                 f = os.path.join(obj, file)
                 ens_list.append(Thicket._from_caliperreader(f))
             return Thicket.unify_ensemble(ens_list)
-        elif (os.path.isfile(obj)):  # if file
+        elif os.path.isfile(obj):  # if file
             return Thicket._from_caliperreader(obj)
         else:
             raise TypeError(f"{type(obj)} is not a valid type.")
 
     def tree(self_):
         try:
-            temp_df = self_.dataframe.drop_duplicates(
-                subset="name").reset_index(level="profile")
+            temp_df = self_.dataframe.drop_duplicates(subset="name").reset_index(
+                level="profile"
+            )
             temp_df["thicket_tree"] = -1
-            return GraphFrame.tree(self=Thicket(graph=self_.graph, dataframe=temp_df), metric_column="thicket_tree")
+            return GraphFrame.tree(
+                self=Thicket(graph=self_.graph, dataframe=temp_df),
+                metric_column="thicket_tree",
+            )
         except KeyError:
             raise NotImplementedError(
-                "Printing this collection of profiles is not supported.")
+                "Printing this collection of profiles is not supported."
+            )
 
     def unify_old(self, other):
         """Unifies two thickets graphs and dataframes
@@ -170,7 +185,9 @@ class Thicket(GraphFrame):
             print("same graph (object)")
             return
 
-        if self.graph == other.graph:  # Check for the same graph structure. Need to walk through graphs *but should still be less expensive then performing the rest of this function.*
+        if (
+            self.graph == other.graph
+        ):  # Check for the same graph structure. Need to walk through graphs *but should still be less expensive then performing the rest of this function.*
             print("same graph (structure)")
             return
 
@@ -185,8 +202,7 @@ class Thicket(GraphFrame):
         self.dataframe.reset_index(inplace=True)
         other.dataframe.reset_index(inplace=True)
 
-        self.dataframe["node"] = self.dataframe["node"].apply(
-            lambda x: node_map[id(x)])
+        self.dataframe["node"] = self.dataframe["node"].apply(lambda x: node_map[id(x)])
         other.dataframe["node"] = other.dataframe["node"].apply(
             lambda x: node_map[id(x)]
         )
@@ -201,7 +217,9 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def unify_new(th_list):
-        same_graphs = True  # variable to keep track of case where all graphs are the same
+        same_graphs = (
+            True  # variable to keep track of case where all graphs are the same
+        )
         node_map = {}
         index_name_list = []
 
@@ -223,10 +241,10 @@ class Thicket(GraphFrame):
         for i in range(len(th_list)):  # n ops
             index_name_list.append(th_list[i].dataframe.index.names)
             th_list[i].dataframe.reset_index(inplace=True)
-            th_list[i].dataframe["node"] = th_list[i].dataframe["node"].apply(
-                lambda x: node_map[id(x)])
-            th_list[i].dataframe.set_index(
-                index_name_list[i], inplace=True, drop=True)
+            th_list[i].dataframe["node"] = (
+                th_list[i].dataframe["node"].apply(lambda x: node_map[id(x)])
+            )
+            th_list[i].dataframe.set_index(index_name_list[i], inplace=True, drop=True)
 
         return union_graph
 
@@ -311,11 +329,11 @@ class Thicket(GraphFrame):
             for th in range(len(th_list)):
                 th_names.append(th)
         elif len(th_names) != len(th_list):
-            raise ValueError('length of names list must match length of thicket list.')
+            raise ValueError("length of names list must match length of thicket list.")
         for name in th_names:  # Check names list is valid
             if type(name) is not str and type(name) is not int:
                 print(type(name))
-                raise TypeError('name list must only contain integers or strings')
+                raise TypeError("name list must only contain integers or strings")
 
         for i in range(len(th_list)):
             th_id = th_names[i]
