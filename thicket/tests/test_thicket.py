@@ -3,7 +3,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-[pytest]
-addopts = --durations=20 -ra
-testpaths = thicket/tests
-python_files = test_*.py
+import pytest
+
+from thicket import Thicket
+
+
+def test_invalid_constructor():
+    with pytest.raises(ValueError):
+        Thicket(None, None)
