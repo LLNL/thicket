@@ -13,7 +13,7 @@ def print_graph(graph):
     """Print the nodes in a hatchet graph"""
     i = 0
     for node in graph.traverse():
-        print(f"{node} {hash(node)}")
+        print(f"{node} ({hash(node)}) ({id(node)})")
         i += 1
     return i
 

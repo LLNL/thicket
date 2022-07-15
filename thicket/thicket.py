@@ -88,13 +88,16 @@ class Thicket(GraphFrame):
         )
         self.profile = profile
         self.profile_mapping = profile_mapping
-        self.statsframe = GraphFrame(
-            graph=self.graph,
-            dataframe=pd.DataFrame(
-                data=None,
-                index=dataframe.index.get_level_values("node").drop_duplicates(),
-            ),
-        )
+        if statsframe is None:
+            self.statsframe = GraphFrame(
+                graph=self.graph,
+                dataframe=pd.DataFrame(
+                    data=None,
+                    index=dataframe.index.get_level_values("node").drop_duplicates(),
+                ),
+            )
+        else:
+            self.statsframe = statsframe
 
     def __str__(self):
         return "".join(
@@ -158,7 +161,24 @@ class Thicket(GraphFrame):
         else:
             raise TypeError(f"{type(obj)} is not a valid type.")
 
+    def deepcopy(self):
+        """Creates a deep copy of a Thicket and its attributes"""
+        gf = GraphFrame.deepcopy(self)  # Use hatchet function
+
+        return Thicket(
+            graph=gf.graph,
+            dataframe=gf.dataframe,
+            exc_metrics=gf.exc_metrics,
+            inc_metrics=gf.inc_metrics,
+            default_metric=gf.default_metric,
+            metadata=self.metadata.copy(),
+            profile=self.profile,
+            profile_mapping=self.profile_mapping,
+            statsframe=self.statsframe.deepcopy(),
+        )
+
     def tree(self_):
+        """hatchet tree() function for a thicket"""
         try:
             temp_df = self_.dataframe.drop_duplicates(subset="name").reset_index(
                 level="profile"
@@ -207,8 +227,8 @@ class Thicket(GraphFrame):
             lambda x: node_map[id(x)]
         )
 
-        self.dataframe.set_index(self_index_names, inplace=True, drop=True)
-        other.dataframe.set_index(other_index_names, inplace=True, drop=True)
+        self.dataframe.set_index(self_index_names, inplace=True)
+        other.dataframe.set_index(other_index_names, inplace=True)
 
         self.graph = union_graph
         other.graph = union_graph
@@ -244,7 +264,7 @@ class Thicket(GraphFrame):
             th_list[i].dataframe["node"] = (
                 th_list[i].dataframe["node"].apply(lambda x: node_map[id(x)])
             )
-            th_list[i].dataframe.set_index(index_name_list[i], inplace=True, drop=True)
+            th_list[i].dataframe.set_index(index_name_list[i], inplace=True)
 
         return union_graph
 
@@ -336,7 +356,13 @@ class Thicket(GraphFrame):
                 raise TypeError("name list must only contain integers or strings")
 
         for i in range(len(th_list)):
+            th_list[i] = th_list[i].deepcopy()
+
             th_id = th_names[i]
+
+            # Modify graph
+            # Necessary so node ids match up
+            th_list[i].graph = th_list[i].statsframe.graph
 
             # Modify the ensembleframe
             df = th_list[i].statsframe.dataframe
