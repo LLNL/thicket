@@ -10,7 +10,7 @@ stages:
 lint-format-check:
  tags:
    - batch
-   - quartz
+   - catalyst
  stage: format
  extends: .load_python_venv
  script:
@@ -20,7 +20,7 @@ lint-format-check:
 check-license-headers:
  tags:
    - batch
-   - quartz
+   - catalyst
  stage: format
  extends: .load_python_venv
  script:
@@ -29,7 +29,7 @@ check-license-headers:
 build-py37:
  tags:
    - batch
-   - quartz
+   - catalyst
  stage: build
  extends: .load_python_venv
  script:
@@ -39,7 +39,7 @@ build-py37:
 test-py37:
  tags:
    - batch
-   - quartz
+   - catalyst
  stage: test
  extends: .load_python_venv
  script:
