@@ -240,8 +240,6 @@ class Thicket(GraphFrame):
         same_graphs = (
             True  # variable to keep track of case where all graphs are the same
         )
-        node_map = {}
-        index_name_list = []
 
         # GRAPH UNIFICATION
         union_graph = th_list[0].graph
@@ -252,20 +250,28 @@ class Thicket(GraphFrame):
                 continue
             else:
                 same_graphs = False
-            union_graph = union_graph.union(th_list[i].graph, node_map)
+            # Unify graph with current thickets graph
+            union_graph = union_graph.union(th_list[i].graph)
 
-        if same_graphs:  # indicates rest of function unecessary
-            return
+        if (
+            same_graphs
+        ):  # If the graphs were all the same in the first place then there is no need to apply any node mappings.
+            return union_graph
 
         # DATAFRAME MAPPING UPDATE
         for i in range(len(th_list)):  # n ops
-            index_name_list.append(th_list[i].dataframe.index.names)
+            node_map = {}
+            # Create a node map from current thickets graph to the union graph. This is only valid once the union graph is complete.
+            union_graph.union(th_list[i].graph, node_map)
+            names = th_list[i].dataframe.index.names
             th_list[i].dataframe.reset_index(inplace=True)
             th_list[i].dataframe["node"] = (
-                th_list[i].dataframe["node"].apply(lambda x: node_map[id(x)])
-            )
-            th_list[i].dataframe.set_index(index_name_list[i], inplace=True)
+                th_list[i].dataframe["node"].apply(lambda node: node_map[id(node)])
+            )  # Apply node_map mapping
+            th_list[i].dataframe.set_index(names, inplace=True, drop=True)
 
+        # After this point the graph and dataframe in each thicket is out of sync.
+        # We could update the graph element in thicket to be the union graph but if the user prints out the graph how do we annotate nodes only contained in one thicket.
         return union_graph
 
     @staticmethod
@@ -288,9 +294,6 @@ class Thicket(GraphFrame):
                     unify_graph = th_list[i].unify_old(th_list[j])
         else:
             unify_graph = Thicket.unify_new(th_list)
-
-        if unify_graph is None:  # Case where all graphs are the same
-            unify_graph = th_list[0].graph
 
         # Unify dataframe
         unify_df = pd.DataFrame()
