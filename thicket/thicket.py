@@ -44,7 +44,7 @@ def store_thicket_input_profile(func):
             # Add profile to dataframe index
             th.dataframe["profile"] = hash_arg
             index_names = list(th.dataframe.index.names)
-            index_names.append("profile")
+            index_names.insert(1, "profile")
             th.dataframe.reset_index(inplace=True)
             th.dataframe.set_index(index_names, inplace=True)
         return th
@@ -275,6 +275,25 @@ class Thicket(GraphFrame):
         return union_graph
 
     @staticmethod
+    def resolve_missing_indicies(th_list):
+        """If at least one profile has an index that another doesn't, then issues will arise when unifying. Need to add this index to other thickets.
+
+        Note that the value to use for the new index is set to '0' for ease-of-use, but something like 'NaN' may arguably provide more clarity.
+        """
+        # Create a set of all index possibilities
+        idx_set = set({})
+        for th in th_list:
+            idx_set.update(th.dataframe.index.names)
+
+        # Apply missing indicies to thickets
+        for th in th_list:
+            for idx in idx_set:
+                if idx not in th.dataframe.index.names:
+                    print(f"Resolving '{idx}' in thicket: ({id(th)})")
+                    th.dataframe[idx] = 0
+                    th.dataframe.set_index(idx, append=True, inplace=True)
+
+    @staticmethod
     def unify_ensemble(th_list, old=False, superthicket=False):
         """Take a list of thickets and unify them into one thicket
 
@@ -286,6 +305,7 @@ class Thicket(GraphFrame):
         Returns:
             (thicket): unified thicket
         """
+
         unify_graph = None
         if old:
             for i in range(len(th_list)):
@@ -294,6 +314,8 @@ class Thicket(GraphFrame):
                     unify_graph = th_list[i].unify_old(th_list[j])
         else:
             unify_graph = Thicket.unify_new(th_list)
+
+        Thicket.resolve_missing_indicies(th_list)
 
         # Unify dataframe
         unify_df = pd.DataFrame()
