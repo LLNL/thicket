@@ -1,46 +1,71 @@
-stages:
-  - format
-  - build
-  - test
+variables:
+  PYTHON_ENVIRONMENT_PATH: ${CI_PROJECT_DIR}/.venv
+  PIP_CACHE_DIR: ${CI_PROJECT_DIR}/.cache/pip
 
-.load_python_venv:
-  before_script:
-    - . /usr/workspace/wsb/asde/virtualenv-hatchet-1c36a6e2/bin/activate
+stages:
+  - environment
+  - format
+  - build-and-test
+
+# Create a python env and cache it
+# Note: The cache needs to be removed manually in CI if the python environment
+# is changed, by clicking "CI/CD - Pipelines - Clear Runner Caches".
+configure_python:
+  variables:
+    GIT_STRATEGY: none
+  tags:
+    - shell
+    - catalyst
+  stage: environment
+  script:
+    - /usr/tce/packages/python/python-3.7.2/bin/virtualenv -p /usr/tce/packages/python/python-3.7.2/bin/python3 ${PYTHON_ENVIRONMENT_PATH}
+    - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
+    - pip install matplotlib pandas numpy
+    - pip install pytest black flake8
+    - pip install cython multiprocess textX caliper-reader
+  cache:
+    paths:
+      - ${PYTHON_ENVIRONMENT_PATH}
+      - ${PIP_CACHE_DIR}
+
+.venv:
+  cache:
+    paths:
+      - ${PYTHON_ENVIRONMENT_PATH}
+      - ${PIP_CACHE_DIR}
+    policy: pull
 
 lint-format-check:
  tags:
-   - batch
+   - shell
    - catalyst
+ extends: .venv
  stage: format
- extends: .load_python_venv
  script:
+   - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
+   - python --version
    - python -m flake8
    - python -m black --check --diff .
 
 check-license-headers:
  tags:
-   - batch
+   - shell
    - catalyst
+ extends: .venv
  stage: format
- extends: .load_python_venv
  script:
+   - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
+   - python --version
    - python license.py verify
 
-build-py37:
+build-and-test-py37:
  tags:
-   - batch
+   - shell
    - catalyst
- stage: build
- extends: .load_python_venv
+ stage: build-and-test
+ extends: .venv
  script:
+   - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
    - python -m pip install -r requirements.txt
    - python setup.py install
-
-test-py37:
- tags:
-   - batch
-   - catalyst
- stage: test
- extends: .load_python_venv
- script:
    - PYTHONPATH=. python -m pytest
