@@ -33,7 +33,4 @@ setup(
     packages=[
         "thicket",
     ],
-    install_requires=[
-        "llnl-hatchet",
-    ],
 )

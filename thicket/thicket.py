@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import copy
 import os
 
 import pandas as pd
@@ -161,9 +162,53 @@ class Thicket(GraphFrame):
         else:
             raise TypeError(f"{type(obj)} is not a valid type.")
 
+    def copy(self):
+        """Return a partially shallow copy of the Thicket.
+
+        See GraphFrame.copy() for more details
+
+        Arguments:
+            self (Thicket): Object to make a copy of.
+
+        Returns:
+            other (Thicket): Copy of self
+                (graph ... default_metric): Same behavior as GraphFrame
+                metadata (DataFrame): Pandas "non-deep" copy of dataframe
+                profile (list): Copy of self's profile
+                profile_mapping (dic): Copy of self's profile_mapping
+                statsframe (GraphFrame): Calls GraphFrame.copy()
+        """
+        gf = GraphFrame.copy(self)
+
+        return Thicket(
+            graph=gf.graph,
+            dataframe=gf.dataframe,
+            exc_metrics=gf.exc_metrics,
+            inc_metrics=gf.inc_metrics,
+            default_metric=gf.default_metric,
+            metadata=self.metadata.copy(deep=False),
+            profile=copy.copy(self.profile),
+            profile_mapping=copy.copy(self.profile_mapping),
+            statsframe=self.statsframe.copy(),
+        )
+
     def deepcopy(self):
-        """Creates a deep copy of a Thicket and its attributes"""
-        gf = GraphFrame.deepcopy(self)  # Use hatchet function
+        """Return a deep copy of the Thicket.
+
+        See GraphFrame.deepcopy() for more details
+
+        Arguments:
+            self (Thicket): Object to make a copy of.
+
+        Returns:
+            other (Thicket): Copy of self
+                (graph ... default_metric): Same behavior as GraphFrame
+                metadata (DataFrame): Pandas "deep" copy of dataframe
+                profile (list): Copy of self's profile
+                profile_mapping (dic): Copy of self's profile_mapping
+                statsframe (GraphFrame): Calls GraphFrame.deepcopy()
+        """
+        gf = GraphFrame.deepcopy(self)
 
         return Thicket(
             graph=gf.graph,
@@ -172,8 +217,8 @@ class Thicket(GraphFrame):
             inc_metrics=gf.inc_metrics,
             default_metric=gf.default_metric,
             metadata=self.metadata.copy(),
-            profile=self.profile,
-            profile_mapping=self.profile_mapping,
+            profile=copy.deepcopy(self.profile),
+            profile_mapping=copy.deepcopy(self.profile_mapping),
             statsframe=self.statsframe.deepcopy(),
         )
 
