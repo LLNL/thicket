@@ -6,6 +6,7 @@ stages:
   - environment
   - format
   - build-and-test
+  - cleanup
 
 # Create a python env and cache it
 # Note: The cache needs to be removed manually in CI if the python environment
@@ -36,36 +37,47 @@ configure_python:
     policy: pull
 
 lint-format-check:
- tags:
-   - shell
-   - catalyst
- extends: .venv
- stage: format
- script:
-   - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
-   - python --version
-   - python -m flake8
-   - python -m black --check --diff .
+  tags:
+    - shell
+    - catalyst
+  extends: .venv
+  stage: format
+  script:
+    - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
+    - python --version
+    - python -m flake8
+    - python -m black --check --diff .
 
 check-license-headers:
- tags:
-   - shell
-   - catalyst
- extends: .venv
- stage: format
- script:
-   - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
-   - python --version
-   - python license.py verify
+  tags:
+    - shell
+    - catalyst
+  extends: .venv
+  stage: format
+  script:
+    - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
+    - python --version
+    - python license.py verify
 
 build-and-test-py37:
- tags:
-   - shell
-   - catalyst
- stage: build-and-test
- extends: .venv
- script:
-   - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
-   - python -m pip install --ignore-installed --no-deps -r requirements.txt
-   - python setup.py install
-   - PYTHONPATH=. python -m pytest
+  tags:
+    - shell
+    - catalyst
+  stage: build-and-test
+  extends: .venv
+  script:
+    - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
+    - python -m pip install --ignore-installed --no-deps -r requirements.txt
+    - python setup.py install
+    - PYTHONPATH=. python -m pytest
+
+job-cleanup:
+  cache: []
+  tags:
+    - shell
+    - catalyst
+  stage: cleanup
+  script:
+    - cd ${HOME}
+    - rm -rf ${HOME}/.jacamar-ci/builds/*
+    - rm -rf ${HOME}/.jacamar-ci/cache/*
