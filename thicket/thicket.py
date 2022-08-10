@@ -238,23 +238,18 @@ class Thicket(GraphFrame):
                 "Printing this collection of profiles is not supported."
             )
 
-    def unify_old(self, other):
-        """Unifies two thickets graphs and dataframes
-        Ensure self and other have the same graph and same node IDs. This may
-        change the node IDs in the dataframe.
-        Update the graphs in the graphframe if they differ.
-        """
-
+    def unify_pair(self, other):
+        """Unify two Thicket's graphs and DataFrames"""
         # Check for the same object. cheap operation since no graph walkthrough.
         if self.graph is other.graph:
             print("same graph (object)")
-            return
+            return self.graph
 
         if (
             self.graph == other.graph
         ):  # Check for the same graph structure. Need to walk through graphs *but should still be less expensive then performing the rest of this function.*
             print("same graph (structure)")
-            return
+            return self.graph
 
         print("different graph")
 
@@ -278,10 +273,24 @@ class Thicket(GraphFrame):
         self.graph = union_graph
         other.graph = union_graph
 
-        return self.graph
+        return union_graph
+
+    def unify_pairwise(th_list):
+        """Unifies two thickets graphs and dataframes
+        Ensure self and other have the same graph and same node IDs. This may
+        change the node IDs in the dataframe.
+        Update the graphs in the graphframe if they differ.
+        """
+        union_graph = th_list[0].graph
+        for i in range(len(th_list)):
+            for j in range(i + 1, len(th_list)):
+                print(f"Unifying ({i}, {j})...")
+                union_graph = th_list[i].unify_pair(th_list[j])
+        return union_graph
 
     @staticmethod
-    def unify_new(th_list):
+    def unify_listwise(th_list):
+        """Unify a list of Thicket's graphs and DataFrames"""
         same_graphs = (
             True  # variable to keep track of case where all graphs are the same
         )
@@ -289,14 +298,14 @@ class Thicket(GraphFrame):
         # GRAPH UNIFICATION
         union_graph = th_list[0].graph
         for i in range(1, len(th_list)):  # n-1 unions
-            print(f"Unifying (Union Graph, {i})")
             # Check to skip unecessary computation. apply short circuiting with 'or'.
             if union_graph is th_list[i].graph or union_graph == th_list[i].graph:
-                continue
+                print(f"Union Graph == thicket[{i}].graph")
             else:
+                print(f"Unifying (Union Graph, {i})")
                 same_graphs = False
-            # Unify graph with current thickets graph
-            union_graph = union_graph.union(th_list[i].graph)
+                # Unify graph with current thickets graph
+                union_graph = union_graph.union(th_list[i].graph)
 
         if (
             same_graphs
@@ -320,7 +329,7 @@ class Thicket(GraphFrame):
         return union_graph
 
     @staticmethod
-    def resolve_missing_indicies(th_list):
+    def _resolve_missing_indicies(th_list):
         """If at least one profile has an index that another doesn't, then issues will arise when unifying. Need to add this index to other thickets.
 
         Note that the value to use for the new index is set to '0' for ease-of-use, but something like 'NaN' may arguably provide more clarity.
@@ -339,12 +348,28 @@ class Thicket(GraphFrame):
                     th.dataframe.set_index(idx, append=True, inplace=True)
 
     @staticmethod
-    def unify_ensemble(th_list, old=False, superthicket=False):
+    def _sync_nodes(gh, df):
+        """Set the node objects to be equal in both the graph and the dataframe.
+        id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet nid's.
+        """
+        index_names = df.index.names
+        df.reset_index(inplace=True)
+        for graph_node in gh.traverse():
+            df["node"] = df["node"].apply(
+                lambda df_node: graph_node
+                if (hash(graph_node) == hash(df_node))
+                else df_node
+            )
+        df.set_index(index_names, inplace=True)
+
+    @staticmethod
+    def unify_ensemble(th_list, pairwise=False, superthicket=False):
+
         """Take a list of thickets and unify them into one thicket
 
         Arguments:
             th_list (list): list of thickets
-            old (bool): use the old implementation of unify (use if having issues)
+            pairwise (bool): use the pairwise implementation of unify (use if having issues)
             superthicket (bool): whether the result is a superthicket
 
         Returns:
@@ -352,15 +377,12 @@ class Thicket(GraphFrame):
         """
 
         unify_graph = None
-        if old:
-            for i in range(len(th_list)):
-                for j in range(i + 1, len(th_list)):
-                    print(f"Unifying ({i}, {j})...")
-                    unify_graph = th_list[i].unify_old(th_list[j])
+        if pairwise:
+            unify_graph = Thicket.unify_pairwise(th_list)
         else:
-            unify_graph = Thicket.unify_new(th_list)
+            unify_graph = Thicket.unify_listwise(th_list)
 
-        Thicket.resolve_missing_indicies(th_list)
+        Thicket._resolve_missing_indicies(th_list)
 
         # Unify dataframe
         unify_df = pd.DataFrame()
@@ -381,8 +403,7 @@ class Thicket(GraphFrame):
                 unify_profile.extend(th.profile)
             if th.profile_mapping is not None:
                 unify_profile_mapping.update(th.profile_mapping)
-            curr_df = th.dataframe.copy()
-            unify_df = pd.concat([curr_df, unify_df])
+            unify_df = pd.concat([th.dataframe, unify_df])
 
         if superthicket:  # Operations specific to a superthicket
             unify_metadata.index.rename("thicket", inplace=True)
@@ -392,11 +413,14 @@ class Thicket(GraphFrame):
         unify_inc_metrics = list(set(unify_inc_metrics))
         unify_exc_metrics = list(set(unify_exc_metrics))
 
+        # Workaround for graph/df node id mismatch. (n tree nodes)x(m df nodes)x(m)
+        Thicket._sync_nodes(unify_graph, unify_df)
+
         unify_th = Thicket(
             graph=unify_graph,
             dataframe=unify_df,
-            inc_metrics=unify_inc_metrics,
             exc_metrics=unify_exc_metrics,
+            inc_metrics=unify_inc_metrics,
             metadata=unify_metadata,
             profile=unify_profile,
             profile_mapping=unify_profile_mapping,
