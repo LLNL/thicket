@@ -397,7 +397,7 @@ class Thicket(GraphFrame):
             unify_exc_metrics.extend(th.exc_metrics)
             if len(th.metadata) > 0:
                 curr_meta = th.metadata.copy()
-                unify_metadata = pd.concat([curr_meta, unify_metadata], sort=True)
+                unify_metadata = pd.concat([curr_meta, unify_metadata])
                 unify_metadata.index.set_names("profile", inplace=True)
             if th.profile is not None:
                 unify_profile.extend(th.profile)
@@ -408,6 +408,10 @@ class Thicket(GraphFrame):
         if superthicket:  # Operations specific to a superthicket
             unify_metadata.index.rename("thicket", inplace=True)
             unify_metadata = unify_metadata.groupby("thicket").agg(set)
+
+        unify_metadata.sort_index(
+            inplace=True
+        )  # Have metadata index match ensembleframe index
 
         unify_df.sort_index(inplace=True)  # Sort by hatchet node id
         unify_inc_metrics = list(set(unify_inc_metrics))
