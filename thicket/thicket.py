@@ -5,8 +5,10 @@
 
 import copy
 import os
+import json
 
 import pandas as pd
+import numpy as np
 
 from hatchet import GraphFrame
 from .helpers import print_graph
@@ -161,6 +163,51 @@ class Thicket(GraphFrame):
             return Thicket._from_caliperreader(obj)
         else:
             raise TypeError(f"{type(obj)} is not a valid type.")
+
+    @staticmethod
+    def from_json(json_thicket):
+        # deserialize the json
+        thicket_dict = json.loads(json_thicket)
+        hatchet_spec = {
+            "graph": thicket_dict["graph"],
+            "dataframe": thicket_dict["dataframe"],
+            "dataframe_indices": thicket_dict["dataframe_indices"],
+            "exclusive_metrics": thicket_dict["inclusive_metrics"],
+            "inclusive_metrics": thicket_dict["exclusive_metrics"],
+        }
+
+        gf = GraphFrame.from_json(json.dumps(hatchet_spec))
+
+        th = Thicket(
+            graph=gf.graph,
+            dataframe=gf.dataframe,
+            exc_metrics=thicket_dict["exclusive_metrics"],
+            inc_metrics=thicket_dict["inclusive_metrics"],
+            profile=thicket_dict["profile"],
+            profile_mapping=thicket_dict["profile_mapping"],
+        )
+
+        if "metadata" in thicket_dict:
+            mf = pd.DataFrame(thicket_dict["metadata"])
+            mf.set_index(mf["profile"], inplace=True)
+            if "profile" in mf.columns:
+                mf = mf.drop(columns=["profile"])
+            th.metadata = mf
+
+        # catch condition where there are no stats
+        if "stats" in thicket_dict:
+            sf_spec = {
+                "graph": thicket_dict["graph"],
+                "dataframe": thicket_dict["stats"],
+                "dataframe_indices": ["node"],
+                "exclusive_metrics": [],
+                "inclusive_metrics": [],
+            }
+            th.statsframe = GraphFrame.from_json(json.dumps(sf_spec))
+            th.statsframe.graph = th.graph
+
+        # make and return thicket?
+        return th
 
     def copy(self):
         """Return a partially shallow copy of the Thicket.
@@ -478,3 +525,46 @@ class Thicket(GraphFrame):
             th_list[i].metadata.set_index(idx_name, inplace=True)
 
         return Thicket.unify_ensemble(th_list, superthicket=True)
+
+    def to_json(self, ensemble=True, metadata=True, stats=True):
+        jsonified_thicket = {}
+
+        # jsonify graph
+        """
+        Nodes: {hatchet_nid: {node data, children:[by-id]}}
+        """
+        formatted_graph_dict = {}
+
+        for n in self.graph.traverse():
+            formatted_graph_dict[n._hatchet_nid] = {
+                "data": n.frame.attrs,
+                "children": [c._hatchet_nid for c in n.children],
+                "parents": [c._hatchet_nid for c in n.parents],
+            }
+
+        jsonified_thicket["graph"] = [formatted_graph_dict]
+
+        if ensemble:
+            jsonified_thicket["dataframe_indices"] = list(self.dataframe.index.names)
+            ef = self.dataframe.reset_index()
+            ef["node"] = ef["node"].apply(lambda n: n._hatchet_nid)
+            jsonified_thicket["dataframe"] = ef.replace({np.nan: None}).to_dict(
+                "records"
+            )
+        if metadata:
+            jsonified_thicket["metadata"] = (
+                self.metadata.reset_index().replace({np.nan: None}).to_dict("records")
+            )
+        if stats:
+            sf = self.statsframe.dataframe.copy(deep=True)
+            sf.index = sf.index.map(lambda n: n._hatchet_nid)
+            jsonified_thicket["stats"] = (
+                sf.replace({np.nan: None}).reset_index().to_dict("records")
+            )
+
+        jsonified_thicket["inclusive_metrics"] = self.inc_metrics
+        jsonified_thicket["exclusive_metrics"] = self.exc_metrics
+        jsonified_thicket["profile"] = self.profile
+        jsonified_thicket["profile_mapping"] = self.profile_mapping
+
+        return json.dumps(jsonified_thicket)

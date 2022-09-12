@@ -26,3 +26,15 @@ def example_cali(data_dir, tmpdir):
     tmpfile = os.path.join(str(tmpdir), "example-profile.cali")
 
     return tmpfile
+
+
+@pytest.fixture
+def example_json(data_dir, tmpdir):
+    """Builds a temporary directory containing the lulesh cali file."""
+    cali_json_dir = os.path.join(data_dir, "example-json")
+    cali_file = os.path.join(cali_json_dir, "user_ensemble.json")
+
+    shutil.copy(cali_file, str(tmpdir))
+    tmpfile = os.path.join(str(tmpdir), "user_ensemble.json")
+
+    return tmpfile
