@@ -38,3 +38,23 @@ def example_json(data_dir, tmpdir):
     tmpfile = os.path.join(str(tmpdir), "user_ensemble.json")
 
     return tmpfile
+
+
+@pytest.fixture
+def misc(data_dir, tmpdir):
+    """Builds a temporary directory containing the miscellaneous cali files."""
+    files = [
+        "200924-16401756144.cali",
+        "200924-17025362173.cali",
+    ]
+    misc_dir = os.path.join(data_dir, "misc")
+    cali_file_0 = os.path.join(misc_dir, files[0])
+    cali_file_1 = os.path.join(misc_dir, files[1])
+
+    shutil.copy(cali_file_0, str(tmpdir))
+    shutil.copy(cali_file_1, str(tmpdir))
+
+    tmpfile_0 = os.path.join(str(tmpdir), files[0])
+    tmpfile_1 = os.path.join(str(tmpdir), files[1])
+
+    return [tmpfile_0, tmpfile_1]

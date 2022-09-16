@@ -142,27 +142,33 @@ class Thicket(GraphFrame):
         return GraphFrame.from_caliperreader(filename_or_caliperreader)
 
     @staticmethod
-    def from_caliperreader(obj):
+    def from_caliperreader(obj, intersection=False):
         """Create a thicket from a list, directory of caliper files or a single file.
 
         Args:
             obj (list or str): obj to read from.
+            intersection (bool): Whether to perform intersection or union (default).
         """
+        ens_list = []
+
+        # Parse the input object
         if type(obj) == list:  # if a list of files
-            ens_list = []
             for file in obj:
                 ens_list.append(Thicket._from_caliperreader(file))
-            return Thicket.unify_ensemble(ens_list)
         elif os.path.isdir(obj):  # if directory of files
-            ens_list = []
             for file in os.listdir(obj):
                 f = os.path.join(obj, file)
                 ens_list.append(Thicket._from_caliperreader(f))
-            return Thicket.unify_ensemble(ens_list)
         elif os.path.isfile(obj):  # if file
             return Thicket._from_caliperreader(obj)
         else:
             raise TypeError(f"{type(obj)} is not a valid type.")
+
+        # Perform unify ensemble
+        thicket_object = Thicket.unify_ensemble(ens_list)
+        if intersection:
+            thicket_object.intersection()
+        return thicket_object
 
     @staticmethod
     def from_json(json_thicket):
@@ -568,3 +574,44 @@ class Thicket(GraphFrame):
         jsonified_thicket["profile_mapping"] = self.profile_mapping
 
         return json.dumps(jsonified_thicket)
+
+    def intersection(self):
+        """Perform an intersection operation on a thicket, removing nodes that are not contained in all profiles.
+
+        Returns:
+            remaining_node_list (list): List of nodes that were not removed.
+            removed_node_list (list): List of removed nodes.
+        """
+        # Filter the ensembleframe
+        total_profiles = len(self.profile)
+        remaining_node_list = []  # Needed for graph
+        removed_node_list = []
+        for node, new_df in self.dataframe.groupby(level=0):  # For each node
+            if len(new_df) < total_profiles:  # Use profile count to make decision
+                removed_node_list.append(node)
+            else:
+                remaining_node_list.append(node)
+        self.dataframe.drop(removed_node_list, inplace=True)
+        self.statsframe.dataframe.drop(
+            removed_node_list, inplace=True
+        )  # Propagate change to statsframe
+
+        # Filter the graph
+        self.graph.roots = list(
+            set(self.graph.roots).intersection(remaining_node_list)
+        )  # Remove roots
+        for node in self.graph.traverse():
+            # Remove children & parents that DNE in the intersection
+            new_children = []
+            new_parents = []
+            for child in node.children:
+                if child in remaining_node_list:
+                    new_children.append(child)
+            for parent in node.parents:
+                if parent in remaining_node_list:
+                    new_parents.append(parent)
+            node.children = new_children
+            node.parents = new_parents
+        self.graph.enumerate_traverse()  # Update hatchet nid's
+
+        return remaining_node_list, removed_node_list
