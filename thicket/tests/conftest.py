@@ -58,3 +58,19 @@ def misc(data_dir, tmpdir):
     tmpfile_1 = os.path.join(str(tmpdir), files[1])
 
     return [tmpfile_0, tmpfile_1]
+
+
+@pytest.fixture
+def example_cali_multiprofile(data_dir):
+    """Returns a list of cali profiles"""
+    cali_json_dir = os.path.join(data_dir, "example-cali")
+    cali_files = []
+    for i in os.listdir(cali_json_dir):
+        if (
+            os.path.isfile(os.path.join(cali_json_dir, i))
+            and "example_all_base_seq_" in i
+        ):
+            cali_files.append(os.path.join(cali_json_dir, i))
+    cali_files.append(os.path.join(cali_json_dir, "example-profile.cali"))
+
+    return cali_files

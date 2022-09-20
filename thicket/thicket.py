@@ -615,3 +615,55 @@ class Thicket(GraphFrame):
         self.graph.enumerate_traverse()  # Update hatchet nid's
 
         return remaining_node_list, removed_node_list
+
+    def metadata_filter(self, select_function):
+        """filter thicket object based on a metadata key and propagate
+        changes to the entire thicket object
+        :param select_function: the filter to apply to the MetadataFrame
+        :type select_function: lambda function
+
+        :return: new thicket object with selected value
+        :rtype: thicket object
+        """
+        if callable(select_function):
+            if not self.metadata.empty:
+                # create a copy of the thicket object
+                new_thicket = self.copy()
+
+                # filter MetadataFrame
+                filtered_rows = new_thicket.metadata.apply(select_function, axis=1)
+                new_thicket.metadata = new_thicket.metadata[filtered_rows]
+
+                # note profile keys to filter EnsembleFrame
+                profile_id = new_thicket.metadata.index.values.tolist()
+                # filter EnsembleFrame based on the MetadataFrame
+                new_thicket.dataframe = new_thicket.dataframe[
+                    new_thicket.dataframe.index.get_level_values("profile").isin(
+                        profile_id
+                    )
+                ]
+
+                # create an empty StatsFrame
+                new_thicket.statsframe.dataframe = pd.DataFrame(
+                    data=None,
+                    index=new_thicket.dataframe.index.get_level_values(
+                        "node"
+                    ).drop_duplicates(),
+                )
+            else:
+                raise EmptyMetadataFrame(
+                    "The provided Thicket object has an empty MetadataFrame."
+                )
+
+        else:
+            raise InvalidFilter("The argument passed to filter must be a callable.")
+
+        return new_thicket
+
+
+class InvalidFilter(Exception):
+    """Raised when an invalid argument is passed to the filter function."""
+
+
+class EmptyMetadataFrame(Exception):
+    """Raised when a Thicket object argument is passed with an empty MetadataFrame to the filter function."""

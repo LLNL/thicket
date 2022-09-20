@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from thicket.helpers import are_synced
-from thicket import Thicket
+from thicket import Thicket, InvalidFilter, EmptyMetadataFrame
 
 
 def test_invalid_constructor():
@@ -72,3 +72,66 @@ def test_sync_nodes(example_cali):
 
     # Check again
     assert are_synced(th.graph, th.dataframe)
+
+
+def test_filter(example_cali_multiprofile):
+    # example thicket
+    th = Thicket.from_caliperreader(example_cali_multiprofile)
+
+    # columns and corresponding values to filter by
+    columns_values = {"problem_size": ["30"], "cluster": ["quartz", "chekov"]}
+
+    for column in columns_values:
+        for value in columns_values[column]:
+            # get expected profile hash and nodes after filtering
+            exp_profile = sorted(
+                th.metadata.index[th.metadata[column] == value].tolist()
+            )
+            exp_nodes = sorted(
+                th.dataframe[
+                    th.dataframe.index.get_level_values("profile").isin(exp_profile)
+                ]
+                .index.get_level_values(0)
+                .drop_duplicates()
+                .tolist()
+            )
+
+            # filter function
+            new_th = th.metadata_filter(lambda x: x[column] == value)
+
+            # check if output is a thicket object
+            assert isinstance(new_th, Thicket)
+
+            # MetadataFrame: compare profile hash keys after filter to expected
+            metadata_profile = new_th.metadata.index.tolist()
+            assert metadata_profile == exp_profile
+
+            # EnsembleFrame: compare profile hash keys and nodes after filter to expected
+            ensemble_profile = sorted(
+                new_th.dataframe.index.get_level_values(1).drop_duplicates().tolist()
+            )
+            ensemble_nodes = sorted(
+                new_th.dataframe.index.get_level_values(0).drop_duplicates().tolist()
+            )
+            assert ensemble_profile == exp_profile
+            assert ensemble_nodes == exp_nodes
+
+            # StatsFrame: compare nodes after filter to expected; check for empty dataframe
+            stats_nodes = sorted(
+                new_th.statsframe.dataframe.index.get_level_values(0)
+                .drop_duplicates()
+                .tolist()
+            )
+            assert exp_nodes == stats_nodes
+            assert new_th.statsframe.dataframe.empty
+
+    # check for invalid filter exception
+    with pytest.raises(InvalidFilter):
+        th.metadata_filter(123)
+
+    # drop all rows of the metadataframe
+    th.metadata = th.metadata.iloc[0:0]
+
+    # check for empty metadataframe exception
+    with pytest.raises(EmptyMetadataFrame):
+        th.metadata_filter(lambda x: x["cluster"] == "chekov")
