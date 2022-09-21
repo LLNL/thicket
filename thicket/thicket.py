@@ -679,6 +679,11 @@ class Thicket(GraphFrame):
 
         return new_thicket
 
+    def filter(self, filter_func):
+        raise RuntimeError(
+            "Invalid function: thicket.filter(), please use thicket.filter_metadata() or thicket.filter_stats()"
+        )
+
 
 class InvalidFilter(Exception):
     """Raised when an invalid argument is passed to the filter function."""
