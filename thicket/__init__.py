@@ -7,3 +7,4 @@
 # flake8: noqa: F401
 
 from .thicket import Thicket, InvalidFilter, EmptyMetadataFrame
+from .model_extrap import Modeling

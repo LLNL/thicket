@@ -10,49 +10,9 @@ import json
 import pandas as pd
 import numpy as np
 
+from collections import OrderedDict
 from hatchet import GraphFrame
 from .helpers import print_graph
-
-
-def store_thicket_input_profile(func):
-    """Decorator to modify a hatchet dataframe to add a profile column to track which instance the row came from.
-
-    Arguments:
-        func (Function): Function to decorate
-    """
-
-    def profile_assign(first_arg, *args, **kwargs):
-        """Decorator workhorse.
-
-        Arguments:
-            first_arg (): path to profile file.
-        """
-        gf = func(first_arg, *args, **kwargs)
-        th = Thicket(
-            graph=gf.graph,
-            dataframe=gf.dataframe,
-            exc_metrics=gf.exc_metrics,
-            inc_metrics=gf.inc_metrics,
-            metadata=gf.metadata,
-        )
-        if th.profile is None and isinstance(first_arg, str):
-            # Store used profiles and profile mappings using a hash of their string
-            hash_arg = hash(first_arg)
-            th.profile = [hash_arg]
-            th.profile_mapping = {hash_arg: first_arg}
-            # format metadata as a dict of dicts
-            temp_meta = {}
-            temp_meta[hash_arg] = th.metadata
-            th.metadata = pd.DataFrame.from_dict(temp_meta, orient="index")
-            # Add profile to dataframe index
-            th.dataframe["profile"] = hash_arg
-            index_names = list(th.dataframe.index.names)
-            index_names.insert(1, "profile")
-            th.dataframe.reset_index(inplace=True)
-            th.dataframe.set_index(index_names, inplace=True)
-        return th
-
-    return profile_assign
 
 
 class Thicket(GraphFrame):
@@ -118,51 +78,107 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
-    @store_thicket_input_profile
-    def from_hpctoolkit(dirname):
+    def thicketize_graphframe(gf, prf):
+        """Necessary function to handle output from using GraphFrame readers.
+
+        Arguments:
+            gf (GraphFrame): hatchet GraphFrame object
+            prf (str): Profile source of the GraphFrame
+
+        Returns:
+            (thicket): thicket object
+        """
+        th = Thicket(
+            graph=gf.graph,
+            dataframe=gf.dataframe,
+            exc_metrics=gf.exc_metrics,
+            inc_metrics=gf.inc_metrics,
+            metadata=gf.metadata,
+        )
+        if th.profile is None and isinstance(prf, str):
+            # Store used profiles and profile mappings using a hash of their string
+            prf = os.path.basename(prf)  # Only care about the filename
+            hash_arg = hash(prf)
+            th.profile = [hash_arg]
+            th.profile_mapping = {hash_arg: prf}
+            # format metadata as a dict of dicts
+            temp_meta = {}
+            temp_meta[hash_arg] = th.metadata
+            th.metadata = pd.DataFrame.from_dict(temp_meta, orient="index")
+            # Add profile to dataframe index
+            th.dataframe["profile"] = hash_arg
+            index_names = list(th.dataframe.index.names)
+            index_names.insert(1, "profile")
+            th.dataframe.reset_index(inplace=True)
+            th.dataframe.set_index(index_names, inplace=True)
+        return th
+
+    @staticmethod
+    def from_caliper(filename_or_stream, query=None, intersection=False):
+        """Read in a Caliper .cali or .json file.
+        Args:
+            filename_or_stream (str or file-like): name of a Caliper output
+                file in `.cali` or JSON-split format, or an open file object
+                to read one
+            intersection (bool): Whether to perform intersection or union (default).
+            query (str): cali-query in CalQL format
+        """
+        return Thicket.reader_dispatch(
+            GraphFrame.from_caliper, intersection, filename_or_stream, query
+        )
+
+    @staticmethod
+    def from_hpctoolkit(dirname, intersection=False):
         """Create a GraphFrame using hatchet's HPCToolkit reader and use its attributes to make a new thicket.
 
         Arguments:
             dirname (str): parent directory of an HPCToolkit experiment.xml file
+            intersection (bool): Whether to perform intersection or union (default).
 
         Returns:
             (thicket): new thicket containing HPCToolkit profile data
         """
-        return GraphFrame.from_hpctoolkit(dirname)
+        return Thicket.reader_dispatch(
+            GraphFrame.from_hpctoolkit, intersection, dirname
+        )
 
     @staticmethod
-    @store_thicket_input_profile
-    def _from_caliperreader(filename_or_caliperreader):
+    def from_caliperreader(filename_or_caliperreader, intersection=False):
         """Helper function to read one caliper file.
 
         Args:
             filename_or_caliperreader (str or CaliperReader): name of a Caliper
                 output file in `.cali` format, or a CaliperReader object
-        """
-        return GraphFrame.from_caliperreader(filename_or_caliperreader)
-
-    @staticmethod
-    def from_caliperreader(obj, intersection=False):
-        """Create a thicket from a list, directory of caliper files or a single file.
-
-        Args:
-            obj (list or str): obj to read from.
             intersection (bool): Whether to perform intersection or union (default).
         """
+        return Thicket.reader_dispatch(
+            GraphFrame.from_caliperreader, intersection, filename_or_caliperreader
+        )
+
+    @staticmethod
+    def reader_dispatch(func, intersection=False, *args, **kwargs):
+        """Create a thicket from a list, directory of files, or a single file.
+
+        Args:
+            func (function): reader function to be used.
+            intersection (bool): Whether to perform intersection or union (default).
+            *args (list): list of args. args[0] should be an object that can be read from.
+        """
         ens_list = []
+        obj = args[0]  # First arg should be readable object
 
         # Parse the input object
         if type(obj) == list:  # if a list of files
             for file in obj:
-                ens_list.append(Thicket._from_caliperreader(file))
+                ens_list.append(Thicket.thicketize_graphframe(func(file), file))
         elif os.path.isdir(obj):  # if directory of files
             for file in os.listdir(obj):
                 f = os.path.join(obj, file)
-                ens_list.append(Thicket._from_caliperreader(f))
-        elif os.path.isfile(obj):  # if file
-            return Thicket._from_caliperreader(obj)
+                ens_list.append(Thicket.thicketize_graphframe(func(f), f))
+        elif os.path.isfile(obj):  # if single file
+            return Thicket.thicketize_graphframe(func(*args, **kwargs), args[0])
         else:
-            raise TypeError(f"{type(obj)} is not a valid type.")
+            raise TypeError(f"{type(obj)} is not a valid type to be read from.")
 
         # Perform unify ensemble
         thicket_object = Thicket.unify_ensemble(ens_list)
@@ -472,6 +488,9 @@ class Thicket(GraphFrame):
 
         # Workaround for graph/df node id mismatch. (n tree nodes)x(m df nodes)x(m)
         Thicket._sync_nodes(unify_graph, unify_df)
+
+        # Mutate into OrderedDict to sort profile hashes
+        unify_profile_mapping = OrderedDict(sorted(unify_profile_mapping.items()))
 
         unify_th = Thicket(
             graph=unify_graph,

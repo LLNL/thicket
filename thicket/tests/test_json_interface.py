@@ -26,8 +26,6 @@ def test_write_json(example_json):
     gf = Thicket.from_json(jgs)
     json_out = gf.to_json()
 
-    print("".join(jgs.split()))
-    print("".join(json_out.split()))
     assert "".join(sorted("".join(sorted(jgs.split())))) == "".join(
         sorted("".join(json_out.split()))
     )

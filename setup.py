@@ -33,4 +33,7 @@ setup(
     packages=[
         "thicket",
     ],
+    install_requires=[
+        "extrap",
+    ],
 )

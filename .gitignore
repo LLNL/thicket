@@ -10,3 +10,8 @@
 
 # Testing
 *out*.txt
+
+# Build
+*build/
+*dist/
+*.egg-info/
