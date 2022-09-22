@@ -1,6 +1,7 @@
 variables:
   PYTHON_ENVIRONMENT_PATH: ${CI_PROJECT_DIR}/.venv
   PIP_CACHE_DIR: ${CI_PROJECT_DIR}/.cache/pip
+  FF_ENABLE_JOB_CLEANUP: "true"
 
 stages:
   - environment
@@ -70,14 +71,3 @@ build-and-test-py37:
     - python -m pip install --ignore-installed --no-deps -r requirements.txt
     - python setup.py install
     - PYTHONPATH=. python -m pytest
-
-job-cleanup:
-  cache: []
-  tags:
-    - shell
-    - catalyst
-  stage: cleanup
-  script:
-    - cd ${HOME}
-    - rm -rf ${HOME}/.jacamar-ci/builds/*
-    - rm -rf ${HOME}/.jacamar-ci/cache/*
