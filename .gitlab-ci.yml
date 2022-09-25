@@ -23,7 +23,7 @@ configure_python:
     - /usr/tce/packages/python/python-3.7.2/bin/virtualenv -p /usr/tce/packages/python/python-3.7.2/bin/python3 ${PYTHON_ENVIRONMENT_PATH}
     - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
     - pip install matplotlib pandas numpy
-    - pip install pytest black flake8
+    - pip install pytest black flake8==4.0.1
     - pip install cython multiprocess textX caliper-reader
   cache:
     paths:
@@ -46,6 +46,7 @@ lint-format-check:
   script:
     - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
     - python --version
+    - python -m flake8 --version
     - python -m flake8
     - python -m black --check --diff .
 
