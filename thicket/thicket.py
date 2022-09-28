@@ -635,7 +635,7 @@ class Thicket(GraphFrame):
 
         return remaining_node_list, removed_node_list
 
-    def metadata_filter(self, select_function):
+    def filter_metadata(self, select_function):
         """filter thicket object based on a metadata key and propagate
         changes to the entire thicket object
         :param select_function: the filter to apply to the MetadataFrame

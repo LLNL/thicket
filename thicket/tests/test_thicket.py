@@ -97,7 +97,7 @@ def test_filter(example_cali_multiprofile):
             )
 
             # filter function
-            new_th = th.metadata_filter(lambda x: x[column] == value)
+            new_th = th.filter_metadata(lambda x: x[column] == value)
 
             # check if output is a thicket object
             assert isinstance(new_th, Thicket)
@@ -127,11 +127,11 @@ def test_filter(example_cali_multiprofile):
 
     # check for invalid filter exception
     with pytest.raises(InvalidFilter):
-        th.metadata_filter(123)
+        th.filter_metadata(123)
 
     # drop all rows of the metadataframe
     th.metadata = th.metadata.iloc[0:0]
 
     # check for empty metadataframe exception
     with pytest.raises(EmptyMetadataFrame):
-        th.metadata_filter(lambda x: x["cluster"] == "chekov")
+        th.filter_metadata(lambda x: x["cluster"] == "chekov")
