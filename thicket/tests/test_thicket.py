@@ -23,13 +23,13 @@ def test_resolve_missing_indicies():
     names_0 = ["node", "profile", "rank"]
     names_1 = ["node", "profile"]
     df_0 = pd.DataFrame(
-        data=np.random.randn(4),
+        data={"time": np.random.randn(4), "name": ["foo", "bar", "graz", "grault"]},
         index=pd.MultiIndex.from_product(
             [["foo", "bar"], ["A"], ["0", "1"]], names=names_0
         ),
     )
     df_1 = pd.DataFrame(
-        np.random.randn(2),
+        data={"time": np.random.randn(2), "name": ["foo", "bar"]},
         index=pd.MultiIndex.from_product([["foo", "bar"], ["B"]], names=names_1),
     )
     t_graph = ht.graph.Graph([])
@@ -200,3 +200,17 @@ def test_groupby(example_cali_multiprofile):
     # check for empty metadataframe exception
     with pytest.raises(EmptyMetadataFrame):
         th.groupby(["user"])
+
+
+def test_statsframe(example_cali):
+    th = Thicket.from_caliperreader(str(example_cali))
+
+    # Arbitrary value insertion in StatsFrame.
+    th.statsframe.dataframe["test"] = 1
+
+    # Check that the statsframe is a Hatchet GraphFrame.
+    assert isinstance(th.statsframe, ht.GraphFrame)
+    # Check that 'name' column is in dataframe. If not, tree() will not work.
+    assert "name" in th.statsframe.dataframe
+    # Check length of graph is the same as the dataframe.
+    assert len(th.statsframe.graph) == len(th.statsframe.dataframe)

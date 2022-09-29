@@ -52,11 +52,14 @@ class Thicket(GraphFrame):
         self.profile = profile
         self.profile_mapping = profile_mapping
         if statsframe is None:
+            subset_df = (
+                dataframe["name"].reset_index().drop_duplicates(subset=["node"])
+            )  # Drop duplicates based on nid
             self.statsframe = GraphFrame(
                 graph=self.graph,
                 dataframe=pd.DataFrame(
-                    data=None,
-                    index=dataframe.index.get_level_values("node").drop_duplicates(),
+                    index=subset_df["node"],
+                    data={"name": subset_df["name"].values},
                 ),
             )
         else:

@@ -20,8 +20,8 @@ def test_model_extrap(mpi_scaling_cali):
     mdl2.produce_models()
 
     # Check that model structure is being created properly
-    assert mdl.tht.statsframe.dataframe.shape == (45, 4)
-    assert mdl2.tht.statsframe.dataframe.shape == (45, 4)
+    assert mdl.tht.statsframe.dataframe.shape == (45, 5)
+    assert mdl2.tht.statsframe.dataframe.shape == (45, 5)
     # Check model values between the two methods
     assert mdl.tht.statsframe.dataframe.applymap(str).equals(
         mdl2.tht.statsframe.dataframe.applymap(str)
