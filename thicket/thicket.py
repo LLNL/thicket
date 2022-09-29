@@ -684,6 +684,54 @@ class Thicket(GraphFrame):
             "Invalid function: thicket.filter(), please use thicket.filter_metadata() or thicket.filter_stats()"
         )
 
+    def groupby(self, groupby_function):
+        """create sub-thickets based on unique values in metadata column(s)
+
+        :param groupby_function: groupby function on dataframe
+        :type groupby_function: mapping, function, label, or list of labels
+
+        :return: list containing sub-thickets
+        :rtype: list[thicket object]
+        """
+        if not self.metadata.empty:
+            # group MetadataFrame by unique values in a column
+            sub_metadataframes = self.metadata.groupby(groupby_function, dropna=False)
+
+            list_sub_thickets = []
+            # for all unique groups of MetadataFrame
+            for key, df in sub_metadataframes:
+
+                # create a thicket copy
+                sub_thicket = self.copy()
+
+                # return unique group as the MetadataFrame
+                sub_thicket.metadata = df
+
+                # find profiles in current unique group & filter EnsembleFrame
+                profile_id = df.index.values.tolist()
+                sub_thicket.dataframe = sub_thicket.dataframe[
+                    sub_thicket.dataframe.index.get_level_values("profile").isin(
+                        profile_id
+                    )
+                ]
+
+                # clear the StatsFrame for current unique group
+                sub_thicket.statsframe.dataframe = pd.DataFrame(
+                    data=None,
+                    index=sub_thicket.dataframe.index.get_level_values(
+                        "node"
+                    ).drop_duplicates(),
+                )
+                list_sub_thickets.append(sub_thicket)
+        else:
+            raise EmptyMetadataFrame(
+                "The provided Thicket object has an empty MetadataFrame."
+            )
+
+        print(len(list_sub_thickets), " Sub-Thickets created...")
+
+        return list_sub_thickets
+
 
 class InvalidFilter(Exception):
     """Raised when an invalid argument is passed to the filter function."""
