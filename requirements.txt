@@ -1,2 +1,4 @@
 git+https://github.com/LLNL/hatchet.git@develop
 extrap
+scipy
+seaborn

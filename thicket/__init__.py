@@ -8,3 +8,11 @@
 
 from .thicket import Thicket, InvalidFilter, EmptyMetadataFrame
 from .model_extrap import Modeling
+from .stats.calc_average import calc_average
+from .stats.calc_corr_nodewise import calc_corr_nodewise
+from .stats.calc_deviation import calc_deviation
+from .stats.calc_extremum import calc_extremum
+from .stats.calc_percentiles import calc_percentile
+from .stats.check_normality import check_normality
+from .stats.display_histogram import display_histogram
+from .stats.display_heatmap import display_heatmap
