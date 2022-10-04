@@ -1,6 +1,6 @@
 variables:
-  PYTHON_ENVIRONMENT_PATH: ${CI_PROJECT_DIR}/.venv
-  PIP_CACHE_DIR: ${CI_PROJECT_DIR}/.cache/pip
+  PYTHON_ENVIRONMENT_PATH: .venv
+  PIP_CACHE_DIR: .cache/pip
   FF_ENABLE_JOB_CLEANUP: "true"
 
 stages:
@@ -22,12 +22,12 @@ configure_python:
   script:
     - /usr/tce/packages/python/python-3.7.2/bin/virtualenv -p /usr/tce/packages/python/python-3.7.2/bin/python3 ${PYTHON_ENVIRONMENT_PATH}
     - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
-    - pip install matplotlib pandas numpy
-    - pip install pytest
-    - pip install click==8.0.4
-    - pip install black==21.12b0
-    - pip install flake8==4.0.1
-    - pip install cython multiprocess textX caliper-reader
+    - $(which python3) -m pip install matplotlib pandas numpy
+    - $(which python3) -m pip install pytest
+    - $(which python3) -m pip install click==8.0.4
+    - $(which python3) -m pip install black==21.12b0
+    - $(which python3) -m pip install flake8==4.0.1
+    - $(which python3) -m pip install cython multiprocess textX caliper-reader
   cache:
     paths:
       - ${PYTHON_ENVIRONMENT_PATH}
@@ -48,10 +48,10 @@ lint-format-check:
   stage: format
   script:
     - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
-    - python --version
-    - python -m flake8 --version
-    - python -m flake8
-    - python -m black --check --diff .
+    - $(which python3) --version
+    - $(which python3) -m flake8 --version
+    - $(which python3) -m flake8
+    - $(which python3) -m black --check --diff .
 
 check-license-headers:
   tags:
@@ -61,8 +61,8 @@ check-license-headers:
   stage: format
   script:
     - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
-    - python --version
-    - python license.py verify
+    - $(which python3) --version
+    - $(which python3) license.py verify
 
 build-and-test-py37:
   tags:
@@ -72,6 +72,6 @@ build-and-test-py37:
   extends: .venv
   script:
     - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
-    - python -m pip install --ignore-installed --no-deps -r requirements.txt
-    - python setup.py install
-    - PYTHONPATH=. python -m pytest
+    - $(which python3) -m pip install --ignore-installed --no-deps -r requirements.txt
+    - $(which python3) setup.py install
+    - PYTHONPATH=. $(which python3) -m pytest
