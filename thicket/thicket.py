@@ -6,6 +6,7 @@
 import copy
 import os
 import json
+import warnings
 
 import pandas as pd
 import numpy as np
@@ -233,6 +234,23 @@ class Thicket(GraphFrame):
 
         # make and return thicket?
         return th
+
+    def add_column_from_metadata_to_ensemble(self, column_name):
+        """Add a column from the MetadataFrame to the EnsembleFrame.
+
+        Arguments:
+            column_name (str): Name of the column from the metadataframe
+        """
+        # Add warning if column already exists in EnsembleFrame
+        if column_name in self.dataframe.columns:
+            warnings.warn(
+                f'Column "{column_name}" will be overwritten in the EnsembleFrame.'
+            )
+
+        # Add the column to the EnsembleFrame
+        self.dataframe = self.dataframe.join(
+            self.metadata[column_name], on=self.dataframe.index.names[1]
+        )
 
     def copy(self):
         """Return a partially shallow copy of the Thicket.

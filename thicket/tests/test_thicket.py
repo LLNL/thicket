@@ -214,3 +214,27 @@ def test_statsframe(example_cali):
     assert "name" in th.statsframe.dataframe
     # Check length of graph is the same as the dataframe.
     assert len(th.statsframe.graph) == len(th.statsframe.dataframe)
+
+
+def test_add_column_from_metadata(mpi_scaling_cali):
+    t_ens = Thicket.from_caliperreader(mpi_scaling_cali)
+
+    example_column = "jobsize"
+    example_column_metrics = ["27", "64", "125", "216", "343"]
+
+    # Column should be in MetadataFrame
+    assert example_column in t_ens.metadata
+    # Column should not be in EnsembleFrame
+    assert example_column not in t_ens.dataframe
+    # Assume second level index is profile
+    assert t_ens.dataframe.index.names[1] == "profile"
+
+    t_ens.add_column_from_metadata_to_ensemble(example_column)
+
+    # Column should be in EnsembleFrame
+    assert example_column in t_ens.dataframe
+
+    # Check that the metrics exist in the EnsembleFrame
+    values = t_ens.dataframe[example_column].values
+    for metric in example_column_metrics:
+        assert metric in values
