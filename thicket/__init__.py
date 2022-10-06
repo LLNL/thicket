@@ -16,3 +16,4 @@ from .stats.calc_percentiles import calc_percentile
 from .stats.check_normality import check_normality
 from .stats.display_histogram import display_histogram
 from .stats.display_heatmap import display_heatmap
+from .version import __version__
