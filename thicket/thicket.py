@@ -101,7 +101,6 @@ class Thicket(GraphFrame):
         )
         if th.profile is None and isinstance(prf, str):
             # Store used profiles and profile mappings using a hash of their string
-            prf = os.path.basename(prf)  # Only care about the filename
             hash_arg = hash(prf)
             th.profile = [hash_arg]
             th.profile_mapping = {hash_arg: prf}
