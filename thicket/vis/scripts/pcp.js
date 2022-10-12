@@ -62,7 +62,7 @@ class ParallelCoordPlot{
                     
         //aggregate vis data
         this.agg = {};
-        let cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function'];
+        let cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function', 'function'];
         for(let md of data.metadata){
             let agg_record = {};
 
@@ -375,7 +375,6 @@ function setup(data){
         let node = JSON.parse(RT['focus_node']);
         let isFound = false;
         for(let k of Object.keys(data.graph[0])){
-            console.log(data.graph[0][k].data.name, node, data.graph[0][k].data.name.localeCompare(node));
             if(data.graph[0][k].data.name.localeCompare(node) == 0){
                 store.dispatch(actions.setCurrentNode(parseInt(k)));
                 isFound = true;
@@ -399,7 +398,7 @@ function setup(data){
     let sap_div = d3.select("#profiles");
     let pcp_div = d3.select("#pcp");
 
-    let cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function'];
+    let cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function', 'function'];
     let axis_opts = Object.keys(data.dataframe[0]).filter((d)=>{return !cali_excludes.includes(d)})
 
     d3.select("#selection-boxes")

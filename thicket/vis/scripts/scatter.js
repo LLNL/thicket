@@ -24,7 +24,7 @@ export default class ScatterPlot{
 
 
         //get cols on dataset
-        let cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function'];
+        let cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function', 'function'];
         for(let md of data.metadata){
             let record = {};
             for(const key of Object.keys(data.dataframe[0])){

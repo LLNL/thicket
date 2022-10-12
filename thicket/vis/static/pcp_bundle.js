@@ -9191,7 +9191,7 @@ var ScatterPlot = /*#__PURE__*/function () {
     this.categorical_metric = '';
     this.color_scale = ordinal(Tableau10); //get cols on dataset
 
-    var cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function'];
+    var cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function', 'function'];
 
     var _iterator = scatter_createForOfIteratorHelper(data.metadata),
         _step;
@@ -9236,7 +9236,7 @@ var ScatterPlot = /*#__PURE__*/function () {
       this.metadata_x = false;
     }
 
-    this.y = this.metrics[1];
+    this.y = this.metrics[0];
     store.dispatch(actions.setAxesForScatterPlot({
       "sid": this.id,
       "axes": {
@@ -9525,7 +9525,7 @@ var ParallelCoordPlot = /*#__PURE__*/function () {
     this.ys = point().range([layout.margins.top, height]).domain(this.valid_dims); //aggregate vis data
 
     this.agg = {};
-    var cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function'];
+    var cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function', 'function'];
 
     var _iterator2 = pcp_createForOfIteratorHelper(data.metadata),
         _step2;
@@ -9855,10 +9855,8 @@ function setup(data) {
 
     for (var _i4 = 0, _Object$keys3 = Object.keys(data.graph[0]); _i4 < _Object$keys3.length; _i4++) {
       var k = _Object$keys3[_i4];
-      console.log(data.graph[0][k].data.name, node, data.graph[0][k].data.name.localeCompare(node));
 
       if (data.graph[0][k].data.name.localeCompare(node) == 0) {
-        console.log("worked?");
         store.dispatch(actions.setCurrentNode(parseInt(k)));
         isFound = true;
       }
@@ -9878,10 +9876,11 @@ function setup(data) {
   pcp_layout.min_height = element.offsetHeight * 2 - pcp_layout.margins.top - pcp_layout.margins.bottom;
   var sap_div = src_select("#profiles");
   var pcp_div = src_select("#pcp");
-  var cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function'];
+  var cali_excludes = ['node', 'nid', 'profile', 'annotation', 'name', 'spot.channel', 'mpi.function', 'function'];
   var axis_opts = Object.keys(data.dataframe[0]).filter(function (d) {
     return !cali_excludes.includes(d);
   });
+  src_select("#selection-boxes").style('height', '100px');
   src_select('#selection-options-left').style('width', '300px').style('float', 'left');
   src_select('#selection-options-right').style('width', '300px').style('float', 'right');
   src_select('#ly').on('change', function (e) {
