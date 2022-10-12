@@ -1,0 +1,55 @@
+from hatchet.external import Roundtrip as RT
+from IPython.core.magic import Magics, magics_class, line_magic
+from os import path
+from os.path import dirname
+
+
+def _thicket_to_json(data):
+    return data.to_json()
+
+
+def _basic_to_json(data):
+    import json
+
+    return json.dumps(data)
+
+
+vis_dir = dirname(path.abspath(__file__))
+
+
+@magics_class
+class EnsembleVis(Magics):
+    def __init__(self, shell):
+        super(EnsembleVis, self).__init__(shell)
+        self.vis_dist = path.join(vis_dir, "static")
+
+    @line_magic
+    def metadata_vis(self, line):
+        args = line.split(" ")
+        RT.load_webpack(path.join(self.vis_dist, "pcp_bundle.html"), cache=False)
+        RT.var_to_js(
+            args[0], "thicket_ensemble", watch=False, to_js_converter=_thicket_to_json
+        )
+
+        if len(args) > 1:
+            RT.var_to_js(
+                args[1], "metadata_dims", watch=False, to_js_converter=_basic_to_json
+            )
+
+        if len(args) > 2:
+            RT.var_to_js(
+                args[2], "focus_node", watch=False, to_js_converter=_basic_to_json
+            )
+
+        RT.initialize()
+
+
+#     @line_magic
+#     def cct_fetch_query(self, line):
+#         args = line.split(" ")
+
+#         RT.fetch_data("jsNodeSelected", args[0], converter=_query_to_dict)
+
+
+def load_ipython_extension(ipython):
+    ipython.register_magics(EnsembleVis)

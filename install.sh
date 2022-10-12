@@ -10,3 +10,4 @@ case *"$PWD"* in
 esac
 
 python setup.py build_ext --inplace
+python thicket/vis/static_fixer.py

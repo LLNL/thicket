@@ -4,6 +4,7 @@
 *build/
 *dist/
 *.egg-info/
+vis/node_modules/
 
 # Profiling
 *.pstats
