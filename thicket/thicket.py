@@ -234,17 +234,22 @@ class Thicket(GraphFrame):
         # make and return thicket?
         return th
 
-    def add_column_from_metadata_to_ensemble(self, column_name):
+    def add_column_from_metadata_to_ensemble(self, column_name, overwrite=False):
         """Add a column from the MetadataFrame to the EnsembleFrame.
 
         Arguments:
             column_name (str): Name of the column from the metadataframe
+            overwrite (bool): Determines overriding behavior in ensembleframe
         """
         # Add warning if column already exists in EnsembleFrame
         if column_name in self.dataframe.columns:
-            warnings.warn(
-                f'Column "{column_name}" will be overwritten in the EnsembleFrame.'
-            )
+            if overwrite:  # Drop column to overwrite
+                self.dataframe.drop(column_name, axis=1, inplace=True)
+            else:  # Warn and return
+                warnings.warn(
+                    f'Column "{column_name}" already exists. Set "overwrite=True" to force update the column.'
+                )
+                return
 
         # Add the column to the EnsembleFrame
         self.dataframe = self.dataframe.join(

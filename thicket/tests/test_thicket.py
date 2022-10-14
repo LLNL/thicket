@@ -221,7 +221,7 @@ def test_add_column_from_metadata(mpi_scaling_cali):
     t_ens = Thicket.from_caliperreader(mpi_scaling_cali)
 
     example_column = "jobsize"
-    example_column_metrics = ["27", "64", "125", "216", "343"]
+    example_column_metrics = [27, 64, 125, 216, 343]
 
     # Column should be in MetadataFrame
     assert example_column in t_ens.metadata
@@ -236,6 +236,6 @@ def test_add_column_from_metadata(mpi_scaling_cali):
     assert example_column in t_ens.dataframe
 
     # Check that the metrics exist in the EnsembleFrame
-    values = t_ens.dataframe[example_column].values
+    values = t_ens.dataframe[example_column].values.astype("int")
     for metric in example_column_metrics:
         assert metric in values
