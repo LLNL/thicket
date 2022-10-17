@@ -97,18 +97,21 @@ class Modeling:
         if not params:  # Get params from metadata DataFrame
             self.params = self.tht.metadata[param_name].tolist()
         else:  # params must be provided by the user
-            if not isinstance(params, list):
-                raise (TypeError("'params' must be provided as a list"))
+            if not isinstance(params, dict):
+                raise (TypeError("'params' must be provided as a dict"))
             elif len(params) != len(self.tht.profile):
                 raise (
                     ValueError(
                         f"length of params must equal amound of profiles {len(params)} != {len(self.tht.profile)}"
                     )
                 )
-            for i, profile in enumerate(
-                self.tht.profile
-            ):  # Assume preserved ordering of profile insertion
-                self.tht.metadata.at[profile, param_name] = params[i]
+            profile_mapping_flipped = {
+                v: k for k, v in self.tht.profile_mapping.items()
+            }
+            for file_name, value in params.items():
+                self.tht.metadata.at[
+                    profile_mapping_flipped[file_name], param_name
+                ] = value
             self.params = tht.metadata[param_name].tolist()
         if not chosen_metrics:
             self.chosen_metrics = self.tht.exc_metrics + self.tht.inc_metrics

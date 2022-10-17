@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 from thicket import Thicket
 from thicket import Modeling
 
@@ -15,7 +16,13 @@ def test_model_extrap(mpi_scaling_cali):
     mdl.produce_models()
 
     # Model created using manually-input core counts for each file
-    core_list = [27, 64, 125, 216, 343]
+    core_list = {
+        mpi_scaling_cali[0]: 27,
+        mpi_scaling_cali[1]: 64,
+        mpi_scaling_cali[2]: 125,
+        mpi_scaling_cali[3]: 216,
+        mpi_scaling_cali[4]: 343,
+    }
     mdl2 = Modeling(t_ens, "cores", core_list)
     mdl2.produce_models()
 
