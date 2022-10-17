@@ -687,12 +687,14 @@ class Thicket(GraphFrame):
                     )
                 ]
 
-                # create an empty StatsFrame
+                # create an empty StatsFrame with the name column
+                subset_df = (
+                    new_thicket.dataframe["name"]
+                    .reset_index()
+                    .drop_duplicates(subset=["node"])
+                )
                 new_thicket.statsframe.dataframe = pd.DataFrame(
-                    data=None,
-                    index=new_thicket.dataframe.index.get_level_values(
-                        "node"
-                    ).drop_duplicates(),
+                    index=subset_df["node"], data={"name": subset_df["name"].values}
                 )
             else:
                 raise EmptyMetadataFrame(
@@ -741,11 +743,13 @@ class Thicket(GraphFrame):
                 ]
 
                 # clear the StatsFrame for current unique group
+                subset_df = (
+                    sub_thicket.dataframe["name"]
+                    .reset_index()
+                    .drop_duplicates(subset=["node"])
+                )
                 sub_thicket.statsframe.dataframe = pd.DataFrame(
-                    data=None,
-                    index=sub_thicket.dataframe.index.get_level_values(
-                        "node"
-                    ).drop_duplicates(),
+                    index=subset_df["node"], data={"name": subset_df["name"].values}
                 )
                 list_sub_thickets.append(sub_thicket)
         else:

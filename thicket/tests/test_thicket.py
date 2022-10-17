@@ -123,7 +123,7 @@ def test_filter(example_cali_multiprofile):
                 .tolist()
             )
             assert exp_nodes == stats_nodes
-            assert new_th.statsframe.dataframe.empty
+            assert "name" in new_th.statsframe.dataframe.columns
 
     # check for invalid filter exception
     with pytest.raises(InvalidFilter):
