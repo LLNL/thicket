@@ -148,7 +148,7 @@ class Modeling:
             [(value, key) for key, value in meta_param_mapping.items()]
         )  # Flipped version of mapping dictionary
         ensemble_profile_ordering = list(
-            self.tht.dataframe.index.unique(level="profile")
+            self.tht.dataframe.index.unique(level=1)
         )  # Ordering of profiles in the ensembleframe
         for profile in ensemble_profile_ordering:  # Append coordinates in order
             param_coords.append(
