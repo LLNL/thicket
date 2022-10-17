@@ -757,6 +757,37 @@ class Thicket(GraphFrame):
 
         return list_sub_thickets
 
+    def filter_stats(self, filter_function):
+        """filter thicket object based on a stats column and propagate
+        changes to the entire thicket object
+        :param select_function: the filter to apply to the StatsFrame
+        :type select_function: lambda function
+
+        :return: new thicket object with applied filter function
+        :rtype: thicket object
+        """
+        # copy thicket
+        new_thicket = self.copy()
+
+        # filter stats rows based on greater than restriction
+        filtered_rows = new_thicket.statsframe.dataframe.apply(filter_function, axis=1)
+        new_thicket.statsframe.dataframe = new_thicket.statsframe.dataframe[
+            filtered_rows
+        ]
+
+        # filter ensembleframe based on filtered nodes
+        filtered_nodes = new_thicket.statsframe.dataframe.index.values.tolist()
+        new_thicket.dataframe = new_thicket.dataframe[
+            new_thicket.dataframe.index.get_level_values("node").isin(filtered_nodes)
+        ]
+
+        # filter nodes in the graph frame based on the DataFrame nodes
+        filtered_graphframe = new_thicket.squash()
+        new_thicket.graph = filtered_graphframe.graph
+        new_thicket.statsframe.graph = filtered_graphframe.graph
+
+        return new_thicket
+
 
 class InvalidFilter(Exception):
     """Raised when an invalid argument is passed to the filter function."""

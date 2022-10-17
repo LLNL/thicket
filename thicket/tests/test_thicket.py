@@ -239,3 +239,64 @@ def test_add_column_from_metadata(mpi_scaling_cali):
     values = t_ens.dataframe[example_column].values.astype("int")
     for metric in example_column_metrics:
         assert metric in values
+
+
+def test_filter_stats(example_cali_multiprofile):
+    # example thicket
+    th = Thicket.from_caliperreader(example_cali_multiprofile)
+
+    # columns and corresponding values to filter by
+    columns_values = {
+        "test_string_column": ["less than 20"],
+        "test_numeric_column": [4, 15],
+    }
+
+    # set string column values
+    th.statsframe.dataframe.loc[0:20, "test_string_column"] = "less than 20"
+    th.statsframe.dataframe.loc[20:45, "test_string_column"] = "less than 45"
+    th.statsframe.dataframe.loc[45:, "test_string_column"] = "less that 87"
+
+    # set numeric column values
+    th.statsframe.dataframe["test_numeric_column"] = range(0, 86)
+
+    for column in columns_values:
+        for value in columns_values[column]:
+            # for type str column
+            if type(value) == str:
+                # expected nodes after applying filter
+                exp_nodes = sorted(
+                    th.statsframe.dataframe.index[
+                        th.statsframe.dataframe[column] == value
+                    ]
+                )
+                new_th = th.filter_stats(lambda x: x[column] == value)
+            # for type int column
+            elif type(value) == int:
+                exp_nodes = sorted(
+                    th.statsframe.dataframe.index[
+                        th.statsframe.dataframe[column] < value
+                    ]
+                )
+                new_th = th.filter_stats(lambda x: x[column] < value)
+            else:
+                # test case not implemented
+                print("The column value type is not a supported test case")
+                exp_nodes = []
+                new_th = th
+
+            # check if output is a thicket object
+            assert isinstance(new_th, Thicket)
+
+            # fitlered statsframe nodes
+            stats_nodes = sorted(
+                new_th.statsframe.dataframe.index.drop_duplicates().tolist()
+            )
+            # check filtered statsframe nodes match exp_nodes
+            assert stats_nodes == exp_nodes
+
+            # filtered ensemble nodes
+            ensemble_nodes = sorted(
+                new_th.dataframe.index.get_level_values(0).drop_duplicates().tolist()
+            )
+            # check filtered ensembleframe nodes match exp_nodes
+            assert ensemble_nodes == exp_nodes
