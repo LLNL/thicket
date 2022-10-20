@@ -9,9 +9,8 @@ import extrap.entities as xent
 import matplotlib.pyplot as plt
 import numpy as np
 
-from extrap.entities.experiment import (
-    Experiment,
-)  # For some reason it errors if "Experiment" is not explicitly imported
+# For some reason it errors if "Experiment" is not explicitly imported
+from extrap.entities.experiment import Experiment
 from extrap.fileio import io_helper
 from extrap.modelers.model_generator import ModelGenerator
 from io import BytesIO
@@ -24,8 +23,9 @@ MODEL_TAG = "_extrap-model"
 class ModelWrapper:
     """Wrapper for an Extra-P model.
 
-    Provides more convenient functions for evaluating the model at given data points, for writing out
-    a string representation of the model, and for displaying (plotting) the model.
+    Provides more convenient functions for evaluating the model at given data
+    points, for writing out a string representation of the model, and for
+    displaying (plotting) the model.
     """
 
     def __init__(self, mdl, param_name):
@@ -41,24 +41,32 @@ class ModelWrapper:
         return self.mdl.hypothesis.function.evaluate(val)
 
     def display(self):
-        measures_sorted = sorted(
-            self.mdl.measurements, key=lambda x: x.coordinate[0]
-        )  # Sort based on x values
+        # Sort based on x values
+        measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
 
         # Scatter plot
         params = [ms.coordinate[0] for ms in measures_sorted]  # X values
         measures = [ms.value(True) for ms in measures_sorted]  # Y values
 
         # Line plot
+
+        # X value plotting range. Dynamic based off what the largest/smallest values are
         x_vals = np.arange(
             params[0], 1.5 * params[-1], (params[-1] - params[0]) / 100.0
-        )  # X value plotting range. Dynamic based off what the largest/smallest values are
-        y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]  # Y values
+        )
+
+        # Y values
+        y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
 
         plt.ioff()
         fig, ax = plt.subplots()
-        ax.plot(x_vals, y_vals, label=self.mdl.hypothesis.function)  # Plot line
-        ax.plot(params, measures, "ro", label=self.mdl.callpath)  # Plot scatter
+
+        # Plot line
+        ax.plot(x_vals, y_vals, label=self.mdl.hypothesis.function)
+
+        # Plot scatter
+        ax.plot(params, measures, "ro", label=self.mdl.callpath)
+
         ax.set_xlabel(self.param_name)
         ax.set_ylabel(self.mdl.metric)
         ax.text(
@@ -72,38 +80,38 @@ class ModelWrapper:
 
 
 class Modeling:
-    """Produce models for all the metrics across the given graph frames.
-    Adds a model column for each metric for each common frame across all the graph frames.
-    The given list of params contains the parameters to build the models. For example, MPI
-    ranks, input sizes, and so on.
+    """Produce models for all the metrics across the given graphframes."""
 
-    Arguments:
-        tht (Thicket): A thicket object.
-        param_name (str): Arbitrary if 'params' is being provided, otherwise name of the metadata column from which 'params' will be extracted.
-        params (list): Parameters list. Domain for the model.
-        chosen_metrics (list): Metrics to be evaluated in the model. Range for the model.
-    """
+    def __init__(self, tht, param_name, params=None, chosen_metrics=None):
+        """Create a new model object.
 
-    def __init__(
-        self,
-        tht,
-        param_name,
-        params=None,
-        chosen_metrics=None,
-    ):
+        Adds a model column for each metric for each common frame across all
+        the graph frames.
+
+        The given list of params contains the parameters to build the models.
+        For example, MPI ranks, input sizes, and so on.
+
+        Arguments:
+            tht (Thicket): thicket object
+            param_name (str): arbitrary if 'params' is being provided, otherwise
+                name of the metadata column from which 'params' will be extracted
+            params (list): parameters list, domain for the model
+            chosen_metrics (list): metrics to be evaluated in the model, range for the model
+        """
         self.tht = tht
         self.param_name = param_name
-        # Assign params
-        if not params:  # Get params from metadata DataFrame
+
+        # Assign param
+        # Get params from metadata DataFrames
+        if not params:
             self.params = self.tht.metadata[param_name].tolist()
-        else:  # params must be provided by the user
+        # params must be provided by the user
+        else:
             if not isinstance(params, dict):
-                raise (TypeError("'params' must be provided as a dict"))
+                raise TypeError("'params' must be provided as a dict")
             elif len(params) != len(self.tht.profile):
-                raise (
-                    ValueError(
-                        f"length of params must equal amound of profiles {len(params)} != {len(self.tht.profile)}"
-                    )
+                raise ValueError(
+                    f"length of params must equal amound of profiles {len(params)} != {len(self.tht.profile)}"
                 )
             profile_mapping_flipped = {
                 v: k for k, v in self.tht.profile_mapping.items()
@@ -130,30 +138,37 @@ class Modeling:
             return imgstr
 
         frm_dict = {met + MODEL_TAG: model_to_img_html for met in self.chosen_metrics}
+
+        # Subset of the statsframes with only the Extra-P columns selected
         return self.tht.statsframe.dataframe[
             [met + MODEL_TAG for met in self.chosen_metrics]
-        ].to_html(
-            escape=False, formatters=frm_dict
-        )  # Subset of the statsframes with only the Extra-P columns selected
+        ].to_html(escape=False, formatters=frm_dict)
 
     def produce_models(self, agg_func=mean):
         """Produces an Extra-P model. Models are generated by calling Extra-P's ModelGenerator.
 
         Arguments:
-            agg_func (Function): Aggregation function to apply to multi-dimensional measurement values. Extra-P v4.0.4 applies mean by default so that is set here for clarity.
+            agg_func (function): aggregation function to apply to
+                multi-dimensional measurement values. Extra-P v4.0.4 applies
+                mean by default so that is set here for clarity.
         """
-        # Setup domain values one time. Have to match ordering with range values (i.e. ensembleframe profile ordering)
+        # Setup domain values one time. Have to match ordering with range
+        # values (i.e. ensembleframe profile ordering)
         param_coords = []  # default coordinates for all profiles
-        meta_param_mapping = self.tht.metadata[
-            self.param_name
-        ].to_dict()  # Mapping from metadata profiles to the parameter
+
+        # Mapping from metadata profiles to the parameter
+        meta_param_mapping = self.tht.metadata[self.param_name].to_dict()
+
+        # Flipped version of mapping dictionary
         meta_param_mapping_flipped = dict(
             [(value, key) for key, value in meta_param_mapping.items()]
-        )  # Flipped version of mapping dictionary
-        ensemble_profile_ordering = list(
-            self.tht.dataframe.index.unique(level=1)
-        )  # Ordering of profiles in the ensembleframe
-        for profile in ensemble_profile_ordering:  # Append coordinates in order
+        )
+
+        # Ordering of profiles in the ensembleframe
+        ensemble_profile_ordering = list(self.tht.dataframe.index.unique(level=1))
+
+        # Append coordinates in order
+        for profile in ensemble_profile_ordering:
             param_coords.append(
                 xent.coordinate.Coordinate(float(meta_param_mapping[profile]))
             )
@@ -172,17 +187,16 @@ class Modeling:
                     measures.append(single_prof_df[met].tolist())
                 # Apply aggregation function to measurements
                 for i in range(len(measures)):
-                    if isinstance(
-                        measures[i], list
-                    ):  # Only apply aggregation function if more that one value
+                    # Only apply aggregation function if more that one value
+                    if isinstance(measures[i], list):
                         measures[i] = agg_func(measures[i])
-                if len(measures) == len(
-                    param_coords
-                ):  # Add coordinates (points at which measurements were taken) for the default case
+                # Add coordinates (points at which measurements were taken) for the
+                # default case
+                if len(measures) == len(param_coords):
                     exp.coordinates.extend(param_coords)
-                elif len(measures) < len(
-                    param_coords
-                ):  # Handle case where profile(s) do not contain a measurement for the current node
+                # Handle case where profile(s) do not contain a measurement for the
+                # current node
+                elif len(measures) < len(param_coords):
                     param_coords_subset = []
                     df_index = self.tht.dataframe.loc[node, met].index
                     for coord in param_coords:

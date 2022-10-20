@@ -7,27 +7,18 @@ import pandas as pd
 
 
 def calc_extremum(thicket=None, columns=None):
+    """Calculate min and max per node.
+
+    Designed to take in a Thicket, and will append a column to the statsframe
+    for the min and max calculations per node.
+
+    The minimum is the lowest observation and the maxiumum is the highest
+    observation in the dataset.
+
+    Arguments:
+        thicket (thicket): Thicket object
+        columns (list): list of hardware/timing metrics to perform extremnum calculations on
     """
-    Designed to take in a Thicket, and will append a column to the statsframe for the
-    min and max calculations per node.
-
-    The minimum is the lowest observation and the maxiumum is the highest observation
-    in the dataset.
-
-    Arguments/Parameters
-    _ _ _ _ _ _ _ _ _ _ _
-
-    thicket : A thicket
-
-    columns : List of hardware/timing metrics to perform extremum calculations on
-
-    Returns
-    _ _ _ _ _ _ _ _ _ _ _
-
-    thicket: Returns a thicket
-
-    """
-
     for column in columns:
         minimum = []
         maximum = []

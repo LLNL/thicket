@@ -7,29 +7,18 @@ from scipy import stats
 
 
 def calc_corr_nodewise(thicket, base=None, correlate=[], correlation="pearson"):
+    """Calculate the nodewise correlation on user-specified columns.
+
+    Calculates the correlation nodewise for user passed in columns. This can
+    either be done for the EnsembleFrame or a super thicket.
+
+    Arguments:
+        thicket (thicket): Thicket object
+        base (str): base column that you want to compare
+        correlate (list): list of columns to correlate to the passed in base column
+        correlation (str): correlation test to perform -- pearson (default),
+            spearman, and kendall
     """
-    Calculates the correlation nodewise for user passed in columns. This can either be
-    done for the EnsembleFrame or a super thicket.
-
-    Arguments/Parameters
-    - - - - - - - - - - -
-    thicket : Thicket object
-
-    base : A base column that you want to compare
-
-    correlate : A list of columns that you wish to correlate to the passed in base
-    column
-
-    correlation : Correlation test to perform on EnsembleFrame or super thicket. Options
-    include: the default pearson, spearman, and kendall.
-
-    Returns
-    _ _ _ _ _ _ _ _ _ _ _
-
-    thicket: Thicket object
-
-    """
-
     for col in correlate:
         correlated = []
         for node in thicket.statsframe.dataframe.index.tolist():

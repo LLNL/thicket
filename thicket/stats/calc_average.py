@@ -8,24 +8,15 @@ import pandas as pd
 
 
 def calc_average(thicket=None, columns=None):
+    """Calculate median and mean per node.
+
+    Designed to take in a Thicket, and will append a column to the statsframe for
+    the median and mean calculations per node.
+
+    Arguments:
+        thicket (thicket): Thicket object
+        columns (list): list of hardware/timing metrics to perform average calculations on
     """
-    Designed to take in a Thicket, and will append a column to the statsframe for the
-    median and mean calculations per node.
-
-    Arguments/Parameters
-    _ _ _ _ _ _ _ _ _ _ _
-
-    thicket : A thicket
-
-    columns : List of hardware/timing metrics to perform extremum calculations on
-
-    Returns
-    _ _ _ _ _ _ _ _ _ _ _
-
-    thicket: Returns a thicket
-
-    """
-
     for column in columns:
         median = []
         mean = []

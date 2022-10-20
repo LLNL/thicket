@@ -8,25 +8,16 @@ import seaborn as sns
 
 
 def display_histogram(thicket=None, node=None, metric=None, **kwargs):
+    """Display a histogram.
+
+    Arguments:
+        thicket (thicket): Thicket object
+        node (str): node object
+        metric (str): metric from ensemble frame
+
+    Returns:
+        (matplotlib Axes): object for managing plot
     """
-    Designed to take in a Thicket, and will display a histogram.
-
-    Arguments/Parameters
-    _ _ _ _ _ _ _ _ _ _ _
-
-    thicket : A thicket
-
-    node : Single node (string)
-
-    metric : Metric from ensemble frame
-
-    Returns
-    _ _ _ _ _ _ _ _ _ _ _
-
-    Object for managing histogram plot
-
-    """
-
     df = pd.melt(
         thicket.dataframe.reset_index(),
         id_vars="node",

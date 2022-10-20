@@ -17,7 +17,8 @@ from .helpers import print_graph
 
 
 class Thicket(GraphFrame):
-    """Ensemble of profiles"""
+    """Ensemble of profiles, includes a graph and three dataframes, ensemble
+    data, metadata, and statistics."""
 
     def __init__(
         self,
@@ -34,28 +35,27 @@ class Thicket(GraphFrame):
         """Create a new thicket from a graph and a dataframe.
 
         Arguments:
-            graph (Graph): Graph of nodes in this thicket.
-            dataframe (DataFrame): Pandas DataFrame indexed by Nodes from the graph, and potentially other indexes.
-            exc_metrics: list of names of exclusive metrics in the dataframe.
-            inc_metrics: list of names of inclusive metrics in the dataframe.
-            metadata (DataFrame): Pandas DataFrame indexed by profile hashes, contains profile metadata.
-            profile (list): List of hashed profile strings.
-            profile_mapping (dict): Mapping of hashed profile strings to original strings.
+            graph (Graph): graph of nodes in this thicket
+            dataframe (DataFrame): pandas DataFrame indexed by Nodes from the
+                graph, and potentially other indexes
+            exc_metrics (list): list of names of exclusive metrics in the dataframe
+            inc_metrics (list): list of names of inclusive metrics in the dataframe
+            default_metric (str): primary metric
+            metadata (DataFrame): pandas DataFrame indexed by profile hashes,
+                contains profile metadata
+            profile (list): list of hashed profile strings
+            profile_mapping (dict): mapping of hashed profile strings to original strings
+            statsframe (DataFrame): pandas DataFrame indexed by Nodes from the
+                graph
         """
         super().__init__(
-            graph,
-            dataframe,
-            exc_metrics,
-            inc_metrics,
-            default_metric,
-            metadata,
+            graph, dataframe, exc_metrics, inc_metrics, default_metric, metadata
         )
         self.profile = profile
         self.profile_mapping = profile_mapping
         if statsframe is None:
-            subset_df = (
-                dataframe["name"].reset_index().drop_duplicates(subset=["node"])
-            )  # Drop duplicates based on nid
+            # Drop duplicates based on nid
+            subset_df = dataframe["name"].reset_index().drop_duplicates(subset=["node"])
             self.statsframe = GraphFrame(
                 graph=self.graph,
                 dataframe=pd.DataFrame(
@@ -87,10 +87,10 @@ class Thicket(GraphFrame):
 
         Arguments:
             gf (GraphFrame): hatchet GraphFrame object
-            prf (str): Profile source of the GraphFrame
+            prf (str): profile source of the GraphFrame
 
         Returns:
-            (thicket): thicket object
+            (thicket): Thicket object
         """
         th = Thicket(
             graph=gf.graph,
@@ -104,10 +104,12 @@ class Thicket(GraphFrame):
             hash_arg = hash(prf)
             th.profile = [hash_arg]
             th.profile_mapping = {hash_arg: prf}
+
             # format metadata as a dict of dicts
             temp_meta = {}
             temp_meta[hash_arg] = th.metadata
             th.metadata = pd.DataFrame.from_dict(temp_meta, orient="index")
+
             # Add profile to dataframe index
             th.dataframe["profile"] = hash_arg
             index_names = list(th.dataframe.index.names)
@@ -119,12 +121,13 @@ class Thicket(GraphFrame):
     @staticmethod
     def from_caliper(filename_or_stream, query=None, intersection=False):
         """Read in a Caliper .cali or .json file.
-        Args:
+
+        Arguments:
             filename_or_stream (str or file-like): name of a Caliper output
                 file in `.cali` or JSON-split format, or an open file object
                 to read one
-            intersection (bool): Whether to perform intersection or union (default).
             query (str): cali-query in CalQL format
+            intersection (bool): whether to perform intersection or union (default)
         """
         return Thicket.reader_dispatch(
             GraphFrame.from_caliper, intersection, filename_or_stream, query
@@ -136,7 +139,7 @@ class Thicket(GraphFrame):
 
         Arguments:
             dirname (str): parent directory of an HPCToolkit experiment.xml file
-            intersection (bool): Whether to perform intersection or union (default).
+            intersection (bool): whether to perform intersection or union (default)
 
         Returns:
             (thicket): new thicket containing HPCToolkit profile data
@@ -149,10 +152,10 @@ class Thicket(GraphFrame):
     def from_caliperreader(filename_or_caliperreader, intersection=False):
         """Helper function to read one caliper file.
 
-        Args:
+        Arguments:
             filename_or_caliperreader (str or CaliperReader): name of a Caliper
                 output file in `.cali` format, or a CaliperReader object
-            intersection (bool): Whether to perform intersection or union (default).
+            intersection (bool): whether to perform intersection or union (default)
         """
         return Thicket.reader_dispatch(
             GraphFrame.from_caliperreader, intersection, filename_or_caliperreader
@@ -162,23 +165,26 @@ class Thicket(GraphFrame):
     def reader_dispatch(func, intersection=False, *args, **kwargs):
         """Create a thicket from a list, directory of files, or a single file.
 
-        Args:
-            func (function): reader function to be used.
-            intersection (bool): Whether to perform intersection or union (default).
-            *args (list): list of args. args[0] should be an object that can be read from.
+        Arguments:
+            func (function): reader function to be used
+            intersection (bool): whether to perform intersection or union (default).
+            args (list): list of args; args[0] should be an object that can be read from
         """
         ens_list = []
         obj = args[0]  # First arg should be readable object
 
         # Parse the input object
-        if type(obj) == list:  # if a list of files
+        # if a list of files
+        if type(obj) == list:
             for file in obj:
                 ens_list.append(Thicket.thicketize_graphframe(func(file), file))
-        elif os.path.isdir(obj):  # if directory of files
+        # if directory of files
+        elif os.path.isdir(obj):
             for file in os.listdir(obj):
                 f = os.path.join(obj, file)
                 ens_list.append(Thicket.thicketize_graphframe(func(f), f))
-        elif os.path.isfile(obj):  # if single file
+        # if single file
+        elif os.path.isfile(obj):
             return Thicket.thicketize_graphframe(func(*args, **kwargs), args[0])
         else:
             raise TypeError(f"{type(obj)} is not a valid type to be read from.")
@@ -238,14 +244,15 @@ class Thicket(GraphFrame):
         """Add a column from the MetadataFrame to the EnsembleFrame.
 
         Arguments:
-            column_name (str): Name of the column from the metadataframe
-            overwrite (bool): Determines overriding behavior in ensembleframe
+            column_name (str): jame of the column from the metadataframe
+            overwrite (bool): determines overriding behavior in ensembleframe
         """
         # Add warning if column already exists in EnsembleFrame
         if column_name in self.dataframe.columns:
-            if overwrite:  # Drop column to overwrite
+            # Drop column to overwrite, otherwise warn and return
+            if overwrite:
                 self.dataframe.drop(column_name, axis=1, inplace=True)
-            else:  # Warn and return
+            else:
                 warnings.warn(
                     f'Column "{column_name}" already exists. Set "overwrite=True" to force update the column.'
                 )
@@ -262,15 +269,15 @@ class Thicket(GraphFrame):
         See GraphFrame.copy() for more details
 
         Arguments:
-            self (Thicket): Object to make a copy of.
+            self (Thicket): object to make a copy of
 
         Returns:
-            other (Thicket): Copy of self
+            other (Thicket): copy of self
                 (graph ... default_metric): Same behavior as GraphFrame
-                metadata (DataFrame): Pandas "non-deep" copy of dataframe
-                profile (list): Copy of self's profile
-                profile_mapping (dic): Copy of self's profile_mapping
-                statsframe (GraphFrame): Calls GraphFrame.copy()
+                metadata (DataFrame): pandas "non-deep" copy of dataframe
+                profile (list): copy of self's profile
+                profile_mapping (dict): copy of self's profile_mapping
+                statsframe (GraphFrame): calls GraphFrame.copy()
         """
         gf = GraphFrame.copy(self)
 
@@ -292,14 +299,14 @@ class Thicket(GraphFrame):
         See GraphFrame.deepcopy() for more details
 
         Arguments:
-            self (Thicket): Object to make a copy of.
+            self (Thicket): object to make a copy of
 
         Returns:
-            other (Thicket): Copy of self
-                (graph ... default_metric): Same behavior as GraphFrame
-                metadata (DataFrame): Pandas "deep" copy of dataframe
-                profile (list): Copy of self's profile
-                profile_mapping (dic): Copy of self's profile_mapping
+            other (Thicket): copy of self
+                (graph ... default_metric): same behavior as GraphFrame
+                metadata (DataFrame): pandas "deep" copy of dataframe
+                profile (list): copy of self's profile
+                profile_mapping (dict): copy of self's profile_mapping
                 statsframe (GraphFrame): Calls GraphFrame.deepcopy()
         """
         gf = GraphFrame.deepcopy(self)
@@ -334,14 +341,14 @@ class Thicket(GraphFrame):
 
     def unify_pair(self, other):
         """Unify two Thicket's graphs and DataFrames"""
-        # Check for the same object. cheap operation since no graph walkthrough.
+        # Check for the same object. Cheap operation since no graph walkthrough.
         if self.graph is other.graph:
             print("same graph (object)")
             return self.graph
 
-        if (
-            self.graph == other.graph
-        ):  # Check for the same graph structure. Need to walk through graphs *but should still be less expensive then performing the rest of this function.*
+        # Check for the same graph structure. Need to walk through graphs *but should
+        # still be less expensive then performing the rest of this function.*
+        if self.graph == other.graph:
             print("same graph (structure)")
             return self.graph
 
@@ -370,9 +377,11 @@ class Thicket(GraphFrame):
         return union_graph
 
     def unify_pairwise(th_list):
-        """Unifies two thickets graphs and dataframes
+        """Unifies two thickets graphs and dataframes.
+
         Ensure self and other have the same graph and same node IDs. This may
         change the node IDs in the dataframe.
+
         Update the graphs in the graphframe if they differ.
         """
         union_graph = th_list[0].graph
@@ -385,9 +394,8 @@ class Thicket(GraphFrame):
     @staticmethod
     def unify_listwise(th_list):
         """Unify a list of Thicket's graphs and DataFrames"""
-        same_graphs = (
-            True  # variable to keep track of case where all graphs are the same
-        )
+        # variable to keep track of case where all graphs are the same
+        same_graphs = True
 
         # GRAPH UNIFICATION
         union_graph = th_list[0].graph
@@ -401,32 +409,41 @@ class Thicket(GraphFrame):
                 # Unify graph with current thickets graph
                 union_graph = union_graph.union(th_list[i].graph)
 
-        if (
-            same_graphs
-        ):  # If the graphs were all the same in the first place then there is no need to apply any node mappings.
+        # If the graphs were all the same in the first place then there is no need to
+        # apply any node mappings.
+        if same_graphs:
             return union_graph
 
         # DATAFRAME MAPPING UPDATE
         for i in range(len(th_list)):  # n ops
             node_map = {}
-            # Create a node map from current thickets graph to the union graph. This is only valid once the union graph is complete.
+            # Create a node map from current thickets graph to the union graph. This is
+            # only valid once the union graph is complete.
             union_graph.union(th_list[i].graph, node_map)
             names = th_list[i].dataframe.index.names
             th_list[i].dataframe.reset_index(inplace=True)
+
+            # Apply node_map mapping
             th_list[i].dataframe["node"] = (
                 th_list[i].dataframe["node"].apply(lambda node: node_map[id(node)])
-            )  # Apply node_map mapping
+            )
             th_list[i].dataframe.set_index(names, inplace=True, drop=True)
 
         # After this point the graph and dataframe in each thicket is out of sync.
-        # We could update the graph element in thicket to be the union graph but if the user prints out the graph how do we annotate nodes only contained in one thicket.
+        # We could update the graph element in thicket to be the union graph but if the
+        # user prints out the graph how do we annotate nodes only contained in one
+        # thicket.
         return union_graph
 
     @staticmethod
     def _resolve_missing_indicies(th_list):
-        """If at least one profile has an index that another doesn't, then issues will arise when unifying. Need to add this index to other thickets.
+        """Resolve indices if at least 1 profile has an indexx that another doesn't
 
-        Note that the value to use for the new index is set to '0' for ease-of-use, but something like 'NaN' may arguably provide more clarity.
+        If at least one profile has an index that another doesn't, then issues will
+        arise when unifying. Need to add this index to other thickets.
+
+        Note that the value to use for the new index is set to '0' for ease-of-use, but
+        something like 'NaN' may arguably provide more clarity.
         """
         # Create a set of all index possibilities
         idx_set = set({})
@@ -444,6 +461,7 @@ class Thicket(GraphFrame):
     @staticmethod
     def _sync_nodes(gh, df):
         """Set the node objects to be equal in both the graph and the dataframe.
+
         id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet nid's.
         """
         index_names = df.index.names
@@ -458,8 +476,7 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def unify_ensemble(th_list, pairwise=False, superthicket=False):
-
-        """Take a list of thickets and unify them into one thicket
+        """Unify a list of thickets into a single thicket
 
         Arguments:
             th_list (list): list of thickets
@@ -469,7 +486,6 @@ class Thicket(GraphFrame):
         Returns:
             (thicket): unified thicket
         """
-
         unify_graph = None
         if pairwise:
             unify_graph = Thicket.unify_pairwise(th_list)
@@ -486,7 +502,8 @@ class Thicket(GraphFrame):
         unify_profile = []
         unify_profile_mapping = {}
 
-        for i, th in enumerate(th_list):  # Unification loop
+        # Unification loop
+        for i, th in enumerate(th_list):
             unify_inc_metrics.extend(th.inc_metrics)
             unify_exc_metrics.extend(th.exc_metrics)
             if len(th.metadata) > 0:
@@ -499,19 +516,22 @@ class Thicket(GraphFrame):
                 unify_profile_mapping.update(th.profile_mapping)
             unify_df = pd.concat([th.dataframe, unify_df])
 
-        if superthicket:  # Operations specific to a superthicket
+        # Operations specific to a superthicket
+        if superthicket:
             unify_metadata.index.rename("thicket", inplace=True)
             unify_metadata = unify_metadata.groupby("thicket").agg(set)
 
-        unify_metadata.sort_index(
-            inplace=True
-        )  # Have metadata index match ensembleframe index
+        # Have metadata index match ensembleframe index
+        unify_metadata.sort_index(inplace=True)
 
-        unify_df.sort_index(inplace=True)  # Sort by hatchet node id
+        # Sort by hatchet node id
+        unify_df.sort_index(inplace=True)
+
         unify_inc_metrics = list(set(unify_inc_metrics))
         unify_exc_metrics = list(set(unify_exc_metrics))
 
-        # Workaround for graph/df node id mismatch. (n tree nodes)x(m df nodes)x(m)
+        # Workaround for graph/df node id mismatch.
+        # (n tree nodes) X (m df nodes) X (m)
         Thicket._sync_nodes(unify_graph, unify_df)
 
         # Mutate into OrderedDict to sort profile hashes
@@ -530,22 +550,28 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def make_superthicket(th_list, th_names=None):
-        """Convert a list of thickets into a 'superthicket'. Their individual statsframes are ensembled and become the superthicket's ensembleframe.
+        """Convert a list of thickets into a 'superthicket'.
+
+        Their individual statsframes are ensembled and become the superthicket's
+        ensembleframe.
 
         Arguments:
             th_list (list): list of thickets
-            th_names (list): list of thicket names corresponding to the thicket list
+            th_names (list, optional): list of thicket names corresponding to the thicket list
 
         Returns:
             (thicket): superthicket
         """
-        if th_names is None:  # Setup names list
+        # Setup names list
+        if th_names is None:
             th_names = []
             for th in range(len(th_list)):
                 th_names.append(th)
         elif len(th_names) != len(th_list):
             raise ValueError("length of names list must match length of thicket list.")
-        for name in th_names:  # Check names list is valid
+
+        # Check names list is valid
+        for name in th_names:
             if type(name) is not str and type(name) is not int:
                 print(type(name))
                 raise TypeError("name list must only contain integers or strings")
@@ -620,32 +646,37 @@ class Thicket(GraphFrame):
         return json.dumps(jsonified_thicket)
 
     def intersection(self):
-        """Perform an intersection operation on a thicket, removing nodes that are not contained in all profiles.
+        """Perform an intersection operation on a thicket.
+
+        Nodes not contained in all profiles are removed.
 
         Returns:
-            remaining_node_list (list): List of nodes that were not removed.
-            removed_node_list (list): List of removed nodes.
+            remaining_node_list (list): list of nodes that were not removed
+            removed_node_list (list): list of removed nodes
         """
         # Filter the ensembleframe
         total_profiles = len(self.profile)
         remaining_node_list = []  # Needed for graph
         removed_node_list = []
-        for node, new_df in self.dataframe.groupby(level=0):  # For each node
-            if len(new_df) < total_profiles:  # Use profile count to make decision
+
+        # For each node
+        for node, new_df in self.dataframe.groupby(level=0):
+            # Use profile count to make decision
+            if len(new_df) < total_profiles:
                 removed_node_list.append(node)
             else:
                 remaining_node_list.append(node)
         self.dataframe.drop(removed_node_list, inplace=True)
-        self.statsframe.dataframe.drop(
-            removed_node_list, inplace=True
-        )  # Propagate change to statsframe
+
+        # Propagate change to statsframe
+        self.statsframe.dataframe.drop(removed_node_list, inplace=True)
 
         # Filter the graph
-        self.graph.roots = list(
-            set(self.graph.roots).intersection(remaining_node_list)
-        )  # Remove roots
+
+        # Remove roots
+        self.graph.roots = list(set(self.graph.roots).intersection(remaining_node_list))
         for node in self.graph.traverse():
-            # Remove children & parents that DNE in the intersection
+            # Remove children and parents that DNE in the intersection
             new_children = []
             new_parents = []
             for child in node.children:
@@ -656,18 +687,22 @@ class Thicket(GraphFrame):
                     new_parents.append(parent)
             node.children = new_children
             node.parents = new_parents
-        self.graph.enumerate_traverse()  # Update hatchet nid's
+
+        # Update hatchet nids
+        self.graph.enumerate_traverse()
 
         return remaining_node_list, removed_node_list
 
     def filter_metadata(self, select_function):
-        """filter thicket object based on a metadata key and propagate
-        changes to the entire thicket object
-        :param select_function: the filter to apply to the MetadataFrame
-        :type select_function: lambda function
+        """Filter thicket object based on a metadata key.
 
-        :return: new thicket object with selected value
-        :rtype: thicket object
+        Changes are propogated to the entire thicket object.
+
+        Arguments:
+            select_function (lambda function): filter to apply to the MetadataFrame
+
+        Returns:
+            (thicket): new thicket object with selected value
         """
         if callable(select_function):
             if not self.metadata.empty:
@@ -707,24 +742,29 @@ class Thicket(GraphFrame):
         return new_thicket
 
     def filter(self, filter_func):
+        """Overloaded generic filter function.
+
+        Provides a helper message for using the thicket filter functions.
+        """
         raise RuntimeError(
             "Invalid function: thicket.filter(), please use thicket.filter_metadata() or thicket.filter_stats()"
         )
 
     def groupby(self, groupby_function):
-        """create sub-thickets based on unique values in metadata column(s)
+        """Create sub-thickets based on unique values in metadata column(s).
 
-        :param groupby_function: groupby function on dataframe
-        :type groupby_function: mapping, function, label, or list of labels
+        Arguments:
+            groupby_function (groupby_function): groupby function on dataframe
 
-        :return: list containing sub-thickets
-        :rtype: list[thicket object]
+        Returns:
+            (list): list of (sub)thickets
         """
         if not self.metadata.empty:
             # group MetadataFrame by unique values in a column
             sub_metadataframes = self.metadata.groupby(groupby_function, dropna=False)
 
             list_sub_thickets = []
+
             # for all unique groups of MetadataFrame
             for key, df in sub_metadataframes:
 
@@ -734,7 +774,7 @@ class Thicket(GraphFrame):
                 # return unique group as the MetadataFrame
                 sub_thicket.metadata = df
 
-                # find profiles in current unique group & filter EnsembleFrame
+                # find profiles in current unique group and filter EnsembleFrame
                 profile_id = df.index.values.tolist()
                 sub_thicket.dataframe = sub_thicket.dataframe[
                     sub_thicket.dataframe.index.get_level_values("profile").isin(
@@ -762,13 +802,15 @@ class Thicket(GraphFrame):
         return list_sub_thickets
 
     def filter_stats(self, filter_function):
-        """filter thicket object based on a stats column and propagate
-        changes to the entire thicket object
-        :param select_function: the filter to apply to the StatsFrame
-        :type select_function: lambda function
+        """Filter thicket object based on a stats column.
 
-        :return: new thicket object with applied filter function
-        :rtype: thicket object
+        Propagate changes to the entire thicket object.
+
+        Arguments:
+            select_function (lambda function): filter to apply to the StatsFrame
+
+        Returns:
+            (thicket): new thicket object with applied filter function
         """
         # copy thicket
         new_thicket = self.copy()

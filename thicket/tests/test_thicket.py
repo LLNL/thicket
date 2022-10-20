@@ -33,14 +33,8 @@ def test_resolve_missing_indicies():
         index=pd.MultiIndex.from_product([["foo", "bar"], ["B"]], names=names_1),
     )
     t_graph = ht.graph.Graph([])
-    th_0 = Thicket(
-        graph=t_graph,
-        dataframe=df_0,
-    )
-    th_1 = Thicket(
-        graph=t_graph,
-        dataframe=df_1,
-    )
+    th_0 = Thicket(graph=t_graph, dataframe=df_0)
+    th_1 = Thicket(graph=t_graph, dataframe=df_1)
 
     Thicket._resolve_missing_indicies([th_0, th_1])
 

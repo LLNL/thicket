@@ -7,23 +7,15 @@ import seaborn as sns
 
 
 def display_heatmap(thicket=None, columns=None, **kwargs):
+    """Display a heatmap.
+
+    Arguments:
+        thicket (thicket): Thicket object
+        columns (list): list of hardware/timing metrics from statsframe to display
+
+    Returns:
+        (matplotlib Axes): object for managing plot
     """
-    Designed to take in a Thicket, and will display a heatmap.
-
-    Arguments/Parameters
-    _ _ _ _ _ _ _ _ _ _ _
-
-    thicket : A thicket
-
-    columns : List of hardware/timing metrics from statsframe to display
-
-    Returns
-    _ _ _ _ _ _ _ _ _ _ _
-
-    Object for managing heatmap plot
-
-    """
-
     thicket.statsframe.dataframe.index = thicket.statsframe.dataframe.index.map(str)
 
     ax = sns.heatmap(thicket.statsframe.dataframe[columns], **kwargs)

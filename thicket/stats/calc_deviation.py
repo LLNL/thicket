@@ -8,27 +8,18 @@ import pandas as pd
 
 
 def calc_deviation(thicket=None, columns=None):
+    """Calculate standard deviation and variance per node.
+
+    Designed to take in a Thicket, and will append a column to the statsframe
+    for the standard deviation and variance calculations per node.
+
+    Variance will allow you to see the spread within a dataset and standard
+    deviation will tell you how dispersed the data is in relation to the mean.
+
+    Arguments:
+        thicket (thicket): Thicket object
+        columns (list): list of hardware/timing metrics to perform deviation calculations on
     """
-    Designed to take in a Thicket, and will append a column to the statsframe for the
-    standard deviation and variance calculations per node.
-
-    Variance will allow you to see the spread within a dataset and standard deviation
-    will tell you how dispersed the data is in relation to the mean.
-
-    Arguments/Parameters
-    _ _ _ _ _ _ _ _ _ _ _
-
-    thicket : A thicket
-
-    columns : List of hardware/timing metrics to perform extremum calculations on
-
-    Returns
-    _ _ _ _ _ _ _ _ _ _ _
-
-    thicket: Returns a thicket
-
-    """
-
     for column in columns:
         var = []
         std = []
