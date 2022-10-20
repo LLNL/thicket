@@ -38,5 +38,3 @@ def calc_extremum(thicket=None, columns=None):
             maximum.append(max_value)
         thicket.statsframe.dataframe[column + "_min"] = minimum
         thicket.statsframe.dataframe[column + "_max"] = maximum
-
-    return thicket

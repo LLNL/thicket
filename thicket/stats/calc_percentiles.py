@@ -43,5 +43,3 @@ def calc_percentile(thicket=None, columns=None):
             )
             percentiles.append(perc_value)
         thicket.statsframe.dataframe[column + "_percentile"] = percentiles
-
-    return thicket

@@ -43,5 +43,3 @@ def check_normality(thicket=None, columns=None):
                 normality.append(pd.NA)
 
         thicket.statsframe.dataframe[column + "_normality"] = normality
-
-    return thicket

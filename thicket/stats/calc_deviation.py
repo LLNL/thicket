@@ -39,5 +39,3 @@ def calc_deviation(thicket=None, columns=None):
             std.append(std_value)
         thicket.statsframe.dataframe[column + "_var"] = var
         thicket.statsframe.dataframe[column + "_std"] = std
-
-    return thicket

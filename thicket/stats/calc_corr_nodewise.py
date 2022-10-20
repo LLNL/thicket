@@ -50,4 +50,3 @@ def calc_corr_nodewise(thicket, base=None, correlate=[], correlation="pearson"):
         thicket.statsframe.dataframe[
             base + "_vs_" + col + " " + f"[{correlation}]"
         ] = correlated
-    return thicket

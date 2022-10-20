@@ -36,5 +36,3 @@ def calc_average(thicket=None, columns=None):
             mean.append(mean_value)
         thicket.statsframe.dataframe[column + "_median"] = median
         thicket.statsframe.dataframe[column + "_mean"] = mean
-
-    return thicket
