@@ -131,7 +131,6 @@ def test_filter(example_cali_multiprofile):
         th.filter_metadata(lambda x: x["cluster"] == "chekov")
 
 
-@pytest.mark.xfail(reason="Temporarily allow this to fail.")
 def test_groupby(example_cali_multiprofile):
     # example thicket
     th = Thicket.from_caliperreader(example_cali_multiprofile)
@@ -140,7 +139,7 @@ def test_groupby(example_cali_multiprofile):
 
     # inspect all use cases
     for col_value in columns:
-        unique_values = sorted(th.metadata[col_value].unique().astype(str).tolist())
+        unique_values = sorted(th.metadata[col_value].unique().tolist())
         th_list = th.groupby(col_value)
         # inspect all unique values in the use case
         for itr, uni_val in enumerate(unique_values):
@@ -186,8 +185,8 @@ def test_groupby(example_cali_multiprofile):
             )
             assert stats_nodes == exp_nodes
 
-            # check for empty statsframe dataframe
-            assert th_list[itr].statsframe.dataframe.empty
+            # check for name column statsframe dataframe
+            assert "name" in th_list[itr].statsframe.dataframe.columns
 
     # drop all rows of the metadataframe
     th.metadata = th.metadata.iloc[0:0]
