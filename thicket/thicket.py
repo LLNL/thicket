@@ -764,9 +764,11 @@ class Thicket(GraphFrame):
             sub_metadataframes = self.metadata.groupby(groupby_function, dropna=False)
 
             list_sub_thickets = []
+            unique_vals = []
 
             # for all unique groups of MetadataFrame
             for key, df in sub_metadataframes:
+                unique_vals.append(key)
 
                 # create a thicket copy
                 sub_thicket = self.copy()
@@ -798,6 +800,7 @@ class Thicket(GraphFrame):
             )
 
         print(len(list_sub_thickets), " Sub-Thickets created...")
+        print(unique_vals)
 
         return list_sub_thickets
 
