@@ -109,6 +109,7 @@ class Thicket(GraphFrame):
             temp_meta = {}
             temp_meta[hash_arg] = th.metadata
             th.metadata = pd.DataFrame.from_dict(temp_meta, orient="index")
+            th.metadata.index.set_names("profile", inplace=True)
 
             # Add profile to dataframe index
             th.dataframe["profile"] = hash_arg
@@ -509,7 +510,6 @@ class Thicket(GraphFrame):
             if len(th.metadata) > 0:
                 curr_meta = th.metadata.copy()
                 unify_metadata = pd.concat([curr_meta, unify_metadata])
-                unify_metadata.index.set_names("profile", inplace=True)
             if th.profile is not None:
                 unify_profile.extend(th.profile)
             if th.profile_mapping is not None:
