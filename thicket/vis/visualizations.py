@@ -43,6 +43,17 @@ class EnsembleVis(Magics):
 
         RT.initialize()
 
+    
+    @line_magic
+    def topdown_analysis(self, line):
+        args = line.split(" ")
+        RT.load_webpack(path.join(self.vis_dist, "topdown_bundle.html"), cache=False)
+        RT.var_to_js(
+            args[0], "topdown_data", watch=False, to_js_converter=_thicket_to_json
+        )
+
+        RT.initialize()
+
 
 #     @line_magic
 #     def cct_fetch_query(self, line):

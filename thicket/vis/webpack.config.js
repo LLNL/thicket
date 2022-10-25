@@ -20,7 +20,8 @@ module.exports = {
         ]
     },
     entry: {
-        pcp: [path.resolve(__dirname,'scripts/pcp.js')]
+        pcp: [path.resolve(__dirname,'scripts/pcp/pcp.js')],
+        topdown: [path.resolve(__dirname,'scripts/topdown/topdown.js')]
     },
     output: {
         publicPath: path.resolve(__dirname, 'static/'),
@@ -37,6 +38,11 @@ module.exports = {
             template: 'templates/pcp.html',
             chunks: ['pcp'],
             filename: 'pcp_bundle.html'
+        }),
+        new HtmlWebpackPlugin({
+            template: 'templates/topdown.html',
+            chunks: ['topdown'],
+            filename: 'topdown_bundle.html'
         })
     ],
     mode: 'production'
