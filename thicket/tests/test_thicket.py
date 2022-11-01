@@ -209,6 +209,13 @@ def test_statsframe(example_cali):
     # Check length of graph is the same as the dataframe.
     assert len(th.statsframe.graph) == len(th.statsframe.dataframe)
 
+    # Expected tree output
+    tree_output = th.statsframe.tree(metric_column="test")
+    # Check if tree output is correct.
+    assert "1.000 MPI_Comm_dup" in tree_output
+    assert "1.000 MPI_Initialized" in tree_output
+    assert "1.000 CalcFBHourglassForceForElems" in tree_output
+
 
 def test_add_column_from_metadata(mpi_scaling_cali):
     t_ens = Thicket.from_caliperreader(mpi_scaling_cali)
