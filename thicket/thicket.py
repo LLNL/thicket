@@ -103,8 +103,7 @@ class Thicket(GraphFrame):
             # Store used profiles and profile mappings using a hash of their string
             hash_arg = hash(prf)
             th.profile = [hash_arg]
-            th.profile_mapping = {hash_arg: prf}
-
+            th.profile_mapping = OrderedDict({hash_arg: [prf]})
             # format metadata as a dict of dicts
             temp_meta = {}
             temp_meta[hash_arg] = th.metadata
@@ -591,9 +590,10 @@ class Thicket(GraphFrame):
             df.set_index("thicket", inplace=True, append=True)
             th_list[i].dataframe = df
 
-            # Existing profile data no longer relevant
-            th_list[i].profile = None
-            th_list[i].profile_mapping = None
+            # Adjust profile and profile_mapping
+            th_list[i].profile = [th_id]
+            profile_paths = list(th_list[i].profile_mapping.values())
+            th_list[i].profile_mapping = OrderedDict({th_id: profile_paths})
 
             # Modify metadata dataframe
             idx_name = "new_idx"

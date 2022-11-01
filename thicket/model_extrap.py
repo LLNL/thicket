@@ -114,7 +114,7 @@ class Modeling:
                     f"length of params must equal amound of profiles {len(params)} != {len(self.tht.profile)}"
                 )
             profile_mapping_flipped = {
-                v: k for k, v in self.tht.profile_mapping.items()
+                v[0]: k for k, v in self.tht.profile_mapping.items()
             }
             for file_name, value in params.items():
                 self.tht.metadata.at[
