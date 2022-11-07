@@ -7,6 +7,8 @@ from os.path import dirname
 def _thicket_to_json(data):
     return data.to_json()
 
+def _df_to_json(data):
+    return data.to_json(orient='records')
 
 def _basic_to_json(data):
     import json
@@ -51,6 +53,11 @@ class EnsembleVis(Magics):
         RT.var_to_js(
             args[0], "topdown_data", watch=False, to_js_converter=_thicket_to_json
         )
+
+        if len(args) > 2:
+            RT.var_to_js(
+                args[2], "test", watch=False, to_js_converter=_basic_to_json
+            )
 
         RT.initialize()
 
