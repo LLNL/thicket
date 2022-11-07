@@ -8,6 +8,8 @@ import base64
 import extrap.entities as xent
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import warnings
 
 # For some reason it errors if "Experiment" is not explicitly imported
 from extrap.entities.experiment import Experiment
@@ -231,3 +233,69 @@ class Modeling:
                 self.tht.statsframe.dataframe.at[node, met + MODEL_TAG] = ModelWrapper(
                     model_gen.models[mkey], self.param_name
                 )
+
+    def _componentize_function(model_object):
+        """Componentize one Extra-P modeling object into a dictionary of its parts
+
+        Arguments:
+            model_object (ModelWrapper): Thicket ModelWrapper Extra-P modeling object
+
+        Returns:
+            (dict): dictionary of the ModelWrapper's hypothesis function parts
+        """
+        # Dictionary of variables mapped to coefficients
+        term_dict = {}
+        # Model object hypothesis function
+        fnc = model_object.mdl.hypothesis.function
+        # Constant "c" column
+        term_dict["c"] = fnc.constant_coefficient
+
+        # Terms of form "coefficient * variables"
+        for term in fnc.compound_terms:
+            # Join variables of the same term together
+            variable_column = " * ".join(t.to_string() for t in term.simple_terms)
+
+            term_dict[variable_column] = term.coefficient
+
+        return term_dict
+
+    def componentize_statsframe(self, columns=None):
+        """Componentize multiple Extra-P modeling objects in the statsframe
+
+        Arguments:
+            column (list): list of column names in the statsframe to componentize
+        """
+        # Use all Extra-P columns
+        if columns is None:
+            columns = [col for col in self.tht.statsframe.dataframe if MODEL_TAG in col]
+
+        # Error checking
+        for c in columns:
+            if c not in self.tht.statsframe.dataframe.columns:
+                raise ValueError(f'column "{c}" is not in the statsframe.')
+            elif MODEL_TAG not in c:
+                warnings.warn(f"column {c} does not appear to be an Extra-P column.")
+
+        # Process each column
+        all_dfs = []
+        for col in columns:
+            # Get list of components for this column
+            components = [
+                Modeling._componentize_function(model_obj)
+                for model_obj in self.tht.statsframe.dataframe[col]
+            ]
+
+            # Component dataframe
+            comp_df = pd.DataFrame(
+                data=components, index=self.tht.statsframe.dataframe.index
+            )
+
+            # Add column name as index level
+            comp_df.columns = pd.MultiIndex.from_product(
+                [[col], comp_df.columns.to_list()]
+            )
+            all_dfs.append(comp_df)
+
+        # Concatenate dataframes horizontally
+        all_dfs.insert(0, self.tht.statsframe.dataframe)
+        self.tht.statsframe.dataframe = pd.concat(all_dfs, axis=1)
