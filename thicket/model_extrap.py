@@ -9,7 +9,6 @@ import extrap.entities as xent
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import warnings
 
 # For some reason it errors if "Experiment" is not explicitly imported
 from extrap.entities.experiment import Experiment
@@ -263,18 +262,25 @@ class Modeling:
         """Componentize multiple Extra-P modeling objects in the statsframe
 
         Arguments:
-            column (list): list of column names in the statsframe to componentize
+            column (list): list of column names in the statsframe to componentize.
+                Values must be of type 'thicket.model_extrap.ModelWrapper'.
         """
         # Use all Extra-P columns
         if columns is None:
-            columns = [col for col in self.tht.statsframe.dataframe if MODEL_TAG in col]
+            columns = [
+                col
+                for col in self.tht.statsframe.dataframe
+                if isinstance(self.tht.statsframe.dataframe[col][0], ModelWrapper)
+            ]
 
         # Error checking
         for c in columns:
             if c not in self.tht.statsframe.dataframe.columns:
                 raise ValueError(f'column "{c}" is not in the statsframe.')
-            elif MODEL_TAG not in c:
-                warnings.warn(f"column {c} does not appear to be an Extra-P column.")
+            elif not isinstance(self.tht.statsframe.dataframe[c][0], ModelWrapper):
+                raise TypeError(
+                    f"column {c} is not the right type (thicket.model_extrap.ModelWrapper)."
+                )
 
         # Process each column
         all_dfs = []
