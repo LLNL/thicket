@@ -22,12 +22,13 @@ configure_python:
   script:
     - /usr/tce/packages/python/python-3.7.2/bin/virtualenv -p /usr/tce/packages/python/python-3.7.2/bin/python3 ${PYTHON_ENVIRONMENT_PATH}
     - . ${PYTHON_ENVIRONMENT_PATH}/bin/activate
-    - $(which python3) -m pip install matplotlib pandas numpy glob2
-    - $(which python3) -m pip install pytest
-    - $(which python3) -m pip install click==8.0.4
-    - $(which python3) -m pip install black==21.12b0
-    - $(which python3) -m pip install flake8==4.0.1
-    - $(which python3) -m pip install cython multiprocess textX caliper-reader
+    - PYTHON_EXECUTABLE=$(which python3)
+    - ${PYTHON_EXECUTABLE} -m pip install matplotlib pandas numpy glob2
+    - ${PYTHON_EXECUTABLE} -m pip install pytest
+    - ${PYTHON_EXECUTABLE} -m pip install click==8.0.4
+    - ${PYTHON_EXECUTABLE} -m pip install black==21.12b0
+    - ${PYTHON_EXECUTABLE} -m pip install flake8==4.0.1
+    - ${PYTHON_EXECUTABLE} -m pip install cython multiprocess textX caliper-reader
   cache:
     paths:
       - ${PYTHON_ENVIRONMENT_PATH}
