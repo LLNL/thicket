@@ -14,6 +14,7 @@ import numpy as np
 from collections import OrderedDict
 from hatchet import GraphFrame
 from .helpers import print_graph
+from .utils import verify_thicket_structures
 
 
 class Thicket(GraphFrame):
@@ -706,6 +707,9 @@ class Thicket(GraphFrame):
         """
         if callable(select_function):
             if not self.metadata.empty:
+                # check profile is an index level in metadata
+                verify_thicket_structures(self.metadata, index=["profile"])
+
                 # create a copy of the thicket object
                 new_thicket = self.copy()
 
