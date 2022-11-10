@@ -17,7 +17,6 @@ def test_model_extrap(mpi_scaling_cali):
         "jobsize",
         chosen_metrics=[
             "avg#inclusive#sum#time.duration",
-            "max#inclusive#sum#time.duration",
         ],
     )
     mdl.produce_models()
@@ -33,17 +32,16 @@ def test_model_extrap(mpi_scaling_cali):
     mdl2 = Modeling(
         t_ens,
         "cores",
-        params=core_list,
+        core_list,
         chosen_metrics=[
             "avg#inclusive#sum#time.duration",
-            "max#inclusive#sum#time.duration",
         ],
     )
     mdl2.produce_models()
 
     # Check that model structure is being created properly
-    assert mdl.tht.statsframe.dataframe.shape == (45, 3)
-    assert mdl2.tht.statsframe.dataframe.shape == (45, 3)
+    assert mdl.tht.statsframe.dataframe.shape == (45, 7)
+    assert mdl2.tht.statsframe.dataframe.shape == (45, 7)
     # Check model values between the two methods
     assert mdl.tht.statsframe.dataframe.applymap(str).equals(
         mdl2.tht.statsframe.dataframe.applymap(str)
@@ -61,7 +59,7 @@ def test_componentize_functions(mpi_scaling_cali):
             "max#inclusive#sum#time.duration",
         ],
     )
-    mdl.produce_models()
+    mdl.produce_models(add_stats=False)
 
     mdl.componentize_statsframe()
 
