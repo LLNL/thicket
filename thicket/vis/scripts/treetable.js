@@ -1,28 +1,30 @@
-
-import { store } from './store';
 import { layout } from './globals';
+import StackedBars from './topdown/stackedbars'
 
 import * as d3 from "d3";
 
 
-class TreeTable{
-    constructor(div, width, height, tree_model, table_model){
-        this.tree_width = .3*width;
+export class TreeTable{
+    constructor(div, width, height, tree_model, table_data){
+        this.tree_width = .2*width;
         this.table_width = width - this.tree_width;
-        this.height = height;
-        this.svg = div.append('svg').attr('height', height).attr('width', width);
-
         this.tree = tree_model;
         this.indented_tree = tree_model.indented_tree();
+        this.table_data = table_data;
+
+        this.rowheight = 60;
+        this.height = Object.values(this.indented_tree).length * this.rowheight;
 
         this.x_scale = d3.scaleLinear().range([layout.margins.left, this.tree_width]).domain([0, tree_model.depth]);
-        this.y_scale = d3.scaleLinear().range([layout.margins.top, height]).domain([0, Object.values(this.indented_tree).length]);
-
+        this.y_scale = d3.scaleLinear().range([layout.margins.top, this.height]).domain([0, Object.values(this.indented_tree).length]);
+       
+        this.svg = div.append('svg').attr('height', this.height + (20*this.rowheight)).attr('width', width);
         this.pre_render();
     }
 
     link_path(node, parent){
         //array of 3 coords
+        //to make angled link between nodes
         //drawn from child to parent
         const coords =[
             {x:this.x_scale(node.layout.depth), y:this.y_scale(node.layout.order)},
@@ -47,6 +49,9 @@ class TreeTable{
             .attr('class','table-group')
             .attr('transform', `translate(${this.tree_width+layout.margins.left},${0})`)
 
+        this.table = new StackedBars(this.table_grp, this.table_width, this.height, this.table_data.dataframe);
+        this.table.set_row_ordering_map(Object.values(this.indented_tree));
+
         this.render();
         
     }
@@ -59,7 +64,10 @@ class TreeTable{
                         function (enter){
                             let node = enter.append('g')
                                         .attr('class','nodes')
-                                        .attr('transform', (d)=>`translate(${self.x_scale(d.layout.depth)},${self.y_scale(d.layout.order)})`);
+                                        .attr('transform', (d)=>{
+                                            return `translate(${self.x_scale(d.layout.depth)},${self.y_scale(d.layout.order)})`
+                                        })
+                                        .on('click', function(e,d){console.log(d)});
 
                             node.append('circle')
                                 .attr('r', 8)
@@ -83,14 +91,15 @@ class TreeTable{
                                 .style("fill", "none")
                                 .style("stroke", "rgba(125,50,50,1)")
                                 .style("stroke-width", 2)
-                                .style("opacity", 1)
+                                .style("opacity", 1);
                         }
                     )
 
+        this.table.render();
     }
 }
 
-class TreeModel{
+export class TreeModel{
     constructor(tree_def){
         this.tree = tree_def;
         this.depth = 0;
@@ -134,29 +143,29 @@ class TreeModel{
 
 }
 
-window.onload = function(){
-    d3.json("http://localhost:8000/test_area/data.json").then(function(data){
-        // console.log(data);
-        setup(data);
-    });
-};
+// window.onload = function(){
+//     d3.json("http://localhost:8000/test_area/data.json").then(function(data){
+//         // console.log(data);
+//         setup(data);
+//     });
+// };
 
-let state = {
-    active_prof: {}
-}
-
-
-function setup(data){
-    let tree_model = new TreeModel(data.graph[0]);
-    let table_model = null;
-
-    let tree_max_w = window.innerWidth*.7;
-    let tree_max_h = window.innerHeight*.9;
-    let tree_div = d3.select("#treetable");
-
-    const treetable = new TreeTable(tree_div, tree_max_w, tree_max_h, tree_model, table_model);
+// let state = {
+//     active_prof: {}
+// }
 
 
-    //Bind render to store updates
-    store.subscribe(() => treetable.render())
-}
+// function setup(data){
+//     let tree_model = new TreeModel(data.graph[0]);
+//     let table_view = null;
+
+//     let tree_max_w = window.innerWidth*.7;
+//     let tree_max_h = window.innerHeight*.9;
+//     let tree_div = d3.select("#treetable");
+
+//     const treetable = new TreeTable(tree_div, tree_max_w, tree_max_h, tree_model, table_view);
+
+
+//     //Bind render to store updates
+//     store.subscribe(() => treetable.render())
+// }
