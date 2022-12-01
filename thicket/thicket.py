@@ -264,6 +264,80 @@ class Thicket(GraphFrame):
             self.metadata[column_name], on=self.dataframe.index.names[1]
         )
 
+    def columnar_join(self, other, column_name, self_new_name, other_new_name):
+        """Join two Thickets column-wise. New column multi-index will be created with self and other's columns under separate indexers.
+
+        Arguments:
+            self (Thicket): left-side thicket
+            other (Thicket): right-side thicket
+            column_name (str): Name of the column from the metadataframe to join on
+            self_new_name (str): The name for self's new upper-level columnar multi-index
+            other_new_name (str): The name for other's new upper-level columnar multi-index
+
+        Returns:
+            (Thicket): New thicket with joined DataFrame
+        """
+        # Pre-check of data structures
+        # Required for deepcopy operation
+        verify_thicket_structures(self.dataframe, index=["node", "profile"])
+        verify_thicket_structures(self.statsframe.dataframe, index=["node"])
+        verify_thicket_structures(self.metadata, index=["profile"])
+        # For joining with "self"
+        verify_thicket_structures(other.dataframe, index=["node", "profile"])
+        verify_thicket_structures(other.statsframe.dataframe, index=["node"])
+        verify_thicket_structures(other.metadata, index=["profile"])
+
+        # Initialize combined thicket
+        combined_th = self.deepcopy()
+
+        # Unify graphs if "self" and "other" do not have the same graph
+        if combined_th.graph != other.graph:
+            combined_th.graph = combined_th.graph.union(other.graph)
+            Thicket._sync_nodes(
+                combined_th.graph, combined_th.dataframe
+            )  # Sync nodes between graph and dataframe
+
+        # Clear statsframe
+        subset_df = (
+            combined_th.dataframe["name"].reset_index().drop_duplicates(subset=["node"])
+        )
+        combined_th.statsframe = GraphFrame(
+            graph=combined_th.graph,
+            dataframe=pd.DataFrame(
+                index=subset_df["node"],
+                data={"name": subset_df["name"].values},
+            ),
+        )
+
+        # Join "self" & "other" metadata frames
+        combined_th.metadata = pd.concat([combined_th.metadata, other.metadata])
+
+        # Create index mapping from metadata
+        self_map_flipped = {
+            v: k for k, v in self.metadata[column_name].to_dict().items()
+        }
+        other_map = other.metadata[column_name].to_dict()
+        other_self_map = {
+            k: self_map_flipped[other_map[k]] for k, v in other_map.items()
+        }
+        # Apply index mapping to other dataframe
+        other_df = other.dataframe.rename(index=other_self_map)
+        # Concatenate combined dataframe column-wise
+        combined_th.dataframe = pd.concat([self.dataframe, other_df], axis=1)
+        # Change second-level index to be from metadata's "column_name" column
+        combined_th.add_column_from_metadata_to_ensemble(column_name)
+        combined_th.dataframe.reset_index(level="profile", drop=True, inplace=True)
+        combined_th.dataframe.set_index(column_name, append=True, inplace=True)
+        # Create new columnar multi-index for "self" and "other"
+        new_idx = []
+        for column in self.dataframe.columns:
+            new_idx.append((self_new_name, column))
+        for column in other.dataframe.columns:
+            new_idx.append((other_new_name, column))
+        combined_th.dataframe.columns = pd.MultiIndex.from_tuples(new_idx)
+
+        return combined_th
+
     def copy(self):
         """Return a partially shallow copy of the Thicket.
 
