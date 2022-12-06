@@ -9887,7 +9887,7 @@ function setup(data) {
     var current = store.getState().scatterPlotAxes["OSP"];
     var copy = {};
     copy.x = current.x;
-    copy.y = src_select(e.originalTarget).node().value;
+    copy.y = src_select(e.target).node().value;
     store.dispatch(actions.setAxesForScatterPlot({
       axes: copy,
       sid: "OSP"
@@ -9903,7 +9903,7 @@ function setup(data) {
     var current = store.getState().scatterPlotAxes["OSP"];
     var copy = {};
     copy.y = current.y;
-    copy.x = src_select(e.originalTarget).node().value;
+    copy.x = src_select(e.target).node().value;
     store.dispatch(actions.setAxesForScatterPlot({
       axes: copy,
       sid: "OSP"
@@ -9919,7 +9919,7 @@ function setup(data) {
     var current = store.getState().scatterPlotAxes["SP"];
     var copy = {};
     copy.y = current.y;
-    copy.x = src_select(e.originalTarget).node().value;
+    copy.x = src_select(e.target).node().value;
     store.dispatch(actions.setAxesForScatterPlot({
       axes: copy,
       sid: "SP"
@@ -9935,7 +9935,7 @@ function setup(data) {
     var current = store.getState().scatterPlotAxes["SP"];
     var copy = {};
     copy.x = current.x;
-    copy.y = src_select(e.originalTarget).node().value;
+    copy.y = src_select(e.target).node().value;
     store.dispatch(actions.setAxesForScatterPlot({
       axes: copy,
       sid: "SP"
@@ -9978,7 +9978,19 @@ if (RT === undefined) {
 
   if (Object.keys(RT).includes('metadata_dims')) {
     pre_selected_dims = JSON.parse(RT.metadata_dims);
-    store.dispatch(actions.updateActiveDimensions(pre_selected_dims));
+    var real_dims = Object.keys(pcp_data.metadata[0]);
+    var valid_dims = pre_selected_dims.filter(function (value) {
+      return real_dims.includes(value);
+    });
+    var invalid_dims = pre_selected_dims.filter(function (value) {
+      return !real_dims.includes(value);
+    });
+
+    if (invalid_dims.length > 0) {
+      console.warn("The following dimensions could not be found on the metadata table: ".concat(invalid_dims));
+    }
+
+    store.dispatch(actions.updateActiveDimensions(valid_dims));
   } //put pre selected dims in the state object
 
 

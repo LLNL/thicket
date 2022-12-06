@@ -23,7 +23,6 @@ class ParallelCoordPlot{
         
         let excludes = ["profile", "launchday", "launchdate", "compilerversion"];
         for(const dim of dims){
-
             let invalid = false;
             if(excludes.indexOf(dim) > -1){
                 invalid = true;
@@ -417,7 +416,7 @@ function setup(data){
             let current = store.getState().scatterPlotAxes["OSP"];
             let copy = {}; 
             copy.x = current.x;
-            copy.y = d3.select(e.originalTarget).node().value;
+            copy.y = d3.select(e.target).node().value;
             store.dispatch(actions.setAxesForScatterPlot({
                 axes: copy,
                 sid: "OSP"
@@ -438,7 +437,7 @@ function setup(data){
             let current = store.getState().scatterPlotAxes["OSP"];
             let copy = {}; 
             copy.y = current.y;
-            copy.x = d3.select(e.originalTarget).node().value;
+            copy.x = d3.select(e.target).node().value;
             store.dispatch(actions.setAxesForScatterPlot({
                 axes: copy,
                 sid: "OSP"
@@ -459,7 +458,7 @@ function setup(data){
             let current = store.getState().scatterPlotAxes["SP"];
             let copy = {}; 
             copy.y = current.y;
-            copy.x = d3.select(e.originalTarget).node().value;
+            copy.x = d3.select(e.target).node().value;
             store.dispatch(actions.setAxesForScatterPlot({
                 axes: copy,
                 sid: "SP"
@@ -480,7 +479,7 @@ function setup(data){
             let current = store.getState().scatterPlotAxes["SP"];
             let copy = {}; 
             copy.x = current.x;
-            copy.y = d3.select(e.originalTarget).node().value;
+            copy.y = d3.select(e.target).node().value;
             store.dispatch(actions.setAxesForScatterPlot({
                 axes: copy,
                 sid: "SP"
@@ -528,7 +527,13 @@ else{
 
     if(Object.keys(RT).includes('metadata_dims')){
         pre_selected_dims = JSON.parse(RT['metadata_dims']);
-        store.dispatch(actions.updateActiveDimensions(pre_selected_dims));
+        let real_dims = Object.keys(data.metadata[0]);
+        let valid_dims = pre_selected_dims.filter(value => real_dims.includes(value));
+        let invalid_dims = pre_selected_dims.filter(value => !real_dims.includes(value));
+        if(invalid_dims.length > 0){
+            console.warn(`The following dimensions could not be found on the metadata table: ${invalid_dims}`)
+        }
+        store.dispatch(actions.updateActiveDimensions(valid_dims));
     }
 
     //put pre selected dims in the state object
