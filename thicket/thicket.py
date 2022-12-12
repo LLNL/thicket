@@ -264,6 +264,69 @@ class Thicket(GraphFrame):
             self.metadata[column_name], on=self.dataframe.index.names[1]
         )
 
+    @staticmethod
+    def _sync_nodes_frame(gh, df):
+        """Set the node objects to be equal in both the graph and the dataframe.
+
+        id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet nid's.
+
+        TODO: This function may be superior to _sync_nodes and may be able to replace it. Need to investigate.
+        """
+        index_names = df.index.names
+        df.reset_index(inplace=True)
+        for graph_node in gh.traverse():
+            df["node"] = df["node"].apply(
+                lambda df_node: graph_node
+                if (graph_node.frame == df_node.frame)
+                else df_node
+            )
+        df.set_index(index_names, inplace=True)
+
+    @staticmethod
+    def _missing_nodes_to_list(a_df, b_df):
+        """Get a list of node differences between two dataframes. Mainly used for "tree" function.
+
+        Arguments:
+            a_df (Dataframe): First pandas Dataframe
+            b_df (Dataframe): Second pandas Dataframe
+
+        Returns:
+            (list): List of numbers in range (0, 1, 2). "0" means node is in both, "1" is only in "a", "2" is only in "b"
+        """
+        missing_nodes = []
+        a_list = list(map(hash, list(a_df.index.get_level_values("node"))))
+        b_list = list(map(hash, list(b_df.index.get_level_values("node"))))
+        # Basic cases
+        while a_list and b_list:
+            a = a_list.pop(0)
+            b = b_list.pop(0)
+            while a > b and b_list:
+                missing_nodes.append(2)
+                b = b_list.pop(0)
+            while b > a and a_list:
+                missing_nodes.append(1)
+                a = a_list.pop(0)
+            if a == b:
+                missing_nodes.append(0)
+                continue
+            elif (
+                a > b
+            ):  # Case where last two nodes and "a" is missing "b" then opposite
+                missing_nodes.append(2)
+                missing_nodes.append(1)
+            elif (
+                b > a
+            ):  # Case where last two nodes and "b" is missing "a" then opposite
+                missing_nodes.append(1)
+                missing_nodes.append(2)
+        while a_list:  # In case "a" has a lot more nodes than "b"
+            missing_nodes.append(1)
+            a = a_list.pop(0)
+        while b_list:  # In case "b" has a lot more nodes than "a"
+            missing_nodes.append(2)
+            b = b_list.pop(0)
+        return missing_nodes
+
     def columnar_join(self, other, column_name, self_new_name, other_new_name):
         """Join two Thickets column-wise. New column multi-index will be created with self and other's columns under separate indexers.
 
@@ -287,19 +350,86 @@ class Thicket(GraphFrame):
         verify_thicket_structures(other.statsframe.dataframe, index=["node"])
         verify_thicket_structures(other.metadata, index=["profile"])
 
+        # For tree diff
+        missing_nodes = None
         # Initialize combined thicket
         combined_th = self.deepcopy()
+        # Use copies to be non-destructive
+        self_cp = self.deepcopy()
+        other_cp = other.deepcopy()
+
+        # Create profile index mapping from metadata
+        self_map_flipped = {
+            v: k for k, v in self_cp.metadata[column_name].to_dict().items()
+        }
+        other_map = other.metadata[column_name].to_dict()
+        other_self_map = {
+            k: self_map_flipped[other_map[k]] for k, v in other_map.items()
+        }
+        # Apply index mapping to other dataframe
+        other_cp.dataframe = other.dataframe.rename(
+            index=other_self_map, level="profile"
+        )
+        Thicket._sync_nodes_frame(
+            other_cp.graph, other_cp.dataframe
+        )  # Sync nodes between graph and dataframe
 
         # Unify graphs if "self" and "other" do not have the same graph
-        if combined_th.graph != other.graph:
-            combined_th.graph = combined_th.graph.union(other.graph)
-            Thicket._sync_nodes(
-                combined_th.graph, combined_th.dataframe
-            )  # Sync nodes between graph and dataframe
+        if self_cp.graph != other_cp.graph:
+            union_graph = self_cp.graph.union(other_cp.graph)
+            combined_th.graph = union_graph
+            self_cp.graph = union_graph
+            other_cp.graph = union_graph
+
+            # Necessary to change dataframe hatchet id's to match the nodes in the graph
+            Thicket._sync_nodes_frame(self_cp.graph, self_cp.dataframe)
+            Thicket._sync_nodes_frame(other_cp.graph, other_cp.dataframe)
+
+            # For tree diff.
+            missing_nodes = Thicket._missing_nodes_to_list(
+                self_cp.dataframe, other_cp.dataframe
+            )
+
+        # Concatenate combined dataframe column-wise. Assumes row-wise alignment in respect to nodes
+        combined_th.dataframe = self_cp.dataframe.join(
+            other_cp.dataframe,
+            how="outer",
+            sort=True,
+            lsuffix="_left",
+            rsuffix="_right",
+        )
+
+        # Fix renaming of duplicate columns since pandas requires it in "join" function. #TODO: Figure out how to join without renaming. This would remove this step.
+        rename_dict = {}
+        for column in combined_th.dataframe.columns:
+            if "_left" in column:
+                rename_dict[column] = column.replace("_left", "")
+            elif "_right" in column:
+                rename_dict[column] = column.replace("_right", "")
+        combined_th.dataframe.rename(columns=rename_dict, inplace=True)
+
+        # Change second-level index to be from metadata's "column_name" column
+        combined_th.add_column_from_metadata_to_ensemble(column_name)
+        combined_th.dataframe.reset_index(level="profile", drop=True, inplace=True)
+        combined_th.dataframe.set_index(column_name, append=True, inplace=True)
+        # Create new columnar multi-index for "self" and "other"
+        new_idx = []
+        for column in self_cp.dataframe.columns:
+            new_idx.append((self_new_name, column))
+        for column in other_cp.dataframe.columns:
+            new_idx.append((other_new_name, column))
+        combined_th.dataframe.columns = pd.MultiIndex.from_tuples(new_idx)
+
+        # Join "self" & "other" metadata frames
+        combined_th.metadata = pd.concat([self_cp.metadata, other_cp.metadata])
 
         # Clear statsframe
         subset_df = (
-            combined_th.dataframe["name"].reset_index().drop_duplicates(subset=["node"])
+            combined_th.dataframe[(self_new_name, "name")]
+            .combine_first(combined_th.dataframe[(other_new_name, "name")])
+            .rename("name")
+            .reset_index()
+            .drop_duplicates(subset=["node"])
         )
         combined_th.statsframe = GraphFrame(
             graph=combined_th.graph,
@@ -309,32 +439,9 @@ class Thicket(GraphFrame):
             ),
         )
 
-        # Join "self" & "other" metadata frames
-        combined_th.metadata = pd.concat([combined_th.metadata, other.metadata])
-
-        # Create index mapping from metadata
-        self_map_flipped = {
-            v: k for k, v in self.metadata[column_name].to_dict().items()
-        }
-        other_map = other.metadata[column_name].to_dict()
-        other_self_map = {
-            k: self_map_flipped[other_map[k]] for k, v in other_map.items()
-        }
-        # Apply index mapping to other dataframe
-        other_df = other.dataframe.rename(index=other_self_map)
-        # Concatenate combined dataframe column-wise
-        combined_th.dataframe = pd.concat([self.dataframe, other_df], axis=1)
-        # Change second-level index to be from metadata's "column_name" column
-        combined_th.add_column_from_metadata_to_ensemble(column_name)
-        combined_th.dataframe.reset_index(level="profile", drop=True, inplace=True)
-        combined_th.dataframe.set_index(column_name, append=True, inplace=True)
-        # Create new columnar multi-index for "self" and "other"
-        new_idx = []
-        for column in self.dataframe.columns:
-            new_idx.append((self_new_name, column))
-        for column in other.dataframe.columns:
-            new_idx.append((other_new_name, column))
-        combined_th.dataframe.columns = pd.MultiIndex.from_tuples(new_idx)
+        # For tree diff
+        if missing_nodes:
+            combined_th.dataframe["_missing_node"] = missing_nodes
 
         return combined_th
 
@@ -398,15 +505,29 @@ class Thicket(GraphFrame):
             statsframe=self.statsframe.deepcopy(),
         )
 
-    def tree(self_):
+    def tree(self):
         """hatchet tree() function for a thicket"""
         try:
-            temp_df = self_.dataframe.drop_duplicates(subset="name").reset_index(
-                level="profile"
-            )
+            if isinstance(self.dataframe.columns, pd.MultiIndex):
+                t_set = set(self.dataframe.columns.get_level_values(0))
+                t_set.remove("_missing_node")
+                name_1, name_2 = t_set
+                temp_df = (
+                    self.dataframe[(name_1, "name")]
+                    .combine_first(self.dataframe[(name_2, "name")])
+                    .rename("name")
+                    .reset_index()
+                    .drop_duplicates(subset=["node"])
+                )
+                temp_df["_missing_node"] = self.dataframe["_missing_node"].to_list()
+                temp_df.set_index("node", inplace=True)
+            else:
+                temp_df = self.dataframe.drop_duplicates(subset="name").reset_index(
+                    level="profile"
+                )
             temp_df["thicket_tree"] = -1
             return GraphFrame.tree(
-                self=Thicket(graph=self_.graph, dataframe=temp_df),
+                self=Thicket(graph=self.graph, dataframe=temp_df),
                 metric_column="thicket_tree",
             )
         except KeyError:
