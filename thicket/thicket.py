@@ -385,7 +385,9 @@ class Thicket(GraphFrame):
             Thicket._sync_nodes_frame(self_cp.graph, self_cp.dataframe)
             Thicket._sync_nodes_frame(other_cp.graph, other_cp.dataframe)
 
-            # For tree diff.
+            # For tree diff. DataFrames need to be sorted.
+            self_cp.dataframe.sort_index(inplace=True)
+            other_cp.dataframe.sort_index(inplace=True)
             missing_nodes = Thicket._missing_nodes_to_list(
                 self_cp.dataframe, other_cp.dataframe
             )
