@@ -521,7 +521,7 @@ class Thicket(GraphFrame):
                     .reset_index()
                     .drop_duplicates(subset=["node"])
                 )
-                temp_df["_missing_node"] = self.dataframe["_missing_node"].to_list()
+                temp_df["_missing_node"] = self.dataframe["_missing_node"].to_list()[::len(self.profile)]
                 temp_df.set_index("node", inplace=True)
             else:
                 temp_df = self.dataframe.drop_duplicates(subset="name").reset_index(
