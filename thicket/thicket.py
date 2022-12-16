@@ -414,6 +414,7 @@ class Thicket(GraphFrame):
         combined_th.add_column_from_metadata_to_ensemble(column_name)
         combined_th.dataframe.reset_index(level="profile", drop=True, inplace=True)
         combined_th.dataframe.set_index(column_name, append=True, inplace=True)
+        combined_th.dataframe.sort_index(inplace=True)
         # Create new columnar multi-index for "self" and "other"
         new_idx = []
         for column in self_cp.dataframe.columns:
@@ -443,7 +444,10 @@ class Thicket(GraphFrame):
 
         # For tree diff
         if missing_nodes:
-            combined_th.dataframe["_missing_node"] = missing_nodes
+            try:
+                combined_th.dataframe["_missing_node"] = missing_nodes
+            except:
+                warnings.warn(f"Unable to add '_missing_node' column.")
 
         return combined_th
 
