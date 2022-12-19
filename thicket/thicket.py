@@ -327,6 +327,39 @@ class Thicket(GraphFrame):
             b = b_list.pop(0)
         return missing_nodes
 
+    def squash(self):
+        """Rewrite the Graph to include only nodes present in the performance DataFrame's rows.
+
+        This can be used to simplify the Graph, or to normalize Graph indexes
+        between two Thickets.
+        """
+        squashed_gf = GraphFrame.squash(self)
+        new_graph = squashed_gf.graph
+        # The following code updates the performance data and the statsframe with the remaining (re-indexed) nodes.
+        # The dataframe is internally updated in squash(), so we can easily just save it to our thicket perfdata.
+        # For the statsframe, we'll have to come up with a better way eventually, but for now, we'll just create
+        #    a new statsframe the same way we do when we create a new thicket. 
+        new_dataframe = squashed_gf.dataframe
+        subset_df = new_dataframe["name"].reset_index().drop_duplicates(subset=["node"])
+        sframe = GraphFrame(
+            graph=squashed_gf.graph,
+            dataframe=pd.DataFrame(
+                index=subset_df["node"],
+                data={"name": subset_df["name"].values},
+            ),
+        )
+        return Thicket(
+            new_graph,
+            new_dataframe,
+            exc_metrics=self.exc_metrics,
+            inc_metrics=self.inc_metrics,
+            default_metric=self.default_metric,
+            metadata=self.metadata,
+            profile=self.profile,
+            profile_mapping=self.profile_mapping,
+            statsframe=sframe,
+        )
+
     def columnar_join(self, other, column_name, self_new_name, other_new_name):
         """Join two Thickets column-wise. New column multi-index will be created with self and other's columns under separate indexers.
 
