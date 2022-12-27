@@ -748,7 +748,7 @@ class Thicket(GraphFrame):
         return unify_th
 
     @staticmethod
-    def make_superthicket(th_list, th_names=None):
+    def make_superthicket(th_list, profiles_from_meta=None):
         """Convert a list of thickets into a 'superthicket'.
 
         Their individual statsframes are ensembled and become the superthicket's
@@ -756,24 +756,37 @@ class Thicket(GraphFrame):
 
         Arguments:
             th_list (list): list of thickets
-            th_names (list, optional): list of thicket names corresponding to the thicket list
+            profiles_from_meta (str, optional): name of the metadata column to use as the new second-level index
 
         Returns:
             (thicket): superthicket
         """
-        # Setup names list
-        if th_names is None:
-            th_names = []
-            for th in range(len(th_list)):
-                th_names.append(th)
-        elif len(th_names) != len(th_list):
-            raise ValueError("length of names list must match length of thicket list.")
+        # Pre-check of data structures
+        for th in th_list:
+            verify_thicket_structures(
+                th.dataframe, index=["node", "profile"]
+            )  # Required for deepcopy operation
+            verify_thicket_structures(
+                th.statsframe.dataframe, index=["node"]
+            )  # Required for deepcopy operation
 
-        # Check names list is valid
-        for name in th_names:
-            if type(name) is not str and type(name) is not int:
-                print(type(name))
-                raise TypeError("name list must only contain integers or strings")
+        # Setup names list
+        if profiles_from_meta is None:
+            profiles_from_meta = []
+            for th in range(len(th_list)):
+                profiles_from_meta.append(th)
+
+        # Build names list
+        th_names = []
+        for th in th_list:
+            # Get name from metadataframe
+            name_list = th.metadata[profiles_from_meta].tolist()
+
+            if len(name_list) > 1:
+                warnings.warn(
+                    f"Multiple values for name {name_list} at thicket.metadata[{profiles_from_meta}]. Only the first will be used."
+                )
+            th_names.append(name_list[0])
 
         for i in range(len(th_list)):
             th_list[i] = th_list[i].deepcopy()
