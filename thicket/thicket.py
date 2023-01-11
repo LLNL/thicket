@@ -13,6 +13,7 @@ import numpy as np
 
 from collections import OrderedDict
 from hatchet import GraphFrame
+from hatchet.query import AbstractQuery, QueryMatcher, parse_cypher_query
 from .helpers import print_graph
 from .utils import verify_thicket_structures
 
@@ -327,11 +328,18 @@ class Thicket(GraphFrame):
             b = b_list.pop(0)
         return missing_nodes
 
-    def squash(self):
+    def squash(self, preserve_stats_dataframe=False):
         """Rewrite the Graph to include only nodes present in the performance DataFrame's rows.
 
         This can be used to simplify the Graph, or to normalize Graph indexes
         between two Thickets.
+
+        Arguments:
+            preserve_stats_dataframe (bool): if true, use the existing DataFrame in the statsframe. Otherwise,
+                                             create a new, empty statsframe for the squashed Thicket object.
+
+        Returns:
+            (Thicket): a newly squashed Thicket object
         """
         squashed_gf = GraphFrame.squash(self)
         new_graph = squashed_gf.graph
@@ -340,13 +348,16 @@ class Thicket(GraphFrame):
         # For the statsframe, we'll have to come up with a better way eventually, but for now, we'll just create
         #    a new statsframe the same way we do when we create a new thicket. 
         new_dataframe = squashed_gf.dataframe
-        subset_df = new_dataframe["name"].reset_index().drop_duplicates(subset=["node"])
-        sframe = GraphFrame(
-            graph=squashed_gf.graph,
-            dataframe=pd.DataFrame(
+        stats_df = self.statsframe.dataframe
+        if not preserve_stats_dataframe:
+            subset_df = new_dataframe["name"].reset_index().drop_duplicates(subset=["node"])
+            stats_df = pd.DataFrame(
                 index=subset_df["node"],
                 data={"name": subset_df["name"].values},
-            ),
+            )
+        sframe = GraphFrame(
+            graph=new_graph,
+            dataframe=stats_df,
         )
         return Thicket(
             new_graph,
@@ -1020,6 +1031,45 @@ class Thicket(GraphFrame):
             "Invalid function: thicket.filter(), please use thicket.filter_metadata() or thicket.filter_stats()"
         )
 
+    def query(self, query_obj, squash=True):
+        """Apply a Hatchet query to the Thicket object.
+
+        Arguments:
+            query_obj (AbstractQuery): the query, represented as by a subclass of Hatchet's AbstractQuery
+            squash (bool): if true, run Thicket.squash before returning the result of the query
+
+        Returns:
+            (Thicket): a new Thicket object containing the data that matches the query
+        """
+        if isinstance(query_obj, (list, str)):
+            raise UnsupportedQuery("Object and String queries from Hatchet are not yet supported in Thicket")
+        elif not issubclass(type(query_obj), AbstractQuery):
+            raise TypeError("Input to 'query' must be a Hatchet query (i.e., list, str, or subclass of AbstractQuery)")
+        dframe_copy = self.dataframe.copy()
+        index_names = self.dataframe.index.names
+        dframe_copy.reset_index(inplace=True)
+        query = query_obj
+        # TODO Add a conditional here to parse Object and String queries when supported
+        query_matches = query.apply(self)
+        filtered_df = dframe_copy.loc[dframe_copy["node"].isin(query_matches)]
+        if filtered_df.shape[0] == 0:
+            raise EmptyQuery("The provided query would have produced an empty Thicket.")
+        filtered_df.set_index(index_names, inplace=True)
+        filtered_th = Thicket(
+            self.graph,
+            filtered_df,
+            exc_metrics=self.exc_metrics,
+            inc_metrics=self.inc_metrics,
+            default_metric=self.default_metric,
+            metadata=self.metadata,
+            profile=self.profile,
+            profile_mapping=self.profile_mapping,
+            statsframe=self.statsframe,
+        )
+        if squash:
+            return filtered_th.squash()
+        return filtered_th
+
     def groupby(self, groupby_function):
         """Create sub-thickets based on unique values in metadata column(s).
 
@@ -1101,7 +1151,8 @@ class Thicket(GraphFrame):
         ]
 
         # filter nodes in the graph frame based on the DataFrame nodes
-        filtered_graphframe = new_thicket.squash()
+        # TODO see if the new Thicket.squash function will work here
+        filtered_graphframe = GraphFrame.squash(new_thicket)
         new_thicket.graph = filtered_graphframe.graph
         new_thicket.statsframe.graph = filtered_graphframe.graph
 
@@ -1114,3 +1165,12 @@ class InvalidFilter(Exception):
 
 class EmptyMetadataFrame(Exception):
     """Raised when a Thicket object argument is passed with an empty MetadataFrame to the filter function."""
+
+
+class UnsupportedQuery(Exception):
+    """Raised when an object query or string query are provided to the 'query' function because those types
+       of queries are not yet supported in Thicket."""
+
+
+class EmptyQuery(Exception):
+    """Raised when a query would result in an empty Thicket object."""
