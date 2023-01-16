@@ -425,6 +425,10 @@ class Thicket(GraphFrame):
 
         # Join "self" & "other" metadata frames
         combined_th.metadata = pd.concat([self_cp.metadata, other_cp.metadata])
+        # Update "profile" object
+        combined_th.profile += other_cp.profile
+        # Update "profile_mapping" object
+        combined_th.profile_mapping.update(other_cp.profile_mapping)
 
         # Clear statsframe
         subset_df = (
