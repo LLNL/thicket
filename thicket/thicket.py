@@ -718,7 +718,20 @@ class Thicket(GraphFrame):
         # Operations specific to a superthicket
         if superthicket:
             unify_metadata.index.rename("thicket", inplace=True)
-            unify_metadata = unify_metadata.groupby("thicket").agg(set)
+
+            # Process to aggregate rows of thickets with the same name.
+            def agg_function(obj):
+                """Aggregate values in 'obj' into a set to remove duplicates."""
+                if len(obj) <= 1:
+                    return obj
+                else:
+                    _set = set(obj)
+                    if len(_set) == 1:
+                        return _set.pop()
+                    else:
+                        return _set
+
+            unify_metadata = unify_metadata.groupby("thicket").agg(agg_function)
 
         # Have metadata index match ensembleframe index
         unify_metadata.sort_index(inplace=True)
