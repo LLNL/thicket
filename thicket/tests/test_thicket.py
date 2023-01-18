@@ -10,6 +10,8 @@ import hatchet as ht
 import numpy as np
 import pandas as pd
 
+from hatchet import QueryMatcher
+
 from thicket.helpers import are_synced
 from thicket import Thicket, InvalidFilter, EmptyMetadataFrame
 
@@ -300,3 +302,31 @@ def test_filter_stats(example_cali_multiprofile):
             )
             # check filtered ensembleframe nodes match exp_nodes
             assert ensemble_nodes == exp_nodes
+
+
+def test_query(rajaperf_basecuda_xl_cali):
+    th = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+    th_df_profiles = th.dataframe.get_level_values("profile")
+    match = [
+        node
+        for node in th.graph.traverse()
+        if node._hatchet_nid in [0, 1, 2, 3, 5, 6, 8, 9]
+    ]
+    match_frames = [node.frame for node in match]
+    match_names = [frame["name"] for frame in match_frames]
+    query = QueryMatcher().match("*").rel(
+        ".",
+        lambda row: row["name"].apply(lambda x: re.match(r"Algorithm.*block_128", x) is not None).all()
+    )
+    filt_th = th.query(query)
+    filt_nodes = list(filt_th.graph.traverse())
+
+    assert sorted(list(filt_th.dataframe.index.names)) == sorted(["node", "profile"])
+    filt_th_df_nodes = filt_th.dataframe.index.get_level_values("node").to_list()
+    filt_th_df_profiles = filt_th.dataframe.index.get_level_values("profile")
+
+    assert len(filt_nodes) == len(match)
+    assert all([n.frame in match_frames for n in filt_nodes])
+    assert all([n.frame["name"] in match_names for n in filt_nodes])
+    assert all([n in filt_th_df_nodes for n in filt_nodes])
+    assert sorted(filt_th_df_profiles.unique().to_list()) == sorted(th_df_profiles.unique().to_list())
