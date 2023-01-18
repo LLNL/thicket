@@ -6853,12 +6853,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
+
 var StackedBars = /*#__PURE__*/function () {
-  function StackedBars(div, width, height, data) {
+  function StackedBars(div, width, height, data, external_scales) {
     _classCallCheck(this, StackedBars);
 
     //data
     this.topdown_vars = ['any#topdown.retiring', 'any#topdown.frontend_bound', 'any#topdown.backend_bound', 'any#topdown.bad_speculation'];
+    this.nice_vars = ['Retiring', 'Frontent Bound', 'Backend Bound', 'Bad Speculation'];
     this.records = this.test_normalize(data);
     this.uniques = this.get_unique_nodes(this.records);
     this.profs = this.get_unique_profs(this.records, this.uniques[0].nid);
@@ -6867,35 +6869,55 @@ var StackedBars = /*#__PURE__*/function () {
     this.magic_ordinal = 'any#ProblemSize';
     this.ordinal_groups = this.getOrdinalGroups();
     this.grouped_records = this.getGroupedRecords();
-    console.log("GRPS:", this.ordinal_groups); //layout 
+    this.longest_string = this.getLongestStringWidth(this.uniques);
+    this.external_scales = external_scales; //layout 
 
     this.margin = 15;
     this.row_chart_margin = 5;
     this.group_margins = 10;
-    this.width = width - this.margin;
+    this.width = width;
     this.height = height;
-    this.bar_chart_height = 60; //derived layout
-
-    this.label_width = this.width * .2;
-    this.indiv_chart_width = this.width - this.label_width;
-    this.total_bar_height = this.bar_chart_height - this.margin;
-    this.bar_width = (this.width - this.margin) / this.num_profs;
-    this.inner_group_width = (this.indiv_chart_width - this.label_width) / this.ordinal_groups.length - this.group_margins; //scales
-
-    this.chart_row_scale = linear_linear().domain([0, this.uniques.length]).range([this.margin, this.uniques.length * this.bar_chart_height]);
-    this.bar_x_scale = linear_linear().domain([0, this.ordinal_groups.length]).range([this.label_width, this.indiv_chart_width]);
-    this.internal_x_scale = linear_linear().domain([0, this.profs.length / this.ordinal_groups.length]).range([this.group_margins / 2, this.inner_group_width]);
-    this.stacked_bar_scale = linear_linear().domain([0, 1]).range([0, this.total_bar_height - this.row_chart_margin]);
-    this.bar_color_scale = ordinal(Tableau10).domain(this.topdown_vars); //dom manip
+    this.bar_chart_height = 60;
+    this.reset_scales(); //dom manip
 
     if (div.node().nodeName == 'div') {
-      this.svg = div.append('svg').attr('width', width).attr('height', this.uniques.length * this.bar_chart_height);
+      this.svg = div.append('svg').attr('width', width).attr('height', this.height);
     } else if (div.node().nodeName == 'svg' || div.node().nodeName == 'g') {
-      this.svg = div.append('g').attr('width', width).attr('height', this.uniques.length * this.bar_chart_height);
+      this.svg = div.append('g').attr('width', width).attr('height', this.height);
     }
   }
 
   _createClass(StackedBars, [{
+    key: "reset_scales",
+    value: function reset_scales() {
+      //derived layout
+      this.label_width = this.longest_string * 9; //width determined hurestically 
+
+      this.indiv_chart_width = this.width - 80;
+      this.inner_group_width = (this.indiv_chart_width - this.label_width) / this.ordinal_groups.length;
+      this.total_bar_height = this.bar_chart_height - this.margin;
+      this.bar_width = this.inner_group_width / (this.num_profs / this.ordinal_groups.length); //scales
+
+      this.chart_row_scale = linear_linear().domain([0, this.uniques.length]).range([0, this.height]);
+      this.bar_x_scale = linear_linear().domain([0, this.ordinal_groups.length]).range([this.label_width, this.indiv_chart_width]);
+      this.internal_x_scale = linear_linear().domain([0, this.num_profs / this.ordinal_groups.length]).range([this.group_margins / 2, this.inner_group_width]);
+      this.stacked_bar_scale = linear_linear().domain([0, 1]).range([0, this.total_bar_height]);
+      this.stacked_bar_axis = linear_linear().domain([1, 0]).range([0, this.total_bar_height]);
+      this.bar_color_scale = ordinal(Tableau10).domain(this.topdown_vars);
+      this.legend_scale = linear_linear().domain([0, this.topdown_vars.length + 1]).range([0, this.width]);
+    }
+  }, {
+    key: "getLongestStringWidth",
+    value: function getLongestStringWidth(list) {
+      var longest = 0;
+
+      for (var s in list) {
+        longest = Math.max(longest, list[s].name.length);
+      }
+
+      return longest;
+    }
+  }, {
     key: "lookup_order",
     value: function lookup_order(nid) {
       var _iterator = _createForOfIteratorHelper(this.row_odering_map),
@@ -6920,8 +6942,7 @@ var StackedBars = /*#__PURE__*/function () {
     value: function getGroupedRecords() {
       var _this = this;
 
-      var nested_recs = []; //get rows first
-
+      //get rows first
       var _iterator2 = _createForOfIteratorHelper(this.uniques),
           _step2;
 
@@ -6973,7 +6994,6 @@ var StackedBars = /*#__PURE__*/function () {
         _iterator2.f();
       }
 
-      console.log(this.uniques);
       return this.uniques;
     }
   }, {
@@ -6990,24 +7010,6 @@ var StackedBars = /*#__PURE__*/function () {
           var r = _step4.value;
 
           if (!grps.includes(r[this.magic_ordinal])) {
-            freq[r[this.magic_ordinal]] = 1;
-          } else {
-            freq[r[this.magic_ordinal]] += 1;
-          }
-
-          console.log("FREQ", freq);
-
-          if (r[this.magic_ordinal] < 100000) {
-            r[this.magic_ordinal] = 80000;
-          } else if (r[this.magic_ordinal] < 200000) {
-            r[this.magic_ordinal] = 160000;
-          } else if (r[this.magic_ordinal] < 400000) {
-            r[this.magic_ordinal] = 320000;
-          } else if (r[this.magic_ordinal] < 800000) {
-            r[this.magic_ordinal] = 640000;
-          }
-
-          if (!grps.includes(r[this.magic_ordinal])) {
             grps.push(r[this.magic_ordinal]);
             freq[r[this.magic_ordinal]] = 1;
           } else {
@@ -7020,7 +7022,6 @@ var StackedBars = /*#__PURE__*/function () {
         _iterator4.f();
       }
 
-      console.log("FREQ", freq);
       return grps;
     }
   }, {
@@ -7156,14 +7157,16 @@ var StackedBars = /*#__PURE__*/function () {
       var _this2 = this;
 
       var self = this;
-      this.y_offset = 0;
+      this.y_offset = 0; //update width scales
+
+      this.reset_scales();
       this.svg.selectAll('.chart_rows').data(this.uniques).join(function (enter) {
         var row = enter.append('g').attr('class', 'chart-rows').attr('transform', function (_, i) {
-          return "translate(".concat(0, ",", _this2.chart_row_scale(_this2.lookup_order(i)), ")");
+          return "translate(".concat(0, ",", _this2.external_scales.tree_y_scale(_this2.lookup_order(i)) - 15, ")");
         });
-        row.append('g').attr('class', 'stacked-bars-row-left-axis').attr('transform', "translate(".concat(_this2.label_width, ",").concat(_this2.row_chart_margin, ")")).call(axisLeft(_this2.stacked_bar_scale).ticks(3));
+        row.append('g').attr('class', 'stacked-bars-row-left-axis').attr('transform', "translate(".concat(_this2.label_width, ",", 0, ")")).call(axisLeft(_this2.stacked_bar_axis).ticks(3));
         row.append('g').attr('class', 'stacked-bars-row-bottom-axis').attr('transform', "translate(0,".concat(_this2.bar_chart_height - _this2.margin, ")")).call(axisBottom(_this2.bar_x_scale).ticks(0));
-        row.append('text').attr('x', 0).attr('y', 18).text(function (d) {
+        row.append('text').attr('x', 0).attr('y', 17).text(function (d) {
           return d.name;
         });
         return row;
@@ -7191,7 +7194,7 @@ var StackedBars = /*#__PURE__*/function () {
       }).join(function (enter) {
         //do rect for each topdown var
         var bar = enter.append('g').attr('class', 'stacked-bar').attr('transform', function (_, i) {
-          return "translate(".concat(_this2.internal_x_scale(i), ",").concat(_this2.row_chart_margin, ")");
+          return "translate(".concat(_this2.internal_x_scale(i), ",", 0, ")");
         });
         return bar;
       }).selectAll('.bar-portion').data(function (d) {
@@ -7229,14 +7232,12 @@ var StackedBars = /*#__PURE__*/function () {
           return self.bar_color_scale(d.varname);
         }).attr('y', function (d, i) {
           if (i == 0) {
-            var _ret = 0;
-            self.y_offset = self.stacked_bar_scale(d.data);
-            return _ret;
+            self.y_offset = _this2.total_bar_height - self.stacked_bar_scale(d.data);
+            return self.y_offset;
           }
 
-          var ret = self.y_offset;
-          self.y_offset += self.stacked_bar_scale(d.data);
-          return ret;
+          self.y_offset -= self.stacked_bar_scale(d.data);
+          return self.y_offset;
         }).attr('height', function (d) {
           return self.stacked_bar_scale(d.data);
         }).on('click', function (e, d) {
@@ -7245,10 +7246,23 @@ var StackedBars = /*#__PURE__*/function () {
         sub_bars.each(function (_, i, a) {
           this.getBBox().height;
         });
-      }); // d3.selectAll('.chart-rows')
-      //     .each((e, d, i)=>{
-      //         console.log(e,d,i);
-      //     })
+      });
+      var legend = this.svg.append('g').attr('class', 'legend').attr('width', this.width).attr('height', 70).attr('transform', "translate(".concat(0, ", ", (this.uniques.length + 1) * this.bar_chart_height, ")"));
+      legend.append('text').attr('');
+      legend.selectAll('.label-grp').data(this.topdown_vars).join(function (enter) {
+        var label = enter.append('g').attr('class', 'label-grp').attr('transform', function (d, i) {
+          console.log(d, i);
+          return "translate(".concat(self.legend_scale(i), ", ", 15, ")");
+        });
+        label.append('rect').attr('height', 20).attr('width', 20).attr('fill', function (d) {
+          return self.bar_color_scale(d);
+        });
+        label.append('text').text(function (d, i) {
+          return self.nice_vars[i];
+        }).attr('x', 23).attr('y', 10).attr('dominant-baseline', 'middle');
+      });
+      this.set_height(this.svg.node().getBBox().height + legend.node().getBBox().height);
+      this.svg.selectAll('text').style('font-family', 'monospace');
     }
   }]);
 
@@ -79790,20 +79804,25 @@ function treetable_createClass(Constructor, protoProps, staticProps) { if (proto
 
 
 
+
 var TreeTable = /*#__PURE__*/function () {
   function TreeTable(div, width, height, tree_model, table_data) {
     treetable_classCallCheck(this, TreeTable);
 
+    this.width = width;
     this.tree_width = .2 * width;
     this.table_width = width - this.tree_width;
     this.tree = tree_model;
     this.indented_tree = tree_model.indented_tree();
     this.table_data = table_data;
-    this.rowheight = 60;
-    this.height = Object.values(this.indented_tree).length * this.rowheight;
-    this.x_scale = linear_linear().range([layout.margins.left, this.tree_width]).domain([0, tree_model.depth]);
+    this.rowheight = 75;
+    this.height = Object.values(this.indented_tree).length * this.rowheight; // //hack for legend until I figure out how to handle this
+    // this.height += 70;
+    //math.max ensures that the depth will at least be 1 for scale purposes
+
+    this.x_scale = linear_linear().range([layout.margins.left, this.tree_width]).domain([0, Math.max(1, tree_model.depth)]);
     this.y_scale = linear_linear().range([layout.margins.top, this.height]).domain([0, Object.values(this.indented_tree).length]);
-    this.svg = div.append('svg').attr('height', this.height + 20 * this.rowheight).attr('width', width);
+    this.svg = div.append('svg').attr('height', this.height + layout.margins.bottom).attr('width', width);
     this.pre_render();
   }
 
@@ -79834,15 +79853,26 @@ var TreeTable = /*#__PURE__*/function () {
     key: "pre_render",
     value: function pre_render() {
       this.tree_grp = this.svg.append('g').attr('width', this.tree_width).attr('height', this.height).attr('class', 'tree-group');
-      this.table_grp = this.svg.append('g').attr('width', this.table_width).attr('height', this.height).attr('class', 'table-group').attr('transform', "translate(".concat(this.tree_width + layout.margins.left, ",", 0, ")"));
-      this.table = new StackedBars(this.table_grp, this.table_width, this.height, this.table_data.dataframe);
+      this.table_grp = this.svg.append('g').attr('width', this.table_width).attr('height', this.height).attr('class', 'table-group').attr('transform', "translate(".concat(this.tree_width, ",", 0, ")"));
+      this.table = new StackedBars(this.table_grp, this.table_width, this.height, this.table_data.dataframe, {
+        'tree_y_scale': this.y_scale
+      });
       this.table.set_row_ordering_map(Object.values(this.indented_tree));
-      this.render();
     }
   }, {
     key: "render",
     value: function render() {
-      var self = this;
+      var self = this; //Fix tree and table ratios for cases of one row of nodes
+
+      this.tree_width = Math.min(this.x_scale(this.tree.depth), this.tree_width);
+      this.table_width = this.width - this.tree_width; //Update elements
+
+      this.tree_grp.attr('width', this.tree_width);
+      this.table_grp.attr('width', this.table_width);
+      this.table_grp.attr('transform', "translate(".concat(this.tree_width + layout.margins.left, ",", 0, ")"));
+      this.table.set_width(this.table_width); //Update scales
+
+      this.x_scale.range([layout.margins.left, this.tree_width]);
       this.tree_grp.selectAll('.nodes').data(Object.values(this.indented_tree)).join(function (enter) {
         var node = enter.append('g').attr('class', 'nodes').attr('transform', function (d) {
           return "translate(".concat(self.x_scale(d.layout.depth), ",").concat(self.y_scale(d.layout.order), ")");
@@ -79859,7 +79889,9 @@ var TreeTable = /*#__PURE__*/function () {
           }
         }).style("fill", "none").style("stroke", "rgba(125,50,50,1)").style("stroke-width", 2).style("opacity", 1);
       });
-      this.table.render();
+      this.table.render(); //adjust height to reflect changes made in table
+
+      this.svg.attr('height', Math.max(this.height + layout.margins.bottom, this.table.height));
     }
   }]);
 
@@ -79921,25 +79953,7 @@ var TreeModel = /*#__PURE__*/function () {
   }]);
 
   return TreeModel;
-}(); // window.onload = function(){
-//     d3.json("http://localhost:8000/test_area/data.json").then(function(data){
-//         // console.log(data);
-//         setup(data);
-//     });
-// };
-// let state = {
-//     active_prof: {}
-// }
-// function setup(data){
-//     let tree_model = new TreeModel(data.graph[0]);
-//     let table_view = null;
-//     let tree_max_w = window.innerWidth*.7;
-//     let tree_max_h = window.innerHeight*.9;
-//     let tree_div = d3.select("#treetable");
-//     const treetable = new TreeTable(tree_div, tree_max_w, tree_max_h, tree_model, table_view);
-//     //Bind render to store updates
-//     store.subscribe(() => treetable.render())
-// }
+}();
 ;// CONCATENATED MODULE: ./scripts/topdown/topdown.js
 
 

@@ -1,9 +1,11 @@
 import * as d3 from 'd3';
+import { thresholdSturges } from 'd3';
 
 export default class StackedBars{
-    constructor(div, width, height, data){
+    constructor(div, width, height, data, external_scales){
         //data
         this.topdown_vars = ['any#topdown.retiring', 'any#topdown.frontend_bound', 'any#topdown.backend_bound', 'any#topdown.bad_speculation'];
+        this.nice_vars  = ['Retiring', 'Frontent Bound', 'Backend Bound', 'Bad Speculation'];
         this.records = this.test_normalize(data);
         this.uniques = this.get_unique_nodes(this.records);
         this.profs = this.get_unique_profs(this.records, this.uniques[0].nid);
@@ -12,44 +14,58 @@ export default class StackedBars{
         this.magic_ordinal = 'any#ProblemSize';
         this.ordinal_groups = this.getOrdinalGroups();
         this.grouped_records = this.getGroupedRecords();
-
-        console.log("GRPS:", this.ordinal_groups);
+        this.longest_string = this.getLongestStringWidth(this.uniques);
+        this.external_scales = external_scales;
 
         //layout 
         this.margin = 15;
         this.row_chart_margin = 5;
         this.group_margins = 10;
-        this.width = width-this.margin;
+        this.width = width;
         this.height = height;
         this.bar_chart_height = 60;
         
-        //derived layout
-        this.label_width = this.width * .2;
-        this.indiv_chart_width = this.width - this.label_width;
-        this.total_bar_height = this.bar_chart_height - this.margin;
-        this.bar_width = (this.width - this.margin) / this.num_profs;
-        this.inner_group_width = ((this.indiv_chart_width-this.label_width)/this.ordinal_groups.length) - this.group_margins;
-        
-        //scales
-        this.chart_row_scale = d3.scaleLinear().domain([0, this.uniques.length]).range([this.margin, this.uniques.length*this.bar_chart_height]);
-        this.bar_x_scale = d3.scaleLinear().domain([0, this.ordinal_groups.length]).range([this.label_width, this.indiv_chart_width]);
-        this.internal_x_scale = d3.scaleLinear().domain([0, this.profs.length/this.ordinal_groups.length]).range([this.group_margins/2, this.inner_group_width]);
-        this.stacked_bar_scale = d3.scaleLinear().domain([0,1]).range([0, this.total_bar_height-this.row_chart_margin]);
-        this.bar_color_scale = d3.scaleOrdinal(d3.schemeTableau10).domain(this.topdown_vars);
+        this.reset_scales();
 
         //dom manip
         if(div.node().nodeName == 'div'){
             this.svg = div.append('svg')
                 .attr('width', width)
-                .attr('height', this.uniques.length*this.bar_chart_height);
+                .attr('height', this.height);
         }
         else if(div.node().nodeName == 'svg' || div.node().nodeName == 'g'){
             this.svg = div.append('g')
                 .attr('width', width)
-                .attr('height', this.uniques.length*this.bar_chart_height);
+                .attr('height', this.height);
 
         }
 
+    }
+
+    reset_scales(){
+           //derived layout
+           this.label_width = this.longest_string*9; //width determined hurestically 
+           this.indiv_chart_width = this.width-80;
+           this.inner_group_width = ((this.indiv_chart_width - this.label_width)/this.ordinal_groups.length);
+           this.total_bar_height = this.bar_chart_height - this.margin;
+           this.bar_width = this.inner_group_width / (this.num_profs/this.ordinal_groups.length);
+           
+           //scales
+           this.chart_row_scale = d3.scaleLinear().domain([0, this.uniques.length]).range([0, this.height]);
+           this.bar_x_scale = d3.scaleLinear().domain([0, this.ordinal_groups.length]).range([this.label_width, this.indiv_chart_width]);
+           this.internal_x_scale = d3.scaleLinear().domain([0, this.num_profs/this.ordinal_groups.length]).range([this.group_margins/2, this.inner_group_width]);
+           this.stacked_bar_scale = d3.scaleLinear().domain([0, 1]).range([0, this.total_bar_height]);
+           this.stacked_bar_axis = d3.scaleLinear().domain([1, 0]).range([0, this.total_bar_height]);
+           this.bar_color_scale = d3.scaleOrdinal(d3.schemeTableau10).domain(this.topdown_vars);
+           this.legend_scale = d3.scaleLinear().domain([0, this.topdown_vars.length+1]).range([0, this.width]);
+    }
+
+    getLongestStringWidth(list){
+        var longest = 0;
+        for(var s in list){
+            longest = Math.max(longest, list[s].name.length);
+        }
+        return longest;
     }
 
     lookup_order(nid){
@@ -61,7 +77,6 @@ export default class StackedBars{
     }
 
     getGroupedRecords(){
-        let nested_recs = [];
         //get rows first
         for(let n of this.uniques){
             let row = this.records.filter(r => {return r.nid == n.nid});
@@ -73,7 +88,6 @@ export default class StackedBars{
             n['records'] = gr;
         }
 
-        console.log(this.uniques);
         return this.uniques;
     }
 
@@ -83,33 +97,6 @@ export default class StackedBars{
 
         for(let r of this.records){
 
-
-            if (!grps.includes(r[this.magic_ordinal])){
-                freq[r[this.magic_ordinal]] = 1;
-            }
-            else{
-                freq[r[this.magic_ordinal]] += 1;
-            }
-            
-            
-            console.log("FREQ", freq);
-
-
-            if(r[this.magic_ordinal] < 100000){
-                r[this.magic_ordinal] = 80000;
-            }
-            else if(r[this.magic_ordinal] < 200000){
-                r[this.magic_ordinal] = 160000;
-            }
-            else if(r[this.magic_ordinal] < 400000){
-                r[this.magic_ordinal] = 320000;
-            }
-            else if(r[this.magic_ordinal] < 800000){
-                r[this.magic_ordinal] = 640000;
-            }
-
-
-
             if (!grps.includes(r[this.magic_ordinal])){
                 grps.push(r[this.magic_ordinal]);
                 freq[r[this.magic_ordinal]] = 1;
@@ -118,7 +105,6 @@ export default class StackedBars{
                 freq[r[this.magic_ordinal]] += 1;
             }
         }
-        console.log("FREQ", freq);
         return grps;
     }
 
@@ -137,7 +123,6 @@ export default class StackedBars{
         }
 
         return data;
-
     }
 
     get_unique_profs(dataframe, id){
@@ -188,18 +173,22 @@ export default class StackedBars{
     render(){
         const self = this;
         this.y_offset = 0;
+
+        //update width scales
+        this.reset_scales();
+
         this.svg.selectAll('.chart_rows')
                 .data(this.uniques)
                 .join(
                     (enter)=>{
                         let row = enter.append('g')
                                 .attr('class', 'chart-rows')
-                                .attr('transform', (_,i)=>{return `translate(${0},${this.chart_row_scale(this.lookup_order(i))})`});
+                                .attr('transform', (_,i)=>{return `translate(${0},${this.external_scales.tree_y_scale(this.lookup_order(i)) - 15})`});
                         
                         row.append('g')
                             .attr('class', 'stacked-bars-row-left-axis')
-                            .attr('transform', `translate(${this.label_width},${this.row_chart_margin})`)
-                            .call(d3.axisLeft(this.stacked_bar_scale).ticks(3));
+                            .attr('transform', `translate(${this.label_width},${0})`)
+                            .call(d3.axisLeft(this.stacked_bar_axis).ticks(3));
                         
                         row.append('g')
                             .attr('class', 'stacked-bars-row-bottom-axis')
@@ -208,7 +197,7 @@ export default class StackedBars{
                         
                         row.append('text')
                             .attr('x', 0)
-                            .attr('y', 18)
+                            .attr('y', 17)
                             .text(d=>{return d.name})
                             
                         return row;
@@ -245,7 +234,7 @@ export default class StackedBars{
                             //do rect for each topdown var
                             let bar = enter.append('g')
                                     .attr('class', 'stacked-bar')
-                                    .attr('transform', (_,i)=>{return `translate(${this.internal_x_scale(i)},${this.row_chart_margin})`});
+                                    .attr('transform', (_,i)=>{return `translate(${this.internal_x_scale(i)},${0})`});
 
                             return bar;
                         }
@@ -277,13 +266,11 @@ export default class StackedBars{
                                 .attr('fill', (d)=>{return self.bar_color_scale(d.varname)})
                                 .attr('y', (d, i)=>{
                                     if(i == 0){
-                                        let ret = 0;
-                                        self.y_offset = self.stacked_bar_scale(d.data);
-                                        return ret;
+                                        self.y_offset = this.total_bar_height - self.stacked_bar_scale(d.data);
+                                        return self.y_offset;
                                     }
-                                    let ret = self.y_offset;
-                                    self.y_offset += self.stacked_bar_scale(d.data);
-                                    return ret;
+                                    self.y_offset -= self.stacked_bar_scale(d.data);
+                                    return self.y_offset;
                                 })
                                 .attr('height', function(d){
                                     return self.stacked_bar_scale(d.data);
@@ -297,10 +284,41 @@ export default class StackedBars{
                             })
                         }
                     )
+        
+        var legend = this.svg.append('g')
+            .attr('class', 'legend')
+            .attr('width', this.width)
+            .attr('height', 70)
+            .attr('transform', `translate(${0}, ${(this.uniques.length+1)*this.bar_chart_height})`);
+        
+        legend.append('text')
+            .attr('')
 
-        // d3.selectAll('.chart-rows')
-        //     .each((e, d, i)=>{
-        //         console.log(e,d,i);
-        //     })
+        legend.selectAll('.label-grp')
+            .data(this.topdown_vars)
+            .join(
+                (enter)=>{
+                    let label = enter.append('g')
+                        .attr('class', 'label-grp')
+                        .attr('transform', (d,i)=>{console.log(d, i); return `translate(${self.legend_scale(i)}, ${15})`});
+                    
+                    label.append('rect')
+                         .attr('height', 20)
+                         .attr('width', 20)
+                         .attr('fill', (d)=>{return self.bar_color_scale(d)})
+                    
+                    label.append('text')
+                        .text((d,i)=>{return self.nice_vars[i]})
+                        .attr('x', 23)
+                        .attr('y', 10)
+                        .attr('dominant-baseline', 'middle');
+                    
+                }
+            )
+
+        this.set_height(this.svg.node().getBBox().height + legend.node().getBBox().height);
+        
+        this.svg.selectAll('text').style('font-family', 'monospace');
+
     }
 }

@@ -2,23 +2,29 @@ import { layout } from './globals';
 import StackedBars from './topdown/stackedbars'
 
 import * as d3 from "d3";
+import { min } from 'd3';
 
 
 export class TreeTable{
     constructor(div, width, height, tree_model, table_data){
+        this.width = width;
         this.tree_width = .2*width;
         this.table_width = width - this.tree_width;
         this.tree = tree_model;
         this.indented_tree = tree_model.indented_tree();
         this.table_data = table_data;
 
-        this.rowheight = 60;
+        this.rowheight = 75;
         this.height = Object.values(this.indented_tree).length * this.rowheight;
 
-        this.x_scale = d3.scaleLinear().range([layout.margins.left, this.tree_width]).domain([0, tree_model.depth]);
+        // //hack for legend until I figure out how to handle this
+        // this.height += 70;
+
+        //math.max ensures that the depth will at least be 1 for scale purposes
+        this.x_scale = d3.scaleLinear().range([layout.margins.left, this.tree_width]).domain([0, Math.max(1, tree_model.depth)]);
         this.y_scale = d3.scaleLinear().range([layout.margins.top, this.height]).domain([0, Object.values(this.indented_tree).length]);
        
-        this.svg = div.append('svg').attr('height', this.height + (20*this.rowheight)).attr('width', width);
+        this.svg = div.append('svg').attr('height', this.height + layout.margins.bottom).attr('width', width);
         this.pre_render();
     }
 
@@ -47,17 +53,29 @@ export class TreeTable{
             .attr('width', this.table_width)
             .attr('height', this.height)
             .attr('class','table-group')
-            .attr('transform', `translate(${this.tree_width+layout.margins.left},${0})`)
+            .attr('transform', `translate(${this.tree_width},${0})`)
 
-        this.table = new StackedBars(this.table_grp, this.table_width, this.height, this.table_data.dataframe);
+        this.table = new StackedBars(this.table_grp, this.table_width, this.height, this.table_data.dataframe, {'tree_y_scale': this.y_scale});
         this.table.set_row_ordering_map(Object.values(this.indented_tree));
-
-        this.render();
-        
     }
 
     render(){
         const self = this;
+
+        //Fix tree and table ratios for cases of one row of nodes
+        this.tree_width = Math.min(this.x_scale(this.tree.depth), this.tree_width);
+        this.table_width = this.width - this.tree_width;
+        
+        //Update elements
+        this.tree_grp.attr('width', this.tree_width);
+        this.table_grp.attr('width',this.table_width);
+        this.table_grp.attr('transform', `translate(${this.tree_width+layout.margins.left},${0})`);
+        this.table.set_width(this.table_width);
+
+        //Update scales
+        this.x_scale.range([layout.margins.left, this.tree_width]);
+
+
         this.tree_grp.selectAll('.nodes')
                     .data(Object.values(this.indented_tree))
                     .join(
@@ -95,7 +113,13 @@ export class TreeTable{
                         }
                     )
 
+
         this.table.render();
+
+        //adjust height to reflect changes made in table
+        this.svg.attr('height', Math.max(this.height + layout.margins.bottom, this.table.height))
+
+
     }
 }
 
@@ -140,32 +164,4 @@ export class TreeModel{
         return tree_cpy;
     }
 
-
 }
-
-// window.onload = function(){
-//     d3.json("http://localhost:8000/test_area/data.json").then(function(data){
-//         // console.log(data);
-//         setup(data);
-//     });
-// };
-
-// let state = {
-//     active_prof: {}
-// }
-
-
-// function setup(data){
-//     let tree_model = new TreeModel(data.graph[0]);
-//     let table_view = null;
-
-//     let tree_max_w = window.innerWidth*.7;
-//     let tree_max_h = window.innerHeight*.9;
-//     let tree_div = d3.select("#treetable");
-
-//     const treetable = new TreeTable(tree_div, tree_max_w, tree_max_h, tree_model, table_view);
-
-
-//     //Bind render to store updates
-//     store.subscribe(() => treetable.render())
-// }
