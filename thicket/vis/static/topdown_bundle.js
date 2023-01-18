@@ -6860,7 +6860,7 @@ var StackedBars = /*#__PURE__*/function () {
 
     //data
     this.topdown_vars = ['any#topdown.retiring', 'any#topdown.frontend_bound', 'any#topdown.backend_bound', 'any#topdown.bad_speculation'];
-    this.nice_vars = ['Retiring', 'Frontent Bound', 'Backend Bound', 'Bad Speculation'];
+    this.nice_vars = ['Retiring', 'Frontend Bound', 'Backend Bound', 'Bad Speculation'];
     this.records = this.test_normalize(data);
     this.uniques = this.get_unique_nodes(this.records);
     this.profs = this.get_unique_profs(this.records, this.uniques[0].nid);
