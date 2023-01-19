@@ -13,7 +13,7 @@ import numpy as np
 
 from collections import OrderedDict
 from hatchet import GraphFrame
-from hatchet.query import AbstractQuery, QueryMatcher, parse_cypher_query
+from hatchet.query import AbstractQuery
 from .helpers import print_graph
 from .utils import verify_thicket_structures
 
@@ -346,11 +346,13 @@ class Thicket(GraphFrame):
         # The following code updates the performance data and the statsframe with the remaining (re-indexed) nodes.
         # The dataframe is internally updated in squash(), so we can easily just save it to our thicket perfdata.
         # For the statsframe, we'll have to come up with a better way eventually, but for now, we'll just create
-        #    a new statsframe the same way we do when we create a new thicket. 
+        #    a new statsframe the same way we do when we create a new thicket.
         new_dataframe = squashed_gf.dataframe
         stats_df = self.statsframe.dataframe
         if not preserve_stats_dataframe:
-            subset_df = new_dataframe["name"].reset_index().drop_duplicates(subset=["node"])
+            subset_df = (
+                new_dataframe["name"].reset_index().drop_duplicates(subset=["node"])
+            )
             stats_df = pd.DataFrame(
                 index=subset_df["node"],
                 data={"name": subset_df["name"].values},
@@ -494,8 +496,8 @@ class Thicket(GraphFrame):
         if missing_nodes:
             try:
                 combined_th.dataframe["_missing_node"] = missing_nodes
-            except:
-                warnings.warn(f"Unable to add '_missing_node' column.")
+            except Exception:
+                warnings.warn("Unable to add '_missing_node' column.")
 
         return combined_th
 
@@ -1042,9 +1044,13 @@ class Thicket(GraphFrame):
             (Thicket): a new Thicket object containing the data that matches the query
         """
         if isinstance(query_obj, (list, str)):
-            raise UnsupportedQuery("Object and String queries from Hatchet are not yet supported in Thicket")
+            raise UnsupportedQuery(
+                "Object and String queries from Hatchet are not yet supported in Thicket"
+            )
         elif not issubclass(type(query_obj), AbstractQuery):
-            raise TypeError("Input to 'query' must be a Hatchet query (i.e., list, str, or subclass of AbstractQuery)")
+            raise TypeError(
+                "Input to 'query' must be a Hatchet query (i.e., list, str, or subclass of AbstractQuery)"
+            )
         dframe_copy = self.dataframe.copy()
         index_names = self.dataframe.index.names
         dframe_copy.reset_index(inplace=True)
@@ -1168,8 +1174,9 @@ class EmptyMetadataFrame(Exception):
 
 
 class UnsupportedQuery(Exception):
-    """Raised when an object query or string query are provided to the 'query' function because those types
-       of queries are not yet supported in Thicket."""
+    """Raised when an object query or string query are provided
+    to the 'query' function because those types of queries are
+    not yet supported in Thicket."""
 
 
 class EmptyQuery(Exception):

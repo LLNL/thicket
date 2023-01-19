@@ -7,8 +7,10 @@ from os.path import dirname
 def _thicket_to_json(data):
     return data.to_json()
 
+
 def _df_to_json(data):
-    return data.to_json(orient='records')
+    return data.to_json(orient="records")
+
 
 def _basic_to_json(data):
     import json
@@ -45,7 +47,6 @@ class EnsembleVis(Magics):
 
         RT.initialize()
 
-    
     @line_magic
     def topdown_analysis(self, line):
         args = line.split(" ")
@@ -55,9 +56,7 @@ class EnsembleVis(Magics):
         )
 
         if len(args) > 2:
-            RT.var_to_js(
-                args[2], "test", watch=False, to_js_converter=_basic_to_json
-            )
+            RT.var_to_js(args[2], "test", watch=False, to_js_converter=_basic_to_json)
 
         RT.initialize()
 

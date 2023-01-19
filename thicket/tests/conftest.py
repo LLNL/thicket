@@ -117,10 +117,10 @@ def rajaperf_basecuda_xl_cali(data_dir, tmpdir):
         "XL_BaseCuda_01048576_04.cali",
         "XL_BaseCuda_01048576_06.cali",
         "XL_BaseCuda_01048576_08.cali",
-        "XL_BaseCuda_01048576_10.cali"
+        "XL_BaseCuda_01048576_10.cali",
     ]
     basecuda_xl_dir = os.path.join(data_dir, "XL_BaseCuda_0128_01048576")
     cali_files = [os.path.join(basecuda_xl_dir, f) for f in files]
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
-    return [os.path.join(str(tmpdir), f) for f in files
+    return [os.path.join(str(tmpdir), f) for f in files]
