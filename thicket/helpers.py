@@ -52,7 +52,7 @@ def print_graph(graph):
     return i
 
 
-def write_profile(func, filepath=str(time.time_ns()) + ".pstats", *args, **kwargs):
+def write_profile(func, filepath=str(time.time() * 1e9) + ".pstats", *args, **kwargs):
     """Use hatchet profiler to profile a function and output to a file"""
     prf = profiler.Profiler()
     prf.start()
