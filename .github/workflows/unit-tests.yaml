@@ -55,11 +55,6 @@ jobs:
       run: |
         python license.py verify
 
-    - name: Update Coverage
-      if: ${{ matrix.python-version == 3.8 }}
-      run: |
-        pip install coverage==6.2
-
     - name: Install ExtraP
       if: ${{ matrix.python-version >= 3.7 }}
       run: |
@@ -67,12 +62,4 @@ jobs:
 
     - name: Basic Test with pytest
       run: |
-        PYTHONPATH=. coverage run $(which pytest)
-
-    - name: "Upload coverage to Codecov"
-      uses: "codecov/codecov-action@v3"
-      with:
-        fail_ci_if_error: true
-        verbose: true
-        env_vars: OS,PYTHON
-        directory: ./.coverage
+        PYTHONPATH=. $(which pytest)
