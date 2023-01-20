@@ -16,7 +16,7 @@ def test_model_extrap(mpi_scaling_cali):
         t_ens,
         "jobsize",
         chosen_metrics=[
-            "avg#inclusive#sum#time.duration",
+            "Avg time/rank",
         ],
     )
     mdl.produce_models()
@@ -34,7 +34,7 @@ def test_model_extrap(mpi_scaling_cali):
         "cores",
         core_list,
         chosen_metrics=[
-            "avg#inclusive#sum#time.duration",
+            "Avg time/rank",
         ],
     )
     mdl2.produce_models()
@@ -55,8 +55,8 @@ def test_componentize_functions(mpi_scaling_cali):
         t_ens,
         "jobsize",
         chosen_metrics=[
-            "avg#inclusive#sum#time.duration",
-            "max#inclusive#sum#time.duration",
+            "Avg time/rank",
+            "Max time/rank",
         ],
     )
     mdl.produce_models(add_stats=False)
@@ -71,18 +71,14 @@ def test_componentize_functions(mpi_scaling_cali):
     # Check values
     epsilon = 1e-10  # Account for rounding/approximation
 
-    val = xp_comp_df[("avg#inclusive#sum#time.duration_extrap-model", "c")].iloc[0]
+    val = xp_comp_df[("Avg time/rank_extrap-model", "c")].iloc[0]
     assert abs(val - 1.91978782561084e-05) < epsilon
 
-    val = xp_comp_df[("avg#inclusive#sum#time.duration_extrap-model", "c")].iloc[10]
+    val = xp_comp_df[("Avg time/rank_extrap-model", "c")].iloc[10]
     assert abs(val - -0.003861532835811386) < epsilon
 
-    val = xp_comp_df[("avg#inclusive#sum#time.duration_extrap-model", "p^(9/4)")].iloc[
-        0
-    ]
+    val = xp_comp_df[("Avg time/rank_extrap-model", "p^(9/4)")].iloc[0]
     assert abs(val - 9.088016797416257e-09) < epsilon
 
-    val = xp_comp_df[
-        ("avg#inclusive#sum#time.duration_extrap-model", "p^(4/3) * log2(p)^(1)")
-    ].iloc[5]
+    val = xp_comp_df[("Avg time/rank_extrap-model", "p^(4/3) * log2(p)^(1)")].iloc[5]
     assert abs(val - 7.635268055673417e-09) < epsilon
