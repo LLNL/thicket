@@ -37,5 +37,9 @@ setup(
         "extrap",
         "scipy",
         "seaborn",
+        "pydot",
+        "matplotlib",
+        "numpy",
+        "pandas",
     ],
 )

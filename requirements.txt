@@ -2,3 +2,11 @@ git+https://github.com/LLNL/hatchet.git@develop
 extrap
 scipy
 seaborn
+codecov
+flake8
+black
+pytest
+pandas
+numpy
+beautifulsoup4
+matplotlib
