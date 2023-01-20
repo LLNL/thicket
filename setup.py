@@ -32,6 +32,8 @@ setup(
     url="",
     packages=[
         "thicket",
+        "thicket.stats",
+        "thicket.vis",
     ],
     install_requires=[
         "extrap",
