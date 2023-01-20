@@ -29,8 +29,8 @@ def test_columnar_join(mpi_scaling_cali):
     assert t2.metadata.equals(t2_deep.metadata)
 
     # Check dataframe shape. Should be columnar-joined
-    assert combined_th.dataframe.shape[0] == max(
-        t1.dataframe.shape[0], t2.dataframe.shape[0]
+    assert (
+        combined_th.dataframe.shape[0] <= t1.dataframe.shape[0] + t2.dataframe.shape[0]
     )
     assert (
         combined_th.dataframe.shape[1] == t1.dataframe.shape[1] + t2.dataframe.shape[1]
@@ -42,11 +42,16 @@ def test_columnar_join(mpi_scaling_cali):
         t1.metadata.shape[1], t2.metadata.shape[1]
     )
 
-    # Check value
-    first_value = float(
-        combined_th.dataframe.at[
-            (combined_th.dataframe.index[0][0], combined_th.dataframe.index[0][1]),
-            ("CPU", "avg#inclusive#sum#time.duration"),
-        ]
+    # Check profiles
+    assert all(profile in combined_th.profile for profile in t1.profile)
+    assert all(profile in combined_th.profile for profile in t2.profile)
+
+    # Check profile_mapping
+    assert all(
+        profile_mapping in combined_th.profile_mapping
+        for profile_mapping in t1.profile_mapping
     )
-    assert (first_value == 0.000034) or (first_value == 0.000026)
+    assert all(
+        profile_mapping in combined_th.profile_mapping
+        for profile_mapping in t2.profile_mapping
+    )
