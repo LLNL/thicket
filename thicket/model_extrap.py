@@ -79,7 +79,7 @@ class ModelWrapper:
             ax.text(
                 x_vals[0],
                 max(y_vals + measures),
-                f"RSS = {self.mdl.hypothesis.RSS}",
+                "RSS = " + self.mdl.hypothesis.RSS,
             )
         ax.legend(loc=1)
 
@@ -118,7 +118,10 @@ class Modeling:
                 raise TypeError("'params' must be provided as a dict")
             elif len(params) != len(self.tht.profile):
                 raise ValueError(
-                    f"length of params must equal amound of profiles {len(params)} != {len(self.tht.profile)}"
+                    "length of params must equal amount of profiles "
+                    + len(params)
+                    + "!= "
+                    + len(self.tht.profile)
                 )
             profile_mapping_flipped = {
                 v[0]: k for k, v in self.tht.profile_mapping.items()
@@ -240,7 +243,12 @@ class Modeling:
                             param_coords_subset.append(coord)
                         else:
                             print(
-                                f"(Coordinate removed) Measurement at ({profile}): {meta_param_mapping[profile]} DNE for node {node}"
+                                "(Coordinate removed) Measurement at ("
+                                + profile
+                                + "): "
+                                + meta_param_mapping[profile]
+                                + "DNE for node "
+                                + node
                             )
                     exp.coordinates.extend(param_coords_subset)
 
@@ -313,10 +321,12 @@ class Modeling:
         # Error checking
         for c in columns:
             if c not in self.tht.statsframe.dataframe.columns:
-                raise ValueError(f'column "{c}" is not in the statsframe.')
+                raise ValueError("column " + c + " is not in the statsframe.")
             elif not isinstance(self.tht.statsframe.dataframe[c][0], ModelWrapper):
                 raise TypeError(
-                    f"column {c} is not the right type (thicket.model_extrap.ModelWrapper)."
+                    "column "
+                    + c
+                    + " is not the right type (thicket.model_extrap.ModelWrapper)."
                 )
 
         # Process each column

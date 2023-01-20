@@ -37,5 +37,5 @@ def calc_corr_nodewise(thicket, base=None, correlate=[], correlation="pearson"):
             else:
                 raise ValueError("Invalid correlation")
         thicket.statsframe.dataframe[
-            base + "_vs_" + col + " " + f"[{correlation}]"
+            base + "_vs_" + col + " " + correlation
         ] = correlated

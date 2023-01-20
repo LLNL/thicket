@@ -76,7 +76,7 @@ def add_ncu_metrics(thicket, ncu_report_file, chosen_metrics=None):
                 cpu_side_kernels.pop(other_kernel)
                 break
         if len(matches) == 0:
-            print(f"Could not match {kernel_name}")
+            print("Could not match", kernel_name)
             continue
         # Add metrics from NCU side
         data_dict["node"].append(matches[0])

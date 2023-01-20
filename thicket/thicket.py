@@ -69,19 +69,30 @@ class Thicket(GraphFrame):
             self.statsframe = statsframe
 
     def __str__(self):
-        return "".join(
-            [
-                f"graph: {print_graph(self.graph)}\n",
-                f"dataframe:\n{self.dataframe}\n",
-                f"exc_metrics: {self.exc_metrics}\n",
-                f"inc_metrics: {self.inc_metrics}\n",
-                f"default_metric: {self.default_metric}\n",
-                f"metadata:\n{self.metadata}\n",
-                f"profile: {self.profile}\n",
-                f"profile_mapping: {self.profile_mapping}\n",
-                f"statsframe:\n{print_graph(self.statsframe.graph)}\n{self.statsframe.dataframe}\n",
-            ]
+        s = (
+            "graph: "
+            + print_graph(self.graph)
+            + "\ndataframe:\n"
+            + self.dataframe
+            + "\nexc_metrics: "
+            + self.exc_metrics
+            + "\ninc_metrics: "
+            + self.inc_metrics
+            + "\ndefault_metric: "
+            + self.default_metric
+            + "\nmetadata:\n"
+            + self.metadata
+            + "\nprofile: "
+            + self.profile
+            + "\nprofile_mapping: "
+            + self.profile_mapping
+            + "\nstatsframe:\n"
+            + print_graph(self.statsframe.graph)
+            + "\n"
+            + self.statsframe.dataframe
         )
+
+        return s
 
     @staticmethod
     def thicketize_graphframe(gf, prf):
@@ -189,7 +200,7 @@ class Thicket(GraphFrame):
         elif os.path.isfile(obj):
             return Thicket.thicketize_graphframe(func(*args, **kwargs), args[0])
         else:
-            raise TypeError(f"{type(obj)} is not a valid type to be read from.")
+            raise TypeError(type(obj) + " is not a valid type to be read from.")
 
         # Perform unify ensemble
         thicket_object = Thicket.unify_ensemble(ens_list)
@@ -256,7 +267,9 @@ class Thicket(GraphFrame):
                 self.dataframe.drop(column_name, axis=1, inplace=True)
             else:
                 warnings.warn(
-                    f'Column "{column_name}" already exists. Set "overwrite=True" to force update the column.'
+                    "Column "
+                    + column_name
+                    + " already exists. Set 'overwrite=True' to force update the column."
                 )
                 return
 
@@ -641,7 +654,7 @@ class Thicket(GraphFrame):
         union_graph = th_list[0].graph
         for i in range(len(th_list)):
             for j in range(i + 1, len(th_list)):
-                print(f"Unifying ({i}, {j})...")
+                print("Unifying (" + str(i) + ", " + str(j) + "...")
                 union_graph = th_list[i].unify_pair(th_list[j])
         return union_graph
 
@@ -656,9 +669,9 @@ class Thicket(GraphFrame):
         for i in range(1, len(th_list)):  # n-1 unions
             # Check to skip unecessary computation. apply short circuiting with 'or'.
             if union_graph is th_list[i].graph or union_graph == th_list[i].graph:
-                print(f"Union Graph == thicket[{i}].graph")
+                print("Union Graph == thicket[" + str(i) + "].graph")
             else:
-                print(f"Unifying (Union Graph, {i})")
+                print("Unifying (Union Graph, " + str(i) + ")")
                 same_graphs = False
                 # Unify graph with current thickets graph
                 union_graph = union_graph.union(th_list[i].graph)
@@ -708,7 +721,9 @@ class Thicket(GraphFrame):
         for th in th_list:
             for idx in idx_set:
                 if idx not in th.dataframe.index.names:
-                    print(f"Resolving '{idx}' in thicket: ({id(th)})")
+                    print(
+                        "Resolving '" + str(idx) + "' in thicket: (" + str(id(th)) + ")"
+                    )
                     th.dataframe[idx] = 0
                     th.dataframe.set_index(idx, append=True, inplace=True)
 
@@ -851,7 +866,11 @@ class Thicket(GraphFrame):
 
             if len(name_list) > 1:
                 warnings.warn(
-                    f"Multiple values for name {name_list} at thicket.metadata[{profiles_from_meta}]. Only the first will be used."
+                    "Multiple values for name "
+                    + name_list
+                    + "at thicket.metadata["
+                    + profiles_from_meta
+                    + "]. Only the first will be used."
                 )
             th_names.append(name_list[0])
 

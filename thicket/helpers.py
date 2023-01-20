@@ -47,12 +47,12 @@ def print_graph(graph):
     """Print the nodes in a hatchet graph"""
     i = 0
     for node in graph.traverse():
-        print(f"{node} ({hash(node)}) ({id(node)})")
+        print(node + "(" + hash(node) + ") (" + id(node) + ")")
         i += 1
     return i
 
 
-def write_profile(func, filepath=f"{time.time_ns()}.pstats", *args, **kwargs):
+def write_profile(func, filepath=str(time.time_ns()) + ".pstats", *args, **kwargs):
     """Use hatchet profiler to profile a function and output to a file"""
     prf = profiler.Profiler()
     prf.start()
