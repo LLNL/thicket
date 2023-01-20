@@ -7,7 +7,6 @@
 # flake8: noqa: F401
 
 from .thicket import Thicket, InvalidFilter, EmptyMetadataFrame
-from .model_extrap import Modeling
 from .stats.calc_average import calc_average
 from .stats.calc_corr_nodewise import calc_corr_nodewise
 from .stats.calc_deviation import calc_deviation

@@ -36,7 +36,6 @@ setup(
         "thicket.vis",
     ],
     install_requires=[
-        "extrap",
         "scipy",
         "seaborn",
         "pydot",

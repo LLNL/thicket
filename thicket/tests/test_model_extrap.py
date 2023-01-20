@@ -3,12 +3,19 @@
 #
 # SPDX-License-Identifier: MIT
 
+import pytest
+import sys
 
 from thicket import Thicket
-from thicket import Modeling
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 7),
+    reason="requires python3.7 or python3.8 to use extrap module",
+)
 def test_model_extrap(mpi_scaling_cali):
+    from thicket.model_extrap import Modeling
+
     t_ens = Thicket.from_caliperreader(mpi_scaling_cali)
 
     # Model created using metadata column
@@ -48,7 +55,13 @@ def test_model_extrap(mpi_scaling_cali):
     )
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 7),
+    reason="requires python3.7 or python3.8 to use extrap module",
+)
 def test_componentize_functions(mpi_scaling_cali):
+    from thicket.model_extrap import Modeling
+
     t_ens = Thicket.from_caliperreader(mpi_scaling_cali)
 
     mdl = Modeling(
