@@ -43,5 +43,6 @@ setup(
         "matplotlib",
         "numpy",
         "pandas",
+        "llnl-hatchet",
     ],
 )
