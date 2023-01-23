@@ -1,0 +1,26 @@
+name: Build Thicket and Upload to PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build_and_upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Python 3
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Install Python Build Tool
+        run: |
+          python3 -m pip install --upgrade build
+      - name: Build Thicket
+        run: |
+          python3 -m build -s -w
+      - name: Publish Thicket to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password ${{ secrets.PYPI_API_TOKEN }}
