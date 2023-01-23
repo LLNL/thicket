@@ -4,7 +4,9 @@
 # SPDX-License-Identifier: MIT
 
 from setuptools import setup
+from setuptools.command.build_py import build_py
 from codecs import open
+import subprocess
 from os import path
 
 
@@ -19,6 +21,16 @@ def readme():
 version = {}
 with open("./thicket/version.py") as fp:
     exec(fp.read(), version)
+
+
+class BuildPyAndNpm(build_py):
+    """Custom build_py command to also install vis using NPM"""
+
+    def run(self):
+        vis_path = path.abspath("./thicket/vis")
+        subprocess.check_output(["npm", "install", "-y"], cwd=vis_path)
+        subprocess.check_output(["npm", "run", "build"], cwd=vis_path)
+        build_py.run(self)
 
 
 setup(
@@ -36,6 +48,7 @@ setup(
         "thicket.stats",
         "thicket.vis",
     ],
+    include_package_data=True,
     install_requires=[
         "scipy",
         "seaborn",
@@ -45,4 +58,7 @@ setup(
         "pandas >= 1.1",
         "llnl-hatchet",
     ],
+    cmdclass={
+        "build_py": BuildPyAndNpm
+    },
 )

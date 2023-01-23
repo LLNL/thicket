@@ -1,0 +1,5 @@
+include thicket/vis/package.json
+include thicket/vis/webpack.config.js
+recursive-include thicket/vis/scripts *
+recursive-include thicket/vis/static *
+recursive-include thicket/vis/templates *
