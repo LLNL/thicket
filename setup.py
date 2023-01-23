@@ -30,7 +30,7 @@ setup(
     long_description_content_type="text/markdown",
     keywords="",
     url="",
-    python_requires = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*",
+    python_requires=">=3.6.1",
     packages=[
         "thicket",
         "thicket.stats",
@@ -42,7 +42,7 @@ setup(
         "pydot",
         "matplotlib",
         "numpy",
-        "pandas",
+        "pandas >= 1.1",
         "llnl-hatchet",
     ],
 )
