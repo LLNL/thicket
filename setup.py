@@ -28,8 +28,8 @@ class BuildPyAndNpm(build_py):
 
     def run(self):
         vis_path = path.abspath("./thicket/vis")
-        subprocess.check_output(["npm", "install", "-y"], cwd=vis_path)
-        subprocess.check_output(["npm", "run", "build"], cwd=vis_path)
+        # subprocess.check_output(["npm", "install", "-y"], cwd=vis_path)
+        # subprocess.check_output(["npm", "run", "build"], cwd=vis_path)
         build_py.run(self)
 
 
@@ -40,8 +40,11 @@ setup(
     description="Toolkit for exploratory data analysis of ensemble performance data",
     long_description=readme(),
     long_description_content_type="text/markdown",
-    keywords="",
-    url="",
+   keywords="",
+    project_urls={
+        "GitHub": "https://github.com/LLNL/thicket",
+        "Documentation": "https://thicket.readthedocs.io/",
+    },
     python_requires=">=3.6.1",
     packages=[
         "thicket",
