@@ -55,17 +55,7 @@ class EnsembleVis(Magics):
             args[0], "topdown_data", watch=False, to_js_converter=_thicket_to_json
         )
 
-        if len(args) > 2:
-            RT.var_to_js(args[2], "test", watch=False, to_js_converter=_basic_to_json)
-
         RT.initialize()
-
-
-#     @line_magic
-#     def cct_fetch_query(self, line):
-#         args = line.split(" ")
-
-#         RT.fetch_data("jsNodeSelected", args[0], converter=_query_to_dict)
 
 
 def load_ipython_extension(ipython):
