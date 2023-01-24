@@ -2,7 +2,6 @@ import { layout } from './globals';
 import StackedBars from './topdown/stackedbars'
 
 import * as d3 from "d3";
-import { min } from 'd3';
 
 
 export class TreeTable{
