@@ -58,6 +58,9 @@ setup(
         "pandas >= 1.1",
         "llnl-hatchet",
     ],
+    extras_require={
+        "extrap": ["extrap"]
+    },
     cmdclass={
         "build_py": BuildPyAndNpm
     },
