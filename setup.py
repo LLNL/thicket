@@ -4,9 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 from setuptools import setup
-from setuptools.command.build_py import build_py
 from codecs import open
-import subprocess
 from os import path
 
 
@@ -23,18 +21,8 @@ with open("./thicket/version.py") as fp:
     exec(fp.read(), version)
 
 
-class BuildPyAndNpm(build_py):
-    """Custom build_py command to also install vis using NPM"""
-
-    def run(self):
-        vis_path = path.abspath("./thicket/vis")
-        subprocess.check_output(["npm", "install", "-y"], cwd=vis_path)
-        subprocess.check_output(["npm", "run", "build"], cwd=vis_path)
-        build_py.run(self)
-
-
 setup(
-    name="llnl-thicket",
+   name="llnl-thicket",
     version=version["__version__"],
     license="MIT",
     description="Toolkit for exploratory data analysis of ensemble performance data",
@@ -42,7 +30,7 @@ setup(
     long_description_content_type="text/markdown",
     keywords="",
     project_urls={
-        "GitHub": "https://github.com/LLNL/thicket",
+        "Source Code": "https://github.com/LLNL/thicket",
         "Documentation": "https://thicket.readthedocs.io/",
     },
     python_requires=">=3.6.1",
@@ -62,5 +50,4 @@ setup(
         "llnl-hatchet",
     ],
     extras_require={"extrap": ["extrap"]},
-    cmdclass={"build_py": BuildPyAndNpm},
 )
