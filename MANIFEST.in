@@ -1,3 +1,5 @@
+include LICENSE
+include NOTICE
 include thicket/vis/package.json
 include thicket/vis/webpack.config.js
 recursive-include thicket/vis/scripts *
