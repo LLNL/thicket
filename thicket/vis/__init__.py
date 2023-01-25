@@ -13,17 +13,22 @@ This is required to use thicket.vis!
 Please install NPM and try again to import thicket.vis!
 """
 
+
 def check_npm():
     if sys.version_info[0] == 2:
         from disutils.spawn import find_executable
+
         return find_executable("npm") is not None
     from shutil import which
+
     return which("npm") is not None
+
 
 def npm_build(vis_directory):
     print("Building thicket.vis using NPM!")
     subprocess.check_output(["npm", "install", "-y"], cwd=vis_directory)
     subprocess.check_output(["npm", "run", "build"], cwd=vis_directory)
+
 
 # Get the absolute path to this __init__.py file
 # Store in curr_dir to minimize the number of variables

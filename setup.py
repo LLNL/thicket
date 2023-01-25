@@ -22,7 +22,7 @@ with open("./thicket/version.py") as fp:
 
 
 setup(
-   name="llnl-thicket",
+    name="llnl-thicket",
     version=version["__version__"],
     license="MIT",
     description="Toolkit for exploratory data analysis of ensemble performance data",
