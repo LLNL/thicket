@@ -29,13 +29,17 @@ setup(
     long_description=readme(),
     long_description_content_type="text/markdown",
     keywords="",
-    url="",
+    project_urls={
+        "Source Code": "https://github.com/LLNL/thicket",
+        "Documentation": "https://thicket.readthedocs.io/",
+    },
     python_requires=">=3.6.1",
     packages=[
         "thicket",
         "thicket.stats",
         "thicket.vis",
     ],
+    include_package_data=True,
     install_requires=[
         "scipy",
         "seaborn",
@@ -45,4 +49,5 @@ setup(
         "pandas >= 1.1",
         "llnl-hatchet",
     ],
+    extras_require={"extrap": ["extrap"]},
 )

@@ -16,3 +16,6 @@ vis/node_modules/
 *build/
 *dist/
 *.egg-info/
+
+**/node_modules/
+**/package-lock.json

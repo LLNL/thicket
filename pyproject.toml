@@ -1,33 +1,6 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
-
-# TODO uncomment once tool.setuptools is no longer in beta
-# [project]
-# name = "llnl-thicket"
-# dynamic = ["version"]
-# description = "Toolkit for exploratory data analysis of ensemble performance data"
-# readme = { file = "README.md", content-type = "text/markdown" }
-# dependencies = [
-#     "scipy",
-#     "seaborn",
-#     "pydot",
-#     "matplotlib",
-#     "numpy",
-#     "pandas >= 1.1",
-#     "llnl-hatchet"
-# ]
-# requires-python = ">=3.6.1"
-# license = { file = "LICENSE" }
-# keywords = []
-# classifiers = []
-#
-# [project.urls]
-# documentation = "https://thicket.readthedocs.io/"
-# repository = "https://github.com/LLNL/thicket"
-#
-# [tool.setuptools.dynamic]
-# version = { attr = "thicket.version.__version__" }
 
 [tool.poetry]
 name = "llnl-thicket"
