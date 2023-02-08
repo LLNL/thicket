@@ -280,20 +280,44 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def _sync_nodes_frame(gh, df):
-        """Set the node objects to be equal in both the graph and the dataframe.
+        """Update dataframe node objects hnid's based off their positioning relative to a given graph.
 
         id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet nid's.
 
         TODO: This function may be superior to _sync_nodes and may be able to replace it. Need to investigate.
         """
+        assert df.index.nlevels == 2  # For num_profiles assumption
+
+        # TODO: Graph function to list conversion: move to Hatchet?
+        gh_node_list = []
+        for gh_node in gh.traverse():
+            gh_node_list.append(gh_node)
+
+        num_profiles = len(df.groupby(level=1))
         index_names = df.index.names
         df.reset_index(inplace=True)
-        for graph_node in gh.traverse():
-            df["node"] = df["node"].apply(
-                lambda df_node: graph_node
-                if (graph_node.frame == df_node.frame)
-                else df_node
-            )
+        df_node_list = df["node"][::num_profiles].to_list()
+
+        # Sequentially walk through graph and dataframe and modify dataframe hnid's based off graph equivalent
+        i = 0
+        j = 0
+        while i < len(gh_node_list) and j < len(df_node_list):
+            if gh_node_list[i].frame == df_node_list[j].frame:
+                df_node_list[j] = gh_node_list[i]
+                j += 1
+            else:
+                i += 1
+
+        # Extend list to match multi-index dataframe structure
+        df_list_full = []
+        for node in df_node_list:
+            temp = []
+            for idx in range(num_profiles):
+                temp.append(node)
+            df_list_full.extend(temp)
+        # Update nodes in the dataframe
+        df["node"] = df_list_full
+
         df.set_index(index_names, inplace=True)
 
     @staticmethod
