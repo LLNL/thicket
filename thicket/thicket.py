@@ -1168,7 +1168,7 @@ class Thicket(GraphFrame):
                 "The provided Thicket object has an empty MetadataFrame."
             )
 
-        print(len(list_sub_thickets), " Sub-Thickets created...")
+        print(len(list_sub_thickets), " thickets created...")
         print(unique_vals)
 
         return list_sub_thickets
