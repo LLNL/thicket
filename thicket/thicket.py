@@ -365,7 +365,7 @@ class Thicket(GraphFrame):
             b = b_list.pop(0)
         return missing_nodes
 
-    def squash(self, preserve_stats_dataframe=False):
+    def squash(self, preserve_stats_dataframe=False, update_inc_cols=True):
         """Rewrite the Graph to include only nodes present in the performance DataFrame's rows.
 
         This can be used to simplify the Graph, or to normalize Graph indexes
@@ -374,11 +374,12 @@ class Thicket(GraphFrame):
         Arguments:
             preserve_stats_dataframe (bool): if true, use the existing DataFrame in the statsframe. Otherwise,
                                              create a new, empty statsframe for the squashed Thicket object.
+            update_inc_cols (boolean, optional): if True, update inclusive columns.
 
         Returns:
             (Thicket): a newly squashed Thicket object
         """
-        squashed_gf = GraphFrame.squash(self)
+        squashed_gf = GraphFrame.squash(self, update_inc_cols=update_inc_cols)
         new_graph = squashed_gf.graph
         # The following code updates the performance data and the statsframe with the remaining (re-indexed) nodes.
         # The dataframe is internally updated in squash(), so we can easily just save it to our thicket perfdata.
@@ -498,12 +499,35 @@ class Thicket(GraphFrame):
         combined_th.dataframe.reset_index(level="profile", drop=True, inplace=True)
         combined_th.dataframe.set_index(column_name, append=True, inplace=True)
         combined_th.dataframe.sort_index(inplace=True)
+
+        def tuple_idx_columns_metrics(target_thicket, source_thicket, source_new_name):
+            """Helper function to create new tuple columnar-index and handle exclusive and inclusive metrics.
+
+            Arguments:
+            target_thicket (Thicket): joined thicket
+            source_thicket (Thicket): a half of the joined thicket
+
+            Returns:
+                (list): list of new indicies generated from the source thicket
+            """
+            new_idx = []
+            for column in source_thicket.dataframe.columns:
+                new_tuple = (source_new_name, column)
+                new_idx.append(new_tuple)
+                if column in source_thicket.exc_metrics:
+                    target_thicket.exc_metrics.append(new_tuple)
+                if column in source_thicket.inc_metrics:
+                    target_thicket.inc_metrics.append(new_tuple)
+            return new_idx
+
+        # Clear old metrics (non-tuple)
+        combined_th.exc_metrics.clear()
+        combined_th.inc_metrics.clear()
+
         # Create new columnar multi-index for "self" and "other"
         new_idx = []
-        for column in self_cp.dataframe.columns:
-            new_idx.append((self_new_name, column))
-        for column in other_cp.dataframe.columns:
-            new_idx.append((other_new_name, column))
+        new_idx.extend(tuple_idx_columns_metrics(combined_th, self_cp, self_new_name))
+        new_idx.extend(tuple_idx_columns_metrics(combined_th, other_cp, other_new_name))
         combined_th.dataframe.columns = pd.MultiIndex.from_tuples(new_idx)
 
         # Join "self" & "other" metadata frames
@@ -1076,12 +1100,13 @@ class Thicket(GraphFrame):
             "Invalid function: thicket.filter(), please use thicket.filter_metadata() or thicket.filter_stats()"
         )
 
-    def query(self, query_obj, squash=True):
+    def query(self, query_obj, squash=True, update_inc_cols=True):
         """Apply a Hatchet query to the Thicket object.
 
         Arguments:
             query_obj (AbstractQuery): the query, represented as by a subclass of Hatchet's AbstractQuery
             squash (bool): if true, run Thicket.squash before returning the result of the query
+            update_inc_cols (boolean, optional): if True, update inclusive columns when performing squash.
 
         Returns:
             (Thicket): a new Thicket object containing the data that matches the query
@@ -1116,7 +1141,7 @@ class Thicket(GraphFrame):
             statsframe=self.statsframe,
         )
         if squash:
-            return filtered_th.squash()
+            return filtered_th.squash(update_inc_cols=update_inc_cols)
         return filtered_th
 
     def groupby(self, groupby_function):
