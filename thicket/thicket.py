@@ -14,7 +14,7 @@ import numpy as np
 from collections import OrderedDict
 from hatchet import GraphFrame
 from hatchet.query import AbstractQuery
-from .helpers import print_graph
+from .helpers import new_statsframe_df, print_graph
 from .utils import verify_thicket_structures
 
 
@@ -56,14 +56,9 @@ class Thicket(GraphFrame):
         self.profile = profile
         self.profile_mapping = profile_mapping
         if statsframe is None:
-            # Drop duplicates based on nid
-            subset_df = dataframe["name"].reset_index().drop_duplicates(subset=["node"])
             self.statsframe = GraphFrame(
                 graph=self.graph,
-                dataframe=pd.DataFrame(
-                    index=subset_df["node"],
-                    data={"name": subset_df["name"].values},
-                ),
+                dataframe=new_statsframe_df(dataframe),
             )
         else:
             self.statsframe = statsframe
@@ -365,15 +360,13 @@ class Thicket(GraphFrame):
             b = b_list.pop(0)
         return missing_nodes
 
-    def squash(self, preserve_stats_dataframe=False, update_inc_cols=True):
+    def squash(self, update_inc_cols=True):
         """Rewrite the Graph to include only nodes present in the performance DataFrame's rows.
 
         This can be used to simplify the Graph, or to normalize Graph indexes
         between two Thickets.
 
         Arguments:
-            preserve_stats_dataframe (bool): if true, use the existing DataFrame in the statsframe. Otherwise,
-                                             create a new, empty statsframe for the squashed Thicket object.
             update_inc_cols (boolean, optional): if True, update inclusive columns.
 
         Returns:
@@ -386,15 +379,7 @@ class Thicket(GraphFrame):
         # For the statsframe, we'll have to come up with a better way eventually, but for now, we'll just create
         #    a new statsframe the same way we do when we create a new thicket.
         new_dataframe = squashed_gf.dataframe
-        stats_df = self.statsframe.dataframe
-        if not preserve_stats_dataframe:
-            subset_df = (
-                new_dataframe["name"].reset_index().drop_duplicates(subset=["node"])
-            )
-            stats_df = pd.DataFrame(
-                index=subset_df["node"],
-                data={"name": subset_df["name"].values},
-            )
+        stats_df = new_statsframe_df(new_dataframe)
         sframe = GraphFrame(
             graph=new_graph,
             dataframe=stats_df,
@@ -538,19 +523,9 @@ class Thicket(GraphFrame):
         combined_th.profile_mapping.update(other_cp.profile_mapping)
 
         # Clear statsframe
-        subset_df = (
-            combined_th.dataframe[(self_new_name, "name")]
-            .combine_first(combined_th.dataframe[(other_new_name, "name")])
-            .rename("name")
-            .reset_index()
-            .drop_duplicates(subset=["node"])
-        )
         combined_th.statsframe = GraphFrame(
             graph=combined_th.graph,
-            dataframe=pd.DataFrame(
-                index=subset_df["node"],
-                data={"name": subset_df["name"].values},
-            ),
+            dataframe=new_statsframe_df(combined_th.dataframe),
         )
 
         # For tree diff
@@ -1073,13 +1048,8 @@ class Thicket(GraphFrame):
                 ]
 
                 # create an empty StatsFrame with the name column
-                subset_df = (
-                    new_thicket.dataframe["name"]
-                    .reset_index()
-                    .drop_duplicates(subset=["node"])
-                )
-                new_thicket.statsframe.dataframe = pd.DataFrame(
-                    index=subset_df["node"], data={"name": subset_df["name"].values}
+                new_thicket.statsframe.dataframe = new_statsframe_df(
+                    new_thicket.dataframe
                 )
             else:
                 raise EmptyMetadataFrame(
@@ -1179,13 +1149,8 @@ class Thicket(GraphFrame):
                 ]
 
                 # clear the StatsFrame for current unique group
-                subset_df = (
-                    sub_thicket.dataframe["name"]
-                    .reset_index()
-                    .drop_duplicates(subset=["node"])
-                )
-                sub_thicket.statsframe.dataframe = pd.DataFrame(
-                    index=subset_df["node"], data={"name": subset_df["name"].values}
+                sub_thicket.statsframe.dataframe = new_statsframe_df(
+                    sub_thicket.dataframe
                 )
                 list_sub_thickets.append(sub_thicket)
         else:

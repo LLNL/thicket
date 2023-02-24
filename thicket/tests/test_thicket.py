@@ -25,15 +25,17 @@ def test_invalid_constructor():
 def test_resolve_missing_indicies():
     names_0 = ["node", "profile", "rank"]
     names_1 = ["node", "profile"]
+    node_0 = ht.node.Node(ht.frame.Frame({"name": "foo", "type": "function"}), hnid=0)
+    node_1 = ht.node.Node(ht.frame.Frame({"name": "bar", "type": "function"}), hnid=1)
     df_0 = pd.DataFrame(
-        data={"time": np.random.randn(4), "name": ["foo", "bar", "graz", "grault"]},
+        data={"time": np.random.randn(4), "name": ["foo", "foo", "bar", "bar"]},
         index=pd.MultiIndex.from_product(
-            [["foo", "bar"], ["A"], ["0", "1"]], names=names_0
+            [[node_0, node_1], ["A"], ["0", "1"]], names=names_0
         ),
     )
     df_1 = pd.DataFrame(
         data={"time": np.random.randn(2), "name": ["foo", "bar"]},
-        index=pd.MultiIndex.from_product([["foo", "bar"], ["B"]], names=names_1),
+        index=pd.MultiIndex.from_product([[node_0, node_1], ["B"]], names=names_1),
     )
     t_graph = ht.graph.Graph([])
     th_0 = Thicket(graph=t_graph, dataframe=df_0)

@@ -5,8 +5,30 @@
 
 import time
 
+import pandas as pd
+
 from hatchet.util import profiler
 from itertools import groupby
+
+
+def new_statsframe_df(df):
+    """Generate new StatsFrame DataFrame from a DataFrame. This is most commonly needed when changes are made to the PerfData's index.
+
+    Arguments:
+        df (DataFrame): Input DataFrame to generate the StatsFrame DataFrame from
+
+    Returns:
+        (DataFrame): new StatsFrame DataFrame
+    """
+    nodes = list(set(df.reset_index()["node"]))  # List of nodes
+    names = [node.frame["name"] for node in nodes]  # List of names
+
+    # Create new dataframe with "node" index and "name" data by default.
+    new_df = pd.DataFrame(
+        data={"node": nodes, "name": names},
+    ).set_index("node")
+
+    return new_df
 
 
 def all_equal(iterable):
