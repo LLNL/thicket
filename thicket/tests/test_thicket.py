@@ -7,14 +7,12 @@ import copy
 import pytest
 import re
 
-import hatchet as ht
 import numpy as np
 import pandas as pd
 
-from hatchet import QueryMatcher
-
-from thicket.helpers import are_synced
+import hatchet as ht
 from thicket import Thicket, InvalidFilter, EmptyMetadataFrame
+import thicket.helpers as helpers
 
 
 def test_invalid_constructor():
@@ -41,7 +39,7 @@ def test_resolve_missing_indicies():
     th_0 = Thicket(graph=t_graph, dataframe=df_0)
     th_1 = Thicket(graph=t_graph, dataframe=df_1)
 
-    Thicket._resolve_missing_indicies([th_0, th_1])
+    helpers._resolve_missing_indicies([th_0, th_1])
 
     assert th_0.dataframe.index.names == th_1.dataframe.index.names
     assert set(names_0).issubset(th_0.dataframe.index.names)
@@ -54,7 +52,7 @@ def test_sync_nodes(example_cali):
     th = Thicket.from_caliperreader(str(example_cali))
 
     # Should be synced from the reader
-    assert are_synced(th.graph, th.dataframe)
+    assert helpers._are_synced(th.graph, th.dataframe)
 
     # Change the id of the first node by making a deepcopy.
     index_names = th.dataframe.index.names
@@ -64,13 +62,13 @@ def test_sync_nodes(example_cali):
     th.dataframe.set_index(index_names, inplace=True)
 
     # Should no longer be synced
-    assert not are_synced(th.graph, th.dataframe)
+    assert not helpers._are_synced(th.graph, th.dataframe)
 
     # Sync the nodes
-    Thicket._sync_nodes(th.graph, th.dataframe)
+    helpers._sync_nodes(th.graph, th.dataframe)
 
     # Check again
-    assert are_synced(th.graph, th.dataframe)
+    assert helpers._are_synced(th.graph, th.dataframe)
 
 
 def test_filter(example_cali_multiprofile):
@@ -318,7 +316,7 @@ def test_query(rajaperf_basecuda_xl_cali):
     match_frames = [node.frame for node in match]
     match_names = [frame["name"] for frame in match_frames]
     query = (
-        QueryMatcher()
+        ht.QueryMatcher()
         .match("*")
         .rel(
             ".",

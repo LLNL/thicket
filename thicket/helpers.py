@@ -3,15 +3,64 @@
 #
 # SPDX-License-Identifier: MIT
 
-import time
-
 import pandas as pd
 
-from hatchet.util import profiler
-from itertools import groupby
+
+def _are_synced(gh, df):
+    """Check if node objects are equal in graph and dataframe id(graph_node) == id(df_node)."""
+    for graph_node in gh.traverse():
+        node_present = False
+        for df_node in df.index.get_level_values("node"):
+            if id(df_node) == id(graph_node):
+                node_present = True
+                continue
+        if not node_present:
+            return False
+    return True
 
 
-def new_statsframe_df(df):
+def _missing_nodes_to_list(a_df, b_df):
+    """Get a list of node differences between two dataframes. Mainly used for "tree" function.
+
+    Arguments:
+        a_df (Dataframe): First pandas Dataframe
+        b_df (Dataframe): Second pandas Dataframe
+
+    Returns:
+        (list): List of numbers in range (0, 1, 2). "0" means node is in both, "1" is only in "a", "2" is only in "b"
+    """
+    missing_nodes = []
+    a_list = list(map(hash, list(a_df.index.get_level_values("node"))))
+    b_list = list(map(hash, list(b_df.index.get_level_values("node"))))
+    # Basic cases
+    while a_list and b_list:
+        a = a_list.pop(0)
+        b = b_list.pop(0)
+        while a > b and b_list:
+            missing_nodes.append(2)
+            b = b_list.pop(0)
+        while b > a and a_list:
+            missing_nodes.append(1)
+            a = a_list.pop(0)
+        if a == b:
+            missing_nodes.append(0)
+            continue
+        elif a > b:  # Case where last two nodes and "a" is missing "b" then opposite
+            missing_nodes.append(2)
+            missing_nodes.append(1)
+        elif b > a:  # Case where last two nodes and "b" is missing "a" then opposite
+            missing_nodes.append(1)
+            missing_nodes.append(2)
+    while a_list:  # In case "a" has a lot more nodes than "b"
+        missing_nodes.append(1)
+        a = a_list.pop(0)
+    while b_list:  # In case "b" has a lot more nodes than "a"
+        missing_nodes.append(2)
+        b = b_list.pop(0)
+    return missing_nodes
+
+
+def _new_statsframe_df(df):
     """Generate new StatsFrame DataFrame from a DataFrame. This is most commonly needed when changes are made to the PerfData's index.
 
     Arguments:
@@ -31,55 +80,91 @@ def new_statsframe_df(df):
     return new_df
 
 
-def all_equal(iterable):
-    """Returns True if all the elements are equal to each other
-
-    Taken from the Python Itertools Recipes page:
-    https://docs.python.org/3/library/itertools.html#itertools-recipes
-    """
-    g = groupby(iterable)
-    return next(g, True) and not next(g, False)
-
-
-def check_distinct_graphs(th_list):
-    """Take a list of objects with hatchet "graph" as an attribute and see if any of the graphs in the list match another."""
-    if len(th_list) <= 1:
-        return True
-    for i in range(len(th_list)):
-        for j in range(i + 1, len(th_list)):
-            if all_equal([th_list[i].graph, th_list[j].graph]):
-                return False
-    return True
-
-
-def are_synced(gh, df):
-    """Check if node objects are equal in graph and dataframe id(graph_node) == id(df_node)."""
-    for graph_node in gh.traverse():
-        node_present = False
-        for df_node in df.index.get_level_values("node"):
-            if id(df_node) == id(graph_node):
-                node_present = True
-                continue
-        if not node_present:
-            return False
-    return True
-
-
-def print_graph(graph):
+def _print_graph(graph):
     """Print the nodes in a hatchet graph"""
     i = 0
     for node in graph.traverse():
-        print(node + "(" + hash(node) + ") (" + id(node) + ")")
+        print(f"{node} ({hash(node)}) ({id(node)})")
         i += 1
     return i
 
 
-def write_profile(func, filepath=str(time.time() * 1e9) + ".pstats", *args, **kwargs):
-    """Use hatchet profiler to profile a function and output to a file"""
-    prf = profiler.Profiler()
-    prf.start()
-    result = func(*args, **kwargs)
-    prf.stop()
-    prf.print_me()
-    prf.write_to_file(filepath)
-    return result
+def _resolve_missing_indicies(th_list):
+    """Resolve indices if at least 1 profile has an indexx that another doesn't
+
+    If at least one profile has an index that another doesn't, then issues will
+    arise when unifying. Need to add this index to other thickets.
+
+    Note that the value to use for the new index is set to '0' for ease-of-use, but
+    something like 'NaN' may arguably provide more clarity.
+    """
+    # Create a set of all index possibilities
+    idx_set = set({})
+    for th in th_list:
+        idx_set.update(th.dataframe.index.names)
+
+    # Apply missing indicies to thickets
+    for th in th_list:
+        for idx in idx_set:
+            if idx not in th.dataframe.index.names:
+                print(f"Resolving '{idx}' in thicket: ({id(th)})")
+                th.dataframe[idx] = 0
+                th.dataframe.set_index(idx, append=True, inplace=True)
+
+
+def _sync_nodes(gh, df):
+    """Set the node objects to be equal in both the graph and the dataframe.
+
+    id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet nid's.
+    """
+    index_names = df.index.names
+    df.reset_index(inplace=True)
+    for graph_node in gh.traverse():
+        df["node"] = df["node"].apply(
+            lambda df_node: graph_node
+            if (hash(graph_node) == hash(df_node))
+            else df_node
+        )
+    df.set_index(index_names, inplace=True)
+
+
+def _sync_nodes_frame(gh, df):
+    """Update dataframe node objects hnid's based off their positioning relative to a given graph.
+
+    id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet nid's.
+
+    TODO: This function may be superior to _sync_nodes and may be able to replace it. Need to investigate.
+    """
+    assert df.index.nlevels == 2  # For num_profiles assumption
+
+    # TODO: Graph function to list conversion: move to Hatchet?
+    gh_node_list = []
+    for gh_node in gh.traverse():
+        gh_node_list.append(gh_node)
+
+    num_profiles = len(df.groupby(level=1))
+    index_names = df.index.names
+    df.reset_index(inplace=True)
+    df_node_list = df["node"][::num_profiles].to_list()
+
+    # Sequentially walk through graph and dataframe and modify dataframe hnid's based off graph equivalent
+    i = 0
+    j = 0
+    while i < len(gh_node_list) and j < len(df_node_list):
+        if gh_node_list[i].frame == df_node_list[j].frame:
+            df_node_list[j] = gh_node_list[i]
+            j += 1
+        else:
+            i += 1
+
+    # Extend list to match multi-index dataframe structure
+    df_list_full = []
+    for node in df_node_list:
+        temp = []
+        for idx in range(num_profiles):
+            temp.append(node)
+        df_list_full.extend(temp)
+    # Update nodes in the dataframe
+    df["node"] = df_list_full
+
+    df.set_index(index_names, inplace=True)

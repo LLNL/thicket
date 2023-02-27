@@ -10,11 +10,11 @@ import warnings
 
 import pandas as pd
 import numpy as np
-
 from collections import OrderedDict
+
 from hatchet import GraphFrame
 from hatchet.query import AbstractQuery
-from .helpers import new_statsframe_df, print_graph
+import thicket.helpers as helpers
 from .utils import verify_thicket_structures
 
 
@@ -58,7 +58,7 @@ class Thicket(GraphFrame):
         if statsframe is None:
             self.statsframe = GraphFrame(
                 graph=self.graph,
-                dataframe=new_statsframe_df(dataframe),
+                dataframe=helpers._new_statsframe_df(dataframe),
             )
         else:
             self.statsframe = statsframe
@@ -66,7 +66,7 @@ class Thicket(GraphFrame):
     def __str__(self):
         s = (
             "graph: "
-            + print_graph(self.graph)
+            + helpers._print_graph(self.graph)
             + "\ndataframe:\n"
             + self.dataframe
             + "\nexc_metrics: "
@@ -82,7 +82,7 @@ class Thicket(GraphFrame):
             + "\nprofile_mapping: "
             + self.profile_mapping
             + "\nstatsframe:\n"
-            + print_graph(self.statsframe.graph)
+            + helpers._print_graph(self.statsframe.graph)
             + "\n"
             + self.statsframe.dataframe
         )
@@ -273,93 +273,6 @@ class Thicket(GraphFrame):
             self.metadata[column_name], on=self.dataframe.index.names[1]
         )
 
-    @staticmethod
-    def _sync_nodes_frame(gh, df):
-        """Update dataframe node objects hnid's based off their positioning relative to a given graph.
-
-        id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet nid's.
-
-        TODO: This function may be superior to _sync_nodes and may be able to replace it. Need to investigate.
-        """
-        assert df.index.nlevels == 2  # For num_profiles assumption
-
-        # TODO: Graph function to list conversion: move to Hatchet?
-        gh_node_list = []
-        for gh_node in gh.traverse():
-            gh_node_list.append(gh_node)
-
-        num_profiles = len(df.groupby(level=1))
-        index_names = df.index.names
-        df.reset_index(inplace=True)
-        df_node_list = df["node"][::num_profiles].to_list()
-
-        # Sequentially walk through graph and dataframe and modify dataframe hnid's based off graph equivalent
-        i = 0
-        j = 0
-        while i < len(gh_node_list) and j < len(df_node_list):
-            if gh_node_list[i].frame == df_node_list[j].frame:
-                df_node_list[j] = gh_node_list[i]
-                j += 1
-            else:
-                i += 1
-
-        # Extend list to match multi-index dataframe structure
-        df_list_full = []
-        for node in df_node_list:
-            temp = []
-            for idx in range(num_profiles):
-                temp.append(node)
-            df_list_full.extend(temp)
-        # Update nodes in the dataframe
-        df["node"] = df_list_full
-
-        df.set_index(index_names, inplace=True)
-
-    @staticmethod
-    def _missing_nodes_to_list(a_df, b_df):
-        """Get a list of node differences between two dataframes. Mainly used for "tree" function.
-
-        Arguments:
-            a_df (Dataframe): First pandas Dataframe
-            b_df (Dataframe): Second pandas Dataframe
-
-        Returns:
-            (list): List of numbers in range (0, 1, 2). "0" means node is in both, "1" is only in "a", "2" is only in "b"
-        """
-        missing_nodes = []
-        a_list = list(map(hash, list(a_df.index.get_level_values("node"))))
-        b_list = list(map(hash, list(b_df.index.get_level_values("node"))))
-        # Basic cases
-        while a_list and b_list:
-            a = a_list.pop(0)
-            b = b_list.pop(0)
-            while a > b and b_list:
-                missing_nodes.append(2)
-                b = b_list.pop(0)
-            while b > a and a_list:
-                missing_nodes.append(1)
-                a = a_list.pop(0)
-            if a == b:
-                missing_nodes.append(0)
-                continue
-            elif (
-                a > b
-            ):  # Case where last two nodes and "a" is missing "b" then opposite
-                missing_nodes.append(2)
-                missing_nodes.append(1)
-            elif (
-                b > a
-            ):  # Case where last two nodes and "b" is missing "a" then opposite
-                missing_nodes.append(1)
-                missing_nodes.append(2)
-        while a_list:  # In case "a" has a lot more nodes than "b"
-            missing_nodes.append(1)
-            a = a_list.pop(0)
-        while b_list:  # In case "b" has a lot more nodes than "a"
-            missing_nodes.append(2)
-            b = b_list.pop(0)
-        return missing_nodes
-
     def squash(self, update_inc_cols=True):
         """Rewrite the Graph to include only nodes present in the performance DataFrame's rows.
 
@@ -379,7 +292,7 @@ class Thicket(GraphFrame):
         # For the statsframe, we'll have to come up with a better way eventually, but for now, we'll just create
         #    a new statsframe the same way we do when we create a new thicket.
         new_dataframe = squashed_gf.dataframe
-        stats_df = new_statsframe_df(new_dataframe)
+        stats_df = helpers._new_statsframe_df(new_dataframe)
         sframe = GraphFrame(
             graph=new_graph,
             dataframe=stats_df,
@@ -439,7 +352,7 @@ class Thicket(GraphFrame):
         other_cp.dataframe = other.dataframe.rename(
             index=other_self_map, level="profile"
         )
-        Thicket._sync_nodes_frame(
+        helpers._sync_nodes_frame(
             other_cp.graph, other_cp.dataframe
         )  # Sync nodes between graph and dataframe
 
@@ -451,13 +364,13 @@ class Thicket(GraphFrame):
             other_cp.graph = union_graph
 
             # Necessary to change dataframe hatchet id's to match the nodes in the graph
-            Thicket._sync_nodes_frame(self_cp.graph, self_cp.dataframe)
-            Thicket._sync_nodes_frame(other_cp.graph, other_cp.dataframe)
+            helpers._sync_nodes_frame(self_cp.graph, self_cp.dataframe)
+            helpers._sync_nodes_frame(other_cp.graph, other_cp.dataframe)
 
             # For tree diff. DataFrames need to be sorted.
             self_cp.dataframe.sort_index(inplace=True)
             other_cp.dataframe.sort_index(inplace=True)
-            missing_nodes = Thicket._missing_nodes_to_list(
+            missing_nodes = helpers._missing_nodes_to_list(
                 self_cp.dataframe, other_cp.dataframe
             )
 
@@ -485,7 +398,7 @@ class Thicket(GraphFrame):
         combined_th.dataframe.set_index(column_name, append=True, inplace=True)
         combined_th.dataframe.sort_index(inplace=True)
 
-        def tuple_idx_columns_metrics(target_thicket, source_thicket, source_new_name):
+        def _tuple_idx_columns_metrics(target_thicket, source_thicket, source_new_name):
             """Helper function to create new tuple columnar-index and handle exclusive and inclusive metrics.
 
             Arguments:
@@ -511,8 +424,10 @@ class Thicket(GraphFrame):
 
         # Create new columnar multi-index for "self" and "other"
         new_idx = []
-        new_idx.extend(tuple_idx_columns_metrics(combined_th, self_cp, self_new_name))
-        new_idx.extend(tuple_idx_columns_metrics(combined_th, other_cp, other_new_name))
+        new_idx.extend(_tuple_idx_columns_metrics(combined_th, self_cp, self_new_name))
+        new_idx.extend(
+            _tuple_idx_columns_metrics(combined_th, other_cp, other_new_name)
+        )
         combined_th.dataframe.columns = pd.MultiIndex.from_tuples(new_idx)
 
         # Join "self" & "other" metadata frames
@@ -525,7 +440,7 @@ class Thicket(GraphFrame):
         # Clear statsframe
         combined_th.statsframe = GraphFrame(
             graph=combined_th.graph,
-            dataframe=new_statsframe_df(combined_th.dataframe),
+            dataframe=helpers._new_statsframe_df(combined_th.dataframe),
         )
 
         # For tree diff
@@ -726,47 +641,6 @@ class Thicket(GraphFrame):
         return union_graph
 
     @staticmethod
-    def _resolve_missing_indicies(th_list):
-        """Resolve indices if at least 1 profile has an indexx that another doesn't
-
-        If at least one profile has an index that another doesn't, then issues will
-        arise when unifying. Need to add this index to other thickets.
-
-        Note that the value to use for the new index is set to '0' for ease-of-use, but
-        something like 'NaN' may arguably provide more clarity.
-        """
-        # Create a set of all index possibilities
-        idx_set = set({})
-        for th in th_list:
-            idx_set.update(th.dataframe.index.names)
-
-        # Apply missing indicies to thickets
-        for th in th_list:
-            for idx in idx_set:
-                if idx not in th.dataframe.index.names:
-                    print(
-                        "Resolving '" + str(idx) + "' in thicket: (" + str(id(th)) + ")"
-                    )
-                    th.dataframe[idx] = 0
-                    th.dataframe.set_index(idx, append=True, inplace=True)
-
-    @staticmethod
-    def _sync_nodes(gh, df):
-        """Set the node objects to be equal in both the graph and the dataframe.
-
-        id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet nid's.
-        """
-        index_names = df.index.names
-        df.reset_index(inplace=True)
-        for graph_node in gh.traverse():
-            df["node"] = df["node"].apply(
-                lambda df_node: graph_node
-                if (hash(graph_node) == hash(df_node))
-                else df_node
-            )
-        df.set_index(index_names, inplace=True)
-
-    @staticmethod
     def unify_ensemble(th_list, pairwise=False, superthicket=False):
         """Unify a list of thickets into a single thicket
 
@@ -784,7 +658,7 @@ class Thicket(GraphFrame):
         else:
             unify_graph = Thicket.unify_listwise(th_list)
 
-        Thicket._resolve_missing_indicies(th_list)
+        helpers._resolve_missing_indicies(th_list)
 
         # Unify dataframe
         unify_df = pd.DataFrame()
@@ -812,7 +686,7 @@ class Thicket(GraphFrame):
             unify_metadata.index.rename("thicket", inplace=True)
 
             # Process to aggregate rows of thickets with the same name.
-            def agg_function(obj):
+            def _agg_function(obj):
                 """Aggregate values in 'obj' into a set to remove duplicates."""
                 if len(obj) <= 1:
                     return obj
@@ -823,7 +697,7 @@ class Thicket(GraphFrame):
                     else:
                         return _set
 
-            unify_metadata = unify_metadata.groupby("thicket").agg(agg_function)
+            unify_metadata = unify_metadata.groupby("thicket").agg(_agg_function)
 
         # Have metadata index match ensembleframe index
         unify_metadata.sort_index(inplace=True)
@@ -836,7 +710,7 @@ class Thicket(GraphFrame):
 
         # Workaround for graph/df node id mismatch.
         # (n tree nodes) X (m df nodes) X (m)
-        Thicket._sync_nodes(unify_graph, unify_df)
+        helpers._sync_nodes(unify_graph, unify_df)
 
         # Mutate into OrderedDict to sort profile hashes
         unify_profile_mapping = OrderedDict(sorted(unify_profile_mapping.items()))
@@ -1048,7 +922,7 @@ class Thicket(GraphFrame):
                 ]
 
                 # create an empty StatsFrame with the name column
-                new_thicket.statsframe.dataframe = new_statsframe_df(
+                new_thicket.statsframe.dataframe = helpers._new_statsframe_df(
                     new_thicket.dataframe
                 )
             else:
@@ -1149,7 +1023,7 @@ class Thicket(GraphFrame):
                 ]
 
                 # clear the StatsFrame for current unique group
-                sub_thicket.statsframe.dataframe = new_statsframe_df(
+                sub_thicket.statsframe.dataframe = helpers._new_statsframe_df(
                     sub_thicket.dataframe
                 )
                 list_sub_thickets.append(sub_thicket)

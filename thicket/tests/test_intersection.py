@@ -3,7 +3,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-from thicket import helpers
+import thicket.helpers as helpers
+
 from thicket import Thicket as th
 
 
@@ -13,7 +14,7 @@ def test_intersection(misc):
     remaining_node_list, removed_node_list = th_ens.intersection()
 
     # Check that nodes are synced between graph and dataframe
-    assert helpers.are_synced(th_ens.graph, th_ens.dataframe)
+    assert helpers._are_synced(th_ens.graph, th_ens.dataframe)
 
     # Check graph length is equal to the remaining nodes
     assert len(th_ens.graph) == len(remaining_node_list)
