@@ -737,7 +737,7 @@ class Thicket(GraphFrame):
 
         Arguments:
             th_list (list): list of thickets
-            profiles_from_meta (str, optional): name of the metadata column to use as the new second-level index
+            profiles_from_meta (str, optional): name of the metadata column to use as the new second-level index. Uses the first value so this only makes sense if provided column is all equal values and each thicket's columns differ in value.
 
         Returns:
             (thicket): superthicket
@@ -752,53 +752,51 @@ class Thicket(GraphFrame):
             )  # Required for deepcopy operation
 
         # Setup names list
-        if profiles_from_meta is None:
-            profiles_from_meta = []
-            for th in range(len(th_list)):
-                profiles_from_meta.append(th)
-
-        # Build names list
         th_names = []
-        for th in th_list:
-            # Get name from metadataframe
-            name_list = th.metadata[profiles_from_meta].tolist()
+        if profiles_from_meta is None:
+            for i in range(len(th_list)):
+                th_names.append(i)
+        else:  # profiles_from_meta was provided.
+            for th in th_list:
+                # Get name from metadataframe
+                name_list = th.metadata[profiles_from_meta].tolist()
 
-            if len(name_list) > 1:
-                warnings.warn(
-                    "Multiple values for name "
-                    + name_list
-                    + "at thicket.metadata["
-                    + profiles_from_meta
-                    + "]. Only the first will be used."
-                )
-            th_names.append(name_list[0])
+                if len(name_list) > 1:
+                    warnings.warn(
+                        f"Multiple values for name {name_list} at thicket.metadata[{profiles_from_meta}]. Only the first will be used."
+                    )
+                th_names.append(name_list[0])
 
+        th_copy_list = []
         for i in range(len(th_list)):
-            th_list[i] = th_list[i].deepcopy()
+            th_copy = th_list[i].deepcopy()
 
             th_id = th_names[i]
 
             # Modify graph
             # Necessary so node ids match up
-            th_list[i].graph = th_list[i].statsframe.graph
+            th_copy.graph = th_copy.statsframe.graph
 
             # Modify the ensembleframe
-            df = th_list[i].statsframe.dataframe
+            df = th_copy.statsframe.dataframe
             df["thicket"] = th_id
             df.set_index("thicket", inplace=True, append=True)
-            th_list[i].dataframe = df
+            th_copy.dataframe = df
 
             # Adjust profile and profile_mapping
-            th_list[i].profile = [th_id]
-            profile_paths = list(th_list[i].profile_mapping.values())
-            th_list[i].profile_mapping = OrderedDict({th_id: profile_paths})
+            th_copy.profile = [th_id]
+            profile_paths = list(th_copy.profile_mapping.values())
+            th_copy.profile_mapping = OrderedDict({th_id: profile_paths})
 
             # Modify metadata dataframe
             idx_name = "new_idx"
-            th_list[i].metadata[idx_name] = th_id
-            th_list[i].metadata.set_index(idx_name, inplace=True)
+            th_copy.metadata[idx_name] = th_id
+            th_copy.metadata.set_index(idx_name, inplace=True)
 
-        return Thicket.unify_ensemble(th_list, superthicket=True)
+            # Append copy to list
+            th_copy_list.append(th_copy)
+
+        return Thicket.unify_ensemble(th_copy_list, superthicket=True)
 
     def to_json(self, ensemble=True, metadata=True, stats=True):
         jsonified_thicket = {}
