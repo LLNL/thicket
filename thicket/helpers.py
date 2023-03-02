@@ -60,11 +60,12 @@ def _missing_nodes_to_list(a_df, b_df):
     return missing_nodes
 
 
-def _new_statsframe_df(df):
+def _new_statsframe_df(df, multiindex=False):
     """Generate new StatsFrame DataFrame from a DataFrame. This is most commonly needed when changes are made to the PerfData's index.
 
     Arguments:
         df (DataFrame): Input DataFrame to generate the StatsFrame DataFrame from
+        multiindex (Bool, optional): Option to setup MultiIndex column structure. This is standard to do if PerfData is MultiIndex.
 
     Returns:
         (DataFrame): new StatsFrame DataFrame
@@ -76,6 +77,10 @@ def _new_statsframe_df(df):
     new_df = pd.DataFrame(
         data={"node": nodes, "name": names},
     ).set_index("node")
+
+    # Create MultiIndex structure if necessary.
+    if multiindex:
+        new_df.columns = pd.MultiIndex.from_tuples([("", "name")])
 
     return new_df
 

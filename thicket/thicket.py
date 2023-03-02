@@ -440,7 +440,9 @@ class Thicket(GraphFrame):
         # Clear statsframe
         combined_th.statsframe = GraphFrame(
             graph=combined_th.graph,
-            dataframe=helpers._new_statsframe_df(combined_th.dataframe),
+            dataframe=helpers._new_statsframe_df(
+                combined_th.dataframe, multiindex=True
+            ),
         )
 
         # For tree diff
