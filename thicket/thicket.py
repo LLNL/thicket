@@ -1071,6 +1071,25 @@ class Thicket(GraphFrame):
 
         return new_thicket
 
+    def get_unique_metadata(self):
+        """Get unique values per column in metadata.
+
+        Returns:
+            (dict): alphabetical ordered dictionary with key's being the column names
+                      and the values being unique values for a column
+        """
+
+        unique_meta = {}
+        columns = self.metadata.columns
+
+        for col in columns:
+            unique_entries = self.metadata[col].unique().tolist()
+            unique_meta[col] = unique_entries
+
+        sorted_meta = dict(sorted(unique_meta.items(), key=lambda x: x[0].lower()))
+
+        return sorted_meta
+
 
 class InvalidFilter(Exception):
     """Raised when an invalid argument is passed to the filter function."""
