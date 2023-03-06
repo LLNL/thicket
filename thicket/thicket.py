@@ -248,12 +248,15 @@ class Thicket(GraphFrame):
         # make and return thicket?
         return th
 
-    def add_column_from_metadata_to_ensemble(self, column_name, overwrite=False):
+    def add_column_from_metadata_to_ensemble(
+        self, column_name, overwrite=False, drop=False
+    ):
         """Add a column from the MetadataFrame to the EnsembleFrame.
 
         Arguments:
-            column_name (str): jame of the column from the metadataframe
-            overwrite (bool): determines overriding behavior in ensembleframe
+            column_name (str): Name of the column from the MetadataFrame
+            overwrite (bool): Determines overriding behavior in EnsembleFrame
+            drop (bool): Whether to drop the column from the MetadataFrame afterwards
         """
         # Add warning if column already exists in EnsembleFrame
         if column_name in self.dataframe.columns:
@@ -272,6 +275,10 @@ class Thicket(GraphFrame):
         self.dataframe = self.dataframe.join(
             self.metadata[column_name], on=self.dataframe.index.names[1]
         )
+
+        # Drop column
+        if drop:
+            self.metadata.drop(column_name, axis=1, inplace=True)
 
     def squash(self, update_inc_cols=True):
         """Rewrite the Graph to include only nodes present in the performance DataFrame's rows.
@@ -309,13 +316,15 @@ class Thicket(GraphFrame):
             statsframe=sframe,
         )
 
-    def columnar_join(self, other, column_name, self_new_name, other_new_name):
+    def columnar_join(
+        self, other, column_name=None, self_new_name="Self", other_new_name="Other"
+    ):
         """Join two Thickets column-wise. New column multi-index will be created with self and other's columns under separate indexers.
 
         Arguments:
             self (Thicket): left-side thicket
             other (Thicket): right-side thicket
-            column_name (str): Name of the column from the metadataframe to join on
+            column_name (str): Name of the column from the metadataframe to join on. If no argument is provided, it is assumed that there is no profile-wise relationship between self and other.
             self_new_name (str): The name for self's new upper-level columnar multi-index
             other_new_name (str): The name for other's new upper-level columnar multi-index
 
@@ -331,6 +340,17 @@ class Thicket(GraphFrame):
         verify_thicket_structures(other.dataframe, index=["node", "profile"])
         verify_thicket_structures(other.statsframe.dataframe, index=["node"])
         verify_thicket_structures(other.metadata, index=["profile"])
+        # Check for column_name in metadata
+        if column_name:
+            verify_thicket_structures(self.metadata, columns=[column_name])
+            verify_thicket_structures(other.metadata, columns=[column_name])
+        # Check length of profiles match
+        if len(self.profile) != len(other.profile):
+            raise ValueError(
+                "Length of self's profiles does not match length of other's profiles {} != {}".format(
+                    len(self.profile), len(other.profile)
+                )
+            )
 
         # For tree diff
         missing_nodes = None
@@ -340,14 +360,21 @@ class Thicket(GraphFrame):
         self_cp = self.deepcopy()
         other_cp = other.deepcopy()
 
-        # Create profile index mapping from metadata
-        self_map_flipped = {
-            v: k for k, v in self_cp.metadata[column_name].to_dict().items()
-        }
-        other_map = other.metadata[column_name].to_dict()
-        other_self_map = {
-            k: self_map_flipped[other_map[k]] for k, v in other_map.items()
-        }
+        # Profile mapping
+        if column_name is None:
+            # Create arbitrary mapping
+            other_self_map = {
+                other.profile[i]: self.profile[i] for i in range(len(self.profile))
+            }
+        else:
+            # Create profile index mapping from metadata
+            self_map_flipped = {
+                v: k for k, v in self_cp.metadata[column_name].to_dict().items()
+            }
+            other_map = other.metadata[column_name].to_dict()
+            other_self_map = {
+                k: self_map_flipped[other_map[k]] for k, v in other_map.items()
+            }
         # Apply index mapping to other dataframe
         other_cp.dataframe = other.dataframe.rename(
             index=other_self_map, level="profile"
@@ -392,11 +419,24 @@ class Thicket(GraphFrame):
                 rename_dict[column] = column.replace("_right", "")
         combined_th.dataframe.rename(columns=rename_dict, inplace=True)
 
-        # Change second-level index to be from metadata's "column_name" column
-        combined_th.add_column_from_metadata_to_ensemble(column_name)
-        combined_th.dataframe.reset_index(level="profile", drop=True, inplace=True)
-        combined_th.dataframe.set_index(column_name, append=True, inplace=True)
-        combined_th.dataframe.sort_index(inplace=True)
+        # Change second-level index
+        if column_name is None:
+            # Create index from scratch
+            new_profiles = [i for i in range(len(self.profile))]
+            combined_th.metadata["new_profiles"] = new_profiles
+            combined_th.add_column_from_metadata_to_ensemble("new_profiles", drop=True)
+            combined_th.dataframe.reset_index(level="profile", drop=True, inplace=True)
+            combined_th.dataframe.set_index("new_profiles", append=True, inplace=True)
+            combined_th.dataframe.sort_index(inplace=True)
+            combined_th.dataframe.index.rename(
+                "profile", level="new_profiles", inplace=True
+            )
+        else:
+            # Change second-level index to be from metadata's "column_name" column
+            combined_th.add_column_from_metadata_to_ensemble(column_name)
+            combined_th.dataframe.reset_index(level="profile", drop=True, inplace=True)
+            combined_th.dataframe.set_index(column_name, append=True, inplace=True)
+            combined_th.dataframe.sort_index(inplace=True)
 
         def _tuple_idx_columns_metrics(target_thicket, source_thicket, source_new_name):
             """Helper function to create new tuple columnar-index and handle exclusive and inclusive metrics.
