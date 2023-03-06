@@ -1,0 +1,8 @@
+name: thicket-docs
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - sphinx-thebe
+  - nbsphinx
+  - myst-parser
