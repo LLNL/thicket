@@ -46,9 +46,7 @@ release = "2023.1.0"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.todo",
-    "sphinx.ext.imgmath",
     "sphinx.ext.viewcode",
-    "sphinx.ext.githubpages",
     "sphinx.ext.napoleon",
     "sphinx_thebe",
     "myst_parser",
