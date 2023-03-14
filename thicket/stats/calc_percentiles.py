@@ -5,9 +5,10 @@
 
 import pandas as pd
 import numpy as np
+from ..utils import verify_thicket_structures
 
 
-def calc_percentile(thicket=None, columns=None):
+def calc_percentile(thicket, columns=None):
     """Calculate q-th percentile per node.
 
     Designed to take in a Thicket, and will append a column to the statsframe
@@ -27,6 +28,13 @@ def calc_percentile(thicket=None, columns=None):
         thicket (thicket): Thicket object
         columns (list): list of hardware/timing metrics to perform percentile calculations on
     """
+    if columns is None:
+        raise ValueError("To see a list of valid columns run get_perf_columns().")
+
+    verify_thicket_structures(
+        thicket.dataframe, index=["node", "profile"], columns=columns
+    )
+
     for column in columns:
         percentiles = []
         for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):

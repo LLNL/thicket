@@ -4,9 +4,10 @@
 # SPDX-License-Identifier: MIT
 
 import seaborn as sns
+from ..utils import verify_thicket_structures
 
 
-def display_heatmap(thicket=None, columns=None, **kwargs):
+def display_heatmap(thicket, columns=None, **kwargs):
     """Display a heatmap.
 
     Arguments:
@@ -16,6 +17,13 @@ def display_heatmap(thicket=None, columns=None, **kwargs):
     Returns:
         (matplotlib Axes): object for managing plot
     """
+    if columns is None:
+        raise ValueError("To see a list of valid columns run get_perf_columns().")
+
+    verify_thicket_structures(
+        thicket.statsframe.dataframe, index=["node"], columns=columns
+    )
+
     thicket.statsframe.dataframe.index = thicket.statsframe.dataframe.index.map(str)
 
     ax = sns.heatmap(thicket.statsframe.dataframe[columns], **kwargs)

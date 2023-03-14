@@ -5,9 +5,10 @@
 
 import numpy as np
 import pandas as pd
+from ..utils import verify_thicket_structures
 
 
-def calc_deviation(thicket=None, columns=None):
+def calc_deviation(thicket, columns=None):
     """Calculate standard deviation and variance per node.
 
     Designed to take in a Thicket, and will append a column to the statsframe
@@ -20,6 +21,13 @@ def calc_deviation(thicket=None, columns=None):
         thicket (thicket): Thicket object
         columns (list): list of hardware/timing metrics to perform deviation calculations on
     """
+    if columns is None:
+        raise ValueError("To see a list of valid columns run get_perf_columns().")
+
+    verify_thicket_structures(
+        thicket.dataframe, index=["node", "profile"], columns=columns
+    )
+
     for column in columns:
         var = []
         std = []

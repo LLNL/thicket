@@ -4,9 +4,10 @@
 # SPDX-License-Identifier: MIT
 
 import pandas as pd
+from ..utils import verify_thicket_structures
 
 
-def calc_extremum(thicket=None, columns=None):
+def calc_extremum(thicket, columns=None):
     """Calculate min and max per node.
 
     Designed to take in a Thicket, and will append a column to the statsframe
@@ -19,6 +20,13 @@ def calc_extremum(thicket=None, columns=None):
         thicket (thicket): Thicket object
         columns (list): list of hardware/timing metrics to perform extremnum calculations on
     """
+    if columns is None:
+        raise ValueError("To see a list of valid columns run get_perf_columns().")
+
+    verify_thicket_structures(
+        thicket.dataframe, index=["node", "profile"], columns=columns
+    )
+
     for column in columns:
         minimum = []
         maximum = []

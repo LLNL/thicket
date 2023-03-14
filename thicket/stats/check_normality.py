@@ -5,9 +5,10 @@
 
 import pandas as pd
 from scipy import stats
+from ..utils import verify_thicket_structures
 
 
-def check_normality(thicket=None, columns=None):
+def check_normality(thicket, columns=None):
     """
     Designed to take in a Thicket, and will append a column to the statsframe.
 
@@ -27,6 +28,12 @@ def check_normality(thicket=None, columns=None):
     statsframe: Returns statsframe with appended columns for normality check
 
     """
+    if columns is None:
+        raise ValueError("To see a list of valid columns run get_perf_columns().")
+
+    verify_thicket_structures(
+        thicket.dataframe, index=["node", "profile"], columns=columns
+    )
 
     for column in columns:
         normality = []

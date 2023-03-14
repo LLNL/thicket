@@ -5,30 +5,38 @@
 
 import pandas as pd
 import seaborn as sns
+from ..utils import verify_thicket_structures
 
 
-def display_histogram(thicket=None, node=None, metric=None, **kwargs):
+def display_histogram(thicket, node=None, column=None, **kwargs):
     """Display a histogram.
 
     Arguments:
         thicket (thicket): Thicket object
         node (str): node object
-        metric (str): metric from ensemble frame
+        column (str): column from ensemble frame
 
     Returns:
         (matplotlib Axes): object for managing plot
     """
+    if column is None or node is None:
+        raise ValueError("To see a list of valid columns run get_perf_columns().")
+
+    verify_thicket_structures(
+        thicket.dataframe, index=["node", "profile"], columns=[column]
+    )
+
     df = pd.melt(
         thicket.dataframe.reset_index(),
         id_vars="node",
-        value_vars=metric,
-        value_name=metric,
+        value_vars=column,
+        value_name=column,
     )
 
     df["node"] = df["node"].astype(str)
 
     filtered_df = df[df["node"] == node]
 
-    ax = sns.displot(filtered_df, x=metric, kind="hist", **kwargs)
+    ax = sns.displot(filtered_df, x=column, kind="hist", **kwargs)
 
     return ax
