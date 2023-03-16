@@ -71,7 +71,10 @@ jobs:
         PYTHONPATH=. coverage run $(which pytest)
 
     - name: Upload coverage to Codecov
-      run: |
-        curl -Os https://uploader.codecov.io/latest/linux/codecov
-        chmod +x codecov
-        ./codecov
+      uses: codecov/codecov-action@v3
+      with:
+        fetch-depth: 0
+        fail_ci_if_error: true
+        verbose: true
+        env_vars: OS,PYTHON
+        directory: ./.coverage
