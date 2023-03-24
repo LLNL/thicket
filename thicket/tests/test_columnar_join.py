@@ -33,8 +33,9 @@ def test_columnar_join(mpi_scaling_cali):
         combined_th.dataframe.shape[0] <= t1.dataframe.shape[0] + t2.dataframe.shape[0]
     )
     assert (
-        combined_th.dataframe.shape[1] == t1.dataframe.shape[1] + t2.dataframe.shape[1]
-    )
+        combined_th.dataframe.shape[1]
+        == t1.dataframe.shape[1] + t2.dataframe.shape[1] - 1
+    )  # (-2) each name column removed, (+1) singular name column created.
 
     # Check metadata shape. Should be row-joined
     assert combined_th.metadata.shape[0] == t1.metadata.shape[0] + t2.metadata.shape[0]

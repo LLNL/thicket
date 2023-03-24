@@ -470,6 +470,15 @@ class Thicket(GraphFrame):
         )
         combined_th.dataframe.columns = pd.MultiIndex.from_tuples(new_idx)
 
+        # Add "name" column.
+        nodes = list(set(combined_th.dataframe.reset_index()["node"]))
+        for node in nodes:
+            combined_th.dataframe.loc[node, "name"] = node.frame["name"]
+        # Drop old "name" columns
+        combined_th.dataframe.drop(
+            columns=[(self_new_name, "name"), (other_new_name, "name")], inplace=True
+        )
+
         # Join "self" & "other" metadata frames
         combined_th.metadata = pd.concat([self_cp.metadata, other_cp.metadata])
         # Update "profile" object
