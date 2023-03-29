@@ -565,35 +565,17 @@ class Thicket(GraphFrame):
 
     def tree(self):
         """hatchet tree() function for a thicket"""
-        try:
-            if isinstance(self.dataframe.columns, pd.MultiIndex):
-                t_set = set(self.dataframe.columns.get_level_values(0))
-                t_set.remove("_missing_node")
-                name_1, name_2 = t_set
-                temp_df = (
-                    self.dataframe[(name_1, "name")]
-                    .combine_first(self.dataframe[(name_2, "name")])
-                    .rename("name")
-                    .reset_index()
-                    .drop_duplicates(subset=["node"])
-                )
-                temp_df["_missing_node"] = self.dataframe["_missing_node"].to_list()[
-                    :: len(self.profile)
-                ]
-                temp_df.set_index("node", inplace=True)
-            else:
-                temp_df = self.dataframe.drop_duplicates(subset="name").reset_index(
-                    level="profile"
-                )
-            temp_df["thicket_tree"] = -1
-            return GraphFrame.tree(
-                self=Thicket(graph=self.graph, dataframe=temp_df),
-                metric_column="thicket_tree",
-            )
-        except KeyError:
-            raise NotImplementedError(
-                "Printing this collection of profiles is not supported."
-            )
+        temp_df = self.statsframe.dataframe.copy()
+        # Adjustments specific for MultiIndex.
+        if isinstance(temp_df.columns, pd.MultiIndex):
+            temp_df.columns = temp_df.columns.to_flat_index()
+            temp_df.rename(columns={("", "name"): "name"}, inplace=True)
+        # Placeholder value. TODO: Enable selection from PerfData.
+        temp_df["thicket_tree"] = -1
+        return GraphFrame.tree(
+            self=Thicket(graph=self.graph, dataframe=temp_df),
+            metric_column="thicket_tree",
+        )
 
     def unify_pair(self, other):
         """Unify two Thicket's graphs and DataFrames"""
