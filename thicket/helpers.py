@@ -173,3 +173,24 @@ def _sync_nodes_frame(gh, df):
     df["node"] = df_list_full
 
     df.set_index(index_names, inplace=True)
+
+
+def _get_perf_columns(df):
+    """Get list of performance dataframe columns that are numeric.
+
+    Numeric columns can be used with thicket's statistical functions.
+
+    Arguments:
+        df (DataFrame): thicket dataframe object
+
+    Returns:
+        numeric_columns (list): list of numeric columns
+    """
+    numeric_types = ["int32", "int64", "float32", "float64"]
+
+    numeric_columns = df.select_dtypes(include=numeric_types).columns.tolist()
+
+    if "nid" in numeric_columns:
+        numeric_columns.remove("nid")
+
+    return numeric_columns

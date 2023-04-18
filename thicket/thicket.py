@@ -30,6 +30,7 @@ class Thicket(GraphFrame):
         inc_metrics=None,
         default_metric="time",
         metadata={},
+        performance_cols=None,
         profile=None,
         profile_mapping=None,
         statsframe=None,
@@ -45,6 +46,8 @@ class Thicket(GraphFrame):
             default_metric (str): primary metric
             metadata (DataFrame): pandas DataFrame indexed by profile hashes,
                 contains profile metadata
+            performance_cols (list): list of numeric columns within the performance
+                dataframe
             profile (list): list of hashed profile strings
             profile_mapping (dict): mapping of hashed profile strings to original strings
             statsframe (DataFrame): pandas DataFrame indexed by Nodes from the
@@ -63,6 +66,8 @@ class Thicket(GraphFrame):
         else:
             self.statsframe = statsframe
 
+        self.performance_cols = helpers._get_perf_columns(self.dataframe)
+
     def __str__(self):
         s = (
             "graph: "
@@ -77,6 +82,8 @@ class Thicket(GraphFrame):
             + self.default_metric
             + "\nmetadata:\n"
             + self.metadata
+            + "\nperformance_cols:\n"
+            + self.performance_cols
             + "\nprofile: "
             + self.profile
             + "\nprofile_mapping: "
