@@ -8,8 +8,8 @@ import thicket.helpers as helpers
 from thicket import Thicket as th
 
 
-def test_intersection(misc):
-    th_ens = th.from_caliperreader(misc)
+def test_intersection(example_cali):
+    th_ens = th.from_caliperreader(example_cali)
 
     remaining_node_list, removed_node_list = th_ens.intersection()
 
