@@ -9,7 +9,7 @@ from thicket import Thicket as th
 
 
 def test_intersection(example_cali):
-    th_ens = th.from_caliperreader(example_cali)
+    th_ens = th.from_caliperreader(example_cali[-1])
 
     remaining_node_list, removed_node_list = th_ens.intersection()
 

@@ -49,7 +49,7 @@ def test_resolve_missing_indicies():
 
 
 def test_sync_nodes(example_cali):
-    th = Thicket.from_caliperreader(str(example_cali))
+    th = Thicket.from_caliperreader(example_cali[-1])
 
     # Should be synced from the reader
     assert helpers._are_synced(th.graph, th.dataframe)
@@ -71,9 +71,9 @@ def test_sync_nodes(example_cali):
     assert helpers._are_synced(th.graph, th.dataframe)
 
 
-def test_filter(example_cali_multiprofile):
+def test_filter(example_cali):
     # example thicket
-    th = Thicket.from_caliperreader(example_cali_multiprofile)
+    th = Thicket.from_caliperreader(example_cali)
 
     # columns and corresponding values to filter by
     columns_values = {"problem_size": ["30"], "cluster": ["quartz", "chekov"]}
@@ -134,9 +134,9 @@ def test_filter(example_cali_multiprofile):
         th.filter_metadata(lambda x: x["cluster"] == "chekov")
 
 
-def test_groupby(example_cali_multiprofile):
+def test_groupby(example_cali):
     # example thicket
-    th = Thicket.from_caliperreader(example_cali_multiprofile)
+    th = Thicket.from_caliperreader(example_cali)
     # use cases for string, numeric, and single value columns
     columns = ["user", "launchdate", "cali.channel"]
 
@@ -200,7 +200,7 @@ def test_groupby(example_cali_multiprofile):
 
 
 def test_statsframe(example_cali):
-    th = Thicket.from_caliperreader(str(example_cali))
+    th = Thicket.from_caliperreader(example_cali[-1])
 
     # Arbitrary value insertion in StatsFrame.
     th.statsframe.dataframe["test"] = 1
@@ -244,9 +244,9 @@ def test_add_column_from_metadata(mpi_scaling_cali):
         assert metric in values
 
 
-def test_filter_stats(example_cali_multiprofile):
+def test_filter_stats(example_cali):
     # example thicket
-    th = Thicket.from_caliperreader(example_cali_multiprofile)
+    th = Thicket.from_caliperreader(example_cali)
 
     # columns and corresponding values to filter by
     columns_values = {

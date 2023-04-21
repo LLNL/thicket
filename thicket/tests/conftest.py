@@ -17,18 +17,6 @@ def data_dir():
 
 
 @pytest.fixture
-def example_cali(data_dir, tmpdir):
-    """Builds a temporary directory containing the lulesh cali file."""
-    cali_json_dir = os.path.join(data_dir, "example-cali")
-    cali_file = os.path.join(cali_json_dir, "example-profile.cali")
-
-    shutil.copy(cali_file, str(tmpdir))
-    tmpfile = os.path.join(str(tmpdir), "example-profile.cali")
-
-    return tmpfile
-
-
-@pytest.fixture
 def example_json(data_dir, tmpdir):
     """Builds a temporary directory containing the lulesh cali file."""
     cali_json_dir = os.path.join(data_dir, "example-json")
@@ -41,7 +29,7 @@ def example_json(data_dir, tmpdir):
 
 
 @pytest.fixture
-def example_cali_multiprofile(data_dir):
+def example_cali(data_dir):
     """Returns a list of cali profiles"""
     cali_json_dir = os.path.join(data_dir, "example-cali")
     cali_files = []

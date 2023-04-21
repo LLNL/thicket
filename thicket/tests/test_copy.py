@@ -7,7 +7,7 @@ from thicket import Thicket
 
 
 def test_copy(example_cali):
-    self = Thicket.from_caliperreader(str(example_cali))
+    self = Thicket.from_caliperreader(example_cali[-1])
     self.exc_metrics.append("value")
     other = self.copy()
 
@@ -68,7 +68,7 @@ def test_copy(example_cali):
 
 
 def test_deepcopy(example_cali):
-    self = Thicket.from_caliperreader(str(example_cali))
+    self = Thicket.from_caliperreader(example_cali[-1])
     self.exc_metrics.append("value")
     other = self.deepcopy()
 
