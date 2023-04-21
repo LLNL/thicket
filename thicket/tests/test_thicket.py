@@ -117,6 +117,23 @@ def test_add_column_from_metadata(mpi_scaling_cali):
         assert metric in values
 
 
+def test_thicketize_graphframe(example_cali):
+    ht1 = ht.GraphFrame.from_caliperreader(example_cali[-1])
+    th1 = Thicket.thicketize_graphframe(ht1, example_cali[-1])
+
+    # Check object types
+    assert isinstance(ht1, ht.GraphFrame)
+    assert isinstance(th1, Thicket)
+
+    # Check graphs are equivalent
+    assert ht1.graph == th1.graph
+
+    # Check dataframes are equivalent when profile level is dropped
+    th1.dataframe.reset_index(level="profile", inplace=True)
+    th1.dataframe.drop("profile", axis=1, inplace=True)
+    assert ht1.dataframe.equals(th1.dataframe)
+
+
 def test_unify_ensemble(mpi_scaling_cali):
     th_27 = Thicket.from_caliperreader(mpi_scaling_cali[0])
     th_64 = Thicket.from_caliperreader(mpi_scaling_cali[1])
@@ -124,8 +141,12 @@ def test_unify_ensemble(mpi_scaling_cali):
     th_listwise = Thicket.unify_ensemble([th_27, th_64])
     th_pairwise = Thicket.unify_ensemble([th_27, th_64], pairwise=True)
 
+    # Check dataframe shape
+    th_listwise.dataframe.shape == (90, 7)
+
     # Check that the two Thickets are equivalent
     assert th_listwise == th_pairwise
 
+    # Check specific values. Row order can vary so use "sum" to check
     node = th_listwise.dataframe.index.get_level_values("node")[8]
     assert sum(th_listwise.dataframe.loc[node, "Min time/rank"]) == 0.000453
