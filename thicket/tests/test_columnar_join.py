@@ -3,10 +3,22 @@
 #
 # SPDX-License-Identifier: MIT
 
+import pytest
+
 from thicket import Thicket
 
 
-def test_columnar_join(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
+@pytest.fixture
+def columnar_join_thicket(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
+    """Generator for 'columnar_join' thicket.
+
+    Arguments:
+        mpi_scaling_cali (list): List of Caliper files for MPI scaling study.
+        rajaperf_basecuda_xl_cali (list): List of Caliper files for basecuda.
+
+    Returns:
+        list: List of Thicket objects.
+    """
     th_mpi_1 = Thicket.from_caliperreader(mpi_scaling_cali[0:2])
     th_mpi_2 = Thicket.from_caliperreader(mpi_scaling_cali[2:4])
     th_cuda128 = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali[0:2])
@@ -32,6 +44,11 @@ def test_columnar_join(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
         column_name="ProblemSize",
     )
 
+    return thicket_list, thicket_list_cp, combined_th
+
+
+def test_columnar_join(columnar_join_thicket):
+    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
     # Check no original objects modified
     for i in range(len(thicket_list)):
         assert thicket_list[i].dataframe.equals(thicket_list_cp[i].dataframe)
