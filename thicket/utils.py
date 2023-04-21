@@ -3,6 +3,23 @@
 #
 # SPDX-License-Identifier: MIT
 
+from collections import OrderedDict
+
+
+def verify_sorted_profile(thicket_component):
+    """Assertion to check if profiles are sorted in a thicket DataFrame
+
+    Arguments:
+        thicket_component (DataFrame): component of thicket to check
+    """
+    profile_index_values = list(
+        OrderedDict.fromkeys(thicket_component.index.get_level_values("profile"))
+    )
+    if profile_index_values != sorted(profile_index_values):
+        raise ValueError(
+            "The profiles in this DataFrame must be sorted. Try 'pandas.DataFrame.sort_index'."
+        )
+
 
 def verify_thicket_structures(thicket_component, columns=[], index=[]):
     """Assertion for missing input requirements to execute thicket functions.

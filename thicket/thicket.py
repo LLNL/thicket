@@ -15,7 +15,7 @@ from collections import OrderedDict
 from hatchet import GraphFrame
 from hatchet.query import AbstractQuery
 import thicket.helpers as helpers
-from .utils import verify_thicket_structures
+from .utils import verify_sorted_profile, verify_thicket_structures
 
 
 class Thicket(GraphFrame):
@@ -255,6 +255,231 @@ class Thicket(GraphFrame):
         # make and return thicket?
         return th
 
+    @staticmethod
+    def columnar_join(
+        thicket_list,
+        header_list=None,
+        column_name=None,
+    ):
+        """Join Thickets column-wise. New column multi-index will be created with columns under separate indexer headers.
+
+        Arguments:
+            thicket_list (list): List of Thickets to join
+            header_list (list): List of headers to use for the new columnar multi-index
+            column_name (str): Name of the column from the metadataframe to join on. If no argument is provided, it is assumed that there is no profile-wise relationship between self and other.
+
+        Returns:
+            (Thicket): New Thicket object with joined columns
+        """
+
+        def _create_multiindex_columns(dataframe, upper_idx_name):
+            """Helper function to create MultiIndex column names from a dataframe's current columns.
+
+            Arguments:
+            dataframe (DataFrame): source DataFrame
+            upper_idx_name (String): name of the newly added index in the MultiIndex. Prepended before each column as a tuple.
+
+            Returns:
+                (list): list of new indicies generated from the source DataFrame
+            """
+            new_idx = []
+            for column in dataframe.columns:
+                new_tuple = (upper_idx_name, column)
+                new_idx.append(new_tuple)
+            return new_idx
+
+        ###
+        # Step 0A: Pre-check of data structures
+        ###
+        # Required/expected format of the data
+        for th in thicket_list:
+            verify_thicket_structures(th.dataframe, index=["node", "profile"])
+            verify_thicket_structures(th.statsframe.dataframe, index=["node"])
+            verify_thicket_structures(th.metadata, index=["profile"])
+        # Check for column_name in metadata
+        if column_name:
+            for th in thicket_list:
+                verify_thicket_structures(th.metadata, columns=[column_name])
+        # Check length of profiles match
+        for i in range(len(thicket_list) - 1):
+            if len(thicket_list[i].profile) != len(thicket_list[i + 1].profile):
+                raise ValueError(
+                    "Length of all thicket profiles must match. {} != {}".format(
+                        len(thicket_list[i].profile), len(thicket_list[i + 1].profile)
+                    )
+                )
+        # Ensure all thickets profiles are sorted. Must be true when column_name=None to guarantee PerfData and MetaData match up.
+        if column_name is None:
+            for th in thicket_list:
+                verify_sorted_profile(th.dataframe)
+                verify_sorted_profile(th.metadata)
+
+        ###
+        # Step 0B: Variable Initialization
+        ###
+        # Initialize combined thicket
+        combined_th = thicket_list[0].deepcopy()
+        # Use copies to be non-destructive
+        thicket_list_cp = [th.deepcopy() for th in thicket_list]
+
+        ###
+        # Step 1: Unify the thickets
+        ###
+        # Unify graphs if "self" and "other" do not have the same graph
+        union_graph = thicket_list_cp[0].graph
+        for i in range(len(thicket_list_cp) - 1):
+            if thicket_list_cp[i].graph != thicket_list_cp[i + 1].graph:
+                union_graph = union_graph.union(thicket_list_cp[i + 1].graph)
+        combined_th.graph = union_graph
+        for i in range(len(thicket_list_cp)):
+            # Set all graphs to the union graph
+            thicket_list_cp[i].graph = union_graph
+            # Necessary to change dataframe hatchet id's to match the nodes in the graph
+            helpers._sync_nodes_frame(union_graph, thicket_list_cp[i].dataframe)
+            # For tree diff. DataFrames need to be sorted.
+            thicket_list_cp[i].dataframe.sort_index(inplace=True)
+
+        ###
+        # Step 2: Join "self" & "other" PerfData
+        ###
+        # Create header list if not provided
+        if header_list is None:
+            header_list = [i for i in range(len(thicket_list))]
+
+        # Update index to reflect PerfData index
+        new_mappings = {}  # Dictionary mapping old profiles to new profiles
+        if column_name is None:  # Create index from scratch
+            new_profiles = [i for i in range(len(thicket_list_cp[0].profile))]
+            for i in range(len(thicket_list_cp)):
+                thicket_list_cp[i].metadata["new_profiles"] = new_profiles
+                thicket_list_cp[i].add_column_from_metadata_to_ensemble(
+                    "new_profiles", drop=True
+                )
+                thicket_list_cp[i].dataframe.reset_index(level="profile", inplace=True)
+                new_mappings.update(
+                    pd.Series(
+                        thicket_list_cp[i]
+                        .dataframe["new_profiles"]
+                        .map(lambda x: (x, header_list[i]))
+                        .values,
+                        index=thicket_list_cp[i].dataframe["profile"],
+                    ).to_dict()
+                )
+                thicket_list_cp[i].dataframe.drop("profile", axis=1, inplace=True)
+                thicket_list_cp[i].dataframe.set_index(
+                    "new_profiles", append=True, inplace=True
+                )
+                thicket_list_cp[i].dataframe.index.rename(
+                    "profile", level="new_profiles", inplace=True
+                )
+        else:  # Change second-level index to be from metadata's "column_name" column
+            for i in range(len(thicket_list_cp)):
+                thicket_list_cp[i].add_column_from_metadata_to_ensemble(column_name)
+                thicket_list_cp[i].dataframe.reset_index(level="profile", inplace=True)
+                new_mappings.update(
+                    pd.Series(
+                        thicket_list_cp[i]
+                        .dataframe[column_name]
+                        .map(lambda x: (x, header_list[i]))
+                        .values,
+                        index=thicket_list_cp[i].dataframe["profile"],
+                    ).to_dict()
+                )
+                thicket_list_cp[i].dataframe.drop("profile", axis=1, inplace=True)
+                thicket_list_cp[i].dataframe.set_index(
+                    column_name, append=True, inplace=True
+                )
+                thicket_list_cp[i].dataframe.sort_index(inplace=True)
+
+        # Create tuple columns
+        new_columns = [
+            _create_multiindex_columns(th.dataframe, header_list[i])
+            for i, th in enumerate(thicket_list_cp)
+        ]
+        # Clear old metrics (non-tuple)
+        combined_th.exc_metrics.clear()
+        combined_th.inc_metrics.clear()
+        # Update inc/exc metrics
+        for i in range(len(new_columns)):
+            for col_tuple in new_columns[i]:
+                if col_tuple[1] in thicket_list_cp[i].exc_metrics:
+                    combined_th.exc_metrics.append(col_tuple)
+                if col_tuple[1] in thicket_list_cp[i].inc_metrics:
+                    combined_th.inc_metrics.append(col_tuple)
+        # Update columns
+        for i in range(len(thicket_list_cp)):
+            thicket_list_cp[i].dataframe.columns = pd.MultiIndex.from_tuples(
+                new_columns[i]
+            )
+
+        # Concat PerfData together
+        combined_th.dataframe = pd.concat(
+            [thicket_list_cp[i].dataframe for i in range(len(thicket_list_cp))],
+            axis="columns",
+            join="outer",
+        )
+
+        # Extract "name" columns to upper level
+        nodes = list(set(combined_th.dataframe.reset_index()["node"]))
+        for node in nodes:
+            combined_th.dataframe.loc[node, "name"] = node.frame["name"]
+        combined_th.dataframe.drop(
+            columns=[(header_list[i], "name") for i in range(len(header_list))],
+            inplace=True,
+        )
+
+        ###
+        # Step 3: Join "self" & "other" MetaData
+        ###
+        # Update index to reflect PerfData index
+        for i in range(len(thicket_list_cp)):
+            thicket_list_cp[i].metadata.reset_index(drop=True, inplace=True)
+        if column_name is None:
+            for i in range(len(thicket_list_cp)):
+                thicket_list_cp[i].metadata.index.set_names("profile", inplace=True)
+        else:
+            for i in range(len(thicket_list_cp)):
+                thicket_list_cp[i].metadata.set_index(column_name, inplace=True)
+                thicket_list_cp[i].metadata.sort_index(inplace=True)
+
+        # Create MultiIndex columns
+        for i in range(len(thicket_list_cp)):
+            thicket_list_cp[i].metadata.columns = pd.MultiIndex.from_tuples(
+                _create_multiindex_columns(thicket_list_cp[i].metadata, header_list[i])
+            )
+
+        # Concat Metadata together
+        combined_th.metadata = pd.concat(
+            [thicket_list_cp[i].metadata for i in range(len(thicket_list_cp))],
+            axis="columns",
+            join="outer",
+        )
+
+        ###
+        # Step 4: Update other Thicket objects.
+        ###
+        for i in range(1, len(thicket_list_cp)):
+            combined_th.profile += thicket_list_cp[i].profile  # Update "profile" object
+            combined_th.profile_mapping.update(
+                thicket_list_cp[i].profile_mapping
+            )  # Update "profile_mapping" object
+        combined_th.profile = [new_mappings[prf] for prf in combined_th.profile]
+        profile_mapping_cp = combined_th.profile_mapping.copy()
+        for k, v in profile_mapping_cp.items():
+            combined_th.profile_mapping[
+                new_mappings[k]
+            ] = combined_th.profile_mapping.pop(k)
+
+        # Clear statsframe
+        combined_th.statsframe = GraphFrame(
+            graph=combined_th.graph,
+            dataframe=helpers._new_statsframe_df(
+                combined_th.dataframe, multiindex=True
+            ),
+        )
+
+        return combined_th
+
     def add_column_from_metadata_to_ensemble(
         self, column_name, overwrite=False, drop=False
     ):
@@ -322,193 +547,6 @@ class Thicket(GraphFrame):
             profile_mapping=self.profile_mapping,
             statsframe=sframe,
         )
-
-    def columnar_join(
-        self, other, column_name=None, self_new_name="Self", other_new_name="Other"
-    ):
-        """Join two Thickets column-wise. New column multi-index will be created with self and other's columns under separate indexers.
-
-        Arguments:
-            self (Thicket): left-side thicket
-            other (Thicket): right-side thicket
-            column_name (str): Name of the column from the metadataframe to join on. If no argument is provided, it is assumed that there is no profile-wise relationship between self and other.
-            self_new_name (str): The name for self's new upper-level columnar multi-index
-            other_new_name (str): The name for other's new upper-level columnar multi-index
-
-        Returns:
-            (Thicket): New thicket with joined DataFrame
-        """
-        # Pre-check of data structures
-        # Required for deepcopy operation
-        verify_thicket_structures(self.dataframe, index=["node", "profile"])
-        verify_thicket_structures(self.statsframe.dataframe, index=["node"])
-        verify_thicket_structures(self.metadata, index=["profile"])
-        # For joining with "self"
-        verify_thicket_structures(other.dataframe, index=["node", "profile"])
-        verify_thicket_structures(other.statsframe.dataframe, index=["node"])
-        verify_thicket_structures(other.metadata, index=["profile"])
-        # Check for column_name in metadata
-        if column_name:
-            verify_thicket_structures(self.metadata, columns=[column_name])
-            verify_thicket_structures(other.metadata, columns=[column_name])
-        # Check length of profiles match
-        if len(self.profile) != len(other.profile):
-            raise ValueError(
-                "Length of self's profiles does not match length of other's profiles {} != {}".format(
-                    len(self.profile), len(other.profile)
-                )
-            )
-
-        # For tree diff
-        missing_nodes = None
-        # Initialize combined thicket
-        combined_th = self.deepcopy()
-        # Use copies to be non-destructive
-        self_cp = self.deepcopy()
-        other_cp = other.deepcopy()
-
-        # Profile mapping
-        if column_name is None:
-            # Create arbitrary mapping
-            other_self_map = {
-                other.profile[i]: self.profile[i] for i in range(len(self.profile))
-            }
-        else:
-            # Create profile index mapping from metadata
-            self_map_flipped = {
-                v: k for k, v in self_cp.metadata[column_name].to_dict().items()
-            }
-            other_map = other.metadata[column_name].to_dict()
-            other_self_map = {
-                k: self_map_flipped[other_map[k]] for k, v in other_map.items()
-            }
-        # Apply index mapping to other dataframe
-        other_cp.dataframe = other.dataframe.rename(
-            index=other_self_map, level="profile"
-        )
-        helpers._sync_nodes_frame(
-            other_cp.graph, other_cp.dataframe
-        )  # Sync nodes between graph and dataframe
-
-        # Unify graphs if "self" and "other" do not have the same graph
-        if self_cp.graph != other_cp.graph:
-            union_graph = self_cp.graph.union(other_cp.graph)
-            combined_th.graph = union_graph
-            self_cp.graph = union_graph
-            other_cp.graph = union_graph
-
-            # Necessary to change dataframe hatchet id's to match the nodes in the graph
-            helpers._sync_nodes_frame(self_cp.graph, self_cp.dataframe)
-            helpers._sync_nodes_frame(other_cp.graph, other_cp.dataframe)
-
-            # For tree diff. DataFrames need to be sorted.
-            self_cp.dataframe.sort_index(inplace=True)
-            other_cp.dataframe.sort_index(inplace=True)
-            missing_nodes = helpers._missing_nodes_to_list(
-                self_cp.dataframe, other_cp.dataframe
-            )
-
-        # Concatenate combined dataframe column-wise. Assumes row-wise alignment in respect to nodes
-        combined_th.dataframe = self_cp.dataframe.join(
-            other_cp.dataframe,
-            how="outer",
-            sort=True,
-            lsuffix="_left",
-            rsuffix="_right",
-        )
-
-        # Fix renaming of duplicate columns since pandas requires it in "join" function. #TODO: Figure out how to join without renaming. This would remove this step.
-        rename_dict = {}
-        for column in combined_th.dataframe.columns:
-            if "_left" in column:
-                rename_dict[column] = column.replace("_left", "")
-            elif "_right" in column:
-                rename_dict[column] = column.replace("_right", "")
-        combined_th.dataframe.rename(columns=rename_dict, inplace=True)
-
-        # Change second-level index
-        if column_name is None:
-            # Create index from scratch
-            new_profiles = [i for i in range(len(self.profile))]
-            combined_th.metadata["new_profiles"] = new_profiles
-            combined_th.add_column_from_metadata_to_ensemble("new_profiles", drop=True)
-            combined_th.dataframe.reset_index(level="profile", drop=True, inplace=True)
-            combined_th.dataframe.set_index("new_profiles", append=True, inplace=True)
-            combined_th.dataframe.sort_index(inplace=True)
-            combined_th.dataframe.index.rename(
-                "profile", level="new_profiles", inplace=True
-            )
-        else:
-            # Change second-level index to be from metadata's "column_name" column
-            combined_th.add_column_from_metadata_to_ensemble(column_name)
-            combined_th.dataframe.reset_index(level="profile", drop=True, inplace=True)
-            combined_th.dataframe.set_index(column_name, append=True, inplace=True)
-            combined_th.dataframe.sort_index(inplace=True)
-
-        def _tuple_idx_columns_metrics(target_thicket, source_thicket, source_new_name):
-            """Helper function to create new tuple columnar-index and handle exclusive and inclusive metrics.
-
-            Arguments:
-            target_thicket (Thicket): joined thicket
-            source_thicket (Thicket): a half of the joined thicket
-
-            Returns:
-                (list): list of new indicies generated from the source thicket
-            """
-            new_idx = []
-            for column in source_thicket.dataframe.columns:
-                new_tuple = (source_new_name, column)
-                new_idx.append(new_tuple)
-                if column in source_thicket.exc_metrics:
-                    target_thicket.exc_metrics.append(new_tuple)
-                if column in source_thicket.inc_metrics:
-                    target_thicket.inc_metrics.append(new_tuple)
-            return new_idx
-
-        # Clear old metrics (non-tuple)
-        combined_th.exc_metrics.clear()
-        combined_th.inc_metrics.clear()
-
-        # Create new columnar multi-index for "self" and "other"
-        new_idx = []
-        new_idx.extend(_tuple_idx_columns_metrics(combined_th, self_cp, self_new_name))
-        new_idx.extend(
-            _tuple_idx_columns_metrics(combined_th, other_cp, other_new_name)
-        )
-        combined_th.dataframe.columns = pd.MultiIndex.from_tuples(new_idx)
-
-        # Add "name" column.
-        nodes = list(set(combined_th.dataframe.reset_index()["node"]))
-        for node in nodes:
-            combined_th.dataframe.loc[node, "name"] = node.frame["name"]
-        # Drop old "name" columns
-        combined_th.dataframe.drop(
-            columns=[(self_new_name, "name"), (other_new_name, "name")], inplace=True
-        )
-
-        # Join "self" & "other" metadata frames
-        combined_th.metadata = pd.concat([self_cp.metadata, other_cp.metadata])
-        # Update "profile" object
-        combined_th.profile += other_cp.profile
-        # Update "profile_mapping" object
-        combined_th.profile_mapping.update(other_cp.profile_mapping)
-
-        # Clear statsframe
-        combined_th.statsframe = GraphFrame(
-            graph=combined_th.graph,
-            dataframe=helpers._new_statsframe_df(
-                combined_th.dataframe, multiindex=True
-            ),
-        )
-
-        # For tree diff
-        if missing_nodes:
-            try:
-                combined_th.dataframe["_missing_node"] = missing_nodes
-            except Exception:
-                warnings.warn("Unable to add '_missing_node' column.")
-
-        return combined_th
 
     def copy(self):
         """Return a partially shallow copy of the Thicket.
