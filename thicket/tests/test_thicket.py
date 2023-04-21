@@ -254,10 +254,15 @@ def test_filter_stats(example_cali_multiprofile):
         "test_numeric_column": [4, 15],
     }
 
+    nrows = th.statsframe.dataframe.shape[0]
+
     # set string column values
-    th.statsframe.dataframe["test_string_column"] = "less than 20"
-    th.statsframe.dataframe.loc[20:45, "test_string_column"] = "less than 45"
-    th.statsframe.dataframe.loc[45:, "test_string_column"] = "less that 87"
+    less_than_20 = ["less than 20"] * 21
+    less_than_45 = ["less than 45"] * 26
+    less_than_87 = ["less than 87"] * (nrows-45+1)
+    new_col = less_than_20 + less_than_45 + less_than_87
+
+    th.statsframe.dataframe["test_string_column"] = new_col
 
     # set numeric column values
     th.statsframe.dataframe["test_numeric_column"] = range(0, 86)
