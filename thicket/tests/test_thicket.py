@@ -87,9 +87,10 @@ def test_statsframe(example_cali):
     # Expected tree output
     tree_output = th.statsframe.tree(metric_column="test")
     # Check if tree output is correct.
-    assert "1.000 MPI_Comm_dup" in tree_output
-    assert "1.000 MPI_Initialized" in tree_output
-    assert "1.000 CalcFBHourglassForceForElems" in tree_output
+
+    assert bool(re.search("1.000.*MPI_Comm_dup", tree_output))
+    assert bool(re.search("1.000.*MPI_Initialized", tree_output))
+    assert bool(re.search("1.000.*CalcFBHourglassForceForElems", tree_output))
 
 
 def test_add_column_from_metadata(mpi_scaling_cali):
@@ -114,3 +115,17 @@ def test_add_column_from_metadata(mpi_scaling_cali):
     values = t_ens.dataframe[example_column].values.astype("int")
     for metric in example_column_metrics:
         assert metric in values
+
+
+def test_unify_ensemble(mpi_scaling_cali):
+    th_27 = Thicket.from_caliperreader(mpi_scaling_cali[0])
+    th_64 = Thicket.from_caliperreader(mpi_scaling_cali[1])
+
+    th_listwise = Thicket.unify_ensemble([th_27, th_64])
+    th_pairwise = Thicket.unify_ensemble([th_27, th_64], pairwise=True)
+
+    # Check that the two Thickets are equivalent
+    assert th_listwise == th_pairwise
+
+    node = th_listwise.dataframe.index.get_level_values("node")[8]
+    assert sum(th_listwise.dataframe.loc[node, "Min time/rank"]) == 0.000453
