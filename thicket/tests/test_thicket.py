@@ -255,7 +255,7 @@ def test_filter_stats(example_cali_multiprofile):
     }
 
     # set string column values
-    th.statsframe.dataframe.loc[0:20, "test_string_column"] = "less than 20"
+    th.statsframe.dataframe["test_string_column"] = "less than 20"
     th.statsframe.dataframe.loc[20:45, "test_string_column"] = "less than 45"
     th.statsframe.dataframe.loc[45:, "test_string_column"] = "less that 87"
 
