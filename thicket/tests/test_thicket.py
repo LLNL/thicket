@@ -257,7 +257,7 @@ def test_filter_stats(example_cali_multiprofile):
     # set string column values
     less_than_20 = ["less than 20"] * 21
     less_than_45 = ["less than 45"] * 25
-    less_than_87 = ["less than 87"] * 41
+    less_than_87 = ["less than 87"] * 40
     new_col = less_than_20 + less_than_45 + less_than_87
 
     th.statsframe.dataframe["test_string_column"] = new_col
