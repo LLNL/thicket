@@ -6,7 +6,11 @@
 from thicket import Thicket
 
 
-def test_thicket(example_cali):
+# TODO: test_from_caliper
+
+# TODO: test_from_hpctoolkit
+
+def test_from_caliperreader(example_cali):
     """Sanity test a GraphFrame object with known data."""
     th = Thicket.from_caliperreader(str(example_cali))
 
