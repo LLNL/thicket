@@ -45,6 +45,7 @@ jobs:
 
     - name: Pin pandas version
       if: ${{ matrix.python-version == 3.7 }}
+      run: |
         pip install pandas==1.2.5
         python -m pip list | grep pandas
 
