@@ -57,7 +57,10 @@ def test_copy(example_cali):
     node = other.dataframe.index.get_level_values("node")[0]
     profile = other.dataframe.index.get_level_values("profile")[0]
     other.dataframe.loc[(node, profile), "nid"] = -1
-    assert other.dataframe.loc[(node, profile), "nid"] == self.dataframe.loc[(node, profile), "nid"]
+    assert (
+        other.dataframe.loc[(node, profile), "nid"]
+        == self.dataframe.loc[(node, profile), "nid"]
+    )
     # Deep copy of structure
     assert len(self.dataframe.columns) + len(self.dataframe.index[0]) == len(
         other.dataframe.reset_index().columns
