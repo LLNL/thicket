@@ -68,6 +68,30 @@ class Thicket(GraphFrame):
 
         self.performance_cols = helpers._get_perf_columns(self.dataframe)
 
+    def __eq__(self, other):
+        """Compare two thicket objects.
+
+        Arguments:
+            other (Thicket): Thicket object to compare to
+
+        Returns:
+            (bool): True if equal, False otherwise
+        """
+        assert isinstance(other, Thicket)
+        return (
+            self.graph == other.graph
+            and self.dataframe.equals(other.dataframe)
+            and self.exc_metrics == other.exc_metrics
+            and self.inc_metrics == other.inc_metrics
+            and self.default_metric == other.default_metric
+            and self.metadata.equals(other.metadata)
+            and self.performance_cols == other.performance_cols
+            and self.profile == other.profile
+            and self.profile_mapping == other.profile_mapping
+            and self.statsframe.graph == other.statsframe.graph
+            and self.statsframe.dataframe.equals(other.statsframe.dataframe)
+        )
+
     def __str__(self):
         s = (
             "graph: "
