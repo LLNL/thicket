@@ -683,24 +683,41 @@ class Thicket(GraphFrame):
 
         return union_graph
 
-    def unify_pairwise(th_list):
+    @staticmethod
+    def unify_pairwise(th_list, debug=False):
         """Unifies two thickets graphs and dataframes.
 
         Ensure self and other have the same graph and same node IDs. This may
         change the node IDs in the dataframe.
 
         Update the graphs in the graphframe if they differ.
+
+        Arguments:
+            th_list (list): list of Thicket objects
+            debug (bool): print debug statements
+
+        Returns:
+            union_graph (Graph): unified graph
         """
         union_graph = th_list[0].graph
         for i in range(len(th_list)):
             for j in range(i + 1, len(th_list)):
-                print("Unifying (" + str(i) + ", " + str(j) + "...")
+                if debug:
+                    print("Unifying (" + str(i) + ", " + str(j) + "...")
                 union_graph = th_list[i].unify_pair(th_list[j])
         return union_graph
 
     @staticmethod
-    def unify_listwise(th_list):
-        """Unify a list of Thicket's graphs and DataFrames"""
+    def unify_listwise(th_list, debug=False):
+        """Unify a list of Thicket's graphs and DataFrames
+
+        Arguments:
+            th_list (list): list of Thicket objects
+            debug (bool): print debug statements
+
+        Returns:
+            union_graph (Graph): unified graph
+        """
         # variable to keep track of case where all graphs are the same
         same_graphs = True
 
@@ -709,9 +726,11 @@ class Thicket(GraphFrame):
         for i in range(1, len(th_list)):  # n-1 unions
             # Check to skip unecessary computation. apply short circuiting with 'or'.
             if union_graph is th_list[i].graph or union_graph == th_list[i].graph:
-                print("Union Graph == thicket[" + str(i) + "].graph")
+                if debug:
+                    print("Union Graph == thicket[" + str(i) + "].graph")
             else:
-                print("Unifying (Union Graph, " + str(i) + ")")
+                if debug:
+                    print("Unifying (Union Graph, " + str(i) + ")")
                 same_graphs = False
                 # Unify graph with current thickets graph
                 union_graph = union_graph.union(th_list[i].graph)
