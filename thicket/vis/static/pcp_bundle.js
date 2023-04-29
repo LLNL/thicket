@@ -9477,6 +9477,7 @@ var ParallelCoordPlot = /*#__PURE__*/function () {
     this.xs = {};
     this.dragging = {};
     this.checkbox_margin = 50;
+    console.log(dims);
     var excludes = ["profile", "launchday", "launchdate", "compilerversion"];
 
     for (var _i = 0, _dims = dims; _i < _dims.length; _i++) {
@@ -9514,12 +9515,14 @@ var ParallelCoordPlot = /*#__PURE__*/function () {
         this.xs[dim] = point().domain(c_domain).range([this.checkbox_margin, width]);
         this.valid_dims.push(dim);
         this.c_dims.push(dim);
-      } else if (c_domain.length > 1 && !isNaN(c_domain[0]) && !invalid) {
+      } else if (c_domain.length > 0 && !isNaN(c_domain[0]) && !invalid) {
         var n_domain = getNumericalDomain(data.metadata, dim);
         this.xs[dim] = linear_linear().domain(n_domain).range([this.checkbox_margin, width]);
         this.valid_dims.push(dim);
         this.n_dims.push(dim);
       }
+
+      console.log(this.valid_dims);
     }
 
     this.ys = point().range([layout.margins.top, height]).domain(this.valid_dims); //aggregate vis data

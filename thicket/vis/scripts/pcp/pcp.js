@@ -45,7 +45,7 @@ class ParallelCoordPlot{
                 this.valid_dims.push(dim);
                 this.c_dims.push(dim);
             }
-            else if(c_domain.length > 1 && !(isNaN(c_domain[0])) && !invalid){
+            else if(c_domain.length > 0 && !(isNaN(c_domain[0])) && !invalid){
                 let n_domain = getNumericalDomain(data.metadata, dim);
                 this.xs[dim] = d3.scaleLinear()
                     .domain(n_domain)
@@ -54,6 +54,7 @@ class ParallelCoordPlot{
                 this.n_dims.push(dim);       
             }
         }
+
 
         this.ys = d3.scalePoint()
                     .range([layout.margins.top, height])
