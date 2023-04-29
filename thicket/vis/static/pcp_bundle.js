@@ -9477,7 +9477,6 @@ var ParallelCoordPlot = /*#__PURE__*/function () {
     this.xs = {};
     this.dragging = {};
     this.checkbox_margin = 50;
-    console.log(dims);
     var excludes = ["profile", "launchday", "launchdate", "compilerversion"];
 
     for (var _i = 0, _dims = dims; _i < _dims.length; _i++) {
@@ -9521,8 +9520,6 @@ var ParallelCoordPlot = /*#__PURE__*/function () {
         this.valid_dims.push(dim);
         this.n_dims.push(dim);
       }
-
-      console.log(this.valid_dims);
     }
 
     this.ys = point().range([layout.margins.top, height]).domain(this.valid_dims); //aggregate vis data
