@@ -33,6 +33,11 @@ def verify_thicket_structures(thicket_component, columns=[], index=[]):
         Raises an error if any columns or index levels are not in component,
         continues program if all columns and index levels are in component
     """
+    if not isinstance(columns, list):
+        raise RuntimeError("columns= must be specified as a list")
+    if not isinstance(index, list):
+        raise RuntimeError("index= must be specified as a list")
+
     # collect component columns and index
     component_columns = thicket_component.columns.tolist()
     component_index = thicket_component.index.names
@@ -47,17 +52,17 @@ def verify_thicket_structures(thicket_component, columns=[], index=[]):
 
     if not column_result and not index_result:
         raise RuntimeError(
-            "\n Missing column(s): "
-            + missing_columns
-            + " required for the function. \n Missing index level(s): "
-            + missing_index
+            "Specified column(s) not found: "
+            + str(missing_columns)
+            + "\nMissing index level(s): "
+            + str(missing_index)
             + " required for the function"
         )
     elif not column_result and index_result:
         raise RuntimeError(
-            "\n Missing column(s): " + missing_columns + " required for the function"
+            "Specified column(s) not found: " + str(missing_columns)
         )
     elif column_result and not index_result:
         raise RuntimeError(
-            "\n Missing index level(s): " + missing_index + " required for the function"
+            "Missing index level(s): " + str(missing_index) + " required for the function"
         )
