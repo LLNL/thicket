@@ -55,7 +55,6 @@ class ParallelCoordPlot{
             }
         }
 
-
         this.ys = d3.scalePoint()
                     .range([layout.margins.top, height])
                     .domain(this.valid_dims);
