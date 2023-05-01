@@ -1002,8 +1002,17 @@ class Thicket(GraphFrame):
         """
         if callable(select_function):
             if not self.metadata.empty:
-                # check profile is an index level in metadata
-                verify_thicket_structures(self.metadata, index=["profile"])
+                # check only 1 index in metadata
+                assert self.metadata.index.nlevels == 1
+
+                # Add warning if filtering on MultiIndex columns
+                if isinstance(new_th.dataframe.columns, pd.MultiIndex):
+                    warnings.warn(
+                        "Filtering on MultiIndex columns will impact the entire row."
+                    )
+
+                # Get index name
+                index_name = self.metadata.index.name
 
                 # create a copy of the thicket object
                 new_thicket = self.copy()
@@ -1012,12 +1021,12 @@ class Thicket(GraphFrame):
                 filtered_rows = new_thicket.metadata.apply(select_function, axis=1)
                 new_thicket.metadata = new_thicket.metadata[filtered_rows]
 
-                # note profile keys to filter EnsembleFrame
-                profile_id = new_thicket.metadata.index.values.tolist()
+                # note index keys to filter EnsembleFrame
+                index_id = new_thicket.metadata.index.values.tolist()
                 # filter EnsembleFrame based on the MetadataFrame
                 new_thicket.dataframe = new_thicket.dataframe[
-                    new_thicket.dataframe.index.get_level_values("profile").isin(
-                        profile_id
+                    new_thicket.dataframe.index.get_level_values(index_name).isin(
+                        index_id
                     )
                 ]
 
