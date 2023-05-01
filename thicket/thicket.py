@@ -1180,11 +1180,14 @@ class Thicket(GraphFrame):
         """
 
         unique_meta = {}
-        columns = self.metadata.columns
 
-        for col in columns:
-            unique_entries = self.metadata[col].unique().tolist()
-            unique_meta[col] = unique_entries
+        for col in self.metadata.columns:
+            # skip columns where the values are a list
+            if isinstance(self.metadata[col].iloc[0], list):
+                continue
+            else:
+                unique_entries = self.metadata[col].unique().tolist()
+                unique_meta[col] = unique_entries
 
         sorted_meta = dict(sorted(unique_meta.items(), key=lambda x: x[0].lower()))
 
