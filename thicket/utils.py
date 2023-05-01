@@ -59,10 +59,10 @@ def verify_thicket_structures(thicket_component, columns=[], index=[]):
             + " required for the function"
         )
     elif not column_result and index_result:
-        raise RuntimeError(
-            "Specified column(s) not found: " + str(missing_columns)
-        )
+        raise RuntimeError("Specified column(s) not found: " + str(missing_columns))
     elif column_result and not index_result:
         raise RuntimeError(
-            "Missing index level(s): " + str(missing_index) + " required for the function"
+            "Missing index level(s): "
+            + str(missing_index)
+            + " required for the function"
         )
