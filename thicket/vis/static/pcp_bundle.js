@@ -9514,7 +9514,7 @@ var ParallelCoordPlot = /*#__PURE__*/function () {
         this.xs[dim] = point().domain(c_domain).range([this.checkbox_margin, width]);
         this.valid_dims.push(dim);
         this.c_dims.push(dim);
-      } else if (c_domain.length > 1 && !isNaN(c_domain[0]) && !invalid) {
+      } else if (c_domain.length > 0 && !isNaN(c_domain[0]) && !invalid) {
         var n_domain = getNumericalDomain(data.metadata, dim);
         this.xs[dim] = linear_linear().domain(n_domain).range([this.checkbox_margin, width]);
         this.valid_dims.push(dim);
