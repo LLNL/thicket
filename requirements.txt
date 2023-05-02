@@ -6,4 +6,3 @@ pandas
 numpy
 beautifulsoup4
 matplotlib
-codecov
