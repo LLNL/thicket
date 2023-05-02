@@ -1178,7 +1178,6 @@ class Thicket(GraphFrame):
             (dict): alphabetical ordered dictionary with key's being the column names
                       and the values being unique values for a column
         """
-
         unique_meta = {}
 
         for col in self.metadata.columns:
