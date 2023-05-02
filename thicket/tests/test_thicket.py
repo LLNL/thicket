@@ -150,3 +150,12 @@ def test_unify_ensemble(mpi_scaling_cali):
     # Check specific values. Row order can vary so use "sum" to check
     node = th_listwise.dataframe.index.get_level_values("node")[8]
     assert sum(th_listwise.dataframe.loc[node, "Min time/rank"]) == 0.000453
+
+
+def test_unique_metadata_base_cuda(rajaperf_basecuda_xl_cali):
+    t_ens = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+
+    res = t_ens.get_unique_metadata()
+    assert res["systype_build"] == ["blueos_3_ppc64le_ib_p9"]
+    assert res["variant"] == ["Base_CUDA"]
+    assert res["gpu_targets_block_sizes"] == [128]
