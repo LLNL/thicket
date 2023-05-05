@@ -1006,9 +1006,9 @@ class Thicket(GraphFrame):
                 assert self.metadata.index.nlevels == 1
 
                 # Add warning if filtering on MultiIndex columns
-                if isinstance(new_th.dataframe.columns, pd.MultiIndex):
+                if isinstance(self.metadata.columns, pd.MultiIndex):
                     warnings.warn(
-                        "Filtering on MultiIndex columns will impact the entire row."
+                        "Filtering on MultiIndex columns will impact the entire row, not just the subsection of the provided MultiIndex."
                     )
 
                 # Get index name
