@@ -5,6 +5,7 @@
 
 import pytest
 
+from test_filter import check_filter
 from thicket import Thicket
 
 
@@ -17,7 +18,7 @@ def columnar_join_thicket(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
         rajaperf_basecuda_xl_cali (list): List of Caliper files for basecuda.
 
     Returns:
-        list: List of Thicket objects.
+        list: List of original thickets, list of deepcopies of original thickets, and columnar-joined thicket.
     """
     th_mpi_1 = Thicket.from_caliperreader(mpi_scaling_cali[0:2])
     th_mpi_2 = Thicket.from_caliperreader(mpi_scaling_cali[2:4])
@@ -80,3 +81,14 @@ def test_columnar_join(columnar_join_thicket):
     assert len(combined_th.profile_mapping) == sum(
         [len(th.profile_mapping) for th in thicket_list]
     )
+
+
+def test_filter_columnar_join(columnar_join_thicket):
+    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+    # columns and corresponding values to filter by
+    columns_values = {
+        ("MPI1", "mpi.world.size"): [27],
+        ("Cuda128", "cali.caliper.version"): ["2.9.0-dev"],
+    }
+
+    check_filter(combined_th, columns_values)
