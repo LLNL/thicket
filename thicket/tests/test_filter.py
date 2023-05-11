@@ -8,22 +8,22 @@ import pytest
 from thicket import Thicket, InvalidFilter, EmptyMetadataFrame
 
 
-def test_filter(example_cali):
-    # example thicket
-    th = Thicket.from_caliperreader(example_cali)
+def check_filter(th, columns_values):
+    """Check filter function for Thicket object.
 
-    # columns and corresponding values to filter by
-    columns_values = {"problem_size": ["30"], "cluster": ["quartz", "chekov"]}
+    Arguments:
+        th (Thicket): Thicket object to test.
+        columns_values (dict): Dictionary of columns and corresponding values to filter by.
+    """
 
+    index_name = th.metadata.index.name
     for column in columns_values:
         for value in columns_values[column]:
             # get expected profile hash and nodes after filtering
-            exp_profile = sorted(
-                th.metadata.index[th.metadata[column] == value].tolist()
-            )
+            exp_index = sorted(th.metadata.index[th.metadata[column] == value].tolist())
             exp_nodes = sorted(
                 th.dataframe[
-                    th.dataframe.index.get_level_values("profile").isin(exp_profile)
+                    th.dataframe.index.get_level_values(index_name).isin(exp_index)
                 ]
                 .index.get_level_values(0)
                 .drop_duplicates()
@@ -38,7 +38,7 @@ def test_filter(example_cali):
 
             # MetadataFrame: compare profile hash keys after filter to expected
             metadata_profile = new_th.metadata.index.tolist()
-            assert metadata_profile == exp_profile
+            assert metadata_profile == exp_index
 
             # EnsembleFrame: compare profile hash keys and nodes after filter to expected
             ensemble_profile = sorted(
@@ -47,7 +47,7 @@ def test_filter(example_cali):
             ensemble_nodes = sorted(
                 new_th.dataframe.index.get_level_values(0).drop_duplicates().tolist()
             )
-            assert ensemble_profile == exp_profile
+            assert ensemble_profile == exp_index
             assert ensemble_nodes == exp_nodes
 
             # StatsFrame: compare nodes after filter to expected; check for empty dataframe
@@ -69,6 +69,15 @@ def test_filter(example_cali):
     # check for empty metadataframe exception
     with pytest.raises(EmptyMetadataFrame):
         th.filter_metadata(lambda x: x["cluster"] == "chekov")
+
+
+def test_filter(example_cali):
+    # example thicket
+    th = Thicket.from_caliperreader(example_cali)
+    # columns and corresponding values to filter by
+    columns_values = {"problem_size": ["30"], "cluster": ["quartz", "chekov"]}
+
+    check_filter(th, columns_values)
 
 
 def test_filter_stats(example_cali):
