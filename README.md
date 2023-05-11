@@ -1,3 +1,9 @@
+# <img src="https://raw.githubusercontent.com/llnl/thicket/develop/logo-notext.png" width="64" valign="middle" alt="thicket"/> Thicket
+
+[![Build Status](https://github.com/llnl/thicket/actions/workflows/unit-tests.yaml/badge.svg)](https://github.com/llnl/thicket/actions)
+[![Read the Docs](http://readthedocs.org/projects/thicket/badge/?version=latest)](http://thicket.readthedocs.io)
+[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 # Thicket
 
 A Python-based toolkit for analyzing ensemble performance data.
