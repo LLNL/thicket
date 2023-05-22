@@ -1150,6 +1150,16 @@ class Thicket(GraphFrame):
                     )
                 ]
 
+                # Updates the profiles to only contain the remaining ones
+                profile_mapping_tmp = sub_thicket.profile_mapping.copy()
+                for profile_mapping_key in profile_mapping_tmp:
+                    if profile_mapping_key not in profile_id:
+                        sub_thicket.profile_mapping.pop(profile_mapping_key)
+
+                sub_thicket.profile = [
+                    profile for profile in sub_thicket.profile if profile in profile_id
+                ]
+
                 # clear the StatsFrame for current unique group
                 sub_thicket.statsframe.dataframe = helpers._new_statsframe_df(
                     sub_thicket.dataframe
