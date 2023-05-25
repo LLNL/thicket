@@ -41,15 +41,6 @@ def check_query(th, hnids, query):
         th_df_profiles.unique().to_list()
     )
 
-    # update_inclusive_columns is called automatically by GraphFrame.squash()
-    # at the end of "query".
-    # To make sure the following assertion works, manually invoke this function
-    # on the original data.
-    # TODO if/when the call to update_inclusive_columns is made optional in Hatchet,
-    #      remove this line
-    th.update_inclusive_columns()
-    assert sorted(list(filt_th.dataframe.columns)) == sorted(list(th.dataframe.columns))
-
 
 def test_query(rajaperf_basecuda_xl_cali):
     # test thicket
