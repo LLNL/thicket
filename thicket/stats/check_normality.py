@@ -35,18 +35,34 @@ def check_normality(thicket, columns=None):
         thicket.dataframe, index=["node", "profile"], columns=columns
     )
 
-    for column in columns:
-        normality = []
+    if thicket.dataframe.columns.nlevels == 1:
+        for column in columns:
+            normality = []
+            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
+                pvalue = stats.shapiro(thicket.dataframe.loc[node][column])[1]
 
-        for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-            metric_value = thicket.dataframe.loc[node][column]
-            pvalue = stats.shapiro(metric_value)[1]
+                if pvalue < 0.05:
+                    normality.append("False")
+                elif pvalue > 0.05:
+                    normality.append("True")
+                else:
+                    normality.append(pd.NA)
 
-            if pvalue < 0.05:
-                normality.append("False")
-            elif pvalue > 0.05:
-                normality.append("True")
-            else:
-                normality.append(pd.NA)
+            thicket.statsframe.dataframe[column + "_normality"] = normality
 
-        thicket.statsframe.dataframe[column + "_normality"] = normality
+    else:
+        for idx,column in columns:
+            normality = []
+            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
+                pvalue = stats.shapiro(thicket.dataframe.loc[node][(idx,column)])[1]
+                
+                if pvalue < 0.05:
+                    normality.append("False")
+                elif pvalue > 0.05:
+                    normality.append("True")
+                else:
+                    normality.append(pd.NA)
+
+            thicket.statsframe.dataframe[(idx,column + "_normality")] = normality
+
+        thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
