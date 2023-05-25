@@ -12,7 +12,8 @@ def display_heatmap(thicket, columns=None, **kwargs):
 
     Arguments:
         thicket (thicket): Thicket object
-        columns (list): list of hardware/timing metrics from statsframe to display
+        columns (list): List of hardware/timing metrics from aggregated statistics table to display.
+                        Column index must be the same throughout. 
 
     Returns:
         (matplotlib Axes): object for managing plot
@@ -20,12 +21,27 @@ def display_heatmap(thicket, columns=None, **kwargs):
     if columns is None:
         raise ValueError("To see a list of valid columns run get_perf_columns().")
 
-    verify_thicket_structures(
-        thicket.statsframe.dataframe, index=["node"], columns=columns
-    )
+    #verify_thicket_structures(
+    #    thicket.statsframe.dataframe, index=["node"], columns=columns
+    #)
 
-    thicket.statsframe.dataframe.index = thicket.statsframe.dataframe.index.map(str)
+    if thicket.dataframe.columns.nlevels == 1:
+        thicket.statsframe.dataframe.index = thicket.statsframe.dataframe.index.map(str)
+        ax = sns.heatmap(thicket.statsframe.dataframe[columns], **kwargs)
 
-    ax = sns.heatmap(thicket.statsframe.dataframe[columns], **kwargs)
+        return ax
+    
+    else:
+        thicket.statsframe.dataframe.index = thicket.statsframe.dataframe.index.map(str)
+        
+        initial_idx = columns[0][0]
+        cols = [columns[0][1]]
+        for element in columns[1:len(columns)]:
+            if initial_idx != element[0]:
+                raise ValueError("Tuples must have the same column index throughout.")
+            else:
+                cols.append(element[1])
 
-    return ax
+        ax = sns.heatmap(thicket.statsframe.dataframe[initial_idx][cols],**kwargs).set_title(initial_idx)
+        
+        return ax

@@ -22,21 +22,37 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
     if column is None or node is None:
         raise ValueError("To see a list of valid columns run get_perf_columns().")
 
-    verify_thicket_structures(
-        thicket.dataframe, index=["node", "profile"], columns=[column]
-    )
+    #verify_thicket_structures(
+    #    thicket.dataframe, index=["node", "profile"], columns=[column]
+    #)
 
-    df = pd.melt(
-        thicket.dataframe.reset_index(),
-        id_vars="node",
-        value_vars=column,
-        value_name=column,
-    )
+    if thicket.dataframe.columns.nlevels == 1:
+        df = pd.melt(
+            thicket.dataframe.reset_index(),
+            id_vars="node",
+            value_vars=column,
+            value_name=" ",
+        )
 
-    df["node"] = df["node"].astype(str)
+        filtered_df = df[df["node"] == node]
 
-    filtered_df = df[df["node"] == node]
+        ax = sns.displot(filtered_df, x=" ", kind="hist", **kwargs)
 
-    ax = sns.displot(filtered_df, x=column, kind="hist", **kwargs)
+        return ax
 
-    return ax
+    else:
+        col_idx,column_value = column[0],column[1]
+        df_subset = thicket.dataframe[col_idx]
+
+        df = pd.melt(
+            df_subset.reset_index(),
+            id_vars="node",
+            value_vars=column_value,
+            value_name= " ",
+        )
+
+        filtered_df = df[df["node"] == node]
+
+        ax = sns.displot(filtered_df,x=" ", kind="hist", **kwargs)
+
+        return ax
