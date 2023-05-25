@@ -9,32 +9,29 @@ import hatchet as ht
 from thicket import Thicket
 
 
-def test_query(rajaperf_basecuda_xl_cali):
-    th = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
-    th_df_profiles = th.dataframe.index.get_level_values("profile")
-    match = [
-        node
-        for node in th.graph.traverse()
-        if node._hatchet_nid in [0, 1, 2, 3, 5, 6, 8, 9]
-    ]
+def check_query(th, hnids, query):
+    """Check query function for Thicket object.
+
+    Arguments:
+        th (Thicket): Thicket object to test.
+        hnids (list): List to match nodes based of hatchet nid.
+        query (ht.QueryMatcher()): match nodes from hatchet query.
+    """
+    node_name, profile_name = th.dataframe.index.names[0:2]
+
+    # Get profiles
+    th_df_profiles = th.dataframe.index.get_level_values(profile_name)
+    # Match first 8 nodes
+    match = [node for node in th.graph.traverse() if node._hatchet_nid in hnids]
     match_frames = [node.frame for node in match]
     match_names = [frame["name"] for frame in match_frames]
-    query = (
-        ht.QueryMatcher()
-        .match("*")
-        .rel(
-            ".",
-            lambda row: row["name"]
-            .apply(lambda x: re.match(r"Algorithm.*block_128", x) is not None)
-            .all(),
-        )
-    )
+    # Match all nodes using query
     filt_th = th.query(query)
     filt_nodes = list(filt_th.graph.traverse())
 
-    assert sorted(list(filt_th.dataframe.index.names)) == sorted(["node", "profile"])
-    filt_th_df_nodes = filt_th.dataframe.index.get_level_values("node").to_list()
-    filt_th_df_profiles = filt_th.dataframe.index.get_level_values("profile")
+    # Get filtered nodes and profiles
+    filt_th_df_nodes = filt_th.dataframe.index.get_level_values(node_name).to_list()
+    filt_th_df_profiles = filt_th.dataframe.index.get_level_values(profile_name)
 
     assert len(filt_nodes) == len(match)
     assert all([n.frame in match_frames for n in filt_nodes])
@@ -52,3 +49,22 @@ def test_query(rajaperf_basecuda_xl_cali):
     #      remove this line
     th.update_inclusive_columns()
     assert sorted(list(filt_th.dataframe.columns)) == sorted(list(th.dataframe.columns))
+
+
+def test_query(rajaperf_basecuda_xl_cali):
+    # test thicket
+    th = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+    # test arguments
+    hnids = [0, 1, 2, 3, 5, 6, 8, 9]
+    query = (
+        ht.QueryMatcher()
+        .match("*")
+        .rel(
+            ".",
+            lambda row: row["name"]
+            .apply(lambda x: re.match(r"Algorithm.*block_128", x) is not None)
+            .all(),
+        )
+    )
+
+    check_query(th, hnids, query)
