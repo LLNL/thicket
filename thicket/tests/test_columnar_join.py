@@ -8,7 +8,7 @@ import re
 import pytest
 import hatchet as ht
 
-from test_filter import check_filter
+from test_filter import check_filter, check_filter_stats
 from test_query import check_query
 from thicket import Thicket
 
@@ -96,6 +96,25 @@ def test_filter_columnar_join(columnar_join_thicket):
     }
 
     check_filter(combined_th, columns_values)
+
+
+def test_filter_stats_columnar_join(columnar_join_thicket):
+    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+    # columns and corresponding values to filter by
+    columns_values = {
+        ("test", "test_string_column"): ["less than 20"],
+        ("test", "test_numeric_column"): [4, 15],
+    }
+    # set string column values
+    less_than_20 = ["less than 20"] * 21
+    less_than_45 = ["less than 45"] * 25
+    less_than_178 = ["less than 178"] * 131
+    new_col = less_than_20 + less_than_45 + less_than_178
+    combined_th.statsframe.dataframe[("test", "test_string_column")] = new_col
+    # set numeric column values
+    combined_th.statsframe.dataframe[("test", "test_numeric_column")] = range(0, 177)
+
+    check_filter_stats(combined_th, columns_values)
 
 
 def test_query_columnar_join(columnar_join_thicket):
