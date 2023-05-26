@@ -3,10 +3,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-import pytest
 import re
 
+import pytest
 import hatchet as ht
+
 from test_filter import check_filter
 from test_query import check_query
 from thicket import Thicket
