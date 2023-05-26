@@ -8,7 +8,8 @@ import re
 import pytest
 import hatchet as ht
 
-from test_filter import check_filter, check_filter_stats
+from test_filter_metadata import check_filter_metadata
+from test_filter_stats import check_filter_stats
 from test_query import check_query
 from thicket import Thicket
 
@@ -95,7 +96,7 @@ def test_filter_columnar_join(columnar_join_thicket):
         ("Cuda128", "cali.caliper.version"): ["2.9.0-dev"],
     }
 
-    check_filter(combined_th, columns_values)
+    check_filter_metadata(combined_th, columns_values)
 
 
 def test_filter_stats_columnar_join(columnar_join_thicket):
