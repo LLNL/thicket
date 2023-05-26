@@ -3,9 +3,13 @@
 #
 # SPDX-License-Identifier: MIT
 
+import re
+
 import pytest
+import hatchet as ht
 
 from test_filter import check_filter, check_filter_stats
+from test_query import check_query
 from thicket import Thicket
 
 
@@ -111,3 +115,21 @@ def test_filter_stats_columnar_join(columnar_join_thicket):
     combined_th.statsframe.dataframe[("test", "test_numeric_column")] = range(0, 177)
 
     check_filter_stats(combined_th, columns_values)
+
+
+def test_query_columnar_join(columnar_join_thicket):
+    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+    # test arguments
+    hnids = [0, 1, 2, 3, 5, 6, 8, 9]
+    query = (
+        ht.QueryMatcher()
+        .match("*")
+        .rel(
+            ".",
+            lambda row: row["name"]
+            .apply(lambda x: re.match(r"Algorithm.*block_128", x) is not None)
+            .all(),
+        )
+    )
+
+    check_query(combined_th, hnids, query)
