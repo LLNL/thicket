@@ -8,40 +8,44 @@ from ..utils import verify_thicket_structures
 
 
 def display_heatmap(thicket, columns=None, **kwargs):
-    """Display a heatmap.
+    """Display a heatmap which contains a full list of nodes and user passed columns. Columns must be
+    from the aggregated statistics table.
 
     Arguments:
         thicket (thicket): Thicket object
         columns (list): List of hardware/timing metrics from aggregated statistics table to display.
-                        Column index must be the same throughout. 
+                        Note, if using a columnar_joined thicket a list of tuples must be
+                        passed in with the format: (column index, column name).
 
     Returns:
-        (matplotlib Axes): object for managing plot
+        (matplotlib Axes): Object for managing heatmap plot.
     """
     if columns is None:
         raise ValueError("To see a list of valid columns run get_perf_columns().")
 
-    #verify_thicket_structures(
-    #    thicket.statsframe.dataframe, index=["node"], columns=columns
-    #)
+    verify_thicket_structures(
+        thicket.statsframe.dataframe, index=["node"], columns=columns
+    )
 
     if thicket.dataframe.columns.nlevels == 1:
         thicket.statsframe.dataframe.index = thicket.statsframe.dataframe.index.map(str)
         ax = sns.heatmap(thicket.statsframe.dataframe[columns], **kwargs)
 
         return ax
-    
+
     else:
         thicket.statsframe.dataframe.index = thicket.statsframe.dataframe.index.map(str)
-        
+
         initial_idx = columns[0][0]
         cols = [columns[0][1]]
-        for element in columns[1:len(columns)]:
+        for element in columns[1 : len(columns)]:
             if initial_idx != element[0]:
                 raise ValueError("Tuples must have the same column index throughout.")
             else:
                 cols.append(element[1])
 
-        ax = sns.heatmap(thicket.statsframe.dataframe[initial_idx][cols],**kwargs).set_title(initial_idx)
-        
+        ax = sns.heatmap(
+            thicket.statsframe.dataframe[initial_idx][cols], **kwargs
+        ).set_title(initial_idx)
+
         return ax
