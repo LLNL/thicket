@@ -10,15 +10,20 @@ from ..utils import verify_thicket_structures
 
 
 def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **kwargs):
-    """Calculates boxplot five number summary and appends these values to the statsframe.
+    """Calculate boxplot five number summary for each node in the performance data table.
+
+    Designed to take in a thicket, and append one or more columns to the aggregated statistics table for
+    the boxplot five number summary calculations for each node.
 
     The 5 number summary includes (1) minimum, (2) q1, (3) median, (4) q3, and (5) maximum.
 
     Arguments:
-        thicket (thicket): thicket object
-        columns (list): list of columns to perform boxplot five number summary on
-        quartiles (list): list containing three values between 0 and 1 to cut the
-            distribution into equal probabilities
+        thicket (thicket): Thicket object
+        columns (list): List of columns to perform boxplot five number summary on
+                        Note, if using a columnar_joined thicket a list of tuples must be
+                        passed in with the format:(column index, column name).
+        quartiles (list): List containing three values between 0 and 1 to cut the
+            distribution into equal probabilities.
     """
     if len(quartiles) != 3:
         raise ValueError(
@@ -30,12 +35,12 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
             "To see a list of valid columns, run thicket.performance_cols."
         )
 
-    #verify_thicket_structures(
-    #    thicket.dataframe, index=["node", "profile"], columns=columns
-    #)
+    verify_thicket_structures(
+        thicket.dataframe, index=["node", "profile"], columns=columns
+    )
 
     q_list = str(tuple(quartiles))
-    
+
     if thicket.dataframe.columns.nlevels == 1:
         for col in columns:
             boxplot_dict = {
@@ -87,17 +92,19 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
     else:
         for idx, col in columns:
             boxplot_dict = {
-                col + "_q1" + q_list: [],
-                col + "_q2" + q_list: [],
-                col + "_q3" + q_list: [],
-                col + "_iqr" + q_list: [],
-                col + "_lowerfence" + q_list: [],
-                col + "_upperfence" + q_list: [],
-                col + "_outliers" + q_list: [],
+                idx: {
+                    col + "_q1" + q_list: [],
+                    col + "_q2" + q_list: [],
+                    col + "_q3" + q_list: [],
+                    col + "_iqr" + q_list: [],
+                    col + "_lowerfence" + q_list: [],
+                    col + "_upperfence" + q_list: [],
+                    col + "_outliers" + q_list: [],
+                }
             }
 
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                values = thicket.dataframe.loc[node][(idx,col)].tolist()
+                values = thicket.dataframe.loc[node][(idx, col)].tolist()
 
                 q = np.quantile(values, quartiles)
                 q1 = q[0]
@@ -108,12 +115,12 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                 lower_fence = q1 - (1.5 * iqr)
                 upper_fence = q3 + (1.5 * iqr)
 
-                boxplot_dict[col + "_q1" + q_list].append(q1)
-                boxplot_dict[col + "_q2" + q_list].append(median)
-                boxplot_dict[col + "_q3" + q_list].append(q3)
-                boxplot_dict[col + "_iqr" + q_list].append(iqr)
-                boxplot_dict[col + "_lowerfence" + q_list].append(lower_fence)
-                boxplot_dict[col + "_upperfence" + q_list].append(upper_fence)
+                boxplot_dict[idx][col + "_q1" + q_list].append(q1)
+                boxplot_dict[idx][col + "_q2" + q_list].append(median)
+                boxplot_dict[idx][col + "_q3" + q_list].append(q3)
+                boxplot_dict[idx][col + "_iqr" + q_list].append(iqr)
+                boxplot_dict[idx][col + "_lowerfence" + q_list].append(lower_fence)
+                boxplot_dict[idx][col + "_upperfence" + q_list].append(upper_fence)
 
                 profile = []
                 for i in range(0, len(values)):
@@ -125,11 +132,15 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                         continue
                 if not profile:
                     profile = []
-                boxplot_dict[col + "_outliers" + q_list].append(profile)
-            
-            
-            df_box = pd.DataFrame(boxplot_dict)
-            return df_box
-            #df_box["node"] = thicket.statsframe.dataframe.index.tolist()
-            #df_box.set_index("node", inplace=True)
-            #thicket.statsframe.dataframe = thicket.statsframe.dataframe.join(df_box)
+                boxplot_dict[idx][col + "_outliers" + q_list].append(profile)
+
+            create_multi_index = {
+                (outerKey, innerKey): values
+                for outerKey, innerDict in boxplot_dict.items()
+                for innerKey, values in innerDict.items()
+            }
+            df_box = pd.DataFrame(create_multi_index)
+            df_box["node"] = thicket.statsframe.dataframe.reset_index()["node"].tolist()
+            df_box = df_box.set_index("node")
+            thicket.statsframe.dataframe = thicket.statsframe.dataframe.join(df_box)
+        thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)

@@ -9,21 +9,23 @@ from ..utils import verify_thicket_structures
 
 
 def mean(thicket, columns=None):
-    """Calculate median and mean per node.
+    """Calculate the mean for each node in the performance data table.
 
-    Designed to take in a Thicket, and will append a column to the statsframe for
-    the median and mean calculations per node.
+    Designed to take in a thicket, and append one or more columns to the aggregated statistics table for
+    the mean calculation for each node.
 
     Arguments:
         thicket (thicket): Thicket object
-        columns (list): list of hardware/timing metrics to perform average calculations on
+        columns (list): List of hardware/timing metrics to perform mean calculation on.
+                        Note, if using a columnar_joined thicket a list of tuples must be
+                        passed in with the format:(column index,column name).
     """
     if columns is None:
         raise ValueError("To see a list of valid columns run get_perf_columns().")
 
-    #verify_thicket_structures(
-    #    thicket.dataframe, index=["node", "profile"], columns=columns
-    #)
+    verify_thicket_structures(
+        thicket.dataframe, index=["node", "profile"], columns=columns
+    )
 
     if thicket.dataframe.columns.nlevels == 1:
         for column in columns:
@@ -33,10 +35,10 @@ def mean(thicket, columns=None):
             thicket.statsframe.dataframe[column + "_mean"] = mean
 
     else:
-        for idx,column in columns:
+        for idx, column in columns:
             mean = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                mean.append(np.mean(thicket.dataframe.loc[node][(idx,column)]))
-            thicket.statsframe.dataframe[(idx,column + "_mean")] = mean
+                mean.append(np.mean(thicket.dataframe.loc[node][(idx, column)]))
+            thicket.statsframe.dataframe[(idx, column + "_mean")] = mean
 
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)

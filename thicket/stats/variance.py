@@ -9,24 +9,25 @@ from ..utils import verify_thicket_structures
 
 
 def variance(thicket, columns=None):
-    """Calculate standard deviation and variance per node.
+    """Calculate the variance for each node in the performance data table.
 
-    Designed to take in a Thicket, and will append a column to the statsframe
-    for the standard deviation and variance calculations per node.
+    Designed to take in a thicket, and append one or more columns to the aggregated statistics table for
+    the variance calculation for each node.
 
-    Variance will allow you to see the spread within a dataset and standard
-    deviation will tell you how dispersed the data is in relation to the mean.
+    Variance will allow you to see the spread of data within a node and that nodes profiles.
 
     Arguments:
         thicket (thicket): Thicket object
-        columns (list): list of hardware/timing metrics to perform deviation calculations on
+        columns (list): List of hardware/timing metrics to perform variance calculation on.
+                        Note, if using a columnar_joined thicket a list of tuples must be
+                        passed in with the format:(column index,column name).
     """
     if columns is None:
         raise ValueError("To see a list of valid columns run get_perf_columns().")
 
-    #verify_thicket_structures(
-    #    thicket.dataframe, index=["node", "profile"], columns=columns
-    #)
+    verify_thicket_structures(
+        thicket.dataframe, index=["node", "profile"], columns=columns
+    )
 
     if thicket.dataframe.columns.nlevels == 1:
         for column in columns:
@@ -36,10 +37,10 @@ def variance(thicket, columns=None):
             thicket.statsframe.dataframe[column + "_var"] = var
 
     else:
-        for idx,column in columns:
+        for idx, column in columns:
             var = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                var.append(np.var(thicket.dataframe.loc[node][(idx,column)]))
-            thicket.statsframe.dataframe[(idx,column + "_var")] = var
+                var.append(np.var(thicket.dataframe.loc[node][(idx, column)]))
+            thicket.statsframe.dataframe[(idx, column + "_var")] = var
 
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)

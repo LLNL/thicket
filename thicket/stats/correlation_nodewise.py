@@ -7,89 +7,106 @@ from scipy import stats
 from ..utils import verify_thicket_structures
 
 
-def correlation_nodewise(
-    thicket, base_column=None, correlate_columns=None, correlation="pearson"
-):
-    """Calculate the nodewise correlation on user-specified columns.
+def correlation_nodewise(thicket, column1=None, column2=None, correlation="pearson"):
+    """Calculate the nodewise correlation for each node in the performance data table.
 
-    Calculates the correlation nodewise for user passed in columns. This can
-    either be done for the EnsembleFrame or a super thicket.
+    Designed to take in a thicket, and append one or more columns to the aggregated statistics table for
+    the nodewise correlation calculation for each node.
 
     Arguments:
         thicket (thicket): Thicket object
-        base_column (str): base column that you want to compare
-        correlate_columns (list): list of columns to correlate to the passed in base column
+        column1 (str): First comparison column
+                       Note, if using a columnar_joined thicket a tuple must be
+                       passed in with the format:(column index,column name).
+        column2 (str): Second comparison column
+                       Note, if using a columnar_joined thicket a tuple must be
+                       passed in with the format:(column index,column name).
         correlation (str): correlation test to perform -- pearson (default),
-            spearman, and kendall
+            spearman, and kendall.
     """
-    if base_column is None or correlate_columns is None:
+    if column1 is None or column2 is None:
         raise ValueError("To see a list of valid columns run get_perf_columns().")
 
-    #if "profile" in thicket.dataframe.index.names:
-    #    verify_thicket_structures(
-    #        thicket.dataframe,
-    #        index=["node", "profile"],
-    #        columns=[base_column] + correlate_columns,
-    #    )
-    #else:
-    #    verify_thicket_structures(
-    #        thicket.dataframe,
-    #        index=["node", "thicket"],
-    #        columns=[base_column] + correlate_columns,
-    #    )
-    if thicket.dataframe.columns.nlevels == 1:
-        for col in correlate_columns:
-            correlated = []
-            for node in thicket.statsframe.dataframe.index.tolist():
-                if correlation == "pearson":
-                    correlated.append(stats.pearsonr(
-                        thicket.dataframe.loc[node][base_column], 
-                        thicket.dataframe.loc[node][col])[0]
-                    )
-                elif correlation == "spearman":
-                    correlated.append(stats.spearmanr(
-                        thicket.dataframe.loc[node][base_column], 
-                        thicket.dataframe.loc[node][col])[0]
-                    )
-                elif correlation == "kendall":
-                    correlated.append(stats.kendalltau(
-                        thicket.dataframe.loc[node][base_column], 
-                        thicket.dataframe.loc[node][col])[0]
-                    )
-                else:
-                    raise ValueError("Invalid correlation")
-            thicket.statsframe.dataframe[
-                base_column + "_vs_" + col + " " + correlation
-            ] = correlated
+    if "profile" in thicket.dataframe.index.names:
+        verify_thicket_structures(
+            thicket.dataframe,
+            index=["node", "profile"],
+            columns=[column1, column2],
+        )
     else:
-        idx_base,column_base = base_column
-        for idx_corr,column_corr in correlate_columns:
-            if idx_base != idx_corr:
-                raise ValueError("Column index must be the same between base_column and correlate_columns for combined thicket.")
-
-            correlated = []
-            for node in thicket.statsframe.dataframe.index.tolist():
-                if correlation == "pearson":
-                    correlated.append(stats.pearsonr(
-                        thicket.dataframe.loc[node][(idx_base,column_base)],
-                        thicket.dataframe.loc[node][(idx_corr,column_corr)])[0]
-                    )
-                elif correlation == "spearman":
-                    correlated.append(stats.spearmanr(
-                        thicket.dataframe.loc[node][(idx_base,column_base)],
-                        thicket.dataframe.loc[node][(idx_corr,column_corr)])[0]
-                    )
-                elif correlation == "kendall":
-                    correlated.append(stats.kendalltau(
-                        thicket.dataframe.loc[node][(idx_base,column_base)],
-                        thicket.dataframe.loc[node][(idx_corr,column_corr)])[0]
-                    )
-                else:
-                    raise ValueError("Invalid correlation, options are pearson, spearman, and kendall.")
-
+        verify_thicket_structures(
+            thicket.dataframe,
+            index=["node", "thicket"],
+            columns=[column1, column2],
+        )
+    if thicket.dataframe.columns.nlevels == 1:
+        correlated = []
+        for node in thicket.statsframe.dataframe.index.tolist():
+            if correlation == "pearson":
+                correlated.append(
+                    stats.pearsonr(
+                        thicket.dataframe.loc[node][column1],
+                        thicket.dataframe.loc[node][column2],
+                    )[0]
+                )
+            elif correlation == "spearman":
+                correlated.append(
+                    stats.spearmanr(
+                        thicket.dataframe.loc[node][column1],
+                        thicket.dataframe.loc[node][column2],
+                    )[0]
+                )
+            elif correlation == "kendall":
+                correlated.append(
+                    stats.kendalltau(
+                        thicket.dataframe.loc[node][column1],
+                        thicket.dataframe.loc[node][column2],
+                    )[0]
+                )
+            else:
+                raise ValueError("Invalid correlation")
+        thicket.statsframe.dataframe[
+            column1 + "_vs_" + column2 + " " + correlation
+        ] = correlated
+    else:
+        correlated = []
+        for node in thicket.statsframe.dataframe.index.tolist():
+            if correlation == "pearson":
+                correlated.append(
+                    stats.pearsonr(
+                        thicket.dataframe.loc[node][column1],
+                        thicket.dataframe.loc[node][column2],
+                    )[0]
+                )
+            elif correlation == "spearman":
+                correlated.append(
+                    stats.spearmanr(
+                        thicket.dataframe.loc[node][column1],
+                        thicket.dataframe.loc[node][column2],
+                    )[0]
+                )
+            elif correlation == "kendall":
+                correlated.append(
+                    stats.kendalltau(
+                        thicket.dataframe.loc[node][column1],
+                        thicket.dataframe.loc[node][column2],
+                    )[0]
+                )
+            else:
+                raise ValueError(
+                    "Invalid correlation, options are pearson, spearman, and kendall."
+                )
+        if column1[0] != column2[0]:
             thicket.statsframe.dataframe[
-                (idx_base,column_base + "_vs_" + column_corr + " " + correlation)
+                (
+                    "Union statistics",
+                    column1[1] + "_vs_" + column2[1] + " " + correlation,
+                )
+            ] = correlated
+        else:
+            column_idx = column1[0]
+            thicket.statsframe.dataframe[
+                (column_idx, column1[1] + "_vs_" + column2[1] + " " + correlation)
             ] = correlated
 
-     
-        thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)  
+        thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
