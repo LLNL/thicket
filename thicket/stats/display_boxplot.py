@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 
 from ..utils import verify_thicket_structures
+import hatchet as ht
 
 
 def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
@@ -27,7 +28,7 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
         (matplotlib Axes): Object for managing boxplot.
     """
     for node in nodes:
-        if str(type(node)) != "<class 'hatchet.node.Node'>":
+        if not isinstance(node, ht.node.Node):
             raise ValueError(
                 "Value(s) passed to node argument must be of type hatchet.node.Node."
             )

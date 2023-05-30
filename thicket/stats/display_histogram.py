@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 
 from ..utils import verify_thicket_structures
+import hatchet as ht
 
 
 def display_histogram(thicket, node=None, column=None, **kwargs):
@@ -26,7 +27,7 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
     if column is None or node is None:
         raise ValueError("To see a list of valid columns run get_perf_columns().")
 
-    if str(type(node)) != "<class 'hatchet.node.Node'>":
+    if not isinstance(node, ht.node.Node):
         raise ValueError(
             "Value passed to node argument must be of type hatchet.node.Node."
         )
