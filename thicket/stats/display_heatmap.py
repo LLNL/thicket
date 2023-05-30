@@ -4,18 +4,20 @@
 # SPDX-License-Identifier: MIT
 
 import seaborn as sns
+
 from ..utils import verify_thicket_structures
 
 
 def display_heatmap(thicket, columns=None, **kwargs):
-    """Display a heatmap which contains a full list of nodes and user passed columns. Columns must be
-    from the aggregated statistics table.
+    """Display a heatmap which contains a full list of nodes and user passed columns.
+    Columns must be from the aggregated statistics table.
 
     Arguments:
         thicket (thicket): Thicket object
-        columns (list): List of hardware/timing metrics from aggregated statistics table to display.
-                        Note, if using a columnar_joined thicket a list of tuples must be
-                        passed in with the format: (column index, column name).
+        columns (list): List of hardware/timing metrics from aggregated statistics
+                        table to display.
+                        Note, if using a columnar_joined thicket a list of tuples
+                        must be passed in with the format: (column index, column name).
 
     Returns:
         (matplotlib Axes): Object for managing heatmap plot.
@@ -40,7 +42,9 @@ def display_heatmap(thicket, columns=None, **kwargs):
         cols = [columns[0][1]]
         for element in columns[1 : len(columns)]:
             if initial_idx != element[0]:
-                raise ValueError("Tuples must have the same column index throughout.")
+                raise ValueError(
+                    "Tuples must have the same column index for a columnar joined thicket."
+                )
             else:
                 cols.append(element[1])
 

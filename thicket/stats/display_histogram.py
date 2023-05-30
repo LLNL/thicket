@@ -5,11 +5,13 @@
 
 import pandas as pd
 import seaborn as sns
+
 from ..utils import verify_thicket_structures
 
 
 def display_histogram(thicket, node=None, column=None, **kwargs):
-    """Display a histogram for a user passed node and column. Node and column must come from the performance data table.
+    """Display a histogram for a user passed node and column. Node and column must come
+    from the performance data table.
 
     Arguments:
         thicket (thicket): Thicket object
@@ -23,6 +25,11 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
     """
     if column is None or node is None:
         raise ValueError("To see a list of valid columns run get_perf_columns().")
+
+    if str(type(node)) != "<class 'hatchet.node.Node'>":
+        raise ValueError(
+            "Value passed to node argument must be of type hatchet.node.Node."
+        )
 
     verify_thicket_structures(
         thicket.dataframe, index=["node", "profile"], columns=[column]
@@ -41,7 +48,6 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
         ax = sns.displot(filtered_df, x=" ", kind="hist", **kwargs)
 
         return ax
-
     else:
         col_idx, column_value = column[0], column[1]
         df_subset = thicket.dataframe[col_idx]
