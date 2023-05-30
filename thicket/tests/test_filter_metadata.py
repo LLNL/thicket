@@ -74,6 +74,7 @@ def check_filter_metadata(th, columns_values, total_col=1):
         idx_col2 = th.metadata.index[
             th.metadata[column2] == columns_values[column2][1]
         ].tolist()
+        # expected profiles for this filter case
         exp_index = sorted(list(set(idx_col1) & set(idx_col2)))
         new_th = th.filter_metadata(
             lambda x: x[column1] == columns_values[column1][0]
@@ -134,6 +135,7 @@ def test_filter_metadata(example_cali):
     th = Thicket.from_caliperreader(example_cali)
     # columns and corresponding values to filter by
     columns_values = {"problem_size": ["30"], "cluster": ["quartz", "chekov"]}
+    # thicket for second scenario
     th1 = th.copy()
     check_filter_metadata(th, columns_values, 1)
     check_filter_metadata(th1, columns_values, 2)
