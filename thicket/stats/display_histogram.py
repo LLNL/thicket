@@ -5,9 +5,9 @@
 
 import pandas as pd
 import seaborn as sns
+import hatchet as ht
 
 from ..utils import verify_thicket_structures
-import hatchet as ht
 
 
 def display_histogram(thicket, node=None, column=None, **kwargs):
@@ -17,15 +17,17 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
     Arguments:
         thicket (thicket): Thicket object
         node (node): Node object
-        column (str): Column from performance data table.
-                      Note, if using a columnar_joined thicket a tuple must be
-                      passed in with the format: (column index, column name).
+        column (str): Column from performance data table. Note, if using a
+            columnar joined thicket a tuple must be passed in with the format
+            (column index, column name).
 
     Returns:
         (matplotlib Axes): Object for managing histogram plot.
     """
     if column is None or node is None:
-        raise ValueError("To see a list of valid columns run get_perf_columns().")
+        raise ValueError(
+            "To see a list of valid columns, run Thicket.get_perf_columns()."
+        )
 
     if not isinstance(node, ht.node.Node):
         raise ValueError(

@@ -5,9 +5,9 @@
 
 import pandas as pd
 import seaborn as sns
+import hatchet as ht
 
 from ..utils import verify_thicket_structures
-import hatchet as ht
 
 
 def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
@@ -20,9 +20,9 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
     Arguments:
         thicket (thicket): Thicket object
         nodes (list): List of nodes to view on the x-axis
-        column (list): List of hardware/timing metrics to view on the y-axis.
-                        Note, if using a columnar_joined thicket a list of tuples must
-                        be passed in with the format: (column index, column name).
+        column (list): List of hardware/timing metrics to view on the y-axis. Note, if
+            using a columnar joined thicket a list of tuples must be passed in with the
+            format (column index, column name).
 
     Returns:
         (matplotlib Axes): Object for managing boxplot.
@@ -52,6 +52,8 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
             for pos in idx:
                 position.append(pos)
 
+        # rename columns such that the x-axis label is "name" and not "node", tick marks
+        # will be node names
         filtered_df = df.loc[position].rename(
             columns={"node": "hatchet node", "name": "node"}
         )
@@ -91,6 +93,8 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
             for pos in idx:
                 position.append(pos)
 
+        # rename columns such that the x-axis label is "name" and not "node", tick marks
+        # will be node names
         filtered_df = df.loc[position].rename(
             columns={"node": "hatchet node", "name": "node"}
         )

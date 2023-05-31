@@ -14,16 +14,17 @@ def display_heatmap(thicket, columns=None, **kwargs):
 
     Arguments:
         thicket (thicket): Thicket object
-        columns (list): List of hardware/timing metrics from aggregated statistics
-                        table to display.
-                        Note, if using a columnar_joined thicket a list of tuples
-                        must be passed in with the format: (column index, column name).
+        columns (list): List of hardware/timing metrics from aggregated statistics table
+            to display. Note, if using a columnar joined thicket a list of tuples must
+            be passed in with the format (column index, column name).
 
     Returns:
         (matplotlib Axes): Object for managing heatmap plot.
     """
     if columns is None:
-        raise ValueError("To see a list of valid columns run get_perf_columns().")
+        raise ValueError(
+            "To see a list of valid columns, run Thicket.get_perf_columns()."
+        )
 
     verify_thicket_structures(
         thicket.statsframe.dataframe, index=["node"], columns=columns
@@ -43,7 +44,7 @@ def display_heatmap(thicket, columns=None, **kwargs):
         for i in range(1, len(columns)):
             if initial_idx != columns[i][0]:
                 raise ValueError(
-                    "Tuples must have the same column index for a columnar joined thicket."
+                    "Tuples identifying columns must have the same column index (first element)."
                 )
             else:
                 cols.append(columns[i][1])
