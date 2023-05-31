@@ -37,7 +37,8 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
     verify_thicket_structures(
         thicket.dataframe, index=["node", "profile"], columns=[column]
     )
-    # Code parses performance data with no columnar index
+
+    # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         df = pd.melt(
             thicket.dataframe.reset_index(),
@@ -51,7 +52,7 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
         ax = sns.displot(filtered_df, x=" ", kind="hist", **kwargs)
 
         return ax
-    # Code parses columnar joined performance data
+    # columnar joined thicket object
     else:
         col_idx, column_value = column[0], column[1]
         df_subset = thicket.dataframe[col_idx]
