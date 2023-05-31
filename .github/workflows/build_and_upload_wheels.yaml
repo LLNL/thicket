@@ -2,8 +2,8 @@ name: Build wheels for Thicket
 
 on:
   # Uncomment for testing through a PR
-  pull_request:
-    branches: [develop, releases/**]
+  # pull_request:
+  #   branches: [develop, releases/**]
   workflow_dispatch:
   release:
     types:
