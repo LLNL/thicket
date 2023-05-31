@@ -4,14 +4,15 @@
 # SPDX-License-Identifier: MIT
 
 from scipy import stats
+
 from ..utils import verify_thicket_structures
 
 
 def correlation_nodewise(thicket, column1=None, column2=None, correlation="pearson"):
     """Calculate the nodewise correlation for each node in the performance data table.
 
-    Designed to take in a thicket, and append one or more columns to the aggregated statistics table for
-    the nodewise correlation calculation for each node.
+    Designed to take in a thicket, and append one or more columns to the aggregated
+    statistics table for the nodewise correlation calculation for each node.
 
     Arguments:
         thicket (thicket): Thicket object
@@ -20,12 +21,14 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                        passed in with the format:(column index,column name).
         column2 (str): Second comparison column
                        Note, if using a columnar_joined thicket a tuple must be
-                       passed in with the format:(column index,column name).
+                       passed in with the format: (column index, column name).
         correlation (str): correlation test to perform -- pearson (default),
             spearman, and kendall.
     """
     if column1 is None or column2 is None:
-        raise ValueError("To see a list of valid columns run get_perf_columns().")
+        raise ValueError(
+            "To see a list of valid columns, please run Thicket.get_perf_columns()."
+        )
 
     if "profile" in thicket.dataframe.index.names:
         verify_thicket_structures(
@@ -39,6 +42,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
             index=["node", "thicket"],
             columns=[column1, column2],
         )
+    # Code parses performance data with no columnar index
     if thicket.dataframe.columns.nlevels == 1:
         correlated = []
         for node in thicket.statsframe.dataframe.index.tolist():
@@ -68,6 +72,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
         thicket.statsframe.dataframe[
             column1 + "_vs_" + column2 + " " + correlation
         ] = correlated
+    # Code parses columnar joined performance data
     else:
         correlated = []
         for node in thicket.statsframe.dataframe.index.tolist():

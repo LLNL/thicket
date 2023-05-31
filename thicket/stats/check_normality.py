@@ -5,15 +5,17 @@
 
 import pandas as pd
 from scipy import stats
+
 from ..utils import verify_thicket_structures
 
 
 def check_normality(thicket, columns=None):
-    """Determine if the data is normal or non-normal for each node in the performance data table.
+    """Determine if the data is normal or non-normal for each node in the performance
+    data table.
 
-    Designed to take in a thicket, and append one or more columns to the aggregated statistics table.
-    A true boolean value will be appended if the data is normal and a false boolean value will be appended
-    if the data is non-normal.
+    Designed to take in a thicket, and append one or more columns to the
+    aggregated statistics table.A true boolean value will be appended if the data is
+    normal and a false boolean value will be appended if the data is non-normal.
 
     For this test, the more data the better. Preferably you would want to have 20 data
     points (20 files) in a dataset to have an accurate result.
@@ -21,16 +23,18 @@ def check_normality(thicket, columns=None):
     Arguments:
         thicket (thicket): Thicket object
         columns (list): List of hardware/timing metrics to perform normality test on.
-                        Note, if using a columnar_joined thicket a list of tuples must be
-                        passed in with the format:(column index,column name).
+                        Note, if using a columnar_joined thicket a list of tuples must
+                        be passed in with the format: (column index, column name).
     """
     if columns is None:
-        raise ValueError("To see a list of valid columns run get_perf_columns().")
+        raise ValueError(
+            "To see a list of valid columns, please run Thicket.get_perf_columns()."
+        )
 
     verify_thicket_structures(
         thicket.dataframe, index=["node", "profile"], columns=columns
     )
-
+    # Code parses performance data with no columnar index
     if thicket.dataframe.columns.nlevels == 1:
         for column in columns:
             normality = []
@@ -45,7 +49,7 @@ def check_normality(thicket, columns=None):
                     normality.append(pd.NA)
 
             thicket.statsframe.dataframe[column + "_normality"] = normality
-
+    # Code parses columnar joined performance data
     else:
         for idx, column in columns:
             normality = []

@@ -10,20 +10,22 @@ from ..utils import verify_thicket_structures
 
 
 def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **kwargs):
-    """Calculate boxplot five number summary for each node in the performance data table.
+    """Calculate boxplot five number summary for each node in the performance data
+    table.
 
-    Designed to take in a thicket, and append one or more columns to the aggregated statistics table for
-    the boxplot five number summary calculations for each node.
+    Designed to take in a thicket, and append one or more columns to the aggregated
+    statistics table for the boxplot five number summary calculations for each node.
 
-    The 5 number summary includes (1) minimum, (2) q1, (3) median, (4) q3, and (5) maximum.
+    The 5 number summary includes (1) minimum, (2) q1, (3) median, (4) q3,
+    and (5) maximum.
 
     Arguments:
         thicket (thicket): Thicket object
         columns (list): List of columns to perform boxplot five number summary on
-                        Note, if using a columnar_joined thicket a list of tuples must be
-                        passed in with the format:(column index, column name).
+                        Note, if using a columnar_joined thicket a list of tuples
+                        must be passed in with the format: (column index, column name).
         quartiles (list): List containing three values between 0 and 1 to cut the
-            distribution into equal probabilities.
+                          distribution into equal probabilities.
     """
     if len(quartiles) != 3:
         raise ValueError(
@@ -32,7 +34,7 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
 
     if len(columns) == 0:
         raise ValueError(
-            "To see a list of valid columns, run thicket.performance_cols."
+            "To see a list of valid columns, please run Thicket.get_perf_columns()."
         )
 
     verify_thicket_structures(
@@ -40,7 +42,7 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
     )
 
     q_list = str(tuple(quartiles))
-
+    # Code parses performance data with no columnar index
     if thicket.dataframe.columns.nlevels == 1:
         for col in columns:
             boxplot_dict = {
@@ -88,7 +90,7 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
             df_box["node"] = thicket.statsframe.dataframe.index.tolist()
             df_box.set_index("node", inplace=True)
             thicket.statsframe.dataframe = thicket.statsframe.dataframe.join(df_box)
-
+    # Code parses columnar joined performance data
     else:
         for idx, col in columns:
             boxplot_dict = {

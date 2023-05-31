@@ -5,35 +5,39 @@
 
 import numpy as np
 import pandas as pd
+
 from ..utils import verify_thicket_structures
 
 
 def median(thicket, columns=None):
     """Calculate the median for each node in the performance data table.
 
-    Designed to take in a thicket, and append one or more columns to the aggregated statistics table for
-    the median calculation for each node.
+    Designed to take in a thicket, and append one or more columns to the aggregated
+    statistics table for the median calculation for each node.
 
     Arguments:
         thicket (thicket): Thicket object
-        columns (list): List of hardware/timing metrics to perform median calculation on.
-                        Note, if using a columnar_joined thicket a list of tuples must be
-                        passed in with the format:(column index,column name).
+        columns (list): List of hardware/timing metrics to perform median calculation
+                        on.
+                        Note, if using a columnar_joined thicket a list of tuples must
+                        be passed in with the format: (column index, column name).
     """
     if columns is None:
-        raise ValueError("To see a list of valid columns run get_perf_columns().")
+        raise ValueError(
+            "To see a list of valid columns, please run Thicket.get_perf_columns()."
+        )
 
     verify_thicket_structures(
         thicket.dataframe, index=["node", "profile"], columns=columns
     )
-
+    # Code parses performance data with no columnar index
     if thicket.dataframe.columns.nlevels == 1:
         for column in columns:
             median = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 median.append(np.median(thicket.dataframe.loc[node][column]))
             thicket.statsframe.dataframe[column + "_median"] = median
-
+    # Code parses columnar joined performance data
     else:
         for idx, column in columns:
             median = []
