@@ -65,13 +65,13 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
     else:
         initial_idx, initial_col = columns[0][0], columns[0][1]
         cols = [initial_col]
-        for element in columns[1:len(columns)]:
-            if initial_idx != element[0]:
+        for i in range(1, len(columns)):
+            if initial_idx != columns[i][0]:
                 raise ValueError(
                     "Tuples must have the same column index for a columnar joined thicket."
                 )
             else:
-                cols.append(element[1])
+                cols.append(columns[i][1])
 
         df_subset = thicket.dataframe[initial_idx].reset_index()
         df_subset["name"] = thicket.dataframe["name"].tolist()
