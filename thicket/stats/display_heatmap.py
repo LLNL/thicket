@@ -28,12 +28,13 @@ def display_heatmap(thicket, columns=None, **kwargs):
     verify_thicket_structures(
         thicket.statsframe.dataframe, index=["node"], columns=columns
     )
-
+    # Code parses performance data with no columnar index
     if thicket.dataframe.columns.nlevels == 1:
         thicket.statsframe.dataframe.index = thicket.statsframe.dataframe.index.map(str)
         ax = sns.heatmap(thicket.statsframe.dataframe[columns], **kwargs)
 
         return ax
+    # Code parses columnar joined performance data
     else:
         thicket.statsframe.dataframe.index = thicket.statsframe.dataframe.index.map(str)
 

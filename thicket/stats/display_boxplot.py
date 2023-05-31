@@ -36,7 +36,7 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
     verify_thicket_structures(
         thicket.dataframe, index=["node", "profile"], columns=columns
     )
-
+    # Code parses performance data with no columnar index
     if thicket.dataframe.columns.nlevels == 1:
         df = pd.melt(
             thicket.dataframe.reset_index(),
@@ -62,6 +62,7 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
             )
         else:
             return sns.boxplot(data=filtered_df, x="node", y=" ", **kwargs)
+    # Code parses columnar joined performance data
     else:
         initial_idx, initial_col = columns[0][0], columns[0][1]
         cols = [initial_col]
