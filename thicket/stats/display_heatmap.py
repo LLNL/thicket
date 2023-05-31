@@ -34,19 +34,18 @@ def display_heatmap(thicket, columns=None, **kwargs):
         ax = sns.heatmap(thicket.statsframe.dataframe[columns], **kwargs)
 
         return ax
-
     else:
         thicket.statsframe.dataframe.index = thicket.statsframe.dataframe.index.map(str)
 
         initial_idx = columns[0][0]
         cols = [columns[0][1]]
-        for element in columns[1 : len(columns)]:
-            if initial_idx != element[0]:
+        for i in range(1, len(columns)):
+            if initial_idx != columns[i][0]:
                 raise ValueError(
                     "Tuples must have the same column index for a columnar joined thicket."
                 )
             else:
-                cols.append(element[1])
+                cols.append(columns[i][1])
 
         ax = sns.heatmap(
             thicket.statsframe.dataframe[initial_idx][cols], **kwargs
