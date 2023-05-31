@@ -16,16 +16,16 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
     Designed to take in a thicket, and append one or more columns to the aggregated
     statistics table for the boxplot five number summary calculations for each node.
 
-    The 5 number summary includes (1) minimum, (2) q1, (3) median, (4) q3,
-    and (5) maximum.
+    The 5 number summary includes (1) minimum, (2) q1, (3) median, (4) q3, and (5)
+    maximum.
 
     Arguments:
         thicket (thicket): Thicket object
-        columns (list): List of columns to perform boxplot five number summary on
-                        Note, if using a columnar_joined thicket a list of tuples
-                        must be passed in with the format: (column index, column name).
+        columns (list): List of columns to perform boxplot five number summary on. Note,
+            if using a columnar joined thicket a list of tuples must be passed in with
+            the format (column index, column name).
         quartiles (list): List containing three values between 0 and 1 to cut the
-                          distribution into equal probabilities.
+            distribution into equal probabilities.
     """
     if len(quartiles) != 3:
         raise ValueError(
@@ -42,7 +42,8 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
     )
 
     q_list = str(tuple(quartiles))
-    # Code parses performance data with no columnar index
+
+    # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         for col in columns:
             boxplot_dict = {
@@ -90,7 +91,7 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
             df_box["node"] = thicket.statsframe.dataframe.index.tolist()
             df_box.set_index("node", inplace=True)
             thicket.statsframe.dataframe = thicket.statsframe.dataframe.join(df_box)
-    # Code parses columnar joined performance data
+    # columnar joined thicket object
     else:
         for idx, col in columns:
             boxplot_dict = {
@@ -145,4 +146,6 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
             df_box["node"] = thicket.statsframe.dataframe.reset_index()["node"].tolist()
             df_box = df_box.set_index("node")
             thicket.statsframe.dataframe = thicket.statsframe.dataframe.join(df_box)
+
+        # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)

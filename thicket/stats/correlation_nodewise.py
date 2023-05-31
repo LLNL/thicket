@@ -16,14 +16,13 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
 
     Arguments:
         thicket (thicket): Thicket object
-        column1 (str): First comparison column
-                       Note, if using a columnar_joined thicket a tuple must be
-                       passed in with the format:(column index,column name).
-        column2 (str): Second comparison column
-                       Note, if using a columnar_joined thicket a tuple must be
-                       passed in with the format: (column index, column name).
-        correlation (str): correlation test to perform -- pearson (default),
-            spearman, and kendall.
+        column1 (str): First comparison column. Note, if using a columnar joined thicket
+            a tuple must be passed in with the format (column index, column name).
+        column2 (str): Second comparison column. Note, if using a columnar joined
+            thicket a tuple must be passed in with the format
+            (column index, column name).
+        correlation (str): correlation test to perform -- pearson (default), spearman,
+            and kendall.
     """
     if column1 is None or column2 is None:
         raise ValueError(
@@ -42,7 +41,8 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
             index=["node", "thicket"],
             columns=[column1, column2],
         )
-    # Code parses performance data with no columnar index
+
+    # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         correlated = []
         for node in thicket.statsframe.dataframe.index.tolist():
@@ -72,7 +72,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
         thicket.statsframe.dataframe[
             column1 + "_vs_" + column2 + " " + correlation
         ] = correlated
-    # Code parses columnar joined performance data
+    # columnar joined thicket object
     else:
         correlated = []
         for node in thicket.statsframe.dataframe.index.tolist():
@@ -114,4 +114,5 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                 (column_idx, column1[1] + "_vs_" + column2[1] + " " + correlation)
             ] = correlated
 
+        # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
