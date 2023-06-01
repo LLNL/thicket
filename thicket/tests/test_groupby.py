@@ -6,23 +6,25 @@
 import pytest
 
 from thicket import Thicket, EmptyMetadataFrame
+from test_columnar_join import test_columnar_join, columnar_join_thicket
 
 
-def test_groupby(example_cali):
-    # example thicket
-    th = Thicket.from_caliperreader(example_cali)
-    # use cases for string, numeric, and single value columns
-    columns = ["user", "launchdate", "cali.channel"]
+def check_groupby(th, columns_values):
+    """Check groupby function for Thicket object.
 
+    Arguments:
+        th (Thicket): Thicket object to test.
+        columns_values (dict): Dictionary of columns to group by.
+    """
     # inspect all use cases
-    for col_value in columns:
-        unique_values = sorted(th.metadata[col_value].unique().tolist())
-        th_list = th.groupby(col_value)
+    for column in columns_values:
+        unique_values = sorted(th.metadata[column].unique().tolist())
+        th_list = th.groupby(column)
         # inspect all unique values in the use case
         for itr, uni_val in enumerate(unique_values):
             # expected profile hashes and nodes
             exp_profiles = sorted(
-                th.metadata.index[th.metadata[col_value] == uni_val].tolist()
+                th.metadata.index[th.metadata[column] == uni_val].tolist()
             )
             exp_nodes = sorted(
                 th.dataframe[th.dataframe.index.get_level_values(1).isin(exp_profiles)]
@@ -71,3 +73,71 @@ def test_groupby(example_cali):
     # check for empty metadataframe exception
     with pytest.raises(EmptyMetadataFrame):
         th.groupby(["user"])
+
+
+def test_groupby(example_cali):
+    # example thicket
+    th = Thicket.from_caliperreader(example_cali)
+    # use cases for string, numeric, and single value columns
+    columns_values = ["user", "launchdate", "cali.channel"]
+
+    check_groupby(th, columns_values)
+
+
+def test_groupby_columnar_join(example_cali):
+    """Tests case where the Sub-Thickets of a groupby are used in a columnar join"""
+    # example thicket
+    th = Thicket.from_caliperreader(example_cali)
+    columns = ["launchdate"]
+
+    # Creates four Sub-Thickets
+    th_list = th.groupby(columns)
+
+    # Prep for testing
+    selected_column = "ProblemSize"
+    problem_size = 10
+    th_list[0].metadata[selected_column] = problem_size
+    th_list[1].metadata[selected_column] = problem_size
+    th_list[2].metadata[selected_column] = problem_size
+    th_list[3].metadata[selected_column] = problem_size
+
+    thicket_list = [th_list[0], th_list[1], th_list[2], th_list[3]]
+    thicket_list_cp = [
+        th_list[0].deepcopy(),
+        th_list[1].deepcopy(),
+        th_list[2].deepcopy(),
+        th_list[3].deepcopy(),
+    ]
+
+    combined_th = Thicket.columnar_join(
+        thicket_list=thicket_list,
+        column_name=selected_column,
+    )
+
+    test_columnar_join((thicket_list, thicket_list_cp, combined_th))
+
+
+def test_groupby_columnar_join_subthickets(example_cali):
+    """Tests case where some specific Sub-Thickets of a groupby are used in a columnar join"""
+    # example thicket
+    th = Thicket.from_caliperreader(example_cali)
+    columns = ["launchdate"]
+
+    # Creates four Sub-Thickets
+    th_list = th.groupby(columns)
+
+    # Pick two Sub-Thickets to test if metadata and profile information is setup correctly
+    selected_column = "ProblemSize"
+    problem_size = 10
+    th_list[0].metadata[selected_column] = problem_size
+    th_list[1].metadata[selected_column] = problem_size
+
+    thicket_list = [th_list[0], th_list[1]]
+    thicket_list_cp = [th_list[0].deepcopy(), th_list[1].deepcopy()]
+
+    combined_th = Thicket.columnar_join(
+        thicket_list=thicket_list,
+        column_name=selected_column,
+    )
+
+    test_columnar_join((thicket_list, thicket_list_cp, combined_th))
