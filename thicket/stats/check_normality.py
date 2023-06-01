@@ -5,48 +5,66 @@
 
 import pandas as pd
 from scipy import stats
+
 from ..utils import verify_thicket_structures
 
 
 def check_normality(thicket, columns=None):
-    """
-    Designed to take in a Thicket, and will append a column to the statsframe.
+    """Determine if the data is normal or non-normal for each node in the performance
+    data table.
+
+    Designed to take in a thicket, and append one or more columns to the aggregated
+    statistics table. A true boolean value will be appended if the data is normal and a
+    false boolean value will be appended if the data is non-normal.
 
     For this test, the more data the better. Preferably you would want to have 20 data
     points (20 files) in a dataset to have an accurate result.
 
-    Arguments/Parameters
-    _ _ _ _ _ _ _ _ _ _ _
-
-    thicket : A thicket
-
-    columns : List of hardware/timing metrics to perform normality test on
-
-    Returns
-    _ _ _ _ _ _ _ _ _ _ _
-
-    statsframe: Returns statsframe with appended columns for normality check
-
+    Arguments:
+        thicket (thicket): Thicket object
+        columns (list): List of hardware/timing metrics to perform normality test on.
+            Note, if using a columnar joined thicket a list of tuples must be passed in
+            with the format (column index, column name).
     """
     if columns is None:
-        raise ValueError("To see a list of valid columns run get_perf_columns().")
+        raise ValueError(
+            "To see a list of valid columns, please run Thicket.get_perf_columns()."
+        )
 
     verify_thicket_structures(
         thicket.dataframe, index=["node", "profile"], columns=columns
     )
 
-    for column in columns:
-        normality = []
+    # thicket object without columnar index
+    if thicket.dataframe.columns.nlevels == 1:
+        for column in columns:
+            normality = []
+            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
+                pvalue = stats.shapiro(thicket.dataframe.loc[node][column])[1]
 
-        for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-            metric_value = thicket.dataframe.loc[node][column]
-            pvalue = stats.shapiro(metric_value)[1]
+                if pvalue < 0.05:
+                    normality.append("False")
+                elif pvalue > 0.05:
+                    normality.append("True")
+                else:
+                    normality.append(pd.NA)
 
-            if pvalue < 0.05:
-                normality.append("False")
-            elif pvalue > 0.05:
-                normality.append("True")
-            else:
-                normality.append(pd.NA)
+            thicket.statsframe.dataframe[column + "_normality"] = normality
+    # columnar joined thicket object
+    else:
+        for idx, column in columns:
+            normality = []
+            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
+                pvalue = stats.shapiro(thicket.dataframe.loc[node][(idx, column)])[1]
 
-        thicket.statsframe.dataframe[column + "_normality"] = normality
+                if pvalue < 0.05:
+                    normality.append("False")
+                elif pvalue > 0.05:
+                    normality.append("True")
+                else:
+                    normality.append(pd.NA)
+
+            thicket.statsframe.dataframe[(idx, column + "_normality")] = normality
+
+        # sort columns in index
+        thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
