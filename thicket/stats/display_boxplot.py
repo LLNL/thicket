@@ -72,7 +72,7 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
         for i in range(1, len(columns)):
             if initial_idx != columns[i][0]:
                 raise ValueError(
-                    "Tuples must have the same column index for a columnar joined thicket."
+                    "Columns specified as tuples must have the same column index (first element)"
                 )
             else:
                 cols.append(columns[i][1])
