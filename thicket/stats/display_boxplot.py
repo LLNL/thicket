@@ -53,7 +53,7 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
             for pos in idx:
                 position.append(pos)
 
-        # rename columns such that the x-axis label is "name" and not "node", tick marks
+        # rename columns such that the x-axis label is "node" and not "name", tick marks
         # will be node names
         filtered_df = df.loc[position].rename(
             columns={"node": "hatchet node", "name": "node"}
@@ -94,7 +94,7 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
             for pos in idx:
                 position.append(pos)
 
-        # rename columns such that the x-axis label is "name" and not "node", tick marks
+        # rename columns such that the x-axis label is "node" and not "name", tick marks
         # will be node names
         filtered_df = df.loc[position].rename(
             columns={"node": "hatchet node", "name": "node"}
