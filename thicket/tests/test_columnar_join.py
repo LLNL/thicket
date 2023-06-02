@@ -8,10 +8,8 @@ import re
 import pytest
 import hatchet as ht
 
-from test_filter_metadata import (
-    filter_one_column,
-    filter_multiple_and,
-)
+from test_filter_metadata import filter_one_column
+from test_filter_metadata import filter_multiple_and
 from test_filter_stats import check_filter_stats
 from test_query import check_query
 from thicket import Thicket
@@ -23,7 +21,7 @@ def columnar_join_thicket(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
 
     Arguments:
         mpi_scaling_cali (list): List of Caliper files for MPI scaling study.
-        rajaperf_basecuda_xl_cali (list): List of Caliper files for basecuda.
+        rajaperf_basecuda_xl_cali (list): List of Caliper files for base cuda variant.
 
     Returns:
         list: List of original thickets, list of deepcopies of original thickets, and columnar-joined thicket.
