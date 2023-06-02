@@ -6,7 +6,7 @@
 import pytest
 
 from thicket import Thicket, EmptyMetadataFrame
-from test_columnar_join import test_columnar_join, columnar_join_thicket
+from test_columnar_join import test_columnar_join
 
 
 def check_groupby(th, columns_values):
