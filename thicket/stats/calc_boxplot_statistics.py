@@ -10,14 +10,11 @@ from ..utils import verify_thicket_structures
 
 
 def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **kwargs):
-    """Calculate boxplot five number summary for each node in the performance data
-    table.
+    """Calculate boxplots lowerfence, q1, q2, q3, iqr, upperfence, and outliers for 
+    each node in the performance data table.
 
     Designed to take in a thicket, and append one or more columns to the aggregated
     statistics table for the boxplot five number summary calculations for each node.
-
-    The 5 number summary includes (1) minimum, (2) q1, (3) median, (4) q3, and (5)
-    maximum.
 
     Arguments:
         thicket (thicket): Thicket object
@@ -129,7 +126,7 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                 for i in range(0, len(values)):
                     if values[i] > upper_fence or values[i] < lower_fence:
                         profile.append(
-                            thicket.dataframe.loc[node].reset_index()["profile"][i]
+                            thicket.dataframe[idx].loc[node].reset_index()["profile"][i]
                         )
                     else:
                         continue
