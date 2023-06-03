@@ -10,17 +10,17 @@ from ..utils import verify_thicket_structures
 
 
 def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **kwargs):
-    """Calculate boxplots lowerfence, q1, q2, q3, iqr, upperfence, and outliers for
-    each node in the performance data table.
+    """Calculate boxplots lowerfence, q1, q2, q3, iqr, upperfence, and outliers for each
+    node in the performance data table.
 
     Designed to take in a thicket, and append one or more columns to the aggregated
     statistics table for the boxplot five number summary calculations for each node.
 
     Arguments:
         thicket (thicket): Thicket object
-        columns (list): List of columns to perform boxplot five number summary on. Note,
-            if using a columnar joined thicket a list of tuples must be passed in with
-            the format (column index, column name).
+        columns (list): List of columns to calculate boxplot metrics on. Note, if using
+            a columnar joined thicket a list of tuples must be passed in with the format
+            (column index, column name).
         quartiles (list): List containing three values between 0 and 1 to cut the
             distribution into equal probabilities.
     """
