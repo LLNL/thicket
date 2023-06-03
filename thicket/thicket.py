@@ -1215,19 +1215,35 @@ class Thicket(GraphFrame):
 
         Returns:
             (dict): alphabetical ordered dictionary with key's being the column names
-                      and the values being unique values for a column
+                and the values being unique values for a metadata column.
         """
         unique_meta = {}
 
-        for col in self.metadata.columns:
-            # skip columns where the values are a list
-            if isinstance(self.metadata[col].iloc[0], list):
-                continue
-            else:
-                unique_entries = self.metadata[col].unique().tolist()
-                unique_meta[col] = unique_entries
+        # thicket object without columnar index
+        if self.dataframe.columns.nlevels == 1:
+            for col in self.metadata.columns:
+                # skip columns where the values are a list
+                if isinstance(self.metadata[col].iloc[0], list):
+                    continue
+                else:
+                    unique_entries = self.metadata[col].unique().tolist()
+                    unique_meta[col] = unique_entries
 
-        sorted_meta = dict(sorted(unique_meta.items(), key=lambda x: x[0].lower()))
+            sorted_meta = dict(sorted(unique_meta.items(), key=lambda x: x[0].lower()))
+        # columnar joined thicket object
+        else:
+            sorted_meta = []
+            for idx in list(self.metadata.columns.levels[0]):
+                for col in self.metadata[idx].columns:
+                    if isinstance(self.metadata[idx][col].iloc[0], list):
+                        continue
+                    else:
+                        unique_entries = self.metadata[idx][col].unique().tolist()
+                        unique_meta[col] = unique_entries
+
+                sorted_meta.append(
+                    (idx, dict(sorted(unique_meta.items(), key=lambda x: x[0].lower())))
+                )
 
         return sorted_meta
 
