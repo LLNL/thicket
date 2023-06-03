@@ -19,8 +19,8 @@ from .utils import verify_sorted_profile, verify_thicket_structures
 
 
 class Thicket(GraphFrame):
-    """Ensemble of profiles, includes a graph and three dataframes, ensemble
-    data, metadata, and statistics."""
+    """Ensemble of profiles, includes a graph and three dataframes, performance data,
+    metadata, and aggregated statistics."""
 
     def __init__(
         self,
@@ -290,7 +290,9 @@ class Thicket(GraphFrame):
         Arguments:
             thicket_list (list): List of Thickets to join
             header_list (list): List of headers to use for the new columnar multi-index
-            column_name (str): Name of the column from the metadataframe to join on. If no argument is provided, it is assumed that there is no profile-wise relationship between self and other.
+            column_name (str): Name of the column from the metadata table to
+                join on. If no argument is provided, it is assumed that there
+                is no profile-wise relationship between self and other.
 
         Returns:
             (Thicket): New Thicket object with joined columns
@@ -472,7 +474,7 @@ class Thicket(GraphFrame):
                 _create_multiindex_columns(thicket_list_cp[i].metadata, header_list[i])
             )
 
-        # Concat Metadata together
+        # Concat metadata together
         combined_th.metadata = pd.concat(
             [thicket_list_cp[i].metadata for i in range(len(thicket_list_cp))],
             axis="columns",
@@ -494,7 +496,7 @@ class Thicket(GraphFrame):
                 new_mappings[k]
             ] = combined_th.profile_mapping.pop(k)
 
-        # Clear statsframe
+        # Clear aggregated statistics table
         combined_th.statsframe = GraphFrame(
             graph=combined_th.graph,
             dataframe=helpers._new_statsframe_df(
@@ -508,14 +510,14 @@ class Thicket(GraphFrame):
     def add_column_from_metadata_to_ensemble(
         self, column_name, overwrite=False, drop=False
     ):
-        """Add a column from the MetadataFrame to the EnsembleFrame.
+        """Add a column from the metadata table to the performance data table.
 
         Arguments:
-            column_name (str): Name of the column from the MetadataFrame
-            overwrite (bool): Determines overriding behavior in EnsembleFrame
-            drop (bool): Whether to drop the column from the MetadataFrame afterwards
+            column_name (str): Name of the column from the metadata table
+            overwrite (bool): Determines overriding behavior in performance data table
+            drop (bool): Whether to drop the column from the metadata table afterwards
         """
-        # Add warning if column already exists in EnsembleFrame
+        # Add warning if column already exists in performance data table
         if column_name in self.dataframe.columns:
             # Drop column to overwrite, otherwise warn and return
             if overwrite:
@@ -528,7 +530,7 @@ class Thicket(GraphFrame):
                 )
                 return
 
-        # Add the column to the EnsembleFrame
+        # Add the column to the performance data table
         self.dataframe = self.dataframe.join(
             self.metadata[column_name], on=self.dataframe.index.names[1]
         )
@@ -551,10 +553,12 @@ class Thicket(GraphFrame):
         """
         squashed_gf = GraphFrame.squash(self, update_inc_cols=update_inc_cols)
         new_graph = squashed_gf.graph
-        # The following code updates the performance data and the statsframe with the remaining (re-indexed) nodes.
-        # The dataframe is internally updated in squash(), so we can easily just save it to our thicket perfdata.
-        # For the statsframe, we'll have to come up with a better way eventually, but for now, we'll just create
-        #    a new statsframe the same way we do when we create a new thicket.
+        # The following code updates the performance data and the aggregated statistics
+        # table with the remaining (re-indexed) nodes. The dataframe is internally
+        # updated in squash(), so we can easily just save it to our thicket performance
+        # data. For the aggregated statistics table, we'll have to come up with a better
+        # way eventually, but for now, we'll just create a new aggregated statistics
+        # table the same way we do when we create a new thicket.
         new_dataframe = squashed_gf.dataframe
         stats_df = helpers._new_statsframe_df(new_dataframe)
         sframe = GraphFrame(
@@ -821,7 +825,7 @@ class Thicket(GraphFrame):
 
             unify_metadata = unify_metadata.groupby("thicket").agg(_agg_function)
 
-        # Have metadata index match ensembleframe index
+        # Have metadata index match performance data table index
         unify_metadata.sort_index(inplace=True)
 
         # Sort by hatchet node id
@@ -852,12 +856,15 @@ class Thicket(GraphFrame):
     def make_superthicket(th_list, profiles_from_meta=None):
         """Convert a list of thickets into a 'superthicket'.
 
-        Their individual statsframes are ensembled and become the superthicket's
-        ensembleframe.
+        Their individual aggregated statistics table are ensembled and become
+        the superthicket's performance data table.
 
         Arguments:
             th_list (list): list of thickets
-            profiles_from_meta (str, optional): name of the metadata column to use as the new second-level index. Uses the first value so this only makes sense if provided column is all equal values and each thicket's columns differ in value.
+            profiles_from_meta (str, optional): name of the metadata column to use as
+                the new second-level index. Uses the first value so this only makes
+                sense if provided column is all equal values and each thicket's columns
+                differ in value.
 
         Returns:
             (thicket): superthicket
@@ -878,7 +885,7 @@ class Thicket(GraphFrame):
                 th_names.append(i)
         else:  # profiles_from_meta was provided.
             for th in th_list:
-                # Get name from metadataframe
+                # Get name from metadata table
                 name_list = th.metadata[profiles_from_meta].tolist()
 
                 if len(name_list) > 1:
@@ -897,7 +904,7 @@ class Thicket(GraphFrame):
             # Necessary so node ids match up
             th_copy.graph = th_copy.statsframe.graph
 
-            # Modify the ensembleframe
+            # Modify the performance data table
             df = th_copy.statsframe.dataframe
             df["thicket"] = th_id
             df.set_index("thicket", inplace=True, append=True)
@@ -970,7 +977,7 @@ class Thicket(GraphFrame):
             remaining_node_list (list): list of nodes that were not removed
             removed_node_list (list): list of removed nodes
         """
-        # Filter the ensembleframe
+        # Filter the performance data table
         total_profiles = len(self.profile)
         remaining_node_list = []  # Needed for graph
         removed_node_list = []
@@ -984,7 +991,7 @@ class Thicket(GraphFrame):
                 remaining_node_list.append(node)
         self.dataframe.drop(removed_node_list, inplace=True)
 
-        # Propagate change to statsframe
+        # Propagate change to aggregated statistics table
         self.statsframe.dataframe.drop(removed_node_list, inplace=True)
 
         # Filter the graph
@@ -1015,7 +1022,7 @@ class Thicket(GraphFrame):
         Changes are propogated to the entire thicket object.
 
         Arguments:
-            select_function (lambda function): filter to apply to the MetadataFrame
+            select_function (lambda function): filter to apply to the metadata table
 
         Returns:
             (thicket): new thicket object with selected value
@@ -1037,26 +1044,26 @@ class Thicket(GraphFrame):
                 # create a copy of the thicket object
                 new_thicket = self.copy()
 
-                # filter MetadataFrame
+                # filter metadata table
                 filtered_rows = new_thicket.metadata.apply(select_function, axis=1)
                 new_thicket.metadata = new_thicket.metadata[filtered_rows]
 
-                # note index keys to filter EnsembleFrame
+                # note index keys to filter performance data table
                 index_id = new_thicket.metadata.index.values.tolist()
-                # filter EnsembleFrame based on the MetadataFrame
+                # filter performance data table based on the metadata table
                 new_thicket.dataframe = new_thicket.dataframe[
                     new_thicket.dataframe.index.get_level_values(index_name).isin(
                         index_id
                     )
                 ]
 
-                # create an empty StatsFrame with the name column
+                # create an empty aggregated statistics table with the name column
                 new_thicket.statsframe.dataframe = helpers._new_statsframe_df(
                     new_thicket.dataframe
                 )
             else:
-                raise EmptyMetadataFrame(
-                    "The provided Thicket object has an empty MetadataFrame."
+                raise EmptyMetadataTable(
+                    "The provided Thicket object has an empty MetadataTable."
                 )
 
         else:
@@ -1127,23 +1134,24 @@ class Thicket(GraphFrame):
             (list): list of (sub)thickets
         """
         if not self.metadata.empty:
-            # group MetadataFrame by unique values in a column
+            # group metadata table by unique values in a column
             sub_metadataframes = self.metadata.groupby(groupby_function, dropna=False)
 
             list_sub_thickets = []
             unique_vals = []
 
-            # for all unique groups of MetadataFrame
+            # for all unique groups of metadata table
             for key, df in sub_metadataframes:
                 unique_vals.append(key)
 
                 # create a thicket copy
                 sub_thicket = self.copy()
 
-                # return unique group as the MetadataFrame
+                # return unique group as the metadata table
                 sub_thicket.metadata = df
 
-                # find profiles in current unique group and filter EnsembleFrame
+                # find profiles in current unique group and filter performance data
+                # table
                 profile_id = df.index.values.tolist()
                 sub_thicket.dataframe = sub_thicket.dataframe[
                     sub_thicket.dataframe.index.get_level_values("profile").isin(
@@ -1161,14 +1169,14 @@ class Thicket(GraphFrame):
                     profile for profile in sub_thicket.profile if profile in profile_id
                 ]
 
-                # clear the StatsFrame for current unique group
+                # clear the aggregated statistics table for current unique group
                 sub_thicket.statsframe.dataframe = helpers._new_statsframe_df(
                     sub_thicket.dataframe
                 )
                 list_sub_thickets.append(sub_thicket)
         else:
-            raise EmptyMetadataFrame(
-                "The provided Thicket object has an empty MetadataFrame."
+            raise EmptyMetadataTable(
+                "The provided Thicket object has an empty metadata table."
             )
 
         print(len(list_sub_thickets), " thickets created...")
@@ -1182,7 +1190,8 @@ class Thicket(GraphFrame):
         Propagate changes to the entire thicket object.
 
         Arguments:
-            select_function (lambda function): filter to apply to the StatsFrame
+            select_function (lambda function): filter to apply to the aggregated
+                statistics table
 
         Returns:
             (thicket): new thicket object with applied filter function
@@ -1190,13 +1199,13 @@ class Thicket(GraphFrame):
         # copy thicket
         new_thicket = self.copy()
 
-        # filter stats rows based on greater than restriction
+        # filter aggregated statistics table based on greater than restriction
         filtered_rows = new_thicket.statsframe.dataframe.apply(filter_function, axis=1)
         new_thicket.statsframe.dataframe = new_thicket.statsframe.dataframe[
             filtered_rows
         ]
 
-        # filter ensembleframe based on filtered nodes
+        # filter performance data table based on filtered nodes
         filtered_nodes = new_thicket.statsframe.dataframe.index.values.tolist()
         new_thicket.dataframe = new_thicket.dataframe[
             new_thicket.dataframe.index.get_level_values("node").isin(filtered_nodes)
@@ -1252,8 +1261,8 @@ class InvalidFilter(Exception):
     """Raised when an invalid argument is passed to the filter function."""
 
 
-class EmptyMetadataFrame(Exception):
-    """Raised when a Thicket object argument is passed with an empty MetadataFrame to the filter function."""
+class EmptyMetadataTable(Exception):
+    """Raised when a Thicket object argument is passed with an empty MetadataTable to the filter function."""
 
 
 class UnsupportedQuery(Exception):

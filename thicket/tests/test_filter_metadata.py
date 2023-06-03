@@ -5,7 +5,9 @@
 
 import pytest
 
-from thicket import Thicket, InvalidFilter, EmptyMetadataFrame
+from thicket import Thicket
+from thicket import InvalidFilter
+from thicket import EmptyMetadataTable
 
 
 def filter_one_column(th, columns_values):
@@ -29,11 +31,12 @@ def filter_one_column(th, columns_values):
             # check if output is a thicket object
             assert isinstance(new_th, Thicket)
 
-            # MetadataFrame: compare profile hash keys after filter to expected
+            # metadata table: compare profile hash keys after filter to expected
             metadata_profile = new_th.metadata.index.tolist()
             assert metadata_profile == exp_index
 
-            # EnsembleFrame: compare profile hash keys and nodes after filter to expected
+            # performance data table: compare profile hash keys and nodes after filter
+            # to expected
             ensemble_profile = sorted(
                 new_th.dataframe.index.get_level_values(1).drop_duplicates().tolist()
             )
@@ -43,7 +46,8 @@ def filter_one_column(th, columns_values):
             assert ensemble_profile == exp_index
             assert ensemble_nodes == exp_nodes
 
-            # StatsFrame: compare nodes after filter to expected; check for empty dataframe
+            # aggregated statistics table: compare nodes after filter to expected; check
+            # for empty dataframe
             stats_nodes = sorted(
                 new_th.statsframe.dataframe.index.get_level_values(0)
                 .drop_duplicates()
@@ -72,7 +76,7 @@ def filter_multiple_and(th, columns_values):
     # check if output is a thicket object
     assert isinstance(new_th, Thicket)
 
-    # MetadataFrame: compare profile hash keys after filter to expected
+    # metadata table: compare profile hash keys after filter to expected
     metadata_profile = new_th.metadata.index.tolist()
     assert metadata_profile == exp_index
 
@@ -95,7 +99,8 @@ def filter_multiple_and(th, columns_values):
     assert exp_nodes == filter_nodes
     assert exp_index == filter_profiles
 
-    # StatsFrame: compare nodes after filter to expected; check for empty dataframe
+    # aggregated statistics table: compare nodes after filter to expected; check for
+    # empty dataframe
     stats_nodes = sorted(
         new_th.statsframe.dataframe.index.get_level_values(0).drop_duplicates().tolist()
     )
@@ -122,7 +127,7 @@ def filter_multiple_or(th, columns_values):
     # check if output is a thicket object
     assert isinstance(new_th, Thicket)
 
-    # MetadataFrame: compare profile hash keys after filter to expected
+    # metadata table: compare profile hash keys after filter to expected
     metadata_profile = new_th.metadata.index.tolist()
     assert metadata_profile == exp_index
 
@@ -145,7 +150,8 @@ def filter_multiple_or(th, columns_values):
     assert exp_nodes == filter_nodes
     assert exp_index == filter_profiles
 
-    # StatsFrame: compare nodes after filter to expected; check for empty dataframe
+    # aggregated statistics table: compare nodes after filter to expected; check for
+    # empty dataframe
     stats_nodes = sorted(
         new_th.statsframe.dataframe.index.get_level_values(0).drop_duplicates().tolist()
     )
@@ -156,11 +162,11 @@ def filter_multiple_or(th, columns_values):
     with pytest.raises(InvalidFilter):
         th.filter_metadata(123)
 
-    # drop all rows of the metadataframe
+    # drop all rows of the metadata table
     th.metadata = th.metadata.iloc[0:0]
 
-    # check for empty metadataframe exception
-    with pytest.raises(EmptyMetadataFrame):
+    # check for empty metadata table exception
+    with pytest.raises(EmptyMetadataTable):
         th.filter_metadata(lambda x: x["cluster"] == "chekov")
 
 

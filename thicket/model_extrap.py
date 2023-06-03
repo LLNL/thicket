@@ -149,13 +149,14 @@ class Modeling:
 
         frm_dict = {met + MODEL_TAG: model_to_img_html for met in self.chosen_metrics}
 
-        # Subset of the statsframes with only the Extra-P columns selected
+        # Subset of the aggregated statistics table with only the Extra-P columns selected
         return self.tht.statsframe.dataframe[
             [met + MODEL_TAG for met in self.chosen_metrics]
         ].to_html(escape=False, formatters=frm_dict)
 
     def _add_extrap_statistics(self, node, metric):
-        """Insert the Extra-P hypothesis function statistics into the statsframe. Has to be called after "produce_models".
+        """Insert the Extra-P hypothesis function statistics into the aggregated
+        statistics table. Has to be called after "produce_models".
 
         Arguments:
             node (hatchet.Node): The node for which statistics should be calculated
@@ -188,10 +189,11 @@ class Modeling:
             agg_func (function): aggregation function to apply to
                 multi-dimensional measurement values. Extra-P v4.0.4 applies
                 mean by default so that is set here for clarity.
-            add_stats (bool): Option to add hypothesis function statistics to the statsframe
+            add_stats (bool): Option to add hypothesis function statistics to the
+                aggregated statistics table
         """
         # Setup domain values one time. Have to match ordering with range
-        # values (i.e. ensembleframe profile ordering)
+        # values (i.e. performance data table profile ordering)
         param_coords = []  # default coordinates for all profiles
 
         # Mapping from metadata profiles to the parameter
@@ -202,7 +204,7 @@ class Modeling:
             [(value, key) for key, value in meta_param_mapping.items()]
         )
 
-        # Ordering of profiles in the ensembleframe
+        # Ordering of profiles in the performance data table
         ensemble_profile_ordering = list(self.tht.dataframe.index.unique(level=1))
 
         # Append coordinates in order
@@ -274,7 +276,7 @@ class Modeling:
                 self.tht.statsframe.dataframe.at[node, met + MODEL_TAG] = ModelWrapper(
                     model_gen.models[mkey], self.param_name
                 )
-                # Add statistics to statsframe
+                # Add statistics to aggregated statistics table
                 if add_stats:
                     self._add_extrap_statistics(node, met)
 
@@ -304,11 +306,12 @@ class Modeling:
         return term_dict
 
     def componentize_statsframe(self, columns=None):
-        """Componentize multiple Extra-P modeling objects in the statsframe
+        """Componentize multiple Extra-P modeling objects in the aggregated statistics
+        table
 
         Arguments:
-            column (list): list of column names in the statsframe to componentize.
-                Values must be of type 'thicket.model_extrap.ModelWrapper'.
+            column (list): list of column names in the aggregated statistics table to
+                componentize. Values must be of type 'thicket.model_extrap.ModelWrapper'.
         """
         # Use all Extra-P columns
         if columns is None:
@@ -321,7 +324,9 @@ class Modeling:
         # Error checking
         for c in columns:
             if c not in self.tht.statsframe.dataframe.columns:
-                raise ValueError("column " + c + " is not in the statsframe.")
+                raise ValueError(
+                    "column " + c + " is not in the aggregated statistics table."
+                )
             elif not isinstance(self.tht.statsframe.dataframe[c][0], ModelWrapper):
                 raise TypeError(
                     "column "
