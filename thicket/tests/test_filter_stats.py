@@ -35,18 +35,18 @@ def check_filter_stats(th, columns_values):
             # check if output is a thicket object
             assert isinstance(new_th, Thicket)
 
-            # filtered statsframe nodes
+            # filtered nodes in aggregated statistics table
             stats_nodes = sorted(
                 new_th.statsframe.dataframe.index.drop_duplicates().tolist()
             )
-            # check filtered statsframe nodes match exp_nodes
+            # check filtered nodes in aggregated statistics table match exp_nodes
             assert stats_nodes == exp_nodes
 
-            # filtered ensemble nodes
+            # filtered nodes in performance data table
             ensemble_nodes = sorted(
                 new_th.dataframe.index.get_level_values(0).drop_duplicates().tolist()
             )
-            # check filtered ensembleframe nodes match exp_nodes
+            # check filtered nodes in performance data table match exp_nodes
             assert ensemble_nodes == exp_nodes
 
 

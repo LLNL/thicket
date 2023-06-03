@@ -61,14 +61,16 @@ def _missing_nodes_to_list(a_df, b_df):
 
 
 def _new_statsframe_df(df, multiindex=False):
-    """Generate new StatsFrame DataFrame from a DataFrame. This is most commonly needed when changes are made to the PerfData's index.
+    """Generate new aggregated statistics table from a DataFrame. This is most commonly
+    needed when changes are made to the PerfData's index.
 
     Arguments:
-        df (DataFrame): Input DataFrame to generate the StatsFrame DataFrame from
-        multiindex (Bool, optional): Option to setup MultiIndex column structure. This is standard to do if PerfData is MultiIndex.
+        df (DataFrame): Input DataFrame to generate the aggregated statistics table from
+        multiindex (Bool, optional): Option to setup MultiIndex column structure. This
+            is standard to do if PerfData is MultiIndex.
 
     Returns:
-        (DataFrame): new StatsFrame DataFrame
+        (DataFrame): new aggregated statistics table
     """
     nodes = list(set(df.reset_index()["node"]))  # List of nodes
     names = [node.frame["name"] for node in nodes]  # List of names

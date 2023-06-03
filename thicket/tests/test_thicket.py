@@ -71,13 +71,13 @@ def test_sync_nodes(example_cali):
     assert helpers._are_synced(th.graph, th.dataframe)
 
 
-def test_statsframe(example_cali):
+def test_aggregated_statistics_table(example_cali):
     th = Thicket.from_caliperreader(example_cali[-1])
 
-    # Arbitrary value insertion in StatsFrame.
+    # Arbitrary value insertion in aggregated statistics table.
     th.statsframe.dataframe["test"] = 1
 
-    # Check that the statsframe is a Hatchet GraphFrame.
+    # Check that the aggregated statistics table is a Hatchet GraphFrame.
     assert isinstance(th.statsframe, ht.GraphFrame)
     # Check that 'name' column is in dataframe. If not, tree() will not work.
     assert "name" in th.statsframe.dataframe
@@ -86,8 +86,8 @@ def test_statsframe(example_cali):
 
     # Expected tree output
     tree_output = th.statsframe.tree(metric_column="test")
-    # Check if tree output is correct.
 
+    # Check if tree output is correct.
     assert bool(re.search("1.000.*MPI_Comm_dup", tree_output))
     assert bool(re.search("1.000.*MPI_Initialized", tree_output))
     assert bool(re.search("1.000.*CalcFBHourglassForceForElems", tree_output))
@@ -99,19 +99,19 @@ def test_add_column_from_metadata(mpi_scaling_cali):
     example_column = "jobsize"
     example_column_metrics = [27, 64, 125, 216, 343]
 
-    # Column should be in MetadataFrame
+    # Column should be in metadata table
     assert example_column in t_ens.metadata
-    # Column should not be in EnsembleFrame
+    # Column should not be in performance data table
     assert example_column not in t_ens.dataframe
     # Assume second level index is profile
     assert t_ens.dataframe.index.names[1] == "profile"
 
     t_ens.add_column_from_metadata_to_ensemble(example_column)
 
-    # Column should be in EnsembleFrame
+    # Column should be in performance data table
     assert example_column in t_ens.dataframe
 
-    # Check that the metrics exist in the EnsembleFrame
+    # Check that the metrics exist in the performance data table
     values = t_ens.dataframe[example_column].values.astype("int")
     for metric in example_column_metrics:
         assert metric in values

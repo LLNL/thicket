@@ -5,7 +5,7 @@
 
 import pytest
 
-from thicket import Thicket, EmptyMetadataFrame
+from thicket import Thicket, EmptyMetadataTable
 from test_columnar_join import test_columnar_join
 
 
@@ -37,7 +37,7 @@ def check_groupby(th, columns_values):
             metadata_profiles = sorted(th_list[itr].metadata.index.tolist())
             assert metadata_profiles == exp_profiles
 
-            # ensemble profile hash for unique value sub-thicket
+            #  performance data table profile hash for unique value sub-thicket
             ensemble_profiles = sorted(
                 th_list[itr]
                 .dataframe.index.get_level_values(1)
@@ -46,7 +46,7 @@ def check_groupby(th, columns_values):
             )
             assert ensemble_profiles == exp_profiles
 
-            # ensemble nodes for unique value sub-thicket
+            # performance data table nodes for unique value sub-thicket
             ensemble_nodes = sorted(
                 th_list[itr]
                 .dataframe.index.get_level_values(0)
@@ -55,7 +55,7 @@ def check_groupby(th, columns_values):
             )
             assert ensemble_nodes == exp_nodes
 
-            # stats nodes for unique value sub-thicket
+            # aggregated statistics nodes for unique value sub-thicket
             stats_nodes = sorted(
                 th_list[itr]
                 .statsframe.dataframe.index.get_level_values(0)
@@ -64,14 +64,14 @@ def check_groupby(th, columns_values):
             )
             assert stats_nodes == exp_nodes
 
-            # check for name column statsframe dataframe
+            # check for name column in aggregated statistics table
             assert "name" in th_list[itr].statsframe.dataframe.columns
 
-    # drop all rows of the metadataframe
+    # drop all rows of the metadata table
     th.metadata = th.metadata.iloc[0:0]
 
-    # check for empty metadataframe exception
-    with pytest.raises(EmptyMetadataFrame):
+    # check for empty metadata table exception
+    with pytest.raises(EmptyMetadataTable):
         th.groupby(["user"])
 
 

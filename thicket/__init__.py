@@ -6,7 +6,9 @@
 # make flake8 unused names in this file.
 # flake8: noqa: F401
 
-from .thicket import Thicket, InvalidFilter, EmptyMetadataFrame
+from .thicket import Thicket
+from .thicket import InvalidFilter
+from .thicket import EmptyMetadataTable
 from .stats.maximum import maximum
 from .stats.mean import mean
 from .stats.median import median

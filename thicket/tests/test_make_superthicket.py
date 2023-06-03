@@ -11,7 +11,7 @@ def test_make_superthicket(mpi_scaling_cali):
     for file in mpi_scaling_cali:
         th_list.append(th.from_caliperreader(file))
 
-    # Add arbitrary value to statsframe
+    # Add arbitrary value to aggregated statistics table
     t_val = 0
     for t in th_list:
         t.statsframe.dataframe["test"] = t_val
