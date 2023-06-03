@@ -501,6 +501,7 @@ class Thicket(GraphFrame):
                 combined_th.dataframe, multiindex=True
             ),
         )
+        combined_th.performance_cols = helpers._get_perf_columns(combined_th.dataframe)
 
         return combined_th
 

@@ -190,7 +190,12 @@ def _get_perf_columns(df):
 
     numeric_columns = df.select_dtypes(include=numeric_types).columns.tolist()
 
-    if "nid" in numeric_columns:
-        numeric_columns.remove("nid")
+    # thicket object without columnar index
+    if df.columns.nlevels == 1:
+        if "nid" in numeric_columns:
+            numeric_columns.remove("nid")
 
-    return numeric_columns
+        return numeric_columns
+    # columnar joined thicket object
+    else:
+        return [x for x in numeric_columns if "nid" not in x]
