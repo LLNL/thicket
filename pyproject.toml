@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.poetry]
 name = "llnl-thicket"
-version = "2023.1.0"
+version = "2023.2.0a0"
 description = "A Python-based toolkit for analyzing ensemble performance data."
 license = "MIT"
 
