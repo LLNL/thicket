@@ -5,53 +5,12 @@
 
 import re
 
-import pytest
 import hatchet as ht
 
 from test_filter_metadata import filter_one_column
 from test_filter_metadata import filter_multiple_and
 from test_filter_stats import check_filter_stats
 from test_query import check_query
-from thicket import Thicket
-
-
-@pytest.fixture
-def columnar_join_thicket(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
-    """Generator for 'columnar_join' thicket.
-
-    Arguments:
-        mpi_scaling_cali (list): List of Caliper files for MPI scaling study.
-        rajaperf_basecuda_xl_cali (list): List of Caliper files for base cuda variant.
-
-    Returns:
-        list: List of original thickets, list of deepcopies of original thickets, and columnar-joined thicket.
-    """
-    th_mpi_1 = Thicket.from_caliperreader(mpi_scaling_cali[0:2])
-    th_mpi_2 = Thicket.from_caliperreader(mpi_scaling_cali[2:4])
-    th_cuda128 = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali[0:2])
-
-    # Prep for testing
-    selected_column = "ProblemSize"
-    problem_sizes = [1, 10]
-    th_mpi_1.metadata[selected_column] = problem_sizes
-    th_mpi_2.metadata[selected_column] = problem_sizes
-    th_cuda128.metadata[selected_column] = problem_sizes
-
-    # To check later if modifications were unexpectedly made
-    th_mpi_1_deep = th_mpi_1.deepcopy()
-    th_mpi_2_deep = th_mpi_2.deepcopy()
-    th_cuda128_deep = th_cuda128.deepcopy()
-
-    thicket_list = [th_mpi_1, th_mpi_2, th_cuda128]
-    thicket_list_cp = [th_mpi_1_deep, th_mpi_2_deep, th_cuda128_deep]
-
-    combined_th = Thicket.columnar_join(
-        thicket_list=thicket_list,
-        header_list=["MPI1", "MPI2", "Cuda128"],
-        column_name="ProblemSize",
-    )
-
-    return thicket_list, thicket_list_cp, combined_th
 
 
 def test_columnar_join(columnar_join_thicket):
