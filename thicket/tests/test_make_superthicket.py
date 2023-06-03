@@ -27,7 +27,7 @@ def test_make_superthicket(mpi_scaling_cali):
         3,
         4,
     }
-    # Check PerfData values
+    # Check performance data table values
     assert set(superthicket.dataframe["test"]) == {0, 2, 4, 6, 8}
 
     superthicket_named = th.make_superthicket(
@@ -42,5 +42,5 @@ def test_make_superthicket(mpi_scaling_cali):
         216,
         343,
     }
-    # Check PerfData values
+    # Check performance data table values
     assert set(superthicket_named.dataframe["test"]) == {0, 2, 4, 6, 8}

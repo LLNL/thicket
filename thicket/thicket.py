@@ -334,7 +334,8 @@ class Thicket(GraphFrame):
                         len(thicket_list[i].profile), len(thicket_list[i + 1].profile)
                     )
                 )
-        # Ensure all thickets profiles are sorted. Must be true when column_name=None to guarantee PerfData and MetaData match up.
+        # Ensure all thickets profiles are sorted. Must be true when column_name=None to
+        # guarantee performance data table and metadata table match up.
         if column_name is None:
             for th in thicket_list:
                 verify_sorted_profile(th.dataframe)
@@ -366,13 +367,13 @@ class Thicket(GraphFrame):
             thicket_list_cp[i].dataframe.sort_index(inplace=True)
 
         ###
-        # Step 2: Join "self" & "other" PerfData
+        # Step 2: Join "self" & "other" performance data table
         ###
         # Create header list if not provided
         if header_list is None:
             header_list = [i for i in range(len(thicket_list))]
 
-        # Update index to reflect PerfData index
+        # Update index to reflect performance data table index
         new_mappings = {}  # Dictionary mapping old profiles to new profiles
         if column_name is None:  # Create index from scratch
             new_profiles = [i for i in range(len(thicket_list_cp[0].profile))]
@@ -438,7 +439,7 @@ class Thicket(GraphFrame):
                 new_columns[i]
             )
 
-        # Concat PerfData together
+        # Concat performance data table together
         combined_th.dataframe = pd.concat(
             [thicket_list_cp[i].dataframe for i in range(len(thicket_list_cp))],
             axis="columns",
@@ -455,9 +456,9 @@ class Thicket(GraphFrame):
         )
 
         ###
-        # Step 3: Join "self" & "other" MetaData
+        # Step 3: Join "self" & "other" metadata table
         ###
-        # Update index to reflect PerfData index
+        # Update index to reflect performance data table index
         for i in range(len(thicket_list_cp)):
             thicket_list_cp[i].metadata.reset_index(drop=True, inplace=True)
         if column_name is None:
@@ -644,7 +645,7 @@ class Thicket(GraphFrame):
         if isinstance(temp_df.columns, pd.MultiIndex):
             temp_df.columns = temp_df.columns.to_flat_index()
             temp_df.rename(columns={("", "name"): "name"}, inplace=True)
-        # Placeholder value. TODO: Enable selection from PerfData.
+        # Placeholder value. TODO: Enable selection from performance data table.
         temp_df["thicket_tree"] = -1
         return GraphFrame.tree(
             self=Thicket(graph=self.graph, dataframe=temp_df),
