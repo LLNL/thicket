@@ -1,7 +1,8 @@
-from hatchet.external import Roundtrip as RT
-from IPython.core.magic import Magics, magics_class, line_magic
 from os import path
 from os.path import dirname
+
+from IPython.core.magic import Magics, magics_class, line_magic
+from hatchet.external import Roundtrip as RT
 
 
 def _thicket_to_json(data):

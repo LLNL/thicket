@@ -7,7 +7,9 @@ import pandas as pd
 
 
 def _are_synced(gh, df):
-    """Check if node objects are equal in graph and dataframe id(graph_node) == id(df_node)."""
+    """Check if node objects are equal in graph and dataframe id(graph_node) ==
+    id(df_node).
+    """
     for graph_node in gh.traverse():
         node_present = False
         for df_node in df.index.get_level_values("node"):
@@ -20,14 +22,16 @@ def _are_synced(gh, df):
 
 
 def _missing_nodes_to_list(a_df, b_df):
-    """Get a list of node differences between two dataframes. Mainly used for "tree" function.
+    """Get a list of node differences between two dataframes. Mainly used for "tree"
+    function.
 
     Arguments:
         a_df (Dataframe): First pandas Dataframe
         b_df (Dataframe): Second pandas Dataframe
 
     Returns:
-        (list): List of numbers in range (0, 1, 2). "0" means node is in both, "1" is only in "a", "2" is only in "b"
+        (list): List of numbers in range (0, 1, 2). "0" means node is in both, "1" is
+            only in "a", "2" is only in "b"
     """
     missing_nodes = []
     a_list = list(map(hash, list(a_df.index.get_level_values("node"))))
@@ -61,11 +65,11 @@ def _missing_nodes_to_list(a_df, b_df):
 
 
 def _new_statsframe_df(df, multiindex=False):
-    """Generate new aggregated statistics table from a DataFrame. This is most commonly
+    """Generate new aggregated statistics table from a dataframe. This is most commonly
     needed when changes are made to the performance data table's index.
 
     Arguments:
-        df (DataFrame): Input DataFrame to generate the aggregated statistics table from
+        df (DataFrame): Input dataframe to generate the aggregated statistics table from
         multiindex (Bool, optional): Option to setup MultiIndex column structure. This
             is standard to do if performance data table is MultiIndex.
 
@@ -97,10 +101,10 @@ def _print_graph(graph):
 
 
 def _resolve_missing_indicies(th_list):
-    """Resolve indices if at least 1 profile has an indexx that another doesn't
+    """Resolve indices if at least 1 profile has an index that another doesn't.
 
-    If at least one profile has an index that another doesn't, then issues will
-    arise when unifying. Need to add this index to other thickets.
+    If at least one profile has an index that another doesn't, then issues will arise
+    when unifying. Need to add this index to other thickets.
 
     Note that the value to use for the new index is set to '0' for ease-of-use, but
     something like 'NaN' may arguably provide more clarity.
@@ -122,7 +126,8 @@ def _resolve_missing_indicies(th_list):
 def _sync_nodes(gh, df):
     """Set the node objects to be equal in both the graph and the dataframe.
 
-    id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet nid's.
+    id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet
+    nid's.
     """
     index_names = df.index.names
     df.reset_index(inplace=True)
@@ -136,11 +141,14 @@ def _sync_nodes(gh, df):
 
 
 def _sync_nodes_frame(gh, df):
-    """Update dataframe node objects hnid's based off their positioning relative to a given graph.
+    """Update dataframe node objects hnid's based off their positioning relative to a
+    given graph.
 
-    id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet nid's.
+    id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet
+    nid's.
 
-    TODO: This function may be superior to _sync_nodes and may be able to replace it. Need to investigate.
+    TODO: This function may be superior to _sync_nodes and may be able to replace it.
+    Need to investigate.
     """
     assert df.index.nlevels == 2  # For num_profiles assumption
 

@@ -30,7 +30,7 @@ class StatsPreference(Thicket):
             thicket1 (thicket): one thicket which will be compared to thicket2
             thicket2 (thicket): second thicket which will be compared to thicket1
             columns (list): list of 1 or more numeric columns to perform t-test on.
-                Columns must be located in the performance dataframe.
+                Columns must be located in the performance data table.
             name_of_thicket1 (str, optional): descriptive name for thicket1
             name_of_thicket2 (str, optional): descriptive name for thicket2
             alpha (float, optional): configure the statistical significance threshold.
@@ -73,7 +73,7 @@ class StatsPreference(Thicket):
             comparison_func (callable function): function taking in two values,
                 compared using a comparison operator such as < or >
             extra_cols (list, optional): list of 1 or more columns to be added to the
-                initial instatiated column list
+                initial instantiated column list
 
         Returns:
             (Thicket): a new thicket object with new column for preference

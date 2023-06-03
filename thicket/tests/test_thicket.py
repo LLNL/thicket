@@ -4,13 +4,13 @@
 # SPDX-License-Identifier: MIT
 
 import copy
-import pytest
 import re
 
+import pytest
 import numpy as np
 import pandas as pd
-
 import hatchet as ht
+
 from thicket import Thicket
 import thicket.helpers as helpers
 
