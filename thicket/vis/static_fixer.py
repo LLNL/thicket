@@ -3,8 +3,9 @@
 #
 # SPDX-License-Identifier: MIT
 
-from bs4 import BeautifulSoup
 from os import walk, path
+
+from bs4 import BeautifulSoup
 
 static_filepath = path.abspath("static/")
 

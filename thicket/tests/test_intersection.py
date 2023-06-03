@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: MIT
 
 import thicket.helpers as helpers
-
 from thicket import Thicket as th
 
 

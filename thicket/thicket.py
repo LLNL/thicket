@@ -7,20 +7,22 @@ import copy
 import os
 import json
 import warnings
+from collections import OrderedDict
 
 import pandas as pd
 import numpy as np
-from collections import OrderedDict
-
 from hatchet import GraphFrame
 from hatchet.query import AbstractQuery
+
 import thicket.helpers as helpers
-from .utils import verify_sorted_profile, verify_thicket_structures
+from .utils import verify_sorted_profile
+from .utils import verify_thicket_structures
 
 
 class Thicket(GraphFrame):
     """Ensemble of profiles, includes a graph and three dataframes, performance data,
-    metadata, and aggregated statistics."""
+    metadata, and aggregated statistics.
+    """
 
     def __init__(
         self,
@@ -39,19 +41,18 @@ class Thicket(GraphFrame):
 
         Arguments:
             graph (Graph): graph of nodes in this thicket
-            dataframe (DataFrame): pandas DataFrame indexed by Nodes from the
-                graph, and potentially other indexes
+            dataframe (DataFrame): pandas DataFrame indexed by Nodes from the graph, and
+                potentially other indexes
             exc_metrics (list): list of names of exclusive metrics in the dataframe
             inc_metrics (list): list of names of inclusive metrics in the dataframe
             default_metric (str): primary metric
-            metadata (DataFrame): pandas DataFrame indexed by profile hashes,
-                contains profile metadata
+            metadata (DataFrame): pandas DataFrame indexed by profile hashes, contains
+                profile metadata
             performance_cols (list): list of numeric columns within the performance
                 dataframe
             profile (list): list of hashed profile strings
             profile_mapping (dict): mapping of hashed profile strings to original strings
-            statsframe (DataFrame): pandas DataFrame indexed by Nodes from the
-                graph
+            statsframe (DataFrame): pandas DataFrame indexed by Nodes from the graph
         """
         super().__init__(
             graph, dataframe, exc_metrics, inc_metrics, default_metric, metadata
@@ -162,9 +163,8 @@ class Thicket(GraphFrame):
         """Read in a Caliper .cali or .json file.
 
         Arguments:
-            filename_or_stream (str or file-like): name of a Caliper output
-                file in `.cali` or JSON-split format, or an open file object
-                to read one
+            filename_or_stream (str or file-like): name of a Caliper output file in
+                `.cali` or JSON-split format, or an open file object to read one
             query (str): cali-query in CalQL format
             intersection (bool): whether to perform intersection or union (default)
         """
@@ -174,7 +174,8 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def from_hpctoolkit(dirname, intersection=False):
-        """Create a GraphFrame using hatchet's HPCToolkit reader and use its attributes to make a new thicket.
+        """Create a GraphFrame using hatchet's HPCToolkit reader and use its attributes
+        to make a new thicket.
 
         Arguments:
             dirname (str): parent directory of an HPCToolkit experiment.xml file
@@ -192,8 +193,8 @@ class Thicket(GraphFrame):
         """Helper function to read one caliper file.
 
         Arguments:
-            filename_or_caliperreader (str or CaliperReader): name of a Caliper
-                output file in `.cali` format, or a CaliperReader object
+            filename_or_caliperreader (str or CaliperReader): name of a Caliper output
+                file in `.cali` format, or a CaliperReader object
             intersection (bool): whether to perform intersection or union (default)
         """
         return Thicket.reader_dispatch(
@@ -285,31 +286,34 @@ class Thicket(GraphFrame):
         header_list=None,
         column_name=None,
     ):
-        """Join Thickets column-wise. New column multi-index will be created with columns under separate indexer headers.
+        """Join Thickets column-wise. New column multi-index will be created with
+        columns under separate indexer headers.
 
         Arguments:
             thicket_list (list): List of Thickets to join
             header_list (list): List of headers to use for the new columnar multi-index
-            column_name (str): Name of the column from the metadata table to
-                join on. If no argument is provided, it is assumed that there
-                is no profile-wise relationship between self and other.
+            column_name (str): Name of the column from the metadata table to join on. If
+                no argument is provided, it is assumed that there is no profile-wise
+                relationship between self and other.
 
         Returns:
             (Thicket): New Thicket object with joined columns
         """
 
-        def _create_multiindex_columns(dataframe, upper_idx_name):
-            """Helper function to create MultiIndex column names from a dataframe's current columns.
+        def _create_multiindex_columns(df, upper_idx_name):
+            """Helper function to create multi-index column names from a dataframe's
+            current columns.
 
             Arguments:
-            dataframe (DataFrame): source DataFrame
-            upper_idx_name (String): name of the newly added index in the MultiIndex. Prepended before each column as a tuple.
+            df (DataFrame): source dataframe
+            upper_idx_name (String): name of the newly added index in the multi-index.
+                Prepended before each column as a tuple.
 
             Returns:
-                (list): list of new indicies generated from the source DataFrame
+                (list): list of new indicies generated from the source dataframe
             """
             new_idx = []
-            for column in dataframe.columns:
+            for column in df.columns:
                 new_tuple = (upper_idx_name, column)
                 new_idx.append(new_tuple)
             return new_idx
@@ -363,7 +367,7 @@ class Thicket(GraphFrame):
             thicket_list_cp[i].graph = union_graph
             # Necessary to change dataframe hatchet id's to match the nodes in the graph
             helpers._sync_nodes_frame(union_graph, thicket_list_cp[i].dataframe)
-            # For tree diff. DataFrames need to be sorted.
+            # For tree diff. dataframes need to be sorted.
             thicket_list_cp[i].dataframe.sort_index(inplace=True)
 
         ###
@@ -469,7 +473,7 @@ class Thicket(GraphFrame):
                 thicket_list_cp[i].metadata.set_index(column_name, inplace=True)
                 thicket_list_cp[i].metadata.sort_index(inplace=True)
 
-        # Create MultiIndex columns
+        # Create multi-index columns
         for i in range(len(thicket_list_cp)):
             thicket_list_cp[i].metadata.columns = pd.MultiIndex.from_tuples(
                 _create_multiindex_columns(thicket_list_cp[i].metadata, header_list[i])
@@ -541,10 +545,11 @@ class Thicket(GraphFrame):
             self.metadata.drop(column_name, axis=1, inplace=True)
 
     def squash(self, update_inc_cols=True):
-        """Rewrite the Graph to include only nodes present in the performance DataFrame's rows.
+        """Rewrite the Graph to include only nodes present in the performance
+        data table's rows.
 
-        This can be used to simplify the Graph, or to normalize Graph indexes
-        between two Thickets.
+        This can be used to simplify the Graph, or to normalize Graph indexes between
+        two Thickets.
 
         Arguments:
             update_inc_cols (boolean, optional): if True, update inclusive columns.
@@ -641,7 +646,7 @@ class Thicket(GraphFrame):
     def tree(self):
         """hatchet tree() function for a thicket"""
         temp_df = self.statsframe.dataframe.copy()
-        # Adjustments specific for MultiIndex.
+        # Adjustments specific for multi-index.
         if isinstance(temp_df.columns, pd.MultiIndex):
             temp_df.columns = temp_df.columns.to_flat_index()
             temp_df.rename(columns={("", "name"): "name"}, inplace=True)
@@ -653,7 +658,7 @@ class Thicket(GraphFrame):
         )
 
     def unify_pair(self, other):
-        """Unify two Thicket's graphs and DataFrames"""
+        """Unify two Thicket's graphs and dataframes"""
         # Check for the same object. Cheap operation since no graph walkthrough.
         if self.graph is other.graph:
             print("same graph (object)")
@@ -693,8 +698,8 @@ class Thicket(GraphFrame):
     def unify_pairwise(th_list, debug=False):
         """Unifies two thickets graphs and dataframes.
 
-        Ensure self and other have the same graph and same node IDs. This may
-        change the node IDs in the dataframe.
+        Ensure self and other have the same graph and same node IDs. This may change the
+        node IDs in the dataframe.
 
         Update the graphs in the graphframe if they differ.
 
@@ -715,7 +720,7 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def unify_listwise(th_list, debug=False):
-        """Unify a list of Thicket's graphs and DataFrames
+        """Unify a list of Thicket's graphs and dataframes
 
         Arguments:
             th_list (list): list of Thicket objects
@@ -730,7 +735,7 @@ class Thicket(GraphFrame):
         # GRAPH UNIFICATION
         union_graph = th_list[0].graph
         for i in range(1, len(th_list)):  # n-1 unions
-            # Check to skip unecessary computation. apply short circuiting with 'or'.
+            # Check to skip unnecessary computation. apply short circuiting with 'or'.
             if union_graph is th_list[i].graph or union_graph == th_list[i].graph:
                 if debug:
                     print("Union Graph == thicket[" + str(i) + "].graph")
@@ -773,7 +778,8 @@ class Thicket(GraphFrame):
 
         Arguments:
             th_list (list): list of thickets
-            pairwise (bool): use the pairwise implementation of unify (use if having issues)
+            pairwise (bool): use the pairwise implementation of unify (use if having
+                issues)
             superthicket (bool): whether the result is a superthicket
 
         Returns:
@@ -857,8 +863,8 @@ class Thicket(GraphFrame):
     def make_superthicket(th_list, profiles_from_meta=None):
         """Convert a list of thickets into a 'superthicket'.
 
-        Their individual aggregated statistics table are ensembled and become
-        the superthicket's performance data table.
+        Their individual aggregated statistics table are ensembled and become the
+        superthicket's performance data table.
 
         Arguments:
             th_list (list): list of thickets
@@ -1020,7 +1026,7 @@ class Thicket(GraphFrame):
     def filter_metadata(self, select_function):
         """Filter thicket object based on a metadata key.
 
-        Changes are propogated to the entire thicket object.
+        Changes are propagated to the entire thicket object.
 
         Arguments:
             select_function (lambda function): filter to apply to the metadata table
@@ -1033,7 +1039,7 @@ class Thicket(GraphFrame):
                 # check only 1 index in metadata
                 assert self.metadata.index.nlevels == 1
 
-                # Add warning if filtering on MultiIndex columns
+                # Add warning if filtering on multi-index columns
                 if isinstance(self.metadata.columns, pd.MultiIndex):
                     warnings.warn(
                         "Filtering on MultiIndex columns will impact the entire row, not just the subsection of the provided MultiIndex."
@@ -1085,9 +1091,12 @@ class Thicket(GraphFrame):
         """Apply a Hatchet query to the Thicket object.
 
         Arguments:
-            query_obj (AbstractQuery): the query, represented as by a subclass of Hatchet's AbstractQuery
-            squash (bool): if true, run Thicket.squash before returning the result of the query
-            update_inc_cols (boolean, optional): if True, update inclusive columns when performing squash.
+            query_obj (AbstractQuery): the query, represented as by a subclass of
+                Hatchet's AbstractQuery
+            squash (bool): if true, run Thicket.squash before returning the result of
+                the query
+            update_inc_cols (boolean, optional): if True, update inclusive columns when
+                performing squash.
 
         Returns:
             (Thicket): a new Thicket object containing the data that matches the query
@@ -1212,7 +1221,7 @@ class Thicket(GraphFrame):
             new_thicket.dataframe.index.get_level_values("node").isin(filtered_nodes)
         ]
 
-        # filter nodes in the graph frame based on the DataFrame nodes
+        # filter nodes in the graphframe based on the dataframe nodes
         # TODO see if the new Thicket.squash function will work here
         filtered_graphframe = GraphFrame.squash(new_thicket)
         new_thicket.graph = filtered_graphframe.graph
@@ -1263,13 +1272,15 @@ class InvalidFilter(Exception):
 
 
 class EmptyMetadataTable(Exception):
-    """Raised when a Thicket object argument is passed with an empty MetadataTable to the filter function."""
+    """Raised when a Thicket object argument is passed with an empty MetadataTable to
+    the filter function.
+    """
 
 
 class UnsupportedQuery(Exception):
-    """Raised when an object query or string query are provided
-    to the 'query' function because those types of queries are
-    not yet supported in Thicket."""
+    """Raised when an object query or string query are provided to the 'query' function
+    because those types of queries are not yet supported in Thicket.
+    """
 
 
 class EmptyQuery(Exception):

@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 
 def verify_sorted_profile(thicket_component):
-    """Assertion to check if profiles are sorted in a thicket DataFrame
+    """Assertion to check if profiles are sorted in a thicket dataframe
 
     Arguments:
         thicket_component (DataFrame): component of thicket to check
@@ -17,7 +17,7 @@ def verify_sorted_profile(thicket_component):
     )
     if profile_index_values != sorted(profile_index_values):
         raise ValueError(
-            "The profiles in this DataFrame must be sorted. Try 'pandas.DataFrame.sort_index'."
+            "The profiles in this dataframe must be sorted. Try 'pandas.DataFrame.sort_index'."
         )
 
 
@@ -30,8 +30,8 @@ def verify_thicket_structures(thicket_component, columns=[], index=[]):
         index (list): list of index levels to check for in the component
 
     Returns:
-        Raises an error if any columns or index levels are not in component,
-        continues program if all columns and index levels are in component
+        Raises an error if any columns or index levels are not in component, continues
+            program if all columns and index levels are in component
     """
     if not isinstance(columns, list):
         raise RuntimeError("columns= must be specified as a list")
@@ -46,7 +46,7 @@ def verify_thicket_structures(thicket_component, columns=[], index=[]):
     column_result = all(elem in component_columns for elem in columns)
     index_result = all(elem in component_index for elem in index)
 
-    # store missing collumns or index if they exist
+    # store missing columns or index if they exist
     missing_columns = list(set(columns).difference(component_columns))
     missing_index = list(set(index).difference(component_index))
 

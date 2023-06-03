@@ -20,7 +20,8 @@ def columnar_join_thicket(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
         rajaperf_basecuda_xl_cali (list): List of Caliper files for base cuda variant.
 
     Returns:
-        list: List of original thickets, list of deepcopies of original thickets, and columnar-joined thicket.
+        list: List of original thickets, list of deepcopies of original thickets, and
+            columnar-joined thicket.
     """
     th_mpi_1 = Thicket.from_caliperreader(mpi_scaling_cali[0:2])
     th_mpi_2 = Thicket.from_caliperreader(mpi_scaling_cali[2:4])

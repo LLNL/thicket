@@ -3,20 +3,20 @@
 #
 # SPDX-License-Identifier: MIT
 
-import ncu_report
 import re
+from collections import defaultdict
 
 import pandas as pd
-
-from collections import defaultdict
+import ncu_report
 
 
 def add_ncu_metrics(th, ncu_report_mapping, chosen_metrics=None):
-    """Add metrics from one ncu report file to one th
+    """Add metrics from one ncu report file to one thicket
 
     Arguments:
         th (Thicket): Thicket object
-        ncu_report_mapping (dict): dictionary mapping from "NCU report file":"Thicket profile"
+        ncu_report_mapping (dict): dictionary mapping from "NCU report file":"Thicket
+            profile"
         chosen_metrics (str): If known, which NCU metrics to add
     """
     # Keep list of NCU dfs for concat
@@ -85,7 +85,7 @@ def add_ncu_metrics(th, ncu_report_mapping, chosen_metrics=None):
                 cpu_side_kernel = other_kernel.replace(k_match, "").replace(" ", "")
                 if ncu_side_kernel == cpu_side_kernel:
                     matches.append(cpu_side_kernels[other_kernel])
-                    # Remove entry since it should not be re-useable
+                    # Remove entry since it should not be re-usable
                     cpu_side_kernels.pop(other_kernel)
                     break
             if len(matches) == 0:

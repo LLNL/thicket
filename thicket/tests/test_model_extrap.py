@@ -3,8 +3,9 @@
 #
 # SPDX-License-Identifier: MIT
 
-import pytest
 import sys
+
+import pytest
 
 from thicket import Thicket
 
