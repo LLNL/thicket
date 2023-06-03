@@ -1215,9 +1215,10 @@ class Thicket(GraphFrame):
 
         Returns:
             (dict): alphabetical ordered dictionary with key's being the column names
-                    and the values being unique values for a metadata column.
+                and the values being unique values for a metadata column.
         """
         unique_meta = {}
+
         # thicket object without columnar index
         if self.dataframe.columns.nlevels == 1:
             for col in self.metadata.columns:
@@ -1229,8 +1230,6 @@ class Thicket(GraphFrame):
                     unique_meta[col] = unique_entries
 
             sorted_meta = dict(sorted(unique_meta.items(), key=lambda x: x[0].lower()))
-
-            return sorted_meta
         # columnar joined thicket object
         else:
             sorted_meta = []
@@ -1245,7 +1244,8 @@ class Thicket(GraphFrame):
                 sorted_meta.append(
                     (idx, dict(sorted(unique_meta.items(), key=lambda x: x[0].lower())))
                 )
-            return sorted_meta
+
+        return sorted_meta
 
 
 class InvalidFilter(Exception):
