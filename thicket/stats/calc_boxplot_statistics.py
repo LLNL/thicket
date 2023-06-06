@@ -83,6 +83,12 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                 if not profile:
                     profile = []
                 boxplot_dict[col + "_outliers" + q_list].append(profile)
+            # check to see if exclusive metric
+            if col in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.extend(list(boxplot_dict.keys()))
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.extend(list(boxplot_dict.keys()))
 
             df_box = pd.DataFrame(boxplot_dict)
             df_box["node"] = thicket.statsframe.dataframe.index.tolist()
@@ -139,6 +145,14 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                 for outerKey, innerDict in boxplot_dict.items()
                 for innerKey, values in innerDict.items()
             }
+
+            # check to see if exclusive metric
+            if (idx, col) in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.extend(list(create_multi_index.keys()))
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.extend(list(create_multi_index.keys()))
+
             df_box = pd.DataFrame(create_multi_index)
             df_box["node"] = thicket.statsframe.dataframe.reset_index()["node"].tolist()
             df_box = df_box.set_index("node")

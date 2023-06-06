@@ -37,6 +37,13 @@ def minimum(thicket, columns=None):
             minimum = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 minimum.append(min(thicket.dataframe.loc[node][column]))
+            # check to see if exclusive metric
+            if column in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append(column + "_min")
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append(column + "_min")
+
             thicket.statsframe.dataframe[column + "_min"] = minimum
     # columnar joined thicket object
     else:
@@ -44,6 +51,13 @@ def minimum(thicket, columns=None):
             minimum = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 minimum.append(min(thicket.dataframe.loc[node][(idx, column)]))
+            # check to see if exclusive metric
+            if (idx, column) in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append((idx, column + "_min"))
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append((idx, column + "_min"))
+
             thicket.statsframe.dataframe[(idx, column + "_min")] = minimum
 
         # sort columns in index

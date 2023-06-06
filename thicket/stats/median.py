@@ -36,6 +36,13 @@ def median(thicket, columns=None):
             median = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 median.append(np.median(thicket.dataframe.loc[node][column]))
+            # check to see if exclusive metric
+            if column in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append(column + "_median")
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append(column + "_median")
+
             thicket.statsframe.dataframe[column + "_median"] = median
     # columnar joined thicket object
     else:
@@ -43,6 +50,13 @@ def median(thicket, columns=None):
             median = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 median.append(np.median(thicket.dataframe.loc[node][(idx, column)]))
+            # check to see if exclusive metric
+            if (idx, column) in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append((idx, column + "_median"))
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append((idx, column + "_median"))
+
             thicket.statsframe.dataframe[(idx, column + "_median")] = median
 
         # sort columns in index
