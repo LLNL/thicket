@@ -12,10 +12,19 @@ Prerequisites
 
 Thicket has the following minimum requirements, which must be installed before Thicket is run:
 
-#. Python 2 (2.7) or 3 (3.5 - 3.8)
-#. extrap
+#. Python 3 (3.6 - 3.11)
+#. hatchet
+#. pandas >= 1.1
+#. numpy
+#. matplotlib
 #. scipy, and
 #. seaborn
+
+Other Packages
+=============
+#. extrap
+#. vis
+  * beautifulsoup4
 
 Thicket is available on `GitHub <https://github.com/llnl/thicket>`_.
 
