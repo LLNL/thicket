@@ -5,8 +5,6 @@
 
 import re
 
-import hatchet as ht
-
 from thicket import Thicket
 from thicket.query import Query, QueryMatcher
 
@@ -60,7 +58,7 @@ def test_new_style_query_base(rajaperf_basecuda_xl_cali):
         )
     )
 
-    check_query(th, hnids, query)
+    check_query(th, hnids, query, multi_index_mode="off")
 
 
 def test_new_style_query_object(rajaperf_basecuda_xl_cali):
@@ -102,4 +100,4 @@ def test_old_style_query(rajaperf_basecuda_xl_cali):
         )
     )
 
-    check_query(th, hnids, query)
+    check_query(th, hnids, query, multi_index_mode="off")

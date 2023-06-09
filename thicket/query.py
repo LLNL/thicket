@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: MIT
 
+# Make flake8 ignore unused names in this file
+# flake8: noqa: F401
+
 from hatchet.query import (
     Query,
     ObjectQuery,
@@ -35,11 +38,11 @@ from hatchet.query.compat import (
     parse_cypher_query,
 )
 
-import hatchet.query.is_hatchet_query
+from hatchet.query import is_hatchet_query
 
 
 def is_thicket_query(query_obj):
-    return hatchet.query.is_hatchet_query(query_obj)
+    return is_hatchet_query(query_obj)
 
 
 __all__ = [

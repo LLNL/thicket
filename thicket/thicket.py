@@ -1114,7 +1114,7 @@ class Thicket(GraphFrame):
         Returns:
             (Thicket): a new Thicket object containing the data that matches the query
         """
-        if not is_thicket_query(query_obj):
+        if not is_thicket_query(query_obj) or not isinstance(query_obj, (list, str)):
             raise TypeError(
                 "Input to 'query' must be a Hatchet query (i.e., list, str, or new- or old-style query object)"
             )
