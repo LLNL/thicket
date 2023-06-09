@@ -14,6 +14,10 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
     Designed to take in a thicket, and append one or more columns to the aggregated
     statistics table for the nodewise correlation calculation for each node.
 
+    Note: Resulting columns from correlation nodewise will currently not be appended
+        to exc_metrics or inc_metrics until creating new data structure to store
+        combined metrics (inclusive + exclusive).
+
     Arguments:
         thicket (thicket): Thicket object
         column1 (str): First comparison column. Note, if using a columnar joined thicket
