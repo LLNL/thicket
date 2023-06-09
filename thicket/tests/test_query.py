@@ -8,9 +8,10 @@ import re
 import hatchet as ht
 
 from thicket import Thicket
+from thicket.query import Query, QueryMatcher
 
 
-def check_query(th, hnids, query):
+def check_query(th, hnids, query, multi_index_mode):
     """Check query function for Thicket object.
 
     Arguments:
@@ -27,7 +28,7 @@ def check_query(th, hnids, query):
     match_frames = [node.frame for node in match]
     match_names = [frame["name"] for frame in match_frames]
     # Match all nodes using query
-    filt_th = th.query(query)
+    filt_th = th.query(query, multi_index_mode=multi_index_mode)
     filt_nodes = list(filt_th.graph.traverse())
 
     # Get filtered nodes and profiles
@@ -43,13 +44,55 @@ def check_query(th, hnids, query):
     )
 
 
-def test_query(rajaperf_basecuda_xl_cali):
+def test_new_style_query_base(rajaperf_basecuda_xl_cali):
     # test thicket
     th = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
     # test arguments
     hnids = [0, 1, 2, 3, 5, 6, 8, 9]
     query = (
-        ht.QueryMatcher()
+        Query()
+        .match("*")
+        .rel(
+            ".",
+            lambda row: row["name"]
+            .apply(lambda x: re.match(r"Algorithm.*block_128", x) is not None)
+            .all(),
+        )
+    )
+
+    check_query(th, hnids, query)
+
+
+def test_new_style_query_object(rajaperf_basecuda_xl_cali):
+    # test thicket
+    th = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+    # test arguments
+    hnids = [0, 1, 2, 3, 5, 6, 8, 9]
+    query = ["*", {"name": "Algorithm.*block_128"}]
+
+    check_query(th, hnids, query, multi_index_mode="all")
+
+
+def test_new_style_query_string(rajaperf_basecuda_xl_cali):
+    # test thicket
+    th = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+    # test arguments
+    hnids = [0, 1, 2, 3, 5, 6, 8, 9]
+    query = """
+    MATCH ("*")->(p)
+    WHERE p."name" =~ "Algorithm.*block_128"
+    """
+
+    check_query(th, hnids, query, multi_index_mode="all")
+
+
+def test_old_style_query(rajaperf_basecuda_xl_cali):
+    # test thicket
+    th = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+    # test arguments
+    hnids = [0, 1, 2, 3, 5, 6, 8, 9]
+    query = (
+        QueryMatcher()
         .match("*")
         .rel(
             ".",

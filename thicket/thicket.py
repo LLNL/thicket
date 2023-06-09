@@ -1094,7 +1094,9 @@ class Thicket(GraphFrame):
             "Invalid function: thicket.filter(), please use thicket.filter_metadata() or thicket.filter_stats()"
         )
 
-    def query(self, query_obj, squash=True, update_inc_cols=True, multi_index_mode="all"):
+    def query(
+        self, query_obj, squash=True, update_inc_cols=True, multi_index_mode="all"
+    ):
         """Apply a Hatchet query to the Thicket object.
 
         Arguments:
@@ -1116,7 +1118,9 @@ class Thicket(GraphFrame):
             raise TypeError(
                 "Input to 'query' must be a Hatchet query (i.e., list, str, or new- or old-style query object)"
             )
-        if multi_index_mode == "off" and (isinstance(query_obj, list) or isinstance(query_obj, str)):
+        if multi_index_mode == "off" and (
+            isinstance(query_obj, list) or isinstance(query_obj, str)
+        ):
             raise UnsupportedQuery(
                 "'Raw' object- and string-based dialect queries cannot be used when 'multi_index_mode' is set to 'off'"
             )

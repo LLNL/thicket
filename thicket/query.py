@@ -37,6 +37,7 @@ from hatchet.query.compat import (
 
 import hatchet.query.is_hatchet_query
 
+
 def is_thicket_query(query_obj):
     return hatchet.query.is_hatchet_query(query_obj)
 
