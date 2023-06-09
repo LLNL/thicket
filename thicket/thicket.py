@@ -12,9 +12,15 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 from hatchet import GraphFrame
-from hatchet.query import AbstractQuery
 
 import thicket.helpers as helpers
+from thicket.query import (
+    is_thicket_query,
+    ObjectQuery,
+    parse_string_dialect,
+    QueryEngine,
+    AbstractQuery,
+)
 from .utils import verify_sorted_profile
 from .utils import verify_thicket_structures
 
@@ -68,6 +74,7 @@ class Thicket(GraphFrame):
             self.statsframe = statsframe
 
         self.performance_cols = helpers._get_perf_columns(self.dataframe)
+        self.query_engine = QueryEngine()
 
     def __eq__(self, other):
         """Compare two thicket objects.
@@ -1087,7 +1094,7 @@ class Thicket(GraphFrame):
             "Invalid function: thicket.filter(), please use thicket.filter_metadata() or thicket.filter_stats()"
         )
 
-    def query(self, query_obj, squash=True, update_inc_cols=True):
+    def query(self, query_obj, squash=True, update_inc_cols=True, multi_index_mode="all"):
         """Apply a Hatchet query to the Thicket object.
 
         Arguments:
@@ -1097,24 +1104,33 @@ class Thicket(GraphFrame):
                 the query
             update_inc_cols (boolean, optional): if True, update inclusive columns when
                 performing squash.
+            multi_index_mode (str, optional): select how to aggregate the results of a predicate.
+                Can be "all" (default; requires the predicate to be True for all rows of data for a given
+                node), "any" (requires the predicate to be True for one or more rows of data for a given
+                node), or "off" (disables the use of query language dialects)
 
         Returns:
             (Thicket): a new Thicket object containing the data that matches the query
         """
-        if isinstance(query_obj, (list, str)):
-            raise UnsupportedQuery(
-                "Object and String queries from Hatchet are not yet supported in Thicket"
-            )
-        elif not issubclass(type(query_obj), AbstractQuery):
+        if not is_thicket_query(query_obj):
             raise TypeError(
-                "Input to 'query' must be a Hatchet query (i.e., list, str, or subclass of AbstractQuery)"
+                "Input to 'query' must be a Hatchet query (i.e., list, str, or new- or old-style query object)"
+            )
+        if multi_index_mode == "off" and (isinstance(query_obj, list) or isinstance(query_obj, str)):
+            raise UnsupportedQuery(
+                "'Raw' object- and string-based dialect queries cannot be used when 'multi_index_mode' is set to 'off'"
             )
         dframe_copy = self.dataframe.copy()
         index_names = self.dataframe.index.names
         dframe_copy.reset_index(inplace=True)
         query = query_obj
-        # TODO Add a conditional here to parse Object and String queries when supported
-        query_matches = query.apply(self)
+        if isinstance(query_obj, list):
+            query = ObjectQuery(query_obj, multi_index_mode=multi_index_mode)
+        elif isinstance(query_obj, str):
+            query = parse_string_dialect(query_obj, multi_index_mode=multi_index_mode)
+        elif issubclass(type(query_obj), AbstractQuery):
+            query = query_obj._get_new_query()
+        query_matches = self.query_engine.apply(query, self.graph, self.dataframe)
         filtered_df = dframe_copy.loc[dframe_copy["node"].isin(query_matches)]
         if filtered_df.shape[0] == 0:
             raise EmptyQuery("The provided query would have produced an empty Thicket.")
