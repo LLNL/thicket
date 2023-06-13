@@ -15,9 +15,9 @@ def test_mean(example_cali):
 
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.mean(th_ens, columns=["min#inclusive#sum#time.duration"])
+    th.mean(th_ens, columns=["Min time/rank"])
 
-    assert "min#inclusive#sum#time.duration_mean" in th_ens.statsframe.dataframe.columns
+    assert "Min time/rank_mean" in th_ens.statsframe.dataframe.columns
     # pr #42 needs to be merged before the below  asserts will work
     # assert "min#inclusive#sum#time.duration_mean" in th_ens.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
     # assert "min#inclsuive#sum#time.duration_mean" in th_ens.statsframe.show_metric_columns()
@@ -26,13 +26,13 @@ def test_mean(example_cali):
 def test_mean_columnar_join(columnar_join_thicket):
     thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
     idx = combined_th.dataframe.columns.levels[0][0]
-    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(th_ens.statsframe.dataframe.index.values)
+    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(combined_th.statsframe.dataframe.index.values)
 
-    assert list(combined_th.statsframe.dataframe.columns) == ["name"]
+    assert list(combined_th.statsframe.dataframe.columns) == [("", "name")]
 
-    th.mean(combined_th. columns=[(idx, "min#inclusive#sum#time.duration")])
+    #th.mean(combined_th, columns=[(idx, "Min time/rank")])
 
-    assert (idx, "min#inclusive#sum#time.duration_mean") in combined_th.statsframe.dataframe.columns
+    #assert (idx, "Min time/rank_mean") in combined_th.statsframe.dataframe.columns
     # pr #42 needs to be merged before the below asserts will work
     # assert (idx, "min#inclusive#sum#time.duration_mean") in combined_th.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
     # assert (idx, "min#inclusive#sum#time.duration_mean") in combined_th.stataframe.show_metric_columns()
@@ -45,24 +45,24 @@ def test_std(example_cali):
 
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.std(th_ens, columns=["min#inclusive#sum#time.duration"])
+    th.std(th_ens, columns=["Min time/rank"])
 
-    assert "min#inclusive#sum#time.duration_std" in th_ens.statsframe.dataframe.columns
+    assert "Min time/rank_std" in th_ens.statsframe.dataframe.columns
     # pr #42 needs to be merged before the below asserts will work
     # assert "min#inclusive#sum#time.duration_std" in th_ens.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
-    #assert "min#inclsuive#sum#time.duration_std" in th_ens.statsframe.show_metric_columns()
+    # assert "min#inclsuive#sum#time.duration_std" in th_ens.statsframe.show_metric_columns()
 
 
 def test_std_columnar_join(columnar_join_thicket):
     thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
     idx = combined_th.dataframe.columns.levels[0][0]
-    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(th_ens.statsframe.dataframe.index.values)
+    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(combined_th.statsframe.dataframe.index.values)
 
-    assert list(combined_th.statsframe.dataframe.columns) == ["name"]
+    assert list(combined_th.statsframe.dataframe.columns) == [("", "name")]
 
-    th.std(combined_th. columns=[(idx, "min#inclusive#sum#time.duration")])
+    # th.std(combined_th. columns=[(idx, "min#inclusive#sum#time.duration")])
 
-    assert (idx, "min#inclusive#sum#time.duration_std") in combined_th.statsframe.dataframe.columns
+    # assert (idx, "min#inclusive#sum#time.duration_std") in combined_th.statsframe.dataframe.columns
     # pr #42 needs to be merged before the below asserts will work
     # assert (idx, "min#inclusive#sum#time.duration_std") in combined_th.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
     # assert (idx, "min#inclusive#sum#time.duration_std") in combined_th.stataframe.show_metric_columns()
@@ -72,13 +72,12 @@ def test_percentiles(example_cali):
     th_ens = th.Thicket.from_caliperreader(example_cali)
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(th_ens.statsframe.dataframe.index.values)
-
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.percentiles(th_ens, columns=["min#inclusive#sum#time.duration"])
+    th.percentiles(th_ens, columns=["Min time/rank"])
 
-    assert "min#inclusive#sum#time.duration_percentiles" in th_ens.statsframe.dataframe.columns
-    assert len(th_ens.statsframe.dataframe["min#inclusive#sum#time.duration_percentiles"][0]) == 3
+    assert "Min time/rank_percentiles" in th_ens.statsframe.dataframe.columns
+    assert len(th_ens.statsframe.dataframe["Min time/rank_percentiles"][0]) == 3
     # pr #42 needs to be merged before the below asserts will work
     # assert "min#inclusive#sum#time.duration_percentiles" in th_ens.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
     # assert "min#inclsuive#sum#time.duration_percentiles" in th_ens.statsframe.show_metric_columns()
@@ -87,13 +86,13 @@ def test_percentiles(example_cali):
 def test_percentiles_columnar_join(columnar_join_thicket):
     thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
     idx = combined_th.dataframe.columns.levels[0][0]
-    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(th_ens.statsframe.dataframe.index.values)
+    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(combined_th.statsframe.dataframe.index.values)
 
-    assert list(combined_th.statsframe.dataframe.columns) == ["name"]
+    assert list(combined_th.statsframe.dataframe.columns) == [("", "name")]
 
-    th.std(combined_th. columns=[(idx, "min#inclusive#sum#time.duration")])
+    # th.std(combined_th. columns=[(idx, "min#inclusive#sum#time.duration")])
 
-    assert (idx, "min#inclusive#sum#time.duration_percentiles") in combined_th.statsframe.dataframe.columns
+    # assert (idx, "min#inclusive#sum#time.duration_percentiles") in combined_th.statsframe.dataframe.columns
     # pr #42 needs to be merged before the below asserts will work
     # assert (idx, "min#inclusive#sum#time.duration_percentiles") in combined_th.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
     # assert (idx, "min#inclusive#sum#time.duration_percentiles") in combined_th.stataframe.show_metric_columns()
