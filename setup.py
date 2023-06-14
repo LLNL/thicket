@@ -42,12 +42,13 @@ setup(
     include_package_data=True,
     install_requires=[
         "scipy",
-        "seaborn",
-        "pydot",
-        "matplotlib",
         "numpy",
         "pandas >= 1.1",
         "llnl-hatchet",
     ],
-    extras_require={"extrap": ["extrap"]},
+    extras_require={
+        "extrap": ["extrap", "matplotlib"],
+        "plotting": ["seaborn"],
+        "vis": ["beautifulsoup4"],
+    },
 )
