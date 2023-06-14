@@ -100,6 +100,58 @@ can be found in the Caliper `GitHub repository
 You can read more about Caliper services in the `Caliper documentation
 <https://software.llnl.gov/Caliper/services.html>`__. Thicket can read two Caliper outputs: the native .cali files and the split-JSON format (.json files).
 
+Adiak
+=======
+Adiak can be used with Caliper to record program metadata. You can use Adiak, 
+a C/C++ library to record environment information (user, launchdata, system name, etc.)
+and program configuration (input problem description, problem size, etc.). Adiak proides 
+built-in fucntions to collect common environment metadata that enables performance comparisons
+across different runs. 
+
+.. code-block:: console
+
+   adiak_user(); /* user name */
+   adiak_uid(); /* user id */
+   adiak_launchdate(); /* program start time (UNIX timestamp) */
+   adiak_executable(); /* executable name */
+   adiak_executablepath(); /* full executable file path */
+   adiak_cmdline(); /* command line parameters */
+   adiak_hostname(); /* current host name */
+   adiak_clustername(); /* cluster name */
+   adiak_job_size(); /* MPI job size */
+   adiak_hostlist(); /* all host names in this MPI job */
+   adiak_walltime(); /* wall-clock job runtime */
+   adiak_cputime(); /* job cpu runtime */
+   adiak_systime(); /* job sys runtime */
+
+adiak::value() records key:value pairs with overloads for many data types
+
+.. code-block:: console
+
+   #include <adiak.hpp>
+   vector<int> ints { 1, 2, 3, 4 };
+   adiak::value(“myvec”, ints);
+   adiak::value(“myint”, 42);
+   adiak::value(“mydouble”, 3.14);
+   adiak::value(“mystring”, “hi”);
+   adiak::value(“mypath”, adiak::path(“/dev/null”));
+   adiak::value(“compiler”, adiak::version(“gcc@8.3.0”));
+
+adiak_nameval() uses printf()-style descriptors to determine data types
+
+.. code-block:: console
+
+   #include <adiak.h>
+   int ints[] = { 1, 2, 3, 4 };
+   adiak_nameval(“myvec”, adiak_general, NULL, “[%d]”, ints, 4);
+   adiak_nameval(“myint”, adiak_general, NULL, “%d”, 42);
+   adiak_nameval(“mydouble”, adiak_general, NULL, “%f”, 3.14);
+   adiak_nameval(“mystring”, adiak_general, NULL, “%s”, “hi”);
+   adiak_nameval(“mypath”, adiak_general, NULL, “%p”, “/dev/null”);
+   adiak_nameval(“compiler”, adiak_general, NULL, “%v”, “gcc@8.3.0”);
+
+You can learn more about the Adiak library in the `Adiak documentation
+<https://github.com/LLNL/Adiak>`__.
 
 TAU
 ===
