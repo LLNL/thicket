@@ -16,18 +16,18 @@ Thicket has the following minimum requirements, which must be installed before T
 #. hatchet
 #. pandas >= 1.1
 #. numpy
-#. matplotlib
-#. scipy, and
-#. seaborn
+#. matplotlib, and
+#. scipy
 
 Other Packages
 =============
-#. extrap
-#. vis
-  * beautifulsoup4
+#. Extrap: extrap, matplotlib
+#. Vis: beautifulsoup4
+#. Plotting: seaborn
 
-Thicket is available on `GitHub <https://github.com/llnl/thicket>`_.
-
+For installation options for the extra packages, refer to the installation 
+instructions below in `Install and Build Thicket`_. Thicket is available 
+on `GitHub <https://github.com/llnl/thicket>`_. 
 
 Installation
 ============
@@ -60,6 +60,13 @@ Alternatively, you can install thicket using pip:
 .. code-block:: console
 
   $ pip install llnl-thicket
+
+You can install the other packages mentioned above for additional features of 
+thicket. Below is an example of installing thicket with extrap.
+
+.. code-block:: console
+
+  $ pip install llnl-thicket[extrap]
 
 Check Installation
 ------------------
