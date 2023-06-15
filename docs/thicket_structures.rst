@@ -24,6 +24,7 @@ example of a performance data table stored in a thicket object.
 .. figure:: images/ensembleframe.png
   :width: 600
 
+|
 The performance data's call tree structure can be seen below with corresponding nodes. This structure extends to both the 
 performance data and aggregate statistics table.
 
@@ -31,6 +32,7 @@ performance data and aggregate statistics table.
   :width: 600
 
 
+|
 Metadata
 =======================
 
@@ -40,6 +42,7 @@ to store these information and add capability to the structure.
 .. figure:: images/metadataframe.png
   :width: 600
 
+|
 Aggregated Statistics
 =======================
 
@@ -55,3 +58,5 @@ of an aggregated statistics table with appended results from a statistical calcu
 
 .. figure:: images/appended_statsdf.png
   :width: 600
+
+|
