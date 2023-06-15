@@ -3,6 +3,7 @@
 
    SPDX-License-Identifier: MIT
 
+.. _generating_profiling_datasets_label:
 ***************
 Generating Profiling Datasets
 ***************
