@@ -47,7 +47,7 @@ and runtime parameters for the application.
 Thicket's functionality leverages the available metadata to enable
 dataset manipulation such as filtering on any of the metadata fields.
 See the <a href="https://thicket.readthedocs.io/en/latest/generating_data.html#adiak">Adiak</a>
-section in :ref:`generating_profiling_datasets_label`
+section in :ref:`generating-profiling-datasets-label`
 for a description on how to enrich your profiling data with metadata.
 
 .. figure:: images/metadataframe.png
