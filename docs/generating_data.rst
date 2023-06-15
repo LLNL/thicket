@@ -3,11 +3,12 @@
 
    SPDX-License-Identifier: MIT
 
-***************
 .. _generating-profiling-datasets-label:
+***************
 Generating Profiling Datasets
 ***************
 
+.. _caliper:
 Caliper
 =======
 Caliper can be installed using `Spack <https://spack.io>`_ or manually from its
@@ -32,6 +33,7 @@ configurations, you should set the ``CALI_CONFIG`` environment variable (e.g.
 You can read more about Caliper services in the `Caliper documentation
 <https://software.llnl.gov/Caliper/services.html>`__. Thicket can read two Caliper outputs: the native .cali files and the split-JSON format (.json files).
 
+.. _adiak:
 Adiak
 =======
 Adiak can be used with Caliper to record program metadata. You can use Adiak, 
