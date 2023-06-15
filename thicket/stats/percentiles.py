@@ -47,6 +47,13 @@ def percentiles(thicket, columns=None):
                 percentiles.append(
                     np.percentile(thicket.dataframe.loc[node][column], [25, 50, 75])
                 )
+            # check to see if exclusive metric
+            if column in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append(column + "_percentiles")
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append(column + "_percentiles")
+
             thicket.statsframe.dataframe[column + "_percentiles"] = percentiles
     # columnar joined thicket object
     else:
@@ -58,6 +65,13 @@ def percentiles(thicket, columns=None):
                         thicket.dataframe.loc[node][(idx, column)], [25, 50, 75]
                     )
                 )
+            # check to see if exclusive metric
+            if (idx, column) in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append((idx, column + "_percentiles"))
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append((idx, column + "_percentiles"))
+
             thicket.statsframe.dataframe[(idx, column + "_percentiles")] = percentiles
 
         # sort columns in index

@@ -37,6 +37,13 @@ def maximum(thicket, columns=None):
             maximum = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 maximum.append(max(thicket.dataframe.loc[node][column]))
+            # check to see if exclusive metric
+            if column in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append(column + "_max")
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append(column + "_max")
+
             thicket.statsframe.dataframe[column + "_max"] = maximum
     # columnar joined thicket object
     else:
@@ -44,6 +51,13 @@ def maximum(thicket, columns=None):
             maximum = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 maximum.append(max(thicket.dataframe.loc[node][(idx, column)]))
+            # check to see if exclusive metric
+            if (idx, column) in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append((idx, column + "_max"))
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append((idx, column + "_max"))
+
             thicket.statsframe.dataframe[(idx, column + "_max")] = maximum
 
         # sort columns in index

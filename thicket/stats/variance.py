@@ -39,6 +39,13 @@ def variance(thicket, columns=None):
             var = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 var.append(np.var(thicket.dataframe.loc[node][column]))
+            # check to see if exclusive metric
+            if column in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append(column + "_var")
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append(column + "_var")
+
             thicket.statsframe.dataframe[column + "_var"] = var
     # columnar joined thicket object
     else:
@@ -46,6 +53,12 @@ def variance(thicket, columns=None):
             var = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 var.append(np.var(thicket.dataframe.loc[node][(idx, column)]))
+            # check to see if exclusive metric
+            if (idx, column) in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append((idx, column + "_var"))
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append((idx, column + "_var"))
             thicket.statsframe.dataframe[(idx, column + "_var")] = var
 
         # sort columns in index

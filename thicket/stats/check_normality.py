@@ -48,6 +48,12 @@ def check_normality(thicket, columns=None):
                     normality.append("True")
                 else:
                     normality.append(pd.NA)
+            # check to see if exclusive metric
+            if column in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append(column + "_normality")
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append(column + "_normality")
 
             thicket.statsframe.dataframe[column + "_normality"] = normality
     # columnar joined thicket object
@@ -63,6 +69,12 @@ def check_normality(thicket, columns=None):
                     normality.append("True")
                 else:
                     normality.append(pd.NA)
+            # check to see if exclusive metric
+            if (idx, column) in thicket.exc_metrics:
+                thicket.statsframe.exc_metrics.append((idx, column + "_normality"))
+            # check to see if inclusive metric
+            else:
+                thicket.statsframe.inc_metrics.append((idx, column + "_normality"))
 
             thicket.statsframe.dataframe[(idx, column + "_normality")] = normality
 
