@@ -1,8 +1,8 @@
-git+https://github.com/LLNL/hatchet.git@develop
 scipy
-seaborn
-pytest
-pandas
 numpy
-beautifulsoup4
+pandas>=1.1
+llnl-hatchet
+extrap
 matplotlib
+seaborn
+beautifulsoup4
