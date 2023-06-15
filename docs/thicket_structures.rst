@@ -5,9 +5,9 @@ User Guide
 Structure of Thicket Object
 =======================
 A thicket object is a flexible data model that enables the structured analysis of unstructured performance data. 
-A study of different performance dimensions canbe done by linking the object’s three components through primary 
-and foreign keys, as shown in the entity relationship diagram below. The three components of thicket are performance 
-data, metadata, and aggregated statistics.
+Thicket enables a study of different performance dimensions by linking the object’s components through primary 
+and foreign keys, as shown in the entity relationship diagram below. The four components of thicket are the call tree,
+performance data, metadata, and aggregated statistics.
 
 
 .. figure:: images/Table-Tree-Revised-gradien.png
@@ -16,7 +16,8 @@ data, metadata, and aggregated statistics.
 Performance Data
 =======================
 The performance data table is a multi-dimensional, multi-indexed structure with one or more rows of data associated 
-with each node of the call tree. Each row represents a different execution of the associated call tree node. Below is an 
+with each node of the call tree. Each row associated with a node of the call tree
+represents a different execution of the associated call tree node. Below is an 
 example of a performance data table stored in a thicket object. 
 
 .. figure:: images/ensembleframe.png
@@ -42,7 +43,7 @@ Aggregated Statistics
 =======================
 
 The aggregated statistics table supports an order-reduction mechanism and stores processed applications’ performance. 
-Each row of the aggregated statistic table holds data aggregated across all profiles associated with aparticular call tree node. 
+Each row of the aggregated statistic table holds data aggregated across all profiles associated with a particular call tree node. 
 Below is an example of an empty aggregated statistics table just containing the nodes.
 
 .. figure:: images/empty_statsdf.png
