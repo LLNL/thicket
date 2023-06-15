@@ -13,6 +13,7 @@ performance data, metadata, and aggregated statistics.
 .. figure:: images/Table-Tree-Revised-gradien.png
   :width: 600
 
+|
 Performance Data
 =======================
 The performance data table is a multi-dimensional, multi-indexed structure with one or more rows of data associated 
