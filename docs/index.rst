@@ -42,15 +42,26 @@ If you are new to thicket and want to start using it, see :doc:`Getting Started
    :caption: User Docs
 
    getting_started
+   thicket_structures
+   generating_data
 
 
 If you encounter bugs while using thicket, you can report them by opening an issue on `GitHub <http://github.com/llnl/thicket/issues>`_.
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorials
+
+   thicket_tutorial.ipynb
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Developer Docs
 
    developer_guide
+   
 
 .. toctree::
    :maxdepth: 2

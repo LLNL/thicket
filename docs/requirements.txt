@@ -7,3 +7,6 @@ cython
 multiprocess
 textX
 caliper-reader
+sphinx-thebe
+nbsphinx
+myst-parser

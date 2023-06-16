@@ -10,7 +10,7 @@ Developer Guide
 Contributing to Thicket
 =======================
 
-If you want to contribute a new data reader, feature, or bugfix to Thicket,
+If you are interested in contributing a new data reader, a feature, or a bugfix to Thicket,
 please read below. This guide discusses the contributing workflow used in the
 Thicket project, and the granularity of pull requests (PRs).
 
@@ -60,8 +60,8 @@ compliance using:
 Contributing Workflow
 ---------------------
 
-Thicket is being actively developed, so the ``develop`` branch in Thicket has
-new pull requests being merged often. The recommended way to contribute a pull
+Thicket is in active development, so the ``develop`` branch in Thicket has
+frequent merges of new pull requests. The recommended way to contribute a pull
 request is to fork the Thicket repo in your own space (if you already have a
 fork, make sure is it up-to-date), and then create a new branch off of
 ``develop``.

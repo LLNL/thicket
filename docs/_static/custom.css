@@ -1,0 +1,7 @@
+div.prompt.empty.docutils.container{
+    display: none;
+}
+
+.wy-nav-content {
+    min-width: 90%;
+}

@@ -12,13 +12,22 @@ Prerequisites
 
 Thicket has the following minimum requirements, which must be installed before Thicket is run:
 
-#. Python 2 (2.7) or 3 (3.5 - 3.8)
-#. extrap
-#. scipy, and
-#. seaborn
+#. Python 3 (3.6 - 3.11)
+#. hatchet
+#. pandas >= 1.1
+#. numpy
+#. matplotlib, and
+#. scipy
 
-Thicket is available on `GitHub <https://github.com/llnl/thicket>`_.
+Other Packages
+=============
+#. Extrap: extrap, matplotlib
+#. Vis: beautifulsoup4
+#. Plotting: seaborn
 
+For installation options for the extra packages, refer to the installation 
+instructions below in `Install and Build Thicket`_. Thicket is available 
+on `GitHub <https://github.com/llnl/thicket>`_. 
 
 Installation
 ============
@@ -51,6 +60,13 @@ Alternatively, you can install thicket using pip:
 .. code-block:: console
 
   $ pip install llnl-thicket
+
+You can install the other packages mentioned above for additional features of 
+thicket. Below is an example of installing thicket with extrap.
+
+.. code-block:: console
+
+  $ pip install llnl-thicket[extrap]
 
 Check Installation
 ------------------
