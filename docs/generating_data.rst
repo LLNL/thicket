@@ -29,16 +29,19 @@ configurations, you should set the ``CALI_CONFIG`` environment variable (e.g.
 ``CALI_CONFIG=hatchet-sample-profile``).
 
 You can read more about Caliper services in the `Caliper documentation
-<https://software.llnl.gov/Caliper/services.html>`__. Thicket can read two Caliper outputs: the native .cali files and the split-JSON format (.json files).
+<https://software.llnl.gov/Caliper/services.html>`__. Thicket can currently only read .cali files, that is a native Caliper output.
 
 .. _adiak:
 Adiak
 =======
 Adiak can be used with Caliper to record program metadata. You can use Adiak, 
 a C/C++ library to record environment information (user, launchdata, system name, etc.)
-and program configuration (input problem description, problem size, etc.). Adiak proides 
+and program configuration (input problem description, problem size, etc.). To build Caliper 
+with Adiak support, -DWITH_ADIAK=On is required. Adiak proides 
 built-in fucntions to collect common environment metadata that enables performance comparisons
-across different runs. 
+across different runs. Some common metadata that can be used with thicket are `launchdate` or 
+`clustername`, where a user can use this metadata information to organize the performance data with 
+the help of thicket's capabilities.
 
 .. code-block:: console
 
