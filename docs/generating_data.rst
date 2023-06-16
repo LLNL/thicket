@@ -32,6 +32,7 @@ You can read more about Caliper services in the `Caliper documentation
 <https://software.llnl.gov/Caliper/services.html>`__. Thicket can currently only read .cali files, that is a native Caliper output.
 
 .. _adiak:
+
 Adiak
 =======
 Adiak can be used with Caliper to record program metadata. You can use Adiak, 
