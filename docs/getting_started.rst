@@ -1,16 +1,19 @@
-.. Copyright 2022 Lawrence Livermore National Security, LLC and other
+..
+   Copyright 2022 Lawrence Livermore National Security, LLC and other
    Thicket Project Developers. See the top-level LICENSE file for details.
 
    SPDX-License-Identifier: MIT
 
+#################
+ Getting Started
+#################
+
 ***************
-Getting Started
+ Prerequisites
 ***************
 
-Prerequisites
-=============
-
-Thicket has the following minimum requirements, which must be installed before Thicket is run:
+Thicket has the following minimum requirements, which must be installed before Thicket
+is run:
 
 #. Python 3 (3.6 - 3.11)
 #. hatchet
@@ -19,72 +22,75 @@ Thicket has the following minimum requirements, which must be installed before T
 #. matplotlib, and
 #. scipy
 
-Other Packages
-=============
+****************
+ Other Packages
+****************
+
 #. Extrap: extrap, matplotlib
 #. Vis: beautifulsoup4
 #. Plotting: seaborn
 
-For installation options for the extra packages, refer to the installation 
-instructions below in `Install and Build Thicket`_. Thicket is available 
-on `GitHub <https://github.com/llnl/thicket>`_. 
+For installation options for the extra packages, refer to the installation instructions
+below in `Install and Build Thicket`_. Thicket is available on `GitHub
+<https://github.com/llnl/thicket>`_.
 
-Installation
-============
+**************
+ Installation
+**************
 
-You can get thicket from its `GitHub repository
-<https://github.com/llnl/thicket>`_ using this command:
+You can get thicket from its `GitHub repository <https://github.com/llnl/thicket>`_
+using this command:
 
-.. code-block:: console
+.. code:: console
 
-  $ git clone https://github.com/llnl/thicket.git
+   $ git clone https://github.com/llnl/thicket.git
 
 This will create a directory called ``thicket``.
 
 Install and Build Thicket
--------------------------
+=========================
 
-To build thicket and update your PYTHONPATH, run the following shell script
-from the thicket root directory:
+To build thicket and update your PYTHONPATH, run the following shell script from the
+thicket root directory:
 
-.. code-block:: console
+.. code:: console
 
-  $ source ./install.sh
+   $ source ./install.sh
 
-Note: The ``source`` keyword is required to update your PYTHONPATH environment
-variable. It is not necessary if you have already manually added the thicket
-directory to your PYTHONPATH.
+Note: The ``source`` keyword is required to update your PYTHONPATH environment variable.
+It is not necessary if you have already manually added the thicket directory to your
+PYTHONPATH.
 
 Alternatively, you can install thicket using pip:
 
-.. code-block:: console
+.. code:: console
 
-  $ pip install llnl-thicket
+   $ pip install llnl-thicket
 
-You can install the other packages mentioned above for additional features of 
-thicket. Below is an example of installing thicket with extrap.
+You can install the other packages mentioned above for additional features of thicket.
+Below is an example of installing thicket with extrap.
 
-.. code-block:: console
+.. code:: console
 
-  $ pip install llnl-thicket[extrap]
+   $ pip install llnl-thicket[extrap]
 
 Check Installation
-------------------
+==================
 
-After installing thicket, you should be able to import thicket when running the Python interpreter in interactive mode:
+After installing thicket, you should be able to import thicket when running the Python
+interpreter in interactive mode:
 
-.. code-block:: console
+.. code:: console
 
-  $ python
-  Python 3.7.4 (default, Jul 11 2019, 01:08:00)
-  [Clang 10.0.1 (clang-1001.0.46.4)] on darwin
-  Type "help", "copyright", "credits" or "license" for more information.
-  >>>
+   $ python
+   Python 3.7.4 (default, Jul 11 2019, 01:08:00)
+   [Clang 10.0.1 (clang-1001.0.46.4)] on darwin
+   Type "help", "copyright", "credits" or "license" for more information.
+   >>>
 
-Typing ``import thicket`` at the prompt should succeed without any error
-messages:
+Typing ``import thicket`` at the prompt should succeed without any error messages:
 
-.. code-block:: console
+.. code:: console
 
-  >>> import thicket
-  >>>
+   >>> import thicket
+   >>>

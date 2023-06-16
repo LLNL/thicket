@@ -57,7 +57,7 @@ dataset manipulation such as filtering on any of the metadata fields.
 
 .. note::
 
-    See the :ref:`Adiak <adiak>` section in :doc:`Generating Profiling Datasets
+    See the :ref:`Adiak <ref-adiak>` section in :doc:`Generating Profiling Datasets
     <generating_data>` for a description on how to enrich your profiling data with
     metadata.
 
