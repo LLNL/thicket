@@ -15,13 +15,13 @@ aggregated statistics, as shown in the figure below.
 
   Figure 1: The four components of the thicket object.
 
-|
 Performance Data
 =======================
 The performance data table is a multi-dimensional, multi-indexed structure with one or more rows of data associated 
 with each node of the call tree. Each row associated with a node of the call tree
 represents a different execution of the associated call tree node. Below is an 
 example of a performance data table stored in a thicket object. 
+TODO: Table and tree need to match
 
 .. figure:: images/ensembleframe.png
   :width: 600
