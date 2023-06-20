@@ -52,7 +52,9 @@ If you encounter bugs while using thicket, you can report them by opening an iss
    :caption: Tutorials
 
    thicket_tutorial.ipynb
+   thicket_rajaperf_clustering.ipynb
    extrap-with-metadata-aggregated.ipynb
+   vis_docs
 
 .. toctree::
    :maxdepth: 2
