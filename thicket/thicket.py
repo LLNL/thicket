@@ -141,8 +141,13 @@ class Thicket(GraphFrame):
             metadata=gf.metadata,
         )
         if th.profile is None and isinstance(prf, str):
-            # Store used profiles and profile mappings using a truncated md5 hash of their string
-            hash_arg = int(md5(prf.encode("utf-8")).hexdigest()[:10], 16)
+            # Store used profiles and profile mappings using a truncated md5 hash of their string.
+            # Resulting int hash will be at least hex_length digits and theoretically up to
+            # hex_length + floor(log(hex_length)) digits after conversion.
+            hex_length = (
+                10  # length of the hex string before being converted to an integer.
+            )
+            hash_arg = int(md5(prf.encode("utf-8")).hexdigest()[:hex_length], 16)
             th.profile = [hash_arg]
             th.profile_mapping = OrderedDict({hash_arg: [prf]})
             # format metadata as a dict of dicts
