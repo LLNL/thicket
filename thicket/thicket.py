@@ -8,6 +8,7 @@ import os
 import json
 import warnings
 from collections import OrderedDict
+from hashlib import md5
 
 import pandas as pd
 import numpy as np
@@ -140,8 +141,8 @@ class Thicket(GraphFrame):
             metadata=gf.metadata,
         )
         if th.profile is None and isinstance(prf, str):
-            # Store used profiles and profile mappings using a hash of their string
-            hash_arg = hash(prf)
+            # Store used profiles and profile mappings using a truncated md5 hash of their string
+            hash_arg = int(md5(prf.encode("utf-8")).hexdigest()[:10], 16)
             th.profile = [hash_arg]
             th.profile_mapping = OrderedDict({hash_arg: [prf]})
             # format metadata as a dict of dicts
