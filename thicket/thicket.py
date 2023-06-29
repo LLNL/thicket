@@ -143,7 +143,7 @@ class Thicket(GraphFrame):
         if th.profile is None and isinstance(prf, str):
             # Store used profiles and profile mappings using a truncated md5 hash of their string.
             # Resulting int hash will be at least hex_length digits and theoretically up to
-            # hex_length + floor(log(hex_length)) digits after conversion.
+            # ceil(log_10(16^n - 1)) digits after conversion.
             hex_length = (
                 10  # length of the hex string before being converted to an integer.
             )
