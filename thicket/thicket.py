@@ -145,7 +145,7 @@ class Thicket(GraphFrame):
             # Resulting int hash will be at least hex_length digits and theoretically up to
             # ceil(log_10(16^n - 1)) digits after conversion.
             hex_length = (
-                10  # length of the hex string before being converted to an integer.
+                8  # length of the hex string before being converted to an integer.
             )
             hash_arg = int(md5(prf.encode("utf-8")).hexdigest()[:hex_length], 16)
             th.profile = [hash_arg]
