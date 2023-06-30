@@ -710,6 +710,9 @@ class Thicket(GraphFrame):
         Returns:
             union_graph (Graph): unified graph
         """
+        # Make copy
+        th_list = [th.deepcopy() for th in th_list]
+
         union_graph = th_list[0].graph
         for i in range(len(th_list)):
             for j in range(i + 1, len(th_list)):
@@ -729,6 +732,9 @@ class Thicket(GraphFrame):
         Returns:
             union_graph (Graph): unified graph
         """
+        # Make copy
+        th_list = [th.deepcopy() for th in th_list]
+
         # variable to keep track of case where all graphs are the same
         same_graphs = True
 
@@ -785,12 +791,44 @@ class Thicket(GraphFrame):
         Returns:
             (thicket): unified thicket
         """
+
+        def _get_full_df(_th_list):
+            # Make copy
+            th_list_cp = [t.deepcopy() for t in th_list]
+            # Copy index names for later. Assumes all thickets have the same index names.
+            index_names = list(set([t.dataframe.index.names for t in th_list_cp]))
+            assert len(index_names) == 1
+            index_names = index_names[0]
+            for i in range(len(th_list_cp)):
+                # Reset index for _insert_missing_rows
+                th_list_cp[i].dataframe.reset_index(inplace=True)
+            for i in range(len(th_list_cp)):
+                for j in range(len(th_list_cp)):
+                    if i != j:
+                        # Insert missing rows
+                        th_list_cp[i]._insert_missing_rows(th_list_cp[j])
+                # Manually set new row's profiles back to original profile
+                th_list_cp[i].dataframe["profile"] = th_list_cp[i].profile[0]
+            # Join dataframes
+            new_df = pd.concat(
+                [t.dataframe for t in th_list_cp], axis="index", join="outer"
+            )
+            # Set index names
+            new_df.set_index(index_names, inplace=True)
+            # Sort the index
+            new_df.sort_index(inplace=True)
+            # Since we are calling _insert_missing_rows on multiple thickets, this is meaningless.
+            new_df.drop(columns=["_missing_node"], inplace=True)
+            return new_df
+
+        # Create the unified graph
         unify_graph = None
         if pairwise:
             unify_graph = Thicket.unify_pairwise(th_list)
         else:
             unify_graph = Thicket.unify_listwise(th_list)
 
+        # Resolve missing indicies between thickets
         helpers._resolve_missing_indicies(th_list)
 
         # Unify dataframe
@@ -800,7 +838,6 @@ class Thicket(GraphFrame):
         unify_metadata = pd.DataFrame()
         unify_profile = []
         unify_profile_mapping = {}
-
         # Unification loop
         for i, th in enumerate(th_list):
             unify_inc_metrics.extend(th.inc_metrics)
@@ -812,7 +849,8 @@ class Thicket(GraphFrame):
                 unify_profile.extend(th.profile)
             if th.profile_mapping is not None:
                 unify_profile_mapping.update(th.profile_mapping)
-            unify_df = pd.concat([th.dataframe, unify_df])
+        # Fill missing rows in dataframe with null values
+        unify_df = _get_full_df(th_list)
 
         # Operations specific to a superthicket
         if superthicket:
