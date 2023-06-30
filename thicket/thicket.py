@@ -817,8 +817,6 @@ class Thicket(GraphFrame):
             new_df.set_index(index_names, inplace=True)
             # Sort the index
             new_df.sort_index(inplace=True)
-            # Since we are calling _insert_missing_rows on multiple thickets, this is meaningless.
-            new_df.drop(columns=["_missing_node"], inplace=True)
             return new_df
 
         # Create the unified graph
