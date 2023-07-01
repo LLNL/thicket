@@ -6,7 +6,9 @@
 
 # Thicket
 
-A Python-based toolkit for analyzing ensemble performance data. You can find a detailed documentation, along with tutorials of thicket in the [thicket's Read the Docs](https://thicket.readthedocs.io/en/latest/).
+A Python-based toolkit for analyzing ensemble performance data. You can find
+detailed documentation, along with tutorials of Thicket in the
+[ReadtheDocs](https://thicket.readthedocs.io/en/latest/).
 
 ### Installation
 
@@ -24,9 +26,11 @@ your `PYTHONPATH`:
 $ source install.sh
 ```
 
-### Feedback and Comments
+### Contact Us
 
-You can direct any feedback regarding thicket to the Lawrence Livermore National Lab's Thicket development team by emailing either Dr. Stephanie Brink (brink2@llnl.gov) or Dr. Olga Pearce (pearce8@llnl.gov).
+You can direct any feature requests or questions to the Lawrence Livermore National
+Lab's Thicket development team by emailing either Stephanie Brink (brink2@llnl.gov)
+or Olga Pearce (pearce8@llnl.gov).
 
 ### Contributing
 
