@@ -824,6 +824,9 @@ class Thicket(GraphFrame):
                 unify_profile_mapping.update(th.profile_mapping)
             unify_df = pd.concat([th.dataframe, unify_df])
 
+        # Fill missing rows in dataframe with NaN's
+        unify_df = unify_df.reindex(pd.MultiIndex.from_product(unify_df.index.levels))
+
         # Operations specific to a superthicket
         if superthicket:
             unify_metadata.index.rename("thicket", inplace=True)
