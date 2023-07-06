@@ -151,7 +151,7 @@ class Thicket(GraphFrame):
 
             hash_arg = int(md5(prf.encode("utf-8")).hexdigest()[:hex_length], 16)
             th.profile = [hash_arg]
-            th.profile_mapping = OrderedDict({hash_arg: [prf]})
+            th.profile_mapping = OrderedDict({hash_arg: prf})
 
             # format metadata as a dict of dicts
             temp_meta = {}
