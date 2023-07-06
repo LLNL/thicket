@@ -24,8 +24,20 @@ def add_ncu_metrics(th, ncu_report_mapping, chosen_metrics=None):
 
     # Loop through dict
     for ncu_report_file in ncu_report_mapping:
-        # Hash value that should exist in th
-        ncu_hash = hash(ncu_report_mapping[ncu_report_file])
+        # Find hash value that should exist in thicket profile map
+        ncu_hash = None
+
+        tprof = ncu_report_mapping[ncu_report_file]
+        for k, v in th.profile_mapping.items():
+            for prf in v:
+                if prf == tprof:
+                    ncu_hash = k
+                    break
+
+        if ncu_hash is None:
+            raise ValueError(
+                "Could not find profile " + str(tprof) + " in thicket profile mapping"
+            )
 
         # Load kernels
         report = ncu_report.load_report(ncu_report_file)
