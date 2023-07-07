@@ -825,7 +825,14 @@ class Thicket(GraphFrame):
             unify_df = pd.concat([th.dataframe, unify_df])
 
         # Fill missing rows in dataframe with NaN's
-        unify_df = unify_df.reindex(pd.MultiIndex.from_product(unify_df.index.levels))
+        fill_value = np.nan
+        unify_df = unify_df.reindex(
+            pd.MultiIndex.from_product(unify_df.index.levels), fill_value=fill_value
+        )
+        # Replace NaN with None in string columns
+        for col in unify_df.columns:
+            if pd.api.types.is_string_dtype(unify_df[col].dtype):
+                unify_df[col].replace(fill_value, None, inplace=True)
 
         # Operations specific to a superthicket
         if superthicket:
