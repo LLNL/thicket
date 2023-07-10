@@ -514,7 +514,9 @@ class Thicket(GraphFrame):
             agg_data["node"] = node_profile[0]
             agg_data["profile"] = node_profile[1]
             # Discard other rows (should be duplicates).
-            agg_data = agg_data.loc[0,]
+            agg_data = agg_data.loc[
+                0,
+            ]
             # Append to main df
             ncu_df = ncu_df.append(agg_data, ignore_index=True)
         ncu_df = ncu_df.set_index(["node", "profile"])
