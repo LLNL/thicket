@@ -125,7 +125,7 @@ class Modeling:
                     + len(self.tht.profile)
                 )
             profile_mapping_flipped = {
-                v[0]: k for k, v in self.tht.profile_mapping.items()
+                v: k for k, v in self.tht.profile_mapping.items()
             }
             for file_name, value in params.items():
                 self.tht.metadata.at[
