@@ -1139,17 +1139,10 @@ class Thicket(GraphFrame):
         if filtered_df.shape[0] == 0:
             raise EmptyQuery("The provided query would have produced an empty Thicket.")
         filtered_df.set_index(index_names, inplace=True)
-        filtered_th = Thicket(
-            self.graph,
-            filtered_df,
-            exc_metrics=self.exc_metrics,
-            inc_metrics=self.inc_metrics,
-            default_metric=self.default_metric,
-            metadata=self.metadata,
-            profile=self.profile,
-            profile_mapping=self.profile_mapping,
-            statsframe=self.statsframe,
-        )
+
+        filtered_th = self.deepcopy()
+        filtered_th.dataframe = filtered_df
+
         if squash:
             return filtered_th.squash(update_inc_cols=update_inc_cols)
         return filtered_th
