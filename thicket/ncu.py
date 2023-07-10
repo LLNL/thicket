@@ -3,134 +3,146 @@
 #
 # SPDX-License-Identifier: MIT
 
-import re
 from collections import defaultdict
 
-import pandas as pd
+from tqdm import tqdm
+
+from hatchet import QueryMatcher
 import ncu_report
 
 
-def add_ncu_metrics(th, ncu_report_mapping, chosen_metrics=None):
-    """Add metrics from one ncu report file to one thicket
+class NCUReader:
+    """Object to interface and pull NCU report data into Thicket"""
 
-    Arguments:
-        th (Thicket): Thicket object
-        ncu_report_mapping (dict): dictionary mapping from "NCU report file":"Thicket
-            profile"
-        chosen_metrics (str): If known, which NCU metrics to add
-    """
-    # Keep list of NCU dfs for concat
-    ncu_df_list = []
+    def __init__(
+        self,
+        thicket,
+        ncu_report_mapping,
+        chosen_metrics=None,
+    ):
+        """Initialize NCUReader object
 
-    # Loop through dict
-    for ncu_report_file in ncu_report_mapping:
-        # Find hash value that should exist in thicket profile map
-        ncu_hash = None
+        Arguments:
+            thicket (Thicket): Thicket object
+            ncu_report_mapping (dict): mapping from NCU report file to profile
+            chosen_metrics (list): list of metrics to sub-select from NCU report
+        """
+        self.thicket = thicket
+        self.ncu_report_mapping = ncu_report_mapping
+        self.chosen_metrics = chosen_metrics
 
-        tprof = ncu_report_mapping[ncu_report_file]
-        for k, v in th.profile_mapping.items():
-            for prf in v:
-                if prf == tprof:
-                    ncu_hash = k
-                    break
+    @staticmethod
+    def _build_query_from_ncu_trace(kernel_call_trace):
+        """Build QueryLanguage query from an NCU kernel call trace
 
-        if ncu_hash is None:
-            raise ValueError(
-                "Could not find profile " + str(tprof) + " in thicket profile mapping"
-            )
+        Arguments:
+            kernel_call_trace (list): Call trace as seen from NCU
+        """
 
-        # Load kernels
-        report = ncu_report.load_report(ncu_report_file)
-        kernels = report[0]
+        def _predicate_builder(kernel, is_regex=False):
+            """Build predicate for QueryMatcher while forcing memoization
 
-        # Mapping from node names to kernels
-        nodes = th.dataframe.index.get_level_values("node").tolist()
-        names = th.dataframe["name"]
-        cpu_side_kernels = {}
-        for i in range(len(nodes)):
-            if nodes[i].frame["type"] == "kernel":
-                cpu_side_kernels[names[i]] = nodes[i]
+            Arguments:
+                kernel (str): kernel name
+                is_regex (bool): whether kernel is a regex
 
-        # Pre-processing
-        # Remove warmup kernels
-        warmup_end_idx = 0
-        i = 0
-        first_warmup_kernel = kernels[0]
-        same_kernel = True
-        for i in range(1, len(kernels)):
-            if kernels[i].name(
-                kernels[i].NameBase_DEMANGLED
-            ) != first_warmup_kernel.name(first_warmup_kernel.NameBase_DEMANGLED):
-                same_kernel = False
-            if not same_kernel and kernels[i].name(
-                kernels[i].NameBase_DEMANGLED
-            ) == first_warmup_kernel.name(first_warmup_kernel.NameBase_DEMANGLED):
-                warmup_end_idx = i
-                break
-        remove_warmup_kernels = kernels[warmup_end_idx:]
-        # Remove duplicate kernels
-        remove_dupe_kernels = []
-        for kernel in remove_warmup_kernels:
-            dupe = False
-            for other_kernel in remove_dupe_kernels:
-                if other_kernel.name(kernel.NameBase_DEMANGLED) == kernel.name(
-                    kernel.NameBase_DEMANGLED
-                ):
-                    dupe = True
-            if not dupe:
-                remove_dupe_kernels.append(kernel)
+            Returns:
+                predicate (function): predicate function
+            """
+            if is_regex:
+                return lambda row: row["name"].apply(lambda x: kernel in x).all()
+            else:
+                return lambda row: row["name"].apply(lambda x: x == kernel).all()
 
-        # Dictionary for metric values
+        query = QueryMatcher()
+        for i, kernel in enumerate(kernel_call_trace):
+            if i == 0:
+                query.match(".", _predicate_builder(kernel))
+            elif i == len(kernel_call_trace) - 1:
+                query.rel("*")
+                query.rel(".", _predicate_builder(kernel, is_regex=True))
+            else:
+                query.rel(".", _predicate_builder(kernel))
+
+        return query
+
+    def _read_ncu(self):
+        """Read NCU report files and return dictionary of data.
+
+        Arguments:
+            self (NCUReader): NCUReader object
+
+        Returns:
+            data_dict (dict): dictionary of NCU data where key is tuple, (node, profile), mapping to list of dictionaries for per-rep data that is aggregated down to one dictionary.
+        """
+
+        # Initialize dict
         data_dict = defaultdict(list)
-        # Matches everything between "<>"
-        regex_str = r".*?\<(.*)\>.*"
-        # For assertion
-        first_kernel_metric_count = len(remove_dupe_kernels[0].metric_names())
-        # Match kernels and add data
-        for kernel in remove_dupe_kernels:
-            kernel_name = kernel.name(kernel.NameBase_DEMANGLED)
-            kernel_match = re.search(regex_str, kernel_name).group(1)
-            ncu_side_kernel = kernel_name.replace(kernel_match, "").replace(" ", "")
-            matches = []
-            for other_kernel in cpu_side_kernels:
-                k_match = re.search(regex_str, other_kernel).group(1)
-                cpu_side_kernel = other_kernel.replace(k_match, "").replace(" ", "")
-                if ncu_side_kernel == cpu_side_kernel:
-                    matches.append(cpu_side_kernels[other_kernel])
-                    # Remove entry since it should not be re-usable
-                    cpu_side_kernels.pop(other_kernel)
-                    break
-            if len(matches) == 0:
-                print(f"Could not match {kernel_name}")
-                continue
-            # Add metrics from NCU side
-            data_dict["node"].append(matches[0])
-            metrics = [kernel[name] for name in kernel.metric_names()]
-            # Undefined behavior if this isn't true. We assume all kernels have same amount of metrics in the same order.
-            assert len(metrics) == first_kernel_metric_count
-            for metric in metrics:
-                data_dict[metric.name()].append(metric.value())
+        # Kernel mapping from NCU kernel to thicket node to save re-querying
+        kernel_map = {}
 
-        # Create NCU df
-        ncu_df = pd.DataFrame.from_dict(data_dict)
-        ncu_df["profile"] = ncu_hash
-        ncu_df.set_index(["node", "profile"], inplace=True)
+        # Loop through NCU files
+        for ncu_report_file in self.ncu_report_mapping:
+            # NCU hash
+            profile_mapping_flipped = {
+                v: k for k, v in self.thicket.profile_mapping.items()
+            }
+            ncu_hash = profile_mapping_flipped[self.ncu_report_mapping[ncu_report_file]]
 
-        # Get subset of metrics
-        if chosen_metrics:
-            ncu_df = ncu_df[chosen_metrics]
+            # Load file
+            report = ncu_report.load_report(ncu_report_file)
 
-        # Append df to list
-        ncu_df_list.append(ncu_df)
+            # Error check
+            if report.num_ranges() > 1:
+                raise ValueError(
+                    "NCU report file "
+                    + ncu_report_file
+                    + " has multiple ranges. Not supported yet."
+                )
+            # Loop through ranges in report
+            for range in report:
+                # Query action in range
+                for action in tqdm(range):
+                    # Name of kernel
+                    kernel_name = action.name()
+                    # Get NCU-side kernel trace
+                    kernel_call_trace = list(
+                        action.nvtx_state().domain_by_id(0).push_pop_ranges()
+                    )
 
-    # First join NCU dfs
-    ncu_df = pd.concat(ncu_df_list)
+                    # Skip warmup kernels
+                    if len(kernel_call_trace) == 0:
+                        continue
+                    else:
+                        # Add kernel name to the end of the trace tuple
+                        kernel_call_trace.append(kernel_name)
 
-    # Join Thicket and NCU dfs
-    th.dataframe = th.dataframe.join(
-        ncu_df,
-        how="outer",
-        sort=True,
-        lsuffix="_left",
-        rsuffix="_right",
-    )
+                        # Match ncu kernel to thicket node
+                        matched_node = None
+                        if kernel_name in kernel_map:
+                            # Skip query building
+                            matched_node = kernel_map[kernel_name]
+                        else:  # kernel hasn't been seen yet
+                            # Build query
+                            query = NCUReader._build_query_from_ncu_trace(
+                                kernel_call_trace
+                            )
+                            # Apply the query
+                            node_set = query.apply(self.thicket)
+                            # Find the correct node
+                            matched_node = [
+                                n for n in node_set if kernel_name in n.frame["name"]
+                            ][0]
+
+                        # matched_node should always exist at this point
+                        assert matched_node is not None
+                        # Set mapping
+                        kernel_map[kernel_name] = matched_node
+
+                        # Add kernel metrics to data_dict
+                        metric_dict = {}
+                        for metric in [action[name] for name in action.metric_names()]:
+                            metric_dict[metric.name()] = metric.value()
+                        data_dict[(matched_node, ncu_hash)].append(metric_dict)
+
+        return data_dict
