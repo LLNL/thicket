@@ -7,6 +7,7 @@ import pytest
 
 from thicket import Thicket, EmptyMetadataTable
 from test_columnar_join import test_columnar_join
+from utils import check_identity
 
 
 def check_groupby(th, columns_values):
@@ -20,6 +21,10 @@ def check_groupby(th, columns_values):
     for column in columns_values:
         unique_values = sorted(th.metadata[column].unique().tolist())
         th_list = th.groupby(column)
+
+        for thicket in th_list:
+            check_identity(th, thicket, "default_metric")
+
         # inspect all unique values in the use case
         for itr, uni_val in enumerate(unique_values):
             # expected profile hashes and nodes
