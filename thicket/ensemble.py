@@ -14,10 +14,13 @@ from .utils import verify_sorted_profile, verify_thicket_structures
 
 
 class Ensemble:
+    """Operations pertaining to ensembling profiles."""
+
     def __init__(
         self,
         thickets,
     ):
+        """Initialize an Ensemble object."""
         self.thickets = thickets
 
     def _unify_listwise(self, debug=False):
@@ -27,7 +30,7 @@ class Ensemble:
             debug (bool): print debug statements
 
         Returns:
-            union_graph (Graph): unified graph
+            union_graph (hatchet.Graph): unified graph
         """
         # variable to keep track of case where all graphs are the same
         same_graphs = True
@@ -89,11 +92,19 @@ class Ensemble:
             debug (bool): print debug statements
 
         Returns:
-            union_graph (Graph): unified graph
+            union_graph (hatchet.Graph): unified graph
         """
 
         def _unify_pair(first, second):
-            """Unify two Thicket's graphs and dataframes"""
+            """Unify two Thicket's graphs and dataframes
+
+            Arguments:
+                first (Thicket): first thicket
+                second (Thicket): second thicket
+
+            Returns:
+                union_graph (hatchet.Graph): unified graph
+            """
             # Check for the same object. Cheap operation since no graph walkthrough.
             if first.graph is second.graph:
                 if debug:
@@ -147,7 +158,7 @@ class Ensemble:
         header_list=None,
         column_name=None,
     ):
-        """Join Thickets column-wise. New column multi-index will be created with
+        """Join Thicket attributes horizontally. For DataFrames, this implies expanding in the column direction. New column multi-index will be created with
         columns under separate indexer headers.
 
         Arguments:
@@ -157,7 +168,7 @@ class Ensemble:
                 relationship between self and other.
 
         Returns:
-            (Thicket): New Thicket object with joined columns
+            (Thicket): New ensembled Thicket object
         """
 
         def _create_multiindex_columns(df, upper_idx_name):
@@ -376,13 +387,18 @@ class Ensemble:
         """Unify a list of thickets into a single thicket
 
         Arguments:
-            self.thickets (list): list of thickets
             pairwise (bool): use the pairwise implementation of unify (use if having
                 issues)
             superthicket (bool): whether the result is a superthicket
 
         Returns:
-            (thicket): unified thicket
+            unify_graph (hatchet.Graph): unified graph,
+            unify_df (DataFrame): unified dataframe,
+            unify_exc_metrics (list): exclusive metrics,
+            unify_inc_metrics (list): inclusive metrics,
+            unify_metadata (DataFrame): unified metadata,
+            unify_profile (list): profiles,
+            unify_profile_mapping (dict): profile mapping
         """
         unify_graph = None
         if pairwise:
