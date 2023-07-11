@@ -6,6 +6,7 @@
 # make flake8 unused names in this file.
 # flake8: noqa: F401
 
+from .ensemble import Ensemble
 from .thicket import Thicket
 from .thicket import InvalidFilter
 from .thicket import EmptyMetadataTable
