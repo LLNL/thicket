@@ -8,6 +8,7 @@ import re
 import hatchet as ht
 
 from thicket import Thicket
+from utils import check_identity
 
 
 def check_query(th, hnids, query):
@@ -41,6 +42,8 @@ def check_query(th, hnids, query):
     assert sorted(filt_th_df_profiles.unique().to_list()) == sorted(
         th_df_profiles.unique().to_list()
     )
+
+    check_identity(th, filt_th, "default_metric")
 
 
 def test_query(rajaperf_basecuda_xl_cali):
