@@ -158,8 +158,9 @@ class Ensemble:
         header_list=None,
         column_name=None,
     ):
-        """Join Thicket attributes horizontally. For DataFrames, this implies expanding in the column direction. New column multi-index will be created with
-        columns under separate indexer headers.
+        """Join Thicket attributes horizontally. For DataFrames, this implies expanding
+        in the column direction. New column multi-index will be created with columns 
+        under separate indexer headers.
 
         Arguments:
             header_list (list): List of headers to use for the new columnar multi-index
