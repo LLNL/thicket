@@ -57,10 +57,6 @@ def test_copy(example_cali):
     node = other.dataframe.index.get_level_values("node")[0]
     profile = other.dataframe.index.get_level_values("profile")[0]
     other.dataframe.loc[(node, profile), "nid"] = -1
-    print(id(other.dataframe))
-    print(id(self.dataframe))
-    print(other.dataframe["nid"])
-    print(self.dataframe["nid"])
     assert (
         other.dataframe.loc[(node, profile), "nid"]
         == self.dataframe.loc[(node, profile), "nid"]
