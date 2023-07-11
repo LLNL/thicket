@@ -111,26 +111,26 @@ class Ensemble:
                 print("different graph")
 
             node_map = {}
-            union_graph = self.graph.union(other.graph, node_map)
+            union_graph = first.graph.union(second.graph, node_map)
 
-            self_index_names = self.dataframe.index.names
-            other_index_names = other.dataframe.index.names
+            first_index_names = first.dataframe.index.names
+            second_index_names = second.dataframe.index.names
 
-            self.dataframe.reset_index(inplace=True)
-            other.dataframe.reset_index(inplace=True)
+            first.dataframe.reset_index(inplace=True)
+            second.dataframe.reset_index(inplace=True)
 
-            self.dataframe["node"] = self.dataframe["node"].apply(
+            first.dataframe["node"] = first.dataframe["node"].apply(
                 lambda x: node_map[id(x)]
             )
-            other.dataframe["node"] = other.dataframe["node"].apply(
+            second.dataframe["node"] = second.dataframe["node"].apply(
                 lambda x: node_map[id(x)]
             )
 
-            self.dataframe.set_index(self_index_names, inplace=True)
-            other.dataframe.set_index(other_index_names, inplace=True)
+            first.dataframe.set_index(first_index_names, inplace=True)
+            second.dataframe.set_index(second_index_names, inplace=True)
 
-            self.graph = union_graph
-            other.graph = union_graph
+            first.graph = union_graph
+            second.graph = union_graph
 
             return union_graph
 
