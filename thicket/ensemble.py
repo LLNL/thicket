@@ -87,20 +87,20 @@ class Ensemble:
             union_graph (Graph): unified graph
         """
 
-        def _unify_pair(self, other):
+        def _unify_pair(first, second):
             """Unify two Thicket's graphs and dataframes"""
             # Check for the same object. Cheap operation since no graph walkthrough.
-            if self.graph is other.graph:
+            if first.graph is second.graph:
                 if debug:
                     print("same graph (object)")
-                return self.graph
+                return first.graph
 
             # Check for the same graph structure. Need to walk through graphs *but should
             # still be less expensive then performing the rest of this function.*
-            if self.graph == other.graph:
+            if first.graph == second.graph:
                 if debug:
                     print("same graph (structure)")
-                return self.graph
+                return first.graph
 
             if debug:
                 print("different graph")
@@ -134,7 +134,7 @@ class Ensemble:
             for j in range(i + 1, len(self.thickets)):
                 if debug:
                     print("Unifying (" + str(i) + ", " + str(j) + "...")
-                union_graph = self.thickets[i]._unify_pair(self.thickets[j])
+                union_graph = _unify_pair(self.thickets[i], self.thickets[j])
         return union_graph
 
     def horizontal(

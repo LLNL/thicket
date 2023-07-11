@@ -255,14 +255,14 @@ class Thicket(GraphFrame):
             thicket_object = thicket_object.intersection()
         return thicket_object
 
-
     @staticmethod
     def columnar_join(thicket_list, header_list=None, column_name=None):
         warnings.warn(
             "columnar_join is deprecated and will be removed in a future release. Use 'horizontal' instead."
         )
-        return Thicket.horizontal(thicket_list, header_list=header_list, column_name=column_name)
-
+        return Thicket.horizontal(
+            thicket_list, header_list=header_list, column_name=column_name
+        )
 
     @staticmethod
     def unify_ensemble(th_list, pairwise=False, superthicket=False):
@@ -274,10 +274,11 @@ class Thicket(GraphFrame):
     @staticmethod
     def horizontal(thickets, header_list=None, column_name=None):
         ensemble = Ensemble(thickets)
-        combined_thicket = ensemble.horizontal(header_list=header_list, column_name=column_name)
+        combined_thicket = ensemble.horizontal(
+            header_list=header_list, column_name=column_name
+        )
 
         return combined_thicket
-
 
     @staticmethod
     def vertical(thickets, pairwise=False, superthicket=False):
