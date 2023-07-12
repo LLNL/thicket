@@ -236,8 +236,14 @@ class Thicket(GraphFrame):
         # if single file
         elif os.path.isfile(obj):
             return Thicket.thicketize_graphframe(func(*args, **kwargs), args[0])
+        # Error checking
         else:
-            raise TypeError(type(obj) + " is not a valid type to be read from.")
+            if type(obj) == str and not os.path.isfile(obj):
+                raise FileNotFoundError("File '" + obj + "' not found.")
+            else:
+                raise TypeError(
+                    str(type(obj).__name__) + " is not a valid type to be read from."
+                )
 
         # Perform unify ensemble
         thicket_object = Thicket.unify_ensemble(ens_list)
