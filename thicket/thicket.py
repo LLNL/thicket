@@ -242,7 +242,7 @@ class Thicket(GraphFrame):
                 raise FileNotFoundError("File '" + obj + "' not found.")
             else:
                 raise TypeError(
-                    str(type(obj).__name__) + " is not a valid type to be read from."
+                    "'" + str(type(obj).__name__) + "' is not a valid type to be read from."
                 )
 
         # Perform unify ensemble
