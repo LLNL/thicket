@@ -159,7 +159,7 @@ class Ensemble:
         column_name=None,
     ):
         """Join Thicket attributes horizontally. For DataFrames, this implies expanding
-        in the column direction. New column multi-index will be created with columns 
+        in the column direction. New column multi-index will be created with columns
         under separate indexer headers.
 
         Arguments:
