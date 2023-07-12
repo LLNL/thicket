@@ -49,8 +49,9 @@ def test_columnar_join(columnar_join_thicket):
     )
 
     # PerfData and StatsFrame nodes should be in the same order.
-    assert (pd.unique(combined_th.dataframe.reset_index()["node"].tolist()) == pd.unique(
-        combined_th.statsframe.dataframe.reset_index()["node"].tolist())
+    assert (
+        pd.unique(combined_th.dataframe.reset_index()["node"].tolist())
+        == pd.unique(combined_th.statsframe.dataframe.reset_index()["node"].tolist())
     ).all()
 
 
