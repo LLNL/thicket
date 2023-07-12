@@ -832,7 +832,7 @@ class Thicket(GraphFrame):
         # Replace NaN with None in string columns
         for col in unify_df.columns:
             if pd.api.types.is_string_dtype(unify_df[col].dtype):
-                unify_df[col].replace(fill_value, None, inplace=True)
+                unify_df[col].replace({fill_value: None}, inplace=True)
 
         # Operations specific to a superthicket
         if superthicket:
