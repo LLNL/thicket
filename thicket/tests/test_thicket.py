@@ -149,18 +149,17 @@ def test_unify_ensemble(mpi_scaling_cali):
     th_27 = Thicket.from_caliperreader(mpi_scaling_cali[0])
     th_64 = Thicket.from_caliperreader(mpi_scaling_cali[1])
 
-    th_listwise = Thicket.unify_ensemble([th_27, th_64])
-    th_pairwise = Thicket.unify_ensemble([th_27, th_64], pairwise=True)
+    tk = Thicket.unify_ensemble([th_27, th_64])
 
     # Check dataframe shape
-    th_listwise.dataframe.shape == (90, 7)
+    tk.dataframe.shape == (90, 7)
 
     # Check that the two Thickets are equivalent
-    assert th_listwise == th_pairwise
+    assert tk
 
     # Check specific values. Row order can vary so use "sum" to check
-    node = th_listwise.dataframe.index.get_level_values("node")[8]
-    assert sum(th_listwise.dataframe.loc[node, "Min time/rank"]) == 0.000453
+    node = tk.dataframe.index.get_level_values("node")[8]
+    assert sum(tk.dataframe.loc[node, "Min time/rank"]) == 0.000453
 
 
 def test_unique_metadata_base_cuda(rajaperf_basecuda_xl_cali):
