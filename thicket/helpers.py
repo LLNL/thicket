@@ -86,7 +86,7 @@ def _new_statsframe_df(df, multiindex=False):
 
     # Create MultiIndex structure if necessary.
     if multiindex:
-        new_df.columns = pd.MultiIndex.from_tuples([("", "name")])
+        new_df.columns = pd.MultiIndex.from_tuples([("name", "")])
 
     return new_df
 
