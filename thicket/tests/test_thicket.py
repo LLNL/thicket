@@ -72,7 +72,6 @@ def test_sync_nodes(example_cali):
 
 
 def test_statsframe(example_cali):
-
     def _test_multiindex():
         """Test statsframe when headers are multiindexed."""
         th1 = Thicket.from_caliperreader(example_cali[0])
