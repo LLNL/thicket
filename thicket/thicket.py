@@ -273,17 +273,17 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def horizontal(thickets, header_list=None, column_name=None):
-        ensemble = Ensemble(thickets)
-        combined_thicket = ensemble.horizontal(
-            header_list=header_list, column_name=column_name
+        combined_thicket = Ensemble.horizontal(
+            thickets=thickets, header_list=header_list, column_name=column_name
         )
 
         return combined_thicket
 
     @staticmethod
     def vertical(thickets, pairwise=False, superthicket=False):
-        ensemble = Ensemble(thickets)
-        thicket_parts = ensemble.vertical(pairwise=pairwise, superthicket=superthicket)
+        thicket_parts = Ensemble.vertical(
+            thickets=thickets, pairwise=pairwise, superthicket=superthicket
+        )
 
         return Thicket(
             graph=thicket_parts[0],

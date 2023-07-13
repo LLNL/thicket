@@ -16,14 +16,8 @@ from .utils import verify_sorted_profile, verify_thicket_structures
 class Ensemble:
     """Operations pertaining to ensembling profiles."""
 
-    def __init__(
-        self,
-        thickets,
-    ):
-        """Initialize an Ensemble object."""
-        self.thickets = thickets
-
-    def _unify_listwise(self, debug=False):
+    @staticmethod
+    def _unify_listwise(thickets, debug=False):
         """Unify a list of Thicket's graphs and dataframes
 
         Arguments:
@@ -36,13 +30,10 @@ class Ensemble:
         same_graphs = True
 
         # GRAPH UNIFICATION
-        union_graph = self.thickets[0].graph
-        for i in range(1, len(self.thickets)):  # n-1 unions
+        union_graph = thickets[0].graph
+        for i in range(1, len(thickets)):  # n-1 unions
             # Check to skip unnecessary computation. apply short circuiting with 'or'.
-            if (
-                union_graph is self.thickets[i].graph
-                or union_graph == self.thickets[i].graph
-            ):
+            if union_graph is thickets[i].graph or union_graph == thickets[i].graph:
                 if debug:
                     print("Union Graph == thicket[" + str(i) + "].graph")
             else:
@@ -50,7 +41,7 @@ class Ensemble:
                     print("Unifying (Union Graph, " + str(i) + ")")
                 same_graphs = False
                 # Unify graph with current thickets graph
-                union_graph = union_graph.union(self.thickets[i].graph)
+                union_graph = union_graph.union(thickets[i].graph)
 
         # If the graphs were all the same in the first place then there is no need to
         # apply any node mappings.
@@ -58,21 +49,19 @@ class Ensemble:
             return union_graph
 
         # DATAFRAME MAPPING UPDATE
-        for i in range(len(self.thickets)):  # n ops
+        for i in range(len(thickets)):  # n ops
             node_map = {}
             # Create a node map from current thickets graph to the union graph. This is
             # only valid once the union graph is complete.
-            union_graph.union(self.thickets[i].graph, node_map)
-            names = self.thickets[i].dataframe.index.names
-            self.thickets[i].dataframe.reset_index(inplace=True)
+            union_graph.union(thickets[i].graph, node_map)
+            names = thickets[i].dataframe.index.names
+            thickets[i].dataframe.reset_index(inplace=True)
 
             # Apply node_map mapping
-            self.thickets[i].dataframe["node"] = (
-                self.thickets[i]
-                .dataframe["node"]
-                .apply(lambda node: node_map[id(node)])
+            thickets[i].dataframe["node"] = (
+                thickets[i].dataframe["node"].apply(lambda node: node_map[id(node)])
             )
-            self.thickets[i].dataframe.set_index(names, inplace=True, drop=True)
+            thickets[i].dataframe.set_index(names, inplace=True, drop=True)
 
         # After this point the graph and dataframe in each thicket is out of sync.
         # We could update the graph element in thicket to be the union graph but if the
@@ -80,11 +69,9 @@ class Ensemble:
         # thicket.
         return union_graph
 
-    def _unify_pairwise(self, debug=False):
+    @staticmethod
+    def _unify_pairwise(thickets, debug=False):
         """Unifies two thickets graphs and dataframes.
-
-        Ensure self and other have the same graph and same node IDs. This may change the
-        node IDs in the dataframe.
 
         Update the graphs in the graphframe if they differ.
 
@@ -145,16 +132,17 @@ class Ensemble:
 
             return union_graph
 
-        union_graph = self.thickets[0].graph
-        for i in range(len(self.thickets)):
-            for j in range(i + 1, len(self.thickets)):
+        union_graph = thickets[0].graph
+        for i in range(len(thickets)):
+            for j in range(i + 1, len(thickets)):
                 if debug:
                     print("Unifying (" + str(i) + ", " + str(j) + "...")
-                union_graph = _unify_pair(self.thickets[i], self.thickets[j])
+                union_graph = _unify_pair(thickets[i], thickets[j])
         return union_graph
 
+    @staticmethod
     def horizontal(
-        self,
+        thickets,
         header_list=None,
         column_name=None,
     ):
@@ -166,7 +154,7 @@ class Ensemble:
             header_list (list): List of headers to use for the new columnar multi-index
             column_name (str): Name of the column from the metadata table to join on. If
                 no argument is provided, it is assumed that there is no profile-wise
-                relationship between self and other.
+                relationship between the thickets.
 
         Returns:
             (Thicket): New ensembled Thicket object
@@ -194,26 +182,26 @@ class Ensemble:
         # Step 0A: Pre-check of data structures
         ###
         # Required/expected format of the data
-        for th in self.thickets:
+        for th in thickets:
             verify_thicket_structures(th.dataframe, index=["node", "profile"])
             verify_thicket_structures(th.statsframe.dataframe, index=["node"])
             verify_thicket_structures(th.metadata, index=["profile"])
         # Check for column_name in metadata
         if column_name:
-            for th in self.thickets:
+            for th in thickets:
                 verify_thicket_structures(th.metadata, columns=[column_name])
         # Check length of profiles match
-        for i in range(len(self.thickets) - 1):
-            if len(self.thickets[i].profile) != len(self.thickets[i + 1].profile):
+        for i in range(len(thickets) - 1):
+            if len(thickets[i].profile) != len(thickets[i + 1].profile):
                 raise ValueError(
                     "Length of all thicket profiles must match. {} != {}".format(
-                        len(self.thickets[i].profile), len(self.thickets[i + 1].profile)
+                        len(thickets[i].profile), len(thickets[i + 1].profile)
                     )
                 )
         # Ensure all thickets profiles are sorted. Must be true when column_name=None to
         # guarantee performance data table and metadata table match up.
         if column_name is None:
-            for th in self.thickets:
+            for th in thickets:
                 verify_sorted_profile(th.dataframe)
                 verify_sorted_profile(th.metadata)
 
@@ -221,9 +209,9 @@ class Ensemble:
         # Step 0B: Variable Initialization
         ###
         # Initialize combined thicket
-        combined_th = self.thickets[0].deepcopy()
+        combined_th = thickets[0].deepcopy()
         # Use copies to be non-destructive
-        thicket_list_cp = [th.deepcopy() for th in self.thickets]
+        thicket_list_cp = [th.deepcopy() for th in thickets]
 
         ###
         # Step 1: Unify the thickets
@@ -247,7 +235,7 @@ class Ensemble:
         ###
         # Create header list if not provided
         if header_list is None:
-            header_list = [i for i in range(len(self.thickets))]
+            header_list = [i for i in range(len(thickets))]
 
         # Update index to reflect performance data table index
         new_mappings = {}  # Dictionary mapping old profiles to new profiles
@@ -384,7 +372,8 @@ class Ensemble:
 
         return combined_th
 
-    def vertical(self, pairwise=False, superthicket=False):
+    @staticmethod
+    def vertical(thickets, pairwise=False, superthicket=False):
         """Unify a list of thickets into a single thicket
 
         Arguments:
@@ -403,11 +392,11 @@ class Ensemble:
         """
         unify_graph = None
         if pairwise:
-            unify_graph = self._unify_pairwise()
+            unify_graph = Ensemble._unify_pairwise(thickets)
         else:
-            unify_graph = self._unify_listwise()
+            unify_graph = Ensemble._unify_listwise(thickets)
 
-        helpers._resolve_missing_indicies(self.thickets)
+        helpers._resolve_missing_indicies(thickets)
 
         # Unify dataframe
         unify_df = pd.DataFrame()
@@ -418,7 +407,7 @@ class Ensemble:
         unify_profile_mapping = {}
 
         # Unification loop
-        for i, th in enumerate(self.thickets):
+        for i, th in enumerate(thickets):
             unify_inc_metrics.extend(th.inc_metrics)
             unify_exc_metrics.extend(th.exc_metrics)
             if len(th.metadata) > 0:
