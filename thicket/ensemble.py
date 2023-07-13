@@ -390,78 +390,93 @@ class Ensemble:
             unify_profile (list): profiles,
             unify_profile_mapping (dict): profile mapping
         """
-        unify_graph = None
-        if pairwise:
-            unify_graph = Ensemble._unify_pairwise(thickets)
-        else:
-            unify_graph = Ensemble._unify_listwise(thickets)
 
-        helpers._resolve_missing_indicies(thickets)
+        def _superthicket_metadata(metadata):
+            """Aggregate data in Metadata"""
 
-        # Unify dataframe
-        unify_df = pd.DataFrame()
-        unify_inc_metrics = []
-        unify_exc_metrics = []
-        unify_metadata = pd.DataFrame()
-        unify_profile = []
-        unify_profile_mapping = {}
-
-        # Unification loop
-        for i, th in enumerate(thickets):
-            unify_inc_metrics.extend(th.inc_metrics)
-            unify_exc_metrics.extend(th.exc_metrics)
-            if len(th.metadata) > 0:
-                curr_meta = th.metadata.copy()
-                unify_metadata = pd.concat([curr_meta, unify_metadata])
-            if th.profile is not None:
-                unify_profile.extend(th.profile)
-            if th.profile_mapping is not None:
-                unify_profile_mapping.update(th.profile_mapping)
-            unify_df = pd.concat([th.dataframe, unify_df])
-
-        # Fill missing rows in dataframe with NaN's
-        fill_value = np.nan
-        unify_df = unify_df.reindex(
-            pd.MultiIndex.from_product(unify_df.index.levels), fill_value=fill_value
-        )
-        # Replace NaN with None in string columns
-        for col in unify_df.columns:
-            if pd.api.types.is_string_dtype(unify_df[col].dtype):
-                unify_df[col].replace(fill_value, None, inplace=True)
-
-        # Operations specific to a superthicket
-        if superthicket:
-            unify_metadata.index.rename("thicket", inplace=True)
-
-            # Process to aggregate rows of thickets with the same name.
-            def _agg_function(obj):
+            def _agg_to_set(obj):
                 """Aggregate values in 'obj' into a set to remove duplicates."""
                 if len(obj) <= 1:
                     return obj
                 else:
                     _set = set(obj)
+                    # If len == 1 just use the value, otherwise return the set
                     if len(_set) == 1:
                         return _set.pop()
                     else:
                         return _set
 
-            unify_metadata = unify_metadata.groupby("thicket").agg(_agg_function)
+            # Rename index to "thicket"
+            metadata.index.rename("thicket", inplace=True)
+            # Execute aggregation
+            metadata = metadata.groupby("thicket").agg(_agg_to_set)
 
-        # Have metadata index match performance data table index
+        def _fill_perfdata(perfdata, fill_value=np.nan):
+            # Fill missing rows in dataframe with NaN's
+            perfdata = perfdata.reindex(
+                pd.MultiIndex.from_product(perfdata.index.levels), fill_value=fill_value
+            )
+            # Replace "NaN" with "None" in columns of string type
+            for col in perfdata.columns:
+                if pd.api.types.is_string_dtype(perfdata[col].dtype):
+                    perfdata[col].replace(fill_value, None, inplace=True)
+
+        # Add missing indicies to thickets
+        helpers._resolve_missing_indicies(thickets)
+
+        # Initialize attributes
+        unify_graph = None
+        unify_df = pd.DataFrame()
+        unify_inc_metrics = []
+        unify_exc_metrics = []
+        unify_metadata = pd.DataFrame()
+        unify_profile = []
+        unify_profile_mapping = OrderedDict()
+
+        # Graph unification
+        if pairwise:
+            unify_graph = Ensemble._unify_pairwise(thickets)
+        else:
+            unify_graph = Ensemble._unify_listwise(thickets)
+
+        # Unification loop
+        for th in thickets:
+            # Extend metrics
+            unify_inc_metrics.extend(th.inc_metrics)
+            unify_exc_metrics.extend(th.exc_metrics)
+            # Extend metadata
+            if len(th.metadata) > 0:
+                curr_meta = th.metadata.copy()
+                unify_metadata = pd.concat([curr_meta, unify_metadata])
+            # Extend profile
+            if th.profile is not None:
+                unify_profile.extend(th.profile)
+            # Extend profile mapping
+            if th.profile_mapping is not None:
+                unify_profile_mapping.update(th.profile_mapping)
+            # Extend dataframe
+            unify_df = pd.concat([th.dataframe, unify_df])
+        # Sort by keys
+        unify_profile_mapping = OrderedDict(sorted(unify_profile_mapping.items()))
+
+        # Insert missing rows in dataframe
+        _fill_perfdata(unify_df)
+
+        # Metadata-specific operations
+        if superthicket:
+            _superthicket_metadata(unify_metadata)
+
+        # Sort PerfData
+        unify_df.sort_index(inplace=True)
+        # Sort Metadata
         unify_metadata.sort_index(inplace=True)
 
-        # Sort by hatchet node id
-        unify_df.sort_index(inplace=True)
-
+        # Remove duplicates in metrics
         unify_inc_metrics = list(set(unify_inc_metrics))
         unify_exc_metrics = list(set(unify_exc_metrics))
 
         # Workaround for graph/df node id mismatch.
-        # (n tree nodes) X (m df nodes) X (m)
         helpers._sync_nodes(unify_graph, unify_df)
-
-        # Mutate into OrderedDict to sort profile hashes
-        unify_profile_mapping = OrderedDict(sorted(unify_profile_mapping.items()))
 
         unify_parts = (
             unify_graph,
