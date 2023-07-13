@@ -265,11 +265,11 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
-    def unify_ensemble(th_list, pairwise=False, superthicket=False):
+    def unify_ensemble(th_list, superthicket=False):
         warnings.warn(
             "unify_ensemble is deprecated and will be removed in a future release. Use 'vertical' instead."
         )
-        return Thicket.vertical(th_list, pairwise=pairwise, superthicket=superthicket)
+        return Thicket.vertical(th_list, superthicket=superthicket)
 
     @staticmethod
     def horizontal(thickets, header_list=None, column_name=None):
@@ -280,10 +280,8 @@ class Thicket(GraphFrame):
         return combined_thicket
 
     @staticmethod
-    def vertical(thickets, pairwise=False, superthicket=False):
-        thicket_parts = Ensemble.vertical(
-            thickets=thickets, pairwise=pairwise, superthicket=superthicket
-        )
+    def vertical(thickets, superthicket=False):
+        thicket_parts = Ensemble.vertical(thickets=thickets, superthicket=superthicket)
 
         return Thicket(
             graph=thicket_parts[0],

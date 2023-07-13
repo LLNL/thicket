@@ -16,6 +16,35 @@ from .utils import verify_sorted_profile, verify_thicket_structures
 class Ensemble:
     """Operations pertaining to ensembling."""
 
+    def _unify(thickets, inplace=False):
+        """Create union graph from list of thickets and sync their DataFrames.
+
+        Arguments:
+            thickets (list): list of Thicket objects
+            inplace (bool): whether to modify the original thicket objects or return new
+
+        Returns:
+            (tuple): tuple containing:
+                (hatchet.Graph): unified graph
+                (list): list of Thicket objects
+        """
+        _thickets = thickets
+        if not inplace:
+            _thickets = [th.deepcopy() for th in thickets]
+        # Unify graphs if "self" and "other" do not have the same graph
+        union_graph = _thickets[0].graph
+        for i in range(len(_thickets) - 1):
+            if _thickets[i].graph != _thickets[i + 1].graph:
+                union_graph = union_graph.union(_thickets[i + 1].graph)
+        for i in range(len(_thickets)):
+            # Set all graphs to the union graph
+            _thickets[i].graph = union_graph
+            # Necessary to change dataframe hatchet id's to match the nodes in the graph
+            helpers._sync_nodes_frame(union_graph, _thickets[i].dataframe)
+            # For tree diff. dataframes need to be sorted.
+            _thickets[i].dataframe.sort_index(inplace=True)
+        return union_graph, _thickets
+
     @staticmethod
     def horizontal(
         thickets,
@@ -236,22 +265,6 @@ class Ensemble:
                 ),
             )
 
-        def _unify_thickets():
-            """Unify the thicket objects."""
-            # Unify graphs if "self" and "other" do not have the same graph
-            union_graph = thicket_list_cp[0].graph
-            for i in range(len(thicket_list_cp) - 1):
-                if thicket_list_cp[i].graph != thicket_list_cp[i + 1].graph:
-                    union_graph = union_graph.union(thicket_list_cp[i + 1].graph)
-            combined_th.graph = union_graph
-            for i in range(len(thicket_list_cp)):
-                # Set all graphs to the union graph
-                thicket_list_cp[i].graph = union_graph
-                # Necessary to change dataframe hatchet id's to match the nodes in the graph
-                helpers._sync_nodes_frame(union_graph, thicket_list_cp[i].dataframe)
-                # For tree diff. dataframes need to be sorted.
-                thicket_list_cp[i].dataframe.sort_index(inplace=True)
-
         # Step 0A: Pre-check of data structures
         _check_structures()
         # Step 0B: Variable Initialization
@@ -259,7 +272,9 @@ class Ensemble:
         thicket_list_cp = [th.deepcopy() for th in thickets]
 
         # Step 1: Unify the thickets
-        _unify_thickets()
+        union_graph, _thickets = Ensemble._unify(thicket_list_cp)
+        combined_th.graph = union_graph
+        thicket_list_cp = _thickets
 
         # Step 2A: Handle performance data tables
         new_mappings = _handle_perfdata()
@@ -273,12 +288,10 @@ class Ensemble:
         return combined_th
 
     @staticmethod
-    def vertical(thickets, pairwise=False, superthicket=False):
+    def vertical(thickets, superthicket=False):
         """Unify a list of thickets into a single thicket
 
         Arguments:
-            pairwise (bool): use the pairwise implementation of unify (use if having
-                issues)
             superthicket (bool): whether the result is a superthicket
 
         Returns:
@@ -321,128 +334,6 @@ class Ensemble:
             # Execute aggregation
             metadata = metadata.groupby("thicket").agg(_agg_to_set)
 
-        def _unify_listwise(thickets, debug=False):
-            """Unify a list of Thicket's graphs and dataframes
-
-            Arguments:
-                debug (bool): print debug statements
-
-            Returns:
-                union_graph (hatchet.Graph): unified graph
-            """
-            # variable to keep track of case where all graphs are the same
-            same_graphs = True
-
-            # GRAPH UNIFICATION
-            union_graph = thickets[0].graph
-            for i in range(1, len(thickets)):  # n-1 unions
-                # Check to skip unnecessary computation. apply short circuiting with 'or'.
-                if union_graph is thickets[i].graph or union_graph == thickets[i].graph:
-                    if debug:
-                        print("Union Graph == thicket[" + str(i) + "].graph")
-                else:
-                    if debug:
-                        print("Unifying (Union Graph, " + str(i) + ")")
-                    same_graphs = False
-                    # Unify graph with current thickets graph
-                    union_graph = union_graph.union(thickets[i].graph)
-
-            # If the graphs were all the same in the first place then there is no need to
-            # apply any node mappings.
-            if same_graphs:
-                return union_graph
-
-            # DATAFRAME MAPPING UPDATE
-            for i in range(len(thickets)):  # n ops
-                node_map = {}
-                # Create a node map from current thickets graph to the union graph. This is
-                # only valid once the union graph is complete.
-                union_graph.union(thickets[i].graph, node_map)
-                names = thickets[i].dataframe.index.names
-                thickets[i].dataframe.reset_index(inplace=True)
-
-                # Apply node_map mapping
-                thickets[i].dataframe["node"] = (
-                    thickets[i].dataframe["node"].apply(lambda node: node_map[id(node)])
-                )
-                thickets[i].dataframe.set_index(names, inplace=True, drop=True)
-
-            # After this point the graph and dataframe in each thicket is out of sync.
-            # We could update the graph element in thicket to be the union graph but if the
-            # user prints out the graph how do we annotate nodes only contained in one
-            # thicket.
-            return union_graph
-
-        def _unify_pairwise(thickets, debug=False):
-            """Unifies two thickets graphs and dataframes.
-
-            Update the graphs in the graphframe if they differ.
-
-            Arguments:
-                debug (bool): print debug statements
-
-            Returns:
-                union_graph (hatchet.Graph): unified graph
-            """
-
-            def _unify_pair(first, second):
-                """Unify two Thicket's graphs and dataframes
-
-                Arguments:
-                    first (Thicket): first thicket
-                    second (Thicket): second thicket
-
-                Returns:
-                    union_graph (hatchet.Graph): unified graph
-                """
-                # Check for the same object. Cheap operation since no graph walkthrough.
-                if first.graph is second.graph:
-                    if debug:
-                        print("same graph (object)")
-                    return first.graph
-
-                # Check for the same graph structure. Need to walk through graphs *but should
-                # still be less expensive then performing the rest of this function.*
-                if first.graph == second.graph:
-                    if debug:
-                        print("same graph (structure)")
-                    return first.graph
-
-                if debug:
-                    print("different graph")
-
-                node_map = {}
-                union_graph = first.graph.union(second.graph, node_map)
-
-                first_index_names = first.dataframe.index.names
-                second_index_names = second.dataframe.index.names
-
-                first.dataframe.reset_index(inplace=True)
-                second.dataframe.reset_index(inplace=True)
-
-                first.dataframe["node"] = first.dataframe["node"].apply(
-                    lambda x: node_map[id(x)]
-                )
-                second.dataframe["node"] = second.dataframe["node"].apply(
-                    lambda x: node_map[id(x)]
-                )
-
-                first.dataframe.set_index(first_index_names, inplace=True)
-                second.dataframe.set_index(second_index_names, inplace=True)
-
-                first.graph = union_graph
-                second.graph = union_graph
-
-                return union_graph
-
-            union_graph = thickets[0].graph
-            for i in range(len(thickets)):
-                for j in range(i + 1, len(thickets)):
-                    if debug:
-                        print("Unifying (" + str(i) + ", " + str(j) + "...")
-                    union_graph = _unify_pair(thickets[i], thickets[j])
-            return union_graph
-
         # Add missing indicies to thickets
         helpers._resolve_missing_indicies(thickets)
 
@@ -455,13 +346,8 @@ class Ensemble:
         unify_profile = []
         unify_profile_mapping = OrderedDict()
 
-        # Graph unification
-        if pairwise:
-            unify_graph = _unify_pairwise(thickets)
-        else:
-            unify_graph = _unify_listwise(thickets)
-
-        # Unification loop
+        # Unification
+        unify_graph, thickets = Ensemble._unify(thickets)
         for th in thickets:
             # Extend metrics
             unify_inc_metrics.extend(th.inc_metrics)
