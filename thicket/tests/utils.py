@@ -11,9 +11,9 @@ def check_identity(
     equal=False,
 ):
     if equal:
-        assert obj1 is obj2, "{} should have the same identy".format(key)
+        assert obj1 is obj2, "Both objects should have the same identity"
     else:
-        assert obj1 is not obj2, "{} should not have the same identy".format(key)
+        assert obj1 is not obj2, "Both objects should not have the same identity"
     for key in obj1.__dict__.keys():
         if key not in ignore_keys:
             if equal:
