@@ -19,7 +19,7 @@ def check_groupby(th, columns_values):
     # inspect all use cases
     for column in columns_values:
         unique_values = sorted(th.metadata[column].unique().tolist())
-        th_list = th.groupby(column)
+        th_list = list(th.groupby(column).values())
         # inspect all unique values in the use case
         for itr, uni_val in enumerate(unique_values):
             # expected profile hashes and nodes
@@ -91,7 +91,7 @@ def test_groupby_columnar_join(example_cali):
     columns = ["launchdate"]
 
     # Creates four Sub-Thickets
-    th_list = th.groupby(columns)
+    th_list = list(th.groupby(columns).values())
 
     # Prep for testing
     selected_column = "ProblemSize"
@@ -129,11 +129,11 @@ def test_groupby_columnar_join_subthickets(example_cali):
     # Pick two Sub-Thickets to test if metadata and profile information is setup correctly
     selected_column = "ProblemSize"
     problem_size = 10
-    th_list[0].metadata[selected_column] = problem_size
-    th_list[1].metadata[selected_column] = problem_size
+    th_list[(1609796088,)].metadata[selected_column] = problem_size
+    th_list[(1649737446,)].metadata[selected_column] = problem_size
 
-    thicket_list = [th_list[0], th_list[1]]
-    thicket_list_cp = [th_list[0].deepcopy(), th_list[1].deepcopy()]
+    thicket_list = [th_list[(1609796088,)], th_list[(1649737446,)]]
+    thicket_list_cp = [th_list[(1609796088,)].deepcopy(), th_list[(1649737446,)].deepcopy()]
 
     combined_th = Thicket.columnar_join(
         thicket_list=thicket_list,
