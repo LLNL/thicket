@@ -133,7 +133,10 @@ def test_groupby_columnar_join_subthickets(example_cali):
     th_list[(1649737446,)].metadata[selected_column] = problem_size
 
     thicket_list = [th_list[(1609796088,)], th_list[(1649737446,)]]
-    thicket_list_cp = [th_list[(1609796088,)].deepcopy(), th_list[(1649737446,)].deepcopy()]
+    thicket_list_cp = [
+        th_list[(1609796088,)].deepcopy(),
+        th_list[(1649737446,)].deepcopy(),
+    ]
 
     combined_th = Thicket.columnar_join(
         thicket_list=thicket_list,
