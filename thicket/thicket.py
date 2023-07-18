@@ -1155,26 +1155,24 @@ class Thicket(GraphFrame):
             return filtered_th.squash(update_inc_cols=update_inc_cols)
         return filtered_th
 
-    def groupby(self, groupby_function):
+    def groupby(self, by):
         """Create sub-thickets based on unique values in metadata column(s).
 
         Arguments:
-            groupby_function (groupby_function): groupby function on dataframe
+            by (mapping, function, label, pd.Grouper or list of such): Used to determine the groups for the groupby. See pandas.DataFrame.groupby() for more details.
 
         Returns:
             (list): list of (sub)thickets
         """
         if not self.metadata.empty:
             # group metadata table by unique values in a column
-            sub_metadataframes = self.metadata.groupby(groupby_function, dropna=False)
+            sub_metadataframes = self.metadata.groupby(by, dropna=False)
 
-            list_sub_thickets = []
-            unique_vals = []
+            # dictionary of sub_thickets
+            sub_thickets = {}
 
             # for all unique groups of metadata table
             for key, df in sub_metadataframes:
-                unique_vals.append(key)
-
                 # create a thicket copy
                 sub_thicket = self.copy()
 
@@ -1204,16 +1202,18 @@ class Thicket(GraphFrame):
                 sub_thicket.statsframe.dataframe = helpers._new_statsframe_df(
                     sub_thicket.dataframe
                 )
-                list_sub_thickets.append(sub_thicket)
+
+                # add thicket to dictionary
+                sub_thickets[key] = sub_thicket
         else:
             raise EmptyMetadataTable(
                 "The provided Thicket object has an empty metadata table."
             )
 
-        print(len(list_sub_thickets), " thickets created...")
-        print(unique_vals)
+        print(len(sub_thickets), " thickets created...")
+        print(sub_thickets)
 
-        return list_sub_thickets
+        return sub_thickets
 
     def filter_stats(self, filter_function):
         """Filter thicket object based on a stats column.
