@@ -1182,7 +1182,7 @@ class Thicket(GraphFrame):
                 unique_vals.append(key)
 
                 # create a thicket copy
-                sub_thicket = self.copy()
+                sub_thicket = self.deepcopy()
 
                 # return unique group as the metadata table
                 sub_thicket.metadata = df
