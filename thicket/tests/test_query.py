@@ -5,9 +5,9 @@
 
 import re
 
+import hatchet as ht
 import pandas as pd
 
-import hatchet as ht
 from thicket import Thicket
 
 
