@@ -6,8 +6,10 @@
 import re
 
 import hatchet as ht
+import pandas as pd
 
 from thicket import Thicket
+from utils import check_identity
 
 
 def check_query(th, hnids, query):
@@ -30,6 +32,10 @@ def check_query(th, hnids, query):
     filt_th = th.query(query)
     filt_nodes = list(filt_th.graph.traverse())
 
+    # MultiIndex check
+    if isinstance(th.statsframe.dataframe.columns, pd.MultiIndex):
+        assert isinstance(filt_th.statsframe.dataframe.columns, pd.MultiIndex)
+
     # Get filtered nodes and profiles
     filt_th_df_nodes = filt_th.dataframe.index.get_level_values(node_name).to_list()
     filt_th_df_profiles = filt_th.dataframe.index.get_level_values(profile_name)
@@ -41,6 +47,8 @@ def check_query(th, hnids, query):
     assert sorted(filt_th_df_profiles.unique().to_list()) == sorted(
         th_df_profiles.unique().to_list()
     )
+
+    check_identity(th, filt_th, "default_metric")
 
 
 def test_query(rajaperf_basecuda_xl_cali):

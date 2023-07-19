@@ -477,6 +477,9 @@ class Thicket(GraphFrame):
             inplace=True,
         )
 
+        # Sort DataFrame
+        combined_th.dataframe.sort_index(inplace=True)
+
         ###
         # Step 3: Join "self" & "other" metadata table
         ###
@@ -584,7 +587,10 @@ class Thicket(GraphFrame):
         # way eventually, but for now, we'll just create a new aggregated statistics
         # table the same way we do when we create a new thicket.
         new_dataframe = squashed_gf.dataframe
-        stats_df = helpers._new_statsframe_df(new_dataframe)
+        multiindex = False
+        if isinstance(self.statsframe.dataframe.columns, pd.MultiIndex):
+            multiindex = True
+        stats_df = helpers._new_statsframe_df(new_dataframe, multiindex=multiindex)
         sframe = GraphFrame(
             graph=new_graph,
             dataframe=stats_df,
@@ -840,7 +846,7 @@ class Thicket(GraphFrame):
         # Replace NaN with None in string columns
         for col in unify_df.columns:
             if pd.api.types.is_string_dtype(unify_df[col].dtype):
-                unify_df[col].replace(fill_value, None, inplace=True)
+                unify_df[col].replace({fill_value: None}, inplace=True)
 
         # Operations specific to a superthicket
         if superthicket:
@@ -1174,7 +1180,7 @@ class Thicket(GraphFrame):
             # for all unique groups of metadata table
             for key, df in sub_metadataframes:
                 # create a thicket copy
-                sub_thicket = self.copy()
+                sub_thicket = self.deepcopy()
 
                 # return unique group as the metadata table
                 sub_thicket.metadata = df
