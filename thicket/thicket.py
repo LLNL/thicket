@@ -477,6 +477,9 @@ class Thicket(GraphFrame):
             inplace=True,
         )
 
+        # Sort DataFrame
+        combined_th.dataframe.sort_index(inplace=True)
+
         ###
         # Step 3: Join "self" & "other" metadata table
         ###

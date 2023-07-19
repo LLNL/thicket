@@ -6,6 +6,7 @@
 import re
 
 import hatchet as ht
+import pandas as pd
 
 from test_filter_metadata import filter_one_column
 from test_filter_metadata import filter_multiple_and
@@ -46,6 +47,12 @@ def test_columnar_join(columnar_join_thicket):
     assert len(combined_th.profile_mapping) == sum(
         [len(th.profile_mapping) for th in thicket_list]
     )
+
+    # PerfData and StatsFrame nodes should be in the same order.
+    assert (
+        pd.unique(combined_th.dataframe.reset_index()["node"].tolist())
+        == pd.unique(combined_th.statsframe.dataframe.reset_index()["node"].tolist())
+    ).all()
 
 
 def test_filter_columnar_join(columnar_join_thicket):
