@@ -587,7 +587,10 @@ class Thicket(GraphFrame):
         # way eventually, but for now, we'll just create a new aggregated statistics
         # table the same way we do when we create a new thicket.
         new_dataframe = squashed_gf.dataframe
-        stats_df = helpers._new_statsframe_df(new_dataframe)
+        multiindex = False
+        if isinstance(self.statsframe.dataframe.columns, pd.MultiIndex):
+            multiindex = True
+        stats_df = helpers._new_statsframe_df(new_dataframe, multiindex=multiindex)
         sframe = GraphFrame(
             graph=new_graph,
             dataframe=stats_df,

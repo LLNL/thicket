@@ -6,6 +6,7 @@
 import re
 
 import hatchet as ht
+import pandas as pd
 
 from thicket import Thicket
 
@@ -29,6 +30,10 @@ def check_query(th, hnids, query):
     # Match all nodes using query
     filt_th = th.query(query)
     filt_nodes = list(filt_th.graph.traverse())
+
+    # MultiIndex check
+    if isinstance(th.statsframe.dataframe.columns, pd.MultiIndex):
+        assert isinstance(filt_th.statsframe.dataframe.columns, pd.MultiIndex)
 
     # Get filtered nodes and profiles
     filt_th_df_nodes = filt_th.dataframe.index.get_level_values(node_name).to_list()
