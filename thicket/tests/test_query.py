@@ -5,8 +5,9 @@
 
 import re
 
-import hatchet as ht
+import pandas as pd
 
+import hatchet as ht
 from thicket import Thicket
 
 
@@ -26,6 +27,16 @@ def check_query(th, hnids, query):
     match = [node for node in th.graph.traverse() if node._hatchet_nid in hnids]
     match_frames = [node.frame for node in match]
     match_names = [frame["name"] for frame in match_frames]
+    # MultiIndex check
+    th_c = th.deepcopy()
+    th_c.dataframe.columns = pd.MultiIndex.from_tuples(
+        ("test", col) for col in th_c.dataframe.columns
+    )
+    th_c.dataframe[("name", "")] = th_c.dataframe[("test", "name")]
+    th_c.statsframe.dataframe.columns = pd.MultiIndex.from_tuples([("name", "")])
+    filt_th_c = th_c.query(query, update_inc_cols=False)
+    assert isinstance(filt_th_c.dataframe.columns, pd.MultiIndex)
+    assert isinstance(filt_th_c.statsframe.dataframe.columns, pd.MultiIndex)
     # Match all nodes using query
     filt_th = th.query(query)
     filt_nodes = list(filt_th.graph.traverse())
