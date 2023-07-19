@@ -20,7 +20,7 @@ def check_groupby(th, columns_values):
     # inspect all use cases
     for column in columns_values:
         unique_values = sorted(th.metadata[column].unique().tolist())
-        th_list = th.groupby(column)
+        th_list = list(th.groupby(column).values())
 
         for thicket in th_list:
             check_identity(th, thicket, "default_metric")
@@ -96,7 +96,7 @@ def test_groupby_columnar_join(example_cali):
     columns = ["launchdate"]
 
     # Creates four Sub-Thickets
-    th_list = th.groupby(columns)
+    th_list = list(th.groupby(columns).values())
 
     # Prep for testing
     selected_column = "ProblemSize"
@@ -129,7 +129,7 @@ def test_groupby_columnar_join_subthickets(example_cali):
     columns = ["launchdate"]
 
     # Creates four Sub-Thickets
-    th_list = th.groupby(columns)
+    th_list = list(th.groupby(columns).values())
 
     # Pick two Sub-Thickets to test if metadata and profile information is setup correctly
     selected_column = "ProblemSize"
@@ -138,7 +138,10 @@ def test_groupby_columnar_join_subthickets(example_cali):
     th_list[1].metadata[selected_column] = problem_size
 
     thicket_list = [th_list[0], th_list[1]]
-    thicket_list_cp = [th_list[0].deepcopy(), th_list[1].deepcopy()]
+    thicket_list_cp = [
+        th_list[0].deepcopy(),
+        th_list[1].deepcopy(),
+    ]
 
     combined_th = Thicket.columnar_join(
         thicket_list=thicket_list,
