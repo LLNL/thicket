@@ -9,7 +9,7 @@ import pandas as pd
 from ..utils import verify_thicket_structures
 
 
-def variance(thicket, columns=None, **kwargs):
+def variance(thicket, columns=None):
     """Calculate the variance for each node in the performance data table.
 
     Designed to take in a thicket, and append one or more columns to the aggregated
@@ -36,7 +36,7 @@ def variance(thicket, columns=None, **kwargs):
         for column in columns:
             var = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                var.append(np.var(thicket.dataframe.loc[node][column], **kwargs))
+                var.append(np.var(thicket.dataframe.loc[node][column]))
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append(column + "_var")
@@ -50,7 +50,7 @@ def variance(thicket, columns=None, **kwargs):
         for idx, column in columns:
             var = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                var.append(np.var(thicket.dataframe.loc[node][(idx, column)], **kwargs))
+                var.append(np.var(thicket.dataframe.loc[node][(idx, column)]))
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append((idx, column + "_var"))

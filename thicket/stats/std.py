@@ -9,7 +9,7 @@ import pandas as pd
 from ..utils import verify_thicket_structures
 
 
-def std(thicket, columns=None, **kwargs):
+def std(thicket, columns=None):
     """Calculate the standard deviation for each node in the performance data table.
 
     Designed to take in a thicket, and append one or more columns to the aggregated
@@ -35,7 +35,7 @@ def std(thicket, columns=None, **kwargs):
         for column in columns:
             std = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                std.append(np.std(thicket.dataframe.loc[node][column], **kwargs))
+                std.append(np.std(thicket.dataframe.loc[node][column]))
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append(column + "_std")
@@ -49,7 +49,7 @@ def std(thicket, columns=None, **kwargs):
         for idx, column in columns:
             std = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                std.append(np.std(thicket.dataframe.loc[node][(idx, column)], **kwargs))
+                std.append(np.std(thicket.dataframe.loc[node][(idx, column)]))
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append((idx, column + "_std"))

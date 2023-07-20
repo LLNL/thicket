@@ -9,7 +9,7 @@ import pandas as pd
 from ..utils import verify_thicket_structures
 
 
-def mean(thicket, columns=None, **kwargs):
+def mean(thicket, columns=None):
     """Calculate the mean for each node in the performance data table.
 
     Designed to take in a thicket, and append one or more columns to the
@@ -33,7 +33,7 @@ def mean(thicket, columns=None, **kwargs):
         for column in columns:
             mean = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                mean.append(np.mean(thicket.dataframe.loc[node][column], **kwargs))
+                mean.append(np.mean(thicket.dataframe.loc[node][column]))
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append(column + "_mean")
@@ -48,7 +48,7 @@ def mean(thicket, columns=None, **kwargs):
             mean = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 mean.append(
-                    np.mean(thicket.dataframe.loc[node][(idx, column)], **kwargs)
+                    np.mean(thicket.dataframe.loc[node][(idx, column)])
                 )
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
