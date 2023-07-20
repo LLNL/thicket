@@ -34,9 +34,7 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
             "Value passed to node argument must be of type hatchet.node.Node."
         )
 
-    verify_thicket_structures(
-        thicket.dataframe, index=["node", "profile"], columns=[column]
-    )
+    verify_thicket_structures(thicket.dataframe, index=["node"], columns=[column])
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:

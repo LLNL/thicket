@@ -8,7 +8,9 @@ from scipy import stats
 from ..utils import verify_thicket_structures
 
 
-def correlation_nodewise(thicket, column1=None, column2=None, correlation="pearson"):
+def correlation_nodewise(
+    thicket, column1=None, column2=None, correlation="pearson", **kwargs
+):
     """Calculate the nodewise correlation for each node in the performance data table.
 
     Designed to take in a thicket, and append one or more columns to the aggregated
@@ -33,19 +35,9 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
             "To see a list of valid columns, please run Thicket.get_perf_columns()."
         )
 
-    if "profile" in thicket.dataframe.index.names:
-        verify_thicket_structures(
-            thicket.dataframe,
-            index=["node", "profile"],
-            columns=[column1, column2],
-        )
-    else:
-        verify_thicket_structures(
-            thicket.dataframe,
-            index=["node", "thicket"],
-            columns=[column1, column2],
-        )
-
+    verify_thicket_structures(
+        thicket.dataframe, index=["node"], columns=[column1, column2]
+    )
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         correlated = []
@@ -55,6 +47,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                     stats.pearsonr(
                         thicket.dataframe.loc[node][column1],
                         thicket.dataframe.loc[node][column2],
+                        **kwargs,
                     )[0]
                 )
             elif correlation == "spearman":
@@ -62,6 +55,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                     stats.spearmanr(
                         thicket.dataframe.loc[node][column1],
                         thicket.dataframe.loc[node][column2],
+                        **kwargs,
                     )[0]
                 )
             elif correlation == "kendall":
@@ -69,10 +63,13 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                     stats.kendalltau(
                         thicket.dataframe.loc[node][column1],
                         thicket.dataframe.loc[node][column2],
+                        **kwargs,
                     )[0]
                 )
             else:
-                raise ValueError("Invalid correlation")
+                raise ValueError(
+                    "Invalid correlation, options are pearson, spearman, and kendall."
+                )
         thicket.statsframe.dataframe[
             column1 + "_vs_" + column2 + " " + correlation
         ] = correlated
@@ -85,6 +82,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                     stats.pearsonr(
                         thicket.dataframe.loc[node][column1],
                         thicket.dataframe.loc[node][column2],
+                        **kwargs,
                     )[0]
                 )
             elif correlation == "spearman":
@@ -92,6 +90,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                     stats.spearmanr(
                         thicket.dataframe.loc[node][column1],
                         thicket.dataframe.loc[node][column2],
+                        **kwargs,
                     )[0]
                 )
             elif correlation == "kendall":
@@ -99,6 +98,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                     stats.kendalltau(
                         thicket.dataframe.loc[node][column1],
                         thicket.dataframe.loc[node][column2],
+                        **kwargs,
                     )[0]
                 )
             else:

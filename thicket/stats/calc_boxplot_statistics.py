@@ -34,9 +34,7 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
             "To see a list of valid columns, please run Thicket.get_perf_columns()."
         )
 
-    verify_thicket_structures(
-        thicket.dataframe, index=["node", "profile"], columns=columns
-    )
+    verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
     q_list = str(tuple(quartiles))
 
@@ -56,7 +54,7 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 values = thicket.dataframe.loc[node][col].tolist()
 
-                q = np.quantile(values, quartiles)
+                q = np.quantile(values, quartiles, **kwargs)
                 q1 = q[0]
                 median = q[1]
                 q3 = q[2]
@@ -112,7 +110,7 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 values = thicket.dataframe.loc[node][(idx, col)].tolist()
 
-                q = np.quantile(values, quartiles)
+                q = np.quantile(values, quartiles, **kwargs)
                 q1 = q[0]
                 median = q[1]
                 q3 = q[2]

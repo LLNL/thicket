@@ -9,7 +9,7 @@ import pandas as pd
 from ..utils import verify_thicket_structures
 
 
-def variance(thicket, columns=None):
+def variance(thicket, columns=None, **kwargs):
     """Calculate the variance for each node in the performance data table.
 
     Designed to take in a thicket, and append one or more columns to the aggregated
@@ -29,16 +29,14 @@ def variance(thicket, columns=None):
             "To see a list of valid columns, please run Thicket.get_perf_columns()."
         )
 
-    verify_thicket_structures(
-        thicket.dataframe, index=["node", "profile"], columns=columns
-    )
+    verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         for column in columns:
             var = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                var.append(np.var(thicket.dataframe.loc[node][column]))
+                var.append(np.var(thicket.dataframe.loc[node][column], **kwargs))
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append(column + "_var")
@@ -52,7 +50,7 @@ def variance(thicket, columns=None):
         for idx, column in columns:
             var = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                var.append(np.var(thicket.dataframe.loc[node][(idx, column)]))
+                var.append(np.var(thicket.dataframe.loc[node][(idx, column)], **kwargs))
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append((idx, column + "_var"))

@@ -9,7 +9,7 @@ import pandas as pd
 from ..utils import verify_thicket_structures
 
 
-def percentiles(thicket, columns=None):
+def percentiles(thicket, columns=None, **kwargs):
     """Calculate the q-th percentile for each node in the performance data table.
 
     Designed to take in a thicket, and append one or more columns to the aggregated
@@ -35,9 +35,7 @@ def percentiles(thicket, columns=None):
             "To see a list of valid columns, please run Thicket.get_perf_columns()."
         )
 
-    verify_thicket_structures(
-        thicket.dataframe, index=["node", "profile"], columns=columns
-    )
+    verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
@@ -45,7 +43,9 @@ def percentiles(thicket, columns=None):
             percentiles = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 percentiles.append(
-                    np.percentile(thicket.dataframe.loc[node][column], [25, 50, 75])
+                    np.percentile(
+                        thicket.dataframe.loc[node][column], [25, 50, 75], **kwargs
+                    )
                 )
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
@@ -62,7 +62,9 @@ def percentiles(thicket, columns=None):
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 percentiles.append(
                     np.percentile(
-                        thicket.dataframe.loc[node][(idx, column)], [25, 50, 75]
+                        thicket.dataframe.loc[node][(idx, column)],
+                        [25, 50, 75],
+                        **kwargs,
                     )
                 )
             # check to see if exclusive metric
