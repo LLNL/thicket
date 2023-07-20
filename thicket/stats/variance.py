@@ -33,31 +33,26 @@ def variance(thicket, columns=None):
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
+        df = thicket.dataframe.reset_index().groupby("node").agg(np.var)
         for column in columns:
-            var = []
-            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                var.append(np.var(thicket.dataframe.loc[node][column]))
+            thicket.statsframe.dataframe[column + "_var"] = df[column]
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append(column + "_var")
             # check to see if inclusive metric
             else:
                 thicket.statsframe.inc_metrics.append(column + "_var")
-
-            thicket.statsframe.dataframe[column + "_var"] = var
     # columnar joined thicket object
     else:
+        df = thicket.dataframe.reset_index(level=1).groupby("node").agg(np.var)
         for idx, column in columns:
-            var = []
-            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                var.append(np.var(thicket.dataframe.loc[node][(idx, column)]))
+            thicket.statsframe.dataframe[(idx, column + "_var")] = df[(idx, column)]
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append((idx, column + "_var"))
             # check to see if inclusive metric
             else:
                 thicket.statsframe.inc_metrics.append((idx, column + "_var"))
-            thicket.statsframe.dataframe[(idx, column + "_var")] = var
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
