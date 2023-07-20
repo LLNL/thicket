@@ -60,7 +60,8 @@ def percentiles(thicket, columns=None):
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 percentiles.append(
                     np.percentile(
-                        thicket.dataframe.loc[node][(idx, column)],[25, 50, 75],
+                        thicket.dataframe.loc[node][(idx, column)],
+                        [25, 50, 75],
                     )
                 )
             # check to see if exclusive metric

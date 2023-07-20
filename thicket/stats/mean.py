@@ -47,9 +47,7 @@ def mean(thicket, columns=None):
         for idx, column in columns:
             mean = []
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                mean.append(
-                    np.mean(thicket.dataframe.loc[node][(idx, column)])
-                )
+                mean.append(np.mean(thicket.dataframe.loc[node][(idx, column)]))
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append((idx, column + "_mean"))
