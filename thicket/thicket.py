@@ -13,7 +13,7 @@ from hashlib import md5
 import pandas as pd
 import numpy as np
 from hatchet import GraphFrame
-from hatchet.query import AbstractQuery
+from hatchet.query import AbstractQuery, QueryMatcher
 
 import thicket.helpers as helpers
 from .utils import verify_sorted_profile
@@ -250,7 +250,7 @@ class Thicket(GraphFrame):
         # Perform unify ensemble
         thicket_object = Thicket.unify_ensemble(ens_list)
         if intersection:
-            thicket_object.intersection()
+            thicket_object = thicket_object.intersection()
         return thicket_object
 
     @staticmethod
@@ -1015,47 +1015,18 @@ class Thicket(GraphFrame):
         Nodes not contained in all profiles are removed.
 
         Returns:
-            remaining_node_list (list): list of nodes that were not removed
-            removed_node_list (list): list of removed nodes
+            (thicket): intersected thicket
         """
-        # Filter the performance data table
-        total_profiles = len(self.profile)
-        remaining_node_list = []  # Needed for graph
-        removed_node_list = []
 
-        # For each node
-        for node, new_df in self.dataframe.groupby(level=0):
-            # Use profile count to make decision
-            if len(new_df) < total_profiles:
-                removed_node_list.append(node)
-            else:
-                remaining_node_list.append(node)
-        self.dataframe.drop(removed_node_list, inplace=True)
+        # Row that didn't exist will contain "None" in the name column.
+        query = (
+            QueryMatcher()
+            .match(".", lambda row: row["name"].apply(lambda n: n is not None).all())
+            .rel("*")
+        )
+        intersected_th = self.query(query)
 
-        # Propagate change to aggregated statistics table
-        self.statsframe.dataframe.drop(removed_node_list, inplace=True)
-
-        # Filter the graph
-
-        # Remove roots
-        self.graph.roots = list(set(self.graph.roots).intersection(remaining_node_list))
-        for node in self.graph.traverse():
-            # Remove children and parents that DNE in the intersection
-            new_children = []
-            new_parents = []
-            for child in node.children:
-                if child in remaining_node_list:
-                    new_children.append(child)
-            for parent in node.parents:
-                if parent in remaining_node_list:
-                    new_parents.append(parent)
-            node.children = new_children
-            node.parents = new_parents
-
-        # Update hatchet nids
-        self.graph.enumerate_traverse()
-
-        return remaining_node_list, removed_node_list
+        return intersected_th
 
     def filter_metadata(self, select_function):
         """Filter thicket object based on a metadata key.
