@@ -14,23 +14,6 @@ import ncu_report
 class NCUReader:
     """Object to interface and pull NCU report data into Thicket"""
 
-    def __init__(
-        self,
-        thicket,
-        ncu_report_mapping,
-        chosen_metrics=None,
-    ):
-        """Initialize NCUReader object
-
-        Arguments:
-            thicket (Thicket): Thicket object
-            ncu_report_mapping (dict): mapping from NCU report file to profile
-            chosen_metrics (list): list of metrics to sub-select from NCU report
-        """
-        self.thicket = thicket
-        self.ncu_report_mapping = ncu_report_mapping
-        self.chosen_metrics = chosen_metrics
-
     @staticmethod
     def _build_query_from_ncu_trace(kernel_call_trace):
         """Build QueryLanguage query from an NCU kernel call trace
@@ -66,11 +49,13 @@ class NCUReader:
 
         return query
 
-    def _read_ncu(self):
+    @staticmethod
+    def _read_ncu(thicket, ncu_report_mapping):
         """Read NCU report files and return dictionary of data.
 
         Arguments:
-            self (NCUReader): NCUReader object
+            thicket (Thicket): thicket object to add ncu metrics to
+            ncu_report_mapping (dict): mapping from NCU report file to profile
 
         Returns:
             data_dict (dict): dictionary of NCU data where key is tuple, (node, profile), mapping to list of dictionaries for per-rep data that is aggregated down to one dictionary.
@@ -82,12 +67,12 @@ class NCUReader:
         kernel_map = {}
 
         # Loop through NCU files
-        for ncu_report_file in self.ncu_report_mapping:
+        for ncu_report_file in ncu_report_mapping:
             # NCU hash
             profile_mapping_flipped = {
-                v: k for k, v in self.thicket.profile_mapping.items()
+                v: k for k, v in thicket.profile_mapping.items()
             }
-            ncu_hash = profile_mapping_flipped[self.ncu_report_mapping[ncu_report_file]]
+            ncu_hash = profile_mapping_flipped[ncu_report_mapping[ncu_report_file]]
 
             # Load file
             report = ncu_report.load_report(ncu_report_file)
@@ -128,7 +113,7 @@ class NCUReader:
                                 kernel_call_trace
                             )
                             # Apply the query
-                            node_set = query.apply(self.thicket)
+                            node_set = query.apply(thicket)
                             # Find the correct node
                             matched_node = [
                                 n for n in node_set if kernel_name in n.frame["name"]
