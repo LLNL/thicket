@@ -69,9 +69,7 @@ class NCUReader:
         # Loop through NCU files
         for ncu_report_file in ncu_report_mapping:
             # NCU hash
-            profile_mapping_flipped = {
-                v: k for k, v in thicket.profile_mapping.items()
-            }
+            profile_mapping_flipped = {v: k for k, v in thicket.profile_mapping.items()}
             ncu_hash = profile_mapping_flipped[ncu_report_mapping[ncu_report_file]]
 
             # Load file
