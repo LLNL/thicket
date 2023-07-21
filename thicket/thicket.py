@@ -495,14 +495,10 @@ class Thicket(GraphFrame):
                 return col
 
         # Initialize reader
-        ncureader = NCUReader(
-            thicket=self,
-            ncu_report_mapping=ncu_report_mapping,
-            chosen_metrics=chosen_metrics,
-        )
+        ncureader = NCUReader()
 
         # Dictionary of NCU data
-        data_dict = ncureader._read_ncu()
+        data_dict = ncureader._read_ncu(self, ncu_report_mapping)
 
         # Create empty df
         ncu_df = pd.DataFrame()
