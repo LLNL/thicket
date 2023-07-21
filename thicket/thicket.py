@@ -673,7 +673,7 @@ class Thicket(GraphFrame):
         # Adjustments specific for multi-index.
         if isinstance(temp_df.columns, pd.MultiIndex):
             temp_df.columns = temp_df.columns.to_flat_index()
-            temp_df.rename(columns={("", "name"): "name"}, inplace=True)
+            temp_df.rename(columns={("name", ""): "name"}, inplace=True)
         # Placeholder value. TODO: Enable selection from performance data table.
         temp_df["thicket_tree"] = -1
         return GraphFrame.tree(
