@@ -181,8 +181,7 @@ def caliper_ordered(data_dir, tmpdir):
 
     shutil.copy(cali_file, str(tmpdir))
     tmpfile = os.path.join(str(tmpdir), "230525-151052_1930517_eWbGeyrlBOPT.cali")
-
-    return tmpfile
+    return [os.path.join(str(tmpdir), f) for f in files]
 
 
 @pytest.fixture
@@ -262,3 +261,38 @@ def literal_thickets():
     thickets = [tk, tk2, tk3]
 
     return thickets
+
+
+@pytest.fixture
+def example_timeseries(data_dir, tmpdir):
+    """Timeseries Caliper file"""
+    cali_timeseries_dir = os.path.join(data_dir, "example-timeseries")
+    cali_file = os.path.join(cali_timeseries_dir, "timeseries.cali")
+
+    shutil.copy(cali_file, str(tmpdir))
+    tmpfile = os.path.join(str(tmpdir), "timeseries.cali")
+
+    return tmpfile
+
+
+def example_timeseries_cxx(data_dir, tmpdir):
+    """Timeseries Caliper file"""
+    cali_timeseries_dir = os.path.join(data_dir, "example-timeseries")
+    cali_file = os.path.join(cali_timeseries_dir, "cxx.cali")
+
+    shutil.copy(cali_file, str(tmpdir))
+    tmpfile = os.path.join(str(tmpdir), "cxx.cali")
+
+    return tmpfile
+
+
+@pytest.fixture
+def mem_power_timeseries(data_dir, tmpdir):
+    """Timeseries Caliper file"""
+    cali_timeseries_dir = os.path.join(data_dir, "example-timeseries")
+    cali_file = os.path.join(cali_timeseries_dir, "mem_power_timeseries.cali")
+
+    shutil.copy(cali_file, str(tmpdir))
+    tmpfile = os.path.join(str(tmpdir), "mem_power_timeseries.cali")
+
+    return tmpfile

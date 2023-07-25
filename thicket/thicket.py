@@ -208,6 +208,44 @@ class Thicket(GraphFrame):
             th.dataframe.set_index(index_names, inplace=True)
 
         return th
+    
+    @staticmethod
+    def thicketize_timeseries_graphframe(gf, iter_column="loop.start_iteration"):
+        """Necessary function to handle output from using GraphFrame readers.
+
+        Arguments:
+            gf (GraphFrame): hatchet GraphFrame object
+            iter_column (str): column name on which we split timeseries file
+                will be renamed to "iteration" and deleted, default is "loop.start_iteration"
+
+        Returns:
+            (thicket): Thicket object
+        """
+        th = Thicket(
+            graph=gf.graph,
+            dataframe=gf.dataframe,
+            exc_metrics=gf.exc_metrics,
+            inc_metrics=gf.inc_metrics,
+            metadata=gf.metadata,
+        )
+
+        # format metadata as a dict of dicts
+        temp_meta = {}
+        temp_meta["iteration"] = th.metadata
+        th.metadata = pd.DataFrame.from_dict(temp_meta, orient="index")
+        th.metadata.index.set_names("iteration", inplace=True)
+
+        # Use iter_column to set iteration dataframe index then delete it
+        iteration = int(th.dataframe[iter_column].dropna().max())
+        th.dataframe.drop(columns=[iter_column], inplace=True)
+        th.dataframe["iteration"] = iteration
+        index_names = list(th.dataframe.index.names)
+        index_names.insert(1, "iteration")
+        th.dataframe.reset_index(inplace=True)
+        th.dataframe.set_index(index_names, inplace=True)
+
+        return th
+
 
     @staticmethod
     def from_pickle(filename, **kwargs):
@@ -328,11 +366,34 @@ class Thicket(GraphFrame):
         tk = Thicket.thicketize_graphframe(GraphFrame.from_literal(graph_dict), profile)
 
         return tk
+    
+    def from_timeseries(
+        filename_or_caliperreader, level="loop.start_iteration", intersection=False
+    ):
+        """Read in a single Caliper .cali file that has timeseries records
+        gets split into a list of graphframes by hatchet.
+
+        Arguments:
+            filename_or_stream (str or file-like): name of a Caliper timeseries output file in
+                `.cali` format, or an open file object to read one
+            level (str): level to split the timeseries, default "loop.start_iteration"
+            intersection (bool): whether to perform intersection or union (default)
+        """
+        # if we are reading a timeseries file we will expect a list back from the reader
+        ens_list = []
+        gf_list = GraphFrame.from_timeseries(filename_or_caliperreader)
+        for gf in gf_list:
+            ens_list.append(Thicket.thicketize_timeseries_graphframe(gf, level))
+
+        # Perform unify ensemble
+        thicket_object = Thicket.unify_ensemble(ens_list)
+        return thicket_object
 
     @staticmethod
     def reader_dispatch(
         func, intersection, fill_perfdata, disable_tqdm, *args, **kwargs
     ):
+
         """Create a thicket from a list, directory of files, or a single file.
 
         Arguments:
