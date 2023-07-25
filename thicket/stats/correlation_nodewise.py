@@ -33,19 +33,9 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
             "To see a list of valid columns, please run Thicket.get_perf_columns()."
         )
 
-    if "profile" in thicket.dataframe.index.names:
-        verify_thicket_structures(
-            thicket.dataframe,
-            index=["node", "profile"],
-            columns=[column1, column2],
-        )
-    else:
-        verify_thicket_structures(
-            thicket.dataframe,
-            index=["node", "thicket"],
-            columns=[column1, column2],
-        )
-
+    verify_thicket_structures(
+        thicket.dataframe, index=["node"], columns=[column1, column2]
+    )
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         correlated = []
@@ -72,7 +62,9 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                     )[0]
                 )
             else:
-                raise ValueError("Invalid correlation")
+                raise ValueError(
+                    "Invalid correlation, options are pearson, spearman, and kendall."
+                )
         thicket.statsframe.dataframe[
             column1 + "_vs_" + column2 + " " + correlation
         ] = correlated

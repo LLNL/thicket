@@ -35,9 +35,7 @@ def percentiles(thicket, columns=None):
             "To see a list of valid columns, please run Thicket.get_perf_columns()."
         )
 
-    verify_thicket_structures(
-        thicket.dataframe, index=["node", "profile"], columns=columns
-    )
+    verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
@@ -62,7 +60,8 @@ def percentiles(thicket, columns=None):
             for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
                 percentiles.append(
                     np.percentile(
-                        thicket.dataframe.loc[node][(idx, column)], [25, 50, 75]
+                        thicket.dataframe.loc[node][(idx, column)],
+                        [25, 50, 75],
                     )
                 )
             # check to see if exclusive metric
