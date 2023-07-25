@@ -1,9 +1,7 @@
 import matplotlib.pyplot as plt
-import pytest
 import pandas as pd
 
 import thicket as th
-
 
 
 def test_histogram(example_cali):
@@ -13,16 +11,17 @@ def test_histogram(example_cali):
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
     n = pd.unique(th_ens.dataframe.reset_index()["node"])[4]
-    
+
     ax = th.display_histogram(th_ens, node=n, column="Min time/rank")
-    
-    # check to make sure that a figure is generated 
+
+    # check to make sure that a figure is generated
     assert plt.get_fignums()[0] == 1
-  
+
     # check to make sure ylabel is Count
     assert ax.axes.flat[0].get_ylabel() == "Count"
 
     plt.close()
+
 
 def test_histogram_columnar_join(columnar_join_thicket):
     thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
@@ -31,17 +30,18 @@ def test_histogram_columnar_join(columnar_join_thicket):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("", "name")]
 
-    n = pd.unique(combined_th.dataframe.reset_index()["node"])[4]
+    n = pd.unique(combined_th.dataframe.reset_index()["node"])[140]
 
-    ax = th.display_histogram(combined_th, node=n, column=("MPI1", "Min time/rank"))
-    
-    # check to make sure that a figure is generated 
+    ax = th.display_histogram(combined_th, node=n, column=(idx, "Min time/rank"))
+
+    # check to make sure that a figure is generated
     assert plt.get_fignums()[0] == 1
 
     # check to make sure ylabel is Count
-    assert ax.axes.flat[0].get_ylabel() == "Count" 
+    assert ax.axes.flat[0].get_ylabel() == "Count"
 
     plt.close()
+
 
 def test_heatmap(example_cali):
     th_ens = th.Thicket.from_caliperreader(example_cali)
@@ -51,8 +51,8 @@ def test_heatmap(example_cali):
 
     th.variance(th_ens, columns=["Min time/rank"])
 
-    ax=th.display_heatmap(th_ens, columns=["Min time/rank_var"])
-    
+    ax = th.display_heatmap(th_ens, columns=["Min time/rank_var"])
+
     # check to make sure that a figure is generated
     assert plt.get_fignums()[0] == 1
 
@@ -62,6 +62,7 @@ def test_heatmap(example_cali):
 
     plt.close()
 
+
 def test_heatmap_columnar_join(columnar_join_thicket):
     thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
     idx = combined_th.dataframe.columns.levels[0][0]
@@ -69,17 +70,18 @@ def test_heatmap_columnar_join(columnar_join_thicket):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("", "name")]
 
-    th.variance(combined_th, columns=[("MPI1","Min time/rank")])
+    th.variance(combined_th, columns=[(idx, "Min time/rank")])
 
-    ax=th.display_heatmap(combined_th, columns=[("MPI1","Min time/rank_var")])
+    ax = th.display_heatmap(combined_th, columns=[(idx, "Min time/rank_var")])
 
     # check to make sure that a figure is generated
     assert plt.get_fignums()[0] == 1
 
     # check to make sure x and y axes have proper x and y tick labels
-    assert "MPI1" == ax.get_text()
+    assert "Cuda128" == ax.get_text()
 
     plt.close()
+
 
 def test_display_boxplot(example_cali):
     th_ens = th.Thicket.from_caliperreader(example_cali)
@@ -89,7 +91,7 @@ def test_display_boxplot(example_cali):
 
     n = pd.unique(th_ens.dataframe.reset_index()["node"])[0:2]
 
-    ax=th.display_boxplot(th_ens, nodes=n, columns=["Min time/rank"])
+    ax = th.display_boxplot(th_ens, nodes=n, columns=["Min time/rank"])
 
     # check to make sure that a figure is generated
     assert plt.get_fignums()[0] == 1
@@ -100,6 +102,7 @@ def test_display_boxplot(example_cali):
 
     plt.close()
 
+
 def test_display_heatmap_columnar_join(columnar_join_thicket):
     thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
     idx = combined_th.dataframe.columns.levels[0][0]
@@ -109,11 +112,11 @@ def test_display_heatmap_columnar_join(columnar_join_thicket):
 
     n = pd.unique(combined_th.dataframe.reset_index()["node"])[0:1]
 
-    ax=th.display_boxplot(combined_th, nodes=n, columns=[("MPI1","Min time/rank")])
+    ax = th.display_boxplot(combined_th, nodes=n, columns=[(idx, "Min time/rank")])
 
     # check to make sure that a figure is generated
     assert plt.get_fignums()[0] == 1
-     
+
     # check to make sure xlabel and xticklabels are correct
     assert "MPI_Allreduce" in ax.get_xticklabels()[0].get_text()
     assert "node" in ax.get_xlabel()
