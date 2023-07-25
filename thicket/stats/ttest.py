@@ -2,6 +2,7 @@
 # Thicket Project Developers. See the top-level LICENSE file for details.
 #
 # SPDX-License-Identifier: MIT
+
 import pandas as pd
 from scipy.stats import ttest_ind_from_stats
 from scipy.stats import t
@@ -12,22 +13,21 @@ import thicket as th
 def __ttest(thicket, columns, alpha=0.05, *args, **kwargs):
     """Perform a ttest on a user selected thicket and columns.
 
-    Designed to take in a thicket and two column. For this private function
-    a tvalue and list of tstatistics will be returned to preference.py.
+    Designed to take in a thicket and two columns. For this private function a tvalue
+    and list of tstatistics will be returned to preference.py.
 
     Arguments:
         thicket (thicket): Thicket object
         columns (list): List of hardware/timing metrics to determine a preference for.
-                        Note, if using a columnar joined thicket a list of tuples must be passed in
-                        with the format (column index, column name).
-        alpha (num): Threshold for statistical significance. Value must be between 0 and 1.
-                     Default is set to 0.05.
+            Note, if using a columnar joined thicket a list of tuples must be passed in
+            with the format (column index, column name).
+        alpha (double): Threshold for statistical significance. Value must be between 0
+            and 1.
 
     Returns:
-       tvalue (num): Value to be used to determine a preference within preference.py.
-
+       tvalue (double): Value to be used to determine a preference within preference.py.
        tstatistics (list): List of values to be used to determine a preference within
-                           preference.py.
+            preference.py.
     """
     # check to see if alpha value is between 0 and 1
     if alpha <= 0 or alpha >= 1:
@@ -102,6 +102,7 @@ def __ttest(thicket, columns, alpha=0.05, *args, **kwargs):
             )
 
             t_statistics.append(tStatistic.statistic)
+
         # store results into thicket's aggregated statistics table
         aggregated_cols = columns[0] + " vs " + columns[1]
         thicket.statsframe.dataframe[aggregated_cols + "_tvalue"] = tvalue

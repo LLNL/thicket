@@ -3,10 +3,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-
 from ..utils import verify_thicket_structures
 from .ttest import __ttest
-
 
 __statistical_tests = {"ttest": __ttest}
 
@@ -14,7 +12,7 @@ __statistical_tests = {"ttest": __ttest}
 def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs):
     """Determine a preference between compilers, architecture, platform, etc.
 
-    Designed to take in a thicket and will append eight total columns  to the
+    Designed to take in a thicket and will append eight total columns to the
     aggregated statistics table. These columns will included: std, mean, tvalue,
     tstatistic, and preferred. As a note, preferred will stand for the preferred
     choice between two options.
@@ -27,10 +25,10 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
     Arguments:
         thicket (thicket): Thicket object
         columns (list): List of hardware/timing metrics to determine a preference for.
-                        Note, if using a columnar joined thicket a list of tuples must
-                        be passed in with the format (column index, column name).
-        comparison_func (function): User defined python or lambda function to decide a
-                                    preference.
+            Note, if using a columnar joined thicket a list of tuples must be passed in
+            with the format (column index, column name).
+        comparison_func (function): User-defined python or lambda function to decide a
+            preference.
         test (str): User selected test.
     """
     if test not in __statistical_tests.keys():
@@ -41,9 +39,11 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
         tvalue, t_statistics = __statistical_tests[test](
             thicket, columns, *args, **kwargs
         )
-    # thicket object wihtout columnar index
+
     pref_mean = []
     pref_std = []
+
+    # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         for i, t_statistic in enumerate(t_statistics):
             if t_statistic < -1 * tvalue or t_statistic > tvalue:
@@ -96,6 +96,7 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
                 aggregated_cols + "_std_preferred",
             )
         ] = pref_std
+
         thicket.statsframe.dataframe[
             (
                 "Preference",
