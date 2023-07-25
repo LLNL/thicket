@@ -9,7 +9,7 @@ import numpy as np
 from ..utils import verify_thicket_structures
 
 
-def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75]):
+def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **kwargs):
     """Calculate boxplots lowerfence, q1, q2, q3, iqr, upperfence, and outliers for each
     node in the performance data table.
 
