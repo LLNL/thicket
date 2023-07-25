@@ -23,4 +23,5 @@ from .stats.check_normality import check_normality
 from .stats.display_boxplot import display_boxplot
 from .stats.display_histogram import display_histogram
 from .stats.display_heatmap import display_heatmap
+from .stats.calc_temporal_pattern import calc_temporal_pattern
 from .version import __version__

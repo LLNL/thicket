@@ -151,3 +151,39 @@ def rajaperf_basecuda_xl_cali(data_dir, tmpdir):
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
     return [os.path.join(str(tmpdir), f) for f in files]
+
+
+@pytest.fixture
+def example_timeseries(data_dir, tmpdir):
+    """Timeseries Caliper file"""
+    cali_timeseries_dir = os.path.join(data_dir, "example-timeseries")
+    cali_file = os.path.join(cali_timeseries_dir, "timeseries.cali")
+
+    shutil.copy(cali_file, str(tmpdir))
+    tmpfile = os.path.join(str(tmpdir), "timeseries.cali")
+
+    return tmpfile
+
+
+@pytest.fixture
+def example_timeseries_cxx(data_dir, tmpdir):
+    """Timeseries Caliper file"""
+    cali_timeseries_dir = os.path.join(data_dir, "example-timeseries")
+    cali_file = os.path.join(cali_timeseries_dir, "cxx.cali")
+
+    shutil.copy(cali_file, str(tmpdir))
+    tmpfile = os.path.join(str(tmpdir), "cxx.cali")
+
+    return tmpfile
+
+
+@pytest.fixture
+def mem_power_timeseries(data_dir, tmpdir):
+    """Timeseries Caliper file"""
+    cali_timeseries_dir = os.path.join(data_dir, "example-timeseries")
+    cali_file = os.path.join(cali_timeseries_dir, "mem_power_timeseries.cali")
+
+    shutil.copy(cali_file, str(tmpdir))
+    tmpfile = os.path.join(str(tmpdir), "mem_power_timeseries.cali")
+
+    return tmpfile
