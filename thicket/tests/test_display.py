@@ -12,7 +12,9 @@ import thicket as th
 def test_histogram(example_cali):
     th_ens = th.Thicket.from_caliperreader(example_cali)
 
-    assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(th_ens.statsframe.dataframe.index.values)
+    assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
+        th_ens.statsframe.dataframe.index.values
+    )
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
     n = pd.unique(th_ens.dataframe.reset_index()["node"])[4]
@@ -31,7 +33,9 @@ def test_histogram(example_cali):
 def test_histogram_columnar_join(columnar_join_thicket):
     thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
     idx = combined_th.dataframe.columns.levels[0][0]
-    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(combined_th.statsframe.dataframe.index.values)
+    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
+        combined_th.statsframe.dataframe.index.values
+    )
 
     assert list(combined_th.statsframe.dataframe.columns) == [("", "name")]
 
@@ -51,7 +55,9 @@ def test_histogram_columnar_join(columnar_join_thicket):
 def test_heatmap(example_cali):
     th_ens = th.Thicket.from_caliperreader(example_cali)
 
-    assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(th_ens.statsframe.dataframe.index.values)
+    assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
+        th_ens.statsframe.dataframe.index.values
+    )
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
     th.variance(th_ens, columns=["Min time/rank"])
@@ -63,7 +69,9 @@ def test_heatmap(example_cali):
 
     # check to make sure x and y axes have proper x and y tick labels
     assert "Min time/rank_var" in ax.get_xticklabels()[0].get_text()
-    assert "{'name': 'Base_Seq', 'type': 'function'}" in ax.get_yticklabels()[0].get_text()
+    assert (
+        "{'name': 'Base_Seq', 'type': 'function'}" in ax.get_yticklabels()[0].get_text()
+    )
 
     plt.close()
 
@@ -71,7 +79,9 @@ def test_heatmap(example_cali):
 def test_heatmap_columnar_join(columnar_join_thicket):
     thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
     idx = combined_th.dataframe.columns.levels[0][0]
-    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(combined_th.statsframe.dataframe.index.values)
+    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
+        combined_th.statsframe.dataframe.index.values
+    )
 
     assert list(combined_th.statsframe.dataframe.columns) == [("", "name")]
 
@@ -82,7 +92,7 @@ def test_heatmap_columnar_join(columnar_join_thicket):
     # check to make sure that a figure is generated
     assert plt.get_fignums()[0] == 1
 
-    # check to make sure x and y axes have proper x and y tick labels
+    # check to make sure x, y and title have proper labels
     assert "Cuda128" == ax.get_text()
 
     plt.close()
@@ -91,7 +101,9 @@ def test_heatmap_columnar_join(columnar_join_thicket):
 def test_display_boxplot(example_cali):
     th_ens = th.Thicket.from_caliperreader(example_cali)
 
-    assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(th_ens.statsframe.dataframe.index.values)
+    assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
+        th_ens.statsframe.dataframe.index.values
+    )
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
     n = pd.unique(th_ens.dataframe.reset_index()["node"])[0:2]
@@ -111,7 +123,9 @@ def test_display_boxplot(example_cali):
 def test_display_heatmap_columnar_join(columnar_join_thicket):
     thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
     idx = combined_th.dataframe.columns.levels[0][0]
-    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(combined_th.statsframe.dataframe.index.values)
+    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
+        combined_th.statsframe.dataframe.index.values
+    )
 
     assert list(combined_th.statsframe.dataframe.columns) == [("", "name")]
 
