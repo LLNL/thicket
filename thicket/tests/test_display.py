@@ -37,7 +37,7 @@ def test_histogram_columnar_join(columnar_join_thicket):
         combined_th.statsframe.dataframe.index.values
     )
 
-    assert list(combined_th.statsframe.dataframe.columns) == [("", "name")]
+    assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
     n = pd.unique(combined_th.dataframe.reset_index()["node"])[140]
 
@@ -83,7 +83,7 @@ def test_heatmap_columnar_join(columnar_join_thicket):
         combined_th.statsframe.dataframe.index.values
     )
 
-    assert list(combined_th.statsframe.dataframe.columns) == [("", "name")]
+    assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
     th.variance(combined_th, columns=[(idx, "Min time/rank")])
 
@@ -127,7 +127,7 @@ def test_display_heatmap_columnar_join(columnar_join_thicket):
         combined_th.statsframe.dataframe.index.values
     )
 
-    assert list(combined_th.statsframe.dataframe.columns) == [("", "name")]
+    assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
     n = pd.unique(combined_th.dataframe.reset_index()["node"])[0:1]
 
@@ -136,6 +136,7 @@ def test_display_heatmap_columnar_join(columnar_join_thicket):
     # check to make sure that a figure is generated
     assert plt.get_fignums()[0] == 1
 
+    print(ax.get_xticklabels().get_text())
     # check to make sure xlabel and xticklabels are correct
     assert "MPI_Allreduce" in ax.get_xticklabels()[0].get_text()
     assert "node" in ax.get_xlabel()
