@@ -1,0 +1,10 @@
+{
+    "thicket_tutorial": {
+        "thicket_fname": "docs/thicket_tutorial.ipynb",
+        "tutorial_fname": "notebooks/thicket_tutorial.ipynb"
+    },
+    "test": {
+        "thicket_fname": "docs/test.ipynb",
+        "tutorial_fname": "notebooks/test.ipynb"
+    }
+}

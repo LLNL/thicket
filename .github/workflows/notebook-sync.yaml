@@ -1,0 +1,84 @@
+name: Sync tutorial notebooks with thicket-tutorials
+
+on:
+  push:
+    branches: [ develop ]
+      
+jobs:
+  parse_file_tracker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Parse config file
+        id: parse
+        run: |
+          jq_out=$(cat .github/workflows/tutorials_sync.json | jq -r 'to_entries|map("\(.key) \(.value.thicket_fname) \(.value.tutorial_fname)")|.[]')
+          IFS=$'\n' rows=( $( echo "$jq_out" | while read -r; do echo "$REPLY"; done ) )
+          out_list="["
+          change_track_filter=""
+          for row in "${rows[@]}"; do
+              arr=( $( xargs -n1 <<<"$row" ) )
+              out_list="$out_list{'name': '${arr[0]}', 'thicket_file': '${arr[1]}', 'tutorials_file': '${arr[2]}'},"
+              change_track_filter="${change_track_filter}${arr[0]}:\n  - ${arr[1]}\n"
+          done
+          out_list=${out_list%?}
+          out_list="$out_list]"
+          echo "tracked_files=$out_list" >> "$GITHUB_OUTPUT"
+          echo "change_track_filter=$change_track_filter" >> "$GITHUB_OUTPUT"
+
+  detect_changes:
+    needs: parse_file_tracker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get changed files
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            ${{ needs.outputs.change_track_filter }}
+      - name: Get number of changed files
+        id: calc_num
+        env:
+          changes: ${{ toJSON(changes.changes) }}
+        run: |
+          num_changes=$(echo $changes | jq '. | length')
+          echo "num_changes=$num_changes" >> "$GITHUB_OUTPUT"
+            
+  sync-files:
+    needs:
+      - parse_file_tracker
+      - detect_changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - if: ${{ needs.detect_changes.calc_num.num_changes > 0 }}
+        name: Sync Files
+        env:
+          GITHUB_TOKEN: ${{ secrets.SYNC_GITHUB_TOKEN }}
+        run: |
+          git config user.name 'Thicket Tutorial Sync Bot'
+          git config user.email '<>'
+          gh repo clone LLNL/thicket-tutorials tutorials
+          cd tutorials
+          username=$(gh api user | jq -r '.login')
+          num_prs=$(gh pr list -A "$username" | wc -l)
+          if test $num_prs -gt 1; then
+              echo "ERROR: multiple PRs from user $username exist!"
+              exit 1
+          elif test $num_prs -eq 1; then
+              pr_num=$(gh pr list --json number -A "$username" | jq -r '.[0].number')
+              gh pr close $pr_num -c "Closing for new sync PR" -d
+          fi
+          tutorials_dir=$(pwd)
+          cd ..
+          for elem in $(echo ${{ needs.parse_file_tracker.outputs.tracked_files }} | jq -r '.[]'); do
+              th_file=$(echo $elem | jq -r '.thicket_file')
+              tut_file=$(echo $elem | jq -r '.tutorials_file')
+              th_abs_file=$(realpath "./${th_file}")
+              tut_abs_file=$(realpath "${tutorials_dir}/${tut_file}")
+              if test -f $tut_abs_file; then
+                  rm $tut_abs_file
+              fi
+              cp $th_abs_file $tut_abs_file
+          done
