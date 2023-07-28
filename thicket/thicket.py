@@ -690,8 +690,8 @@ class Thicket(GraphFrame):
     ):
         """Visualize the Thicket as a tree
         Arguments:
-            metric_column (str, list, optional): Columns to use the metrics from. Defaults to None.
-            annotation_column (str, optional): Column to use to adding an annotation. Defaults to None.
+            metric_column (str, tuple, list, optional): Columns to use the metrics from. Defaults to None.
+            annotation_column (str, optional): Column to use as an annotation. Defaults to None.
             precision (int, optional): Precision of shown numbers. Defaults to 3.
             name_column (str, optional): Column of the node name. Defaults to "name".
             expand_name (bool, optional): Limits the lenght of the node name. Defaults to False.
