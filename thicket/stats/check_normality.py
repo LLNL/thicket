@@ -37,46 +37,42 @@ def check_normality(thicket, columns=None):
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
+        df = thicket.dataframe.reset_index().groupby("node").agg(stats.shapiro)
         for column in columns:
-            normality = []
-            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                pvalue = stats.shapiro(thicket.dataframe.loc[node][column])[1]
+            for i in len(df[column]):
+                pvalue = df[column][i].pvalue
 
                 if pvalue < 0.05:
-                    normality.append("False")
+                    thicket.statsframe.dataframe.loc[df.index[i], column + "_normality"] = "False"
                 elif pvalue > 0.05:
-                    normality.append("True")
+                    thicket.statsframe.dataframe.loc[df.index[i], column + "_normality"] = "True"
                 else:
-                    normality.append(pd.NA)
-            # check to see if exclusive metric
-            if column in thicket.exc_metrics:
-                thicket.statsframe.exc_metrics.append(column + "_normality")
-            # check to see if inclusive metric
-            else:
-                thicket.statsframe.inc_metrics.append(column + "_normality")
-
-            thicket.statsframe.dataframe[column + "_normality"] = normality
+                    thicket.stataframe.dataframe.loc[df.index[i], column + "_normality"] = pd.NA
+                # check to see if exclusive metric
+                if column in thicket.exc_metrics:
+                    thicket.statsframe.exc_metrics.append(column + "_normality")
+                # check to see if inclusive metric
+                else:
+                    thicket.statsframe.inc_metrics.append(column + "_normality")
     # columnar joined thicket object
     else:
+        df = thicket.dataframe.reset_index(level=1).groupby("node").agg(stats.shapiro)
         for idx, column in columns:
-            normality = []
-            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                pvalue = stats.shapiro(thicket.dataframe.loc[node][(idx, column)])[1]
+            for i in len(df[(idx, column)]):
+                pvalue = df[column][i].pvalue
 
                 if pvalue < 0.05:
-                    normality.append("False")
+                    thicket.statsframe.dataframe.loc[df.index[i], (idx, column + "_normality")] = "False"
                 elif pvalue > 0.05:
-                    normality.append("True")
+                    thicket.statsframe.dataframe.loc[df.index[i], (idx, column + "_normality")] = "True"
                 else:
-                    normality.append(pd.NA)
+                    thicket.statsframe.dataframe.loc[df.index[i], (idx, column + "_normality")] = pd.NA
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append((idx, column + "_normality"))
             # check to see if inclusive metric
             else:
                 thicket.statsframe.inc_metrics.append((idx, column + "_normality"))
-
-            thicket.statsframe.dataframe[(idx, column + "_normality")] = normality
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
