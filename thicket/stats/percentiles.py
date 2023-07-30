@@ -41,38 +41,38 @@ def percentiles(thicket, columns=None):
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
+        # select numeric columns within thicket (.quantiles) will not work without this step
+        numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+        df_num = thicket.dataframe.select_dtypes(include=numerics)
+        df = df_num.reset_index().groupby("node").quantile([0.25, 0.50, 0.75])
         for column in columns:
             percentiles = []
-            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                percentiles.append(
-                    np.percentile(thicket.dataframe.loc[node][column], [25, 50, 75])
-                )
+            for node in pd.unique(df.reset_index()["node"].tolist()):
+                percentiles.append(list(df.loc[node][column]))
+            thicket.statsframe.dataframe[column + "_percentiles"] = percentiles
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append(column + "_percentiles")
             # check to see if inclusive metric
             else:
                 thicket.statsframe.inc_metrics.append(column + "_percentiles")
-
-            thicket.statsframe.dataframe[column + "_percentiles"] = percentiles
     # columnar joined thicket object
     else:
+        numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+        df_num = thicket.dataframe.select_dtypes(include=numerics)
+        df = df_num.reset_index(level=1).groupby("node").quantile([0.25, 0.50, 0.75])
+        percentiles = []
         for idx, column in columns:
             percentiles = []
-            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                percentiles.append(
-                    np.percentile(
-                        thicket.dataframe.loc[node][(idx, column)], [25, 50, 75]
-                    )
-                )
+            for node in pd.unique(df.reset_index()["node"].tolist()):
+                percentiles.append(list(df.loc[node][(idx, column)]))
+            thicket.statsframe.dataframe[(idx, column + "_percentiles")] = percentiles
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append((idx, column + "_percentiles"))
             # check to see if inclusive metric
             else:
                 thicket.statsframe.inc_metrics.append((idx, column + "_percentiles"))
-
-            thicket.statsframe.dataframe[(idx, column + "_percentiles")] = percentiles
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
