@@ -3,7 +3,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-import numpy as np
 import pandas as pd
 
 from ..utils import verify_thicket_structures
@@ -40,7 +39,7 @@ def percentiles(thicket, columns=None):
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         # select numeric columns within thicket (.quantiles) will not work without this step
-        numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+        numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
         df_num = thicket.dataframe.select_dtypes(include=numerics)
         df = df_num.reset_index().groupby("node").quantile([0.25, 0.50, 0.75])
         for column in columns:
@@ -56,7 +55,7 @@ def percentiles(thicket, columns=None):
                 thicket.statsframe.inc_metrics.append(column + "_percentiles")
     # columnar joined thicket object
     else:
-        numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+        numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
         df_num = thicket.dataframe.select_dtypes(include=numerics)
         df = df_num.reset_index(level=1).groupby("node").quantile([0.25, 0.50, 0.75])
         percentiles = []

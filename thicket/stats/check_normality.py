@@ -41,11 +41,17 @@ def check_normality(thicket, columns=None):
                 pvalue = df[column][i].pvalue
 
                 if pvalue < 0.05:
-                    thicket.statsframe.dataframe.loc[df.index[i], column + "_normality"] = "False"
+                    thicket.statsframe.dataframe.loc[
+                        df.index[i], column + "_normality"
+                    ] = "False"
                 elif pvalue > 0.05:
-                    thicket.statsframe.dataframe.loc[df.index[i], column + "_normality"] = "True"
+                    thicket.statsframe.dataframe.loc[
+                        df.index[i], column + "_normality"
+                    ] = "True"
                 else:
-                    thicket.stataframe.dataframe.loc[df.index[i], column + "_normality"] = pd.NA
+                    thicket.stataframe.dataframe.loc[
+                        df.index[i], column + "_normality"
+                    ] = pd.NA
                 # check to see if exclusive metric
                 if column in thicket.exc_metrics:
                     thicket.statsframe.exc_metrics.append(column + "_normality")
@@ -60,11 +66,17 @@ def check_normality(thicket, columns=None):
                 pvalue = df[column][i].pvalue
 
                 if pvalue < 0.05:
-                    thicket.statsframe.dataframe.loc[df.index[i], (idx, column + "_normality")] = "False"
+                    thicket.statsframe.dataframe.loc[
+                        df.index[i], (idx, column + "_normality")
+                    ] = "False"
                 elif pvalue > 0.05:
-                    thicket.statsframe.dataframe.loc[df.index[i], (idx, column + "_normality")] = "True"
+                    thicket.statsframe.dataframe.loc[
+                        df.index[i], (idx, column + "_normality")
+                    ] = "True"
                 else:
-                    thicket.statsframe.dataframe.loc[df.index[i], (idx, column + "_normality")] = pd.NA
+                    thicket.statsframe.dataframe.loc[
+                        df.index[i], (idx, column + "_normality")
+                    ] = pd.NA
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
                 thicket.statsframe.exc_metrics.append((idx, column + "_normality"))

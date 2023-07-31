@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: MIT
 
 import numpy as np
-import pandas as pd
 
 from ..utils import verify_thicket_structures
 
