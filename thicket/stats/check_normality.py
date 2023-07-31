@@ -35,9 +35,14 @@ def check_normality(thicket, columns=None):
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
-        df = thicket.dataframe.reset_index().groupby("node").agg(stats.shapiro)
+        df = (
+            thicket.dataframe.drop(columns="name")
+            .reset_index()
+            .groupby("node")
+            .agg(stats.shapiro)
+        )
         for column in columns:
-            for i in len(df[column]):
+            for i in range(0, len(df[column])):
                 pvalue = df[column][i].pvalue
 
                 if pvalue < 0.05:
@@ -60,10 +65,15 @@ def check_normality(thicket, columns=None):
                     thicket.statsframe.inc_metrics.append(column + "_normality")
     # columnar joined thicket object
     else:
-        df = thicket.dataframe.reset_index(level=1).groupby("node").agg(stats.shapiro)
+        df = (
+            thicket.dataframe.drop(columns=("name", ""))
+            .reset_index(level=1)
+            .groupby("node")
+            .agg(stats.shapiro)
+        )
         for idx, column in columns:
-            for i in len(df[(idx, column)]):
-                pvalue = df[column][i].pvalue
+            for i in range(0, len(df[(idx, column)])):
+                pvalue = df[(idx, column)][i].pvalue
 
                 if pvalue < 0.05:
                     thicket.statsframe.dataframe.loc[
