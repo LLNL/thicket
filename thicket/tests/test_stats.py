@@ -305,7 +305,8 @@ def test_normality(rajaperf_basecuda_xl_cali):
 
 def test_normality_columnar_join(columnar_join_thicket):
     thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
-    idx = combined_th.dataframe.columns.levels[0][0]
+    # new data must be added before uncommenting, need 3 or more datapoints
+    # idx = combined_th.dataframe.columns.levels[0][0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values
     )
