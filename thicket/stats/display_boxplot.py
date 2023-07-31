@@ -33,9 +33,7 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
                 "Value(s) passed to node argument must be of type hatchet.node.Node."
             )
 
-    verify_thicket_structures(
-        thicket.dataframe, index=["node", "profile"], columns=columns
-    )
+    verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:

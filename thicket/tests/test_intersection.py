@@ -8,17 +8,17 @@ from thicket import Thicket as th
 
 
 def test_intersection(example_cali):
-    th_ens = th.from_caliperreader(example_cali[-1])
+    th_ens = th.from_caliperreader(example_cali)
 
-    remaining_node_list, removed_node_list = th_ens.intersection()
+    intersected_th = th_ens.intersection()
+
+    # Check original and intersected thickets
+    assert len(th_ens.dataframe) == 344
+    assert len(intersected_th.dataframe) == 4
 
     # Check that nodes are synced between graph and dataframe
     assert helpers._are_synced(th_ens.graph, th_ens.dataframe)
+    assert helpers._are_synced(intersected_th.graph, intersected_th.dataframe)
 
-    # Check graph length is equal to the remaining nodes
-    assert len(th_ens.graph) == len(remaining_node_list)
-
-    # Check node values match up
-    list_iter = iter(remaining_node_list)
-    for node in th_ens.graph.traverse():
-        assert node == next(list_iter)
+    # Check graph length
+    assert len(intersected_th.graph) < len(th_ens.graph)

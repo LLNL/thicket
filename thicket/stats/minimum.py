@@ -25,9 +25,7 @@ def minimum(thicket, columns=None):
             "To see a list of valid columns, please run Thicket.get_perf_columns()."
         )
 
-    verify_thicket_structures(
-        thicket.dataframe, index=["node", "profile"], columns=columns
-    )
+    verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:

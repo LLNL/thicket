@@ -71,7 +71,18 @@ def test_sync_nodes(example_cali):
     assert helpers._are_synced(th.graph, th.dataframe)
 
 
-def test_aggregated_statistics_table(example_cali):
+def test_statsframe(example_cali):
+    def _test_multiindex():
+        """Test statsframe when headers are multiindexed."""
+        th1 = Thicket.from_caliperreader(example_cali[0])
+        th2 = Thicket.from_caliperreader(example_cali[1])
+        th_cj = Thicket.columnar_join([th1, th2])
+
+        # Check column format
+        assert ("name", "") in th_cj.statsframe.dataframe.columns
+
+    _test_multiindex()
+
     th = Thicket.from_caliperreader(example_cali[-1])
 
     # Arbitrary value insertion in aggregated statistics table.
