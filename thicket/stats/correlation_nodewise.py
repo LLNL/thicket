@@ -48,27 +48,28 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
+        df = thicket.dataframe.reset_index().groupby("node")
         correlated = []
-        for node in thicket.statsframe.dataframe.index.tolist():
+        for node, item in df:
             if correlation == "pearson":
                 correlated.append(
                     stats.pearsonr(
-                        thicket.dataframe.loc[node][column1],
-                        thicket.dataframe.loc[node][column2],
+                        df.get_group(node)[column1],
+                        df.get_group(node)[column2],
                     )[0]
                 )
             elif correlation == "spearman":
                 correlated.append(
                     stats.spearmanr(
-                        thicket.dataframe.loc[node][column1],
-                        thicket.dataframe.loc[node][column2],
+                        df.get_group(node)[column1],
+                        df.get_group(node)[column2],
                     )[0]
                 )
             elif correlation == "kendall":
                 correlated.append(
                     stats.kendalltau(
-                        thicket.dataframe.loc[node][column1],
-                        thicket.dataframe.loc[node][column2],
+                        df.get_group(node)[column1],
+                        df.get_group(node)[column2],
                     )[0]
                 )
             else:
@@ -78,27 +79,28 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
         ] = correlated
     # columnar joined thicket object
     else:
+        df = thicket.dataframe.reset_index().groupby("node")
         correlated = []
-        for node in thicket.statsframe.dataframe.index.tolist():
+        for node, item in df:
             if correlation == "pearson":
                 correlated.append(
                     stats.pearsonr(
-                        thicket.dataframe.loc[node][column1],
-                        thicket.dataframe.loc[node][column2],
+                        df.get_group(node)[column1],
+                        df.get_group(node)[column2],
                     )[0]
                 )
             elif correlation == "spearman":
                 correlated.append(
                     stats.spearmanr(
-                        thicket.dataframe.loc[node][column1],
-                        thicket.dataframe.loc[node][column2],
+                        df.get_group(node)[column1],
+                        df.get_group(node)[column2],
                     )[0]
                 )
             elif correlation == "kendall":
                 correlated.append(
                     stats.kendalltau(
-                        thicket.dataframe.loc[node][column1],
-                        thicket.dataframe.loc[node][column2],
+                        df.get_group(node)[column1],
+                        df.get_group(node)[column2],
                     )[0]
                 )
             else:
