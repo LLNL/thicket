@@ -3,8 +3,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-import pandas as pd
-
 from ..utils import verify_thicket_structures
 
 
@@ -54,7 +52,6 @@ def maximum(thicket, columns=None):
             # check to see if inclusive metric
             else:
                 thicket.statsframe.inc_metrics.append((idx, column + "_max"))
-
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
