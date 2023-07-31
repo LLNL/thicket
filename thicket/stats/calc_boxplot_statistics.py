@@ -51,8 +51,9 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                 col + "_outliers" + q_list: [],
             }
 
-            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                values = thicket.dataframe.loc[node][col].tolist()
+            df = thicket.dataframe.reset_index().groupby("node")
+            for node, item in df:
+                values = df.get_group(node)[col].tolist()
 
                 q = np.quantile(values, quartiles)
                 q1 = q[0]
@@ -107,8 +108,9 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                 }
             }
 
-            for node in pd.unique(thicket.dataframe.reset_index()["node"].tolist()):
-                values = thicket.dataframe.loc[node][(idx, col)].tolist()
+            df = thicket.dataframe.reset_index().groupby("node")
+            for node, item in df:
+                values = df.get_group(node)[(idx, col)].tolist()
 
                 q = np.quantile(values, quartiles)
                 q1 = q[0]
