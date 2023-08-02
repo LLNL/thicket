@@ -253,6 +253,9 @@ class Ensemble:
                 inplace=True,
             )
 
+            # Sort DataFrame
+            combined_th.dataframe.sort_index(inplace=True)
+
             return new_mappings
 
         def _handle_statsframe():
@@ -312,7 +315,7 @@ class Ensemble:
             # Replace "NaN" with "None" in columns of string type
             for col in perfdata.columns:
                 if pd.api.types.is_string_dtype(perfdata[col].dtype):
-                    perfdata[col].replace(fill_value, None, inplace=True)
+                    perfdata[col].replace({fill_value: None}, inplace=True)
 
         def _superthicket_metadata(metadata):
             """Aggregate data in Metadata"""
