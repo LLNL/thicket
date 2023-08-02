@@ -317,6 +317,8 @@ class Ensemble:
                 if pd.api.types.is_string_dtype(perfdata[col].dtype):
                     perfdata[col].replace({fill_value: None}, inplace=True)
 
+            return perfdata
+
         def _superthicket_metadata(metadata):
             """Aggregate data in Metadata"""
 
@@ -371,7 +373,7 @@ class Ensemble:
         unify_profile_mapping = OrderedDict(sorted(unify_profile_mapping.items()))
 
         # Insert missing rows in dataframe
-        _fill_perfdata(unify_df)
+        unify_df = _fill_perfdata(unify_df)
 
         # Metadata-specific operations
         if superthicket:
