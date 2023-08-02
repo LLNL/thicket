@@ -249,48 +249,87 @@ class Thicket(GraphFrame):
                     + "' is not a valid type to be read from."
                 )
 
-        # Perform unify ensemble
-        thicket_object = Thicket.vertical(ens_list)
+        # Perform ensembling operation
+        calltree = "union"
         if intersection:
-            thicket_object = thicket_object.intersection()
+            calltree = "intersection"
+        thicket_object = Thicket.concat_thickets(
+            thickets=ens_list,
+            axis="index",
+            calltree=calltree,
+        )
+
         return thicket_object
+
+    @staticmethod
+    def concat_thickets(thickets, axis="index", calltree="union", **kwargs):
+        """?
+
+        Arguments:
+            thickets (list): list of thicket objects
+            axis (str): axis to concatenate on -> "index" or "column"
+            calltree (str): calltree to use -> "union" or "intersection"
+
+        Returns:
+            (thicket): concatenated thicket
+        """
+
+        def _index(thickets, superthicket=False):
+            thicket_parts = Ensemble._index(
+                thickets=thickets, superthicket=superthicket
+            )
+
+            return Thicket(
+                graph=thicket_parts[0],
+                dataframe=thicket_parts[1],
+                exc_metrics=thicket_parts[2],
+                inc_metrics=thicket_parts[3],
+                metadata=thicket_parts[4],
+                profile=thicket_parts[5],
+                profile_mapping=thicket_parts[6],
+            )
+
+        def _columns(thickets, header_list=None, column_name=None):
+            combined_thicket = Ensemble._columns(
+                thickets=thickets, header_list=header_list, column_name=column_name
+            )
+
+            return combined_thicket
+
+        if calltree not in ["union", "intersection"]:
+            raise ValueError("calltree must be 'union' or 'intersection'")
+
+        if axis == "index":
+            ct = _index(thickets, **kwargs)
+        elif axis == "columns":
+            ct = _columns(thickets, **kwargs)
+        else:
+            raise ValueError("axis must be 'index' or 'columns'")
+
+        if calltree == "intersection":
+            ct = ct.intersection()
+
+        return ct
 
     @staticmethod
     def columnar_join(thicket_list, header_list=None, column_name=None):
         warnings.warn(
-            "columnar_join is deprecated and will be removed in a future release. Use 'horizontal' instead."
+            "columnar_join is deprecated and will be removed in a future release. Use 'concat_thickets(axis='columns'...)' instead."
         )
-        return Thicket.horizontal(
-            thicket_list, header_list=header_list, column_name=column_name
+        return Thicket.concat_thickets(
+            thickets=thicket_list,
+            axis="columns",
+            header_list=header_list,
+            column_name=column_name,
         )
 
     @staticmethod
     def unify_ensemble(th_list, superthicket=False):
         warnings.warn(
-            "unify_ensemble is deprecated and will be removed in a future release. Use 'vertical' instead."
+            "unify_ensemble is deprecated and will be removed in a future release. Use 'concat_thickets(axis='index'...)' instead."
         )
-        return Thicket.vertical(th_list, superthicket=superthicket)
-
-    @staticmethod
-    def horizontal(thickets, header_list=None, column_name=None):
-        combined_thicket = Ensemble.horizontal(
-            thickets=thickets, header_list=header_list, column_name=column_name
-        )
-
-        return combined_thicket
-
-    @staticmethod
-    def vertical(thickets, superthicket=False):
-        thicket_parts = Ensemble.vertical(thickets=thickets, superthicket=superthicket)
-
-        return Thicket(
-            graph=thicket_parts[0],
-            dataframe=thicket_parts[1],
-            exc_metrics=thicket_parts[2],
-            inc_metrics=thicket_parts[3],
-            metadata=thicket_parts[4],
-            profile=thicket_parts[5],
-            profile_mapping=thicket_parts[6],
+        return Thicket.concat_thickets(
+            thickets=th_list, axis="index", superthicket=superthicket
         )
 
     @staticmethod
@@ -627,7 +666,7 @@ class Thicket(GraphFrame):
             # Append copy to list
             th_copy_list.append(th_copy)
 
-        return Thicket.vertical(th_copy_list, superthicket=True)
+        return Thicket._index(th_copy_list, superthicket=True)
 
     def to_json(self, ensemble=True, metadata=True, stats=True):
         jsonified_thicket = {}

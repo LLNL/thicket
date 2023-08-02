@@ -16,6 +16,7 @@ from .utils import verify_sorted_profile, verify_thicket_structures
 class Ensemble:
     """Operations pertaining to ensembling."""
 
+    @staticmethod
     def _unify(thickets, inplace=False):
         """Create union graph from list of thickets and sync their DataFrames.
 
@@ -46,12 +47,12 @@ class Ensemble:
         return union_graph, _thickets
 
     @staticmethod
-    def horizontal(
+    def _columns(
         thickets,
         header_list=None,
         column_name=None,
     ):
-        """Join Thicket attributes horizontally. For DataFrames, this implies expanding
+        """Join Thicket attributes. For DataFrames, this implies expanding
         in the column direction. New column multi-index will be created with columns
         under separate indexer headers.
 
@@ -291,7 +292,7 @@ class Ensemble:
         return combined_th
 
     @staticmethod
-    def vertical(thickets, superthicket=False):
+    def _index(thickets, superthicket=False):
         """Unify a list of thickets into a single thicket
 
         Arguments:
