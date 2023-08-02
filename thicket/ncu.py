@@ -33,7 +33,7 @@ class NCUReader:
                 predicate (function): predicate function
             """
             if is_regex:
-                return lambda row: row["name"].apply(lambda x: kernel in x).all()
+                return lambda row: row["name"].apply(lambda x: kernel in x if x is not None else False).all()
             else:
                 return lambda row: row["name"].apply(lambda x: x == kernel).all()
 
