@@ -489,8 +489,9 @@ class Thicket(GraphFrame):
             Arguments:
                 col (pd.Series): column of data
             """
-            if col.dtype == np.dtype("float64") or col.dtype == np.dtype("int64"):
-                return col.mean()
+            agg_func = ncureader.rollup_operations[rollup_dict[col.name]]
+            if agg_func is not None and pd.api.types.is_numeric_dtype(col):
+                return agg_func(col)
             else:
                 return col
 
@@ -498,7 +499,7 @@ class Thicket(GraphFrame):
         ncureader = NCUReader()
 
         # Dictionary of NCU data
-        data_dict = ncureader._read_ncu(self, ncu_report_mapping)
+        data_dict, rollup_dict = ncureader._read_ncu(self, ncu_report_mapping)
 
         # Create empty df
         ncu_df = pd.DataFrame()
@@ -510,9 +511,7 @@ class Thicket(GraphFrame):
             agg_data["node"] = node_profile[0]
             agg_data["profile"] = node_profile[1]
             # Discard other rows (should be duplicates).
-            agg_data = agg_data.loc[
-                0,
-            ]
+            agg_data = agg_data.loc[0,]
             # Append to main df
             ncu_df = ncu_df.append(agg_data, ignore_index=True)
         ncu_df = ncu_df.set_index(["node", "profile"])
