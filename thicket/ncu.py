@@ -5,14 +5,23 @@
 
 from collections import defaultdict
 
+from hatchet import QueryMatcher
+import pandas as pd
 from tqdm import tqdm
 
-from hatchet import QueryMatcher
 import ncu_report
 
 
 class NCUReader:
     """Object to interface and pull NCU report data into Thicket"""
+
+    rollup_operations = {
+        None: None,
+        ncu_report.IMetric.RollupOperation_AVG: pd.Series.mean,  # 1
+        ncu_report.IMetric.RollupOperation_MAX: pd.Series.max,  # 2
+        ncu_report.IMetric.RollupOperation_MIN: pd.Series.min,  # 3
+        ncu_report.IMetric.RollupOperation_SUM: pd.Series.sum,  # 4
+    }
 
     @staticmethod
     def _build_query_from_ncu_trace(kernel_call_trace):
@@ -33,7 +42,11 @@ class NCUReader:
                 predicate (function): predicate function
             """
             if is_regex:
-                return lambda row: row["name"].apply(lambda x: kernel in x if x is not None else False).all()
+                return (
+                    lambda row: row["name"]
+                    .apply(lambda x: kernel in x if x is not None else False)
+                    .all()
+                )
             else:
                 return lambda row: row["name"].apply(lambda x: x == kernel).all()
 
@@ -63,6 +76,7 @@ class NCUReader:
 
         # Initialize dict
         data_dict = defaultdict(list)
+        rollup_dict = {}
         # Kernel mapping from NCU kernel to thicket node to save re-querying
         kernel_map = {}
 
@@ -126,6 +140,7 @@ class NCUReader:
                         metric_dict = {}
                         for metric in [action[name] for name in action.metric_names()]:
                             metric_dict[metric.name()] = metric.value()
+                            rollup_dict[metric.name()] = metric.rollup_operation()
                         data_dict[(matched_node, ncu_hash)].append(metric_dict)
 
-        return data_dict
+        return data_dict, rollup_dict
