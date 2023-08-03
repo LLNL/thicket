@@ -6,7 +6,7 @@
 import pytest
 
 from thicket import Thicket, EmptyMetadataTable
-from test_columnar_join import test_columnar_join
+from test_concat_thickets import test_concat_thickets_columns
 from utils import check_identity
 
 
@@ -89,7 +89,7 @@ def test_groupby(example_cali):
     check_groupby(th, columns_values)
 
 
-def test_groupby_columnar_join(example_cali):
+def test_groupby_concat_thickets_columns(example_cali):
     """Tests case where the Sub-Thickets of a groupby are used in a columnar join"""
     # example thicket
     th = Thicket.from_caliperreader(example_cali)
@@ -106,23 +106,24 @@ def test_groupby_columnar_join(example_cali):
     th_list[2].metadata[selected_column] = problem_size
     th_list[3].metadata[selected_column] = problem_size
 
-    thicket_list = [th_list[0], th_list[1], th_list[2], th_list[3]]
-    thicket_list_cp = [
+    thickets = [th_list[0], th_list[1], th_list[2], th_list[3]]
+    thickets_cp = [
         th_list[0].deepcopy(),
         th_list[1].deepcopy(),
         th_list[2].deepcopy(),
         th_list[3].deepcopy(),
     ]
 
-    combined_th = Thicket.columnar_join(
-        thicket_list=thicket_list,
+    combined_th = Thicket.concat_thickets(
+        thickets=thickets,
+        axis="columns",
         column_name=selected_column,
     )
 
-    test_columnar_join((thicket_list, thicket_list_cp, combined_th))
+    test_concat_thickets_columns((thickets, thickets_cp, combined_th))
 
 
-def test_groupby_columnar_join_subthickets(example_cali):
+def test_groupby_concat_thickets_columns_subthickets(example_cali):
     """Tests case where some specific Sub-Thickets of a groupby are used in a columnar join"""
     # example thicket
     th = Thicket.from_caliperreader(example_cali)
@@ -137,15 +138,16 @@ def test_groupby_columnar_join_subthickets(example_cali):
     th_list[0].metadata[selected_column] = problem_size
     th_list[1].metadata[selected_column] = problem_size
 
-    thicket_list = [th_list[0], th_list[1]]
-    thicket_list_cp = [
+    thickets = [th_list[0], th_list[1]]
+    thickets_cp = [
         th_list[0].deepcopy(),
         th_list[1].deepcopy(),
     ]
 
-    combined_th = Thicket.columnar_join(
-        thicket_list=thicket_list,
+    combined_th = Thicket.concat_thickets(
+        thickets=thickets,
+        axis="columns",
         column_name=selected_column,
     )
 
-    test_columnar_join((thicket_list, thicket_list_cp, combined_th))
+    test_concat_thickets_columns((thickets, thickets_cp, combined_th))

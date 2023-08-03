@@ -12,10 +12,28 @@ from test_filter_metadata import filter_one_column
 from test_filter_metadata import filter_multiple_and
 from test_filter_stats import check_filter_stats
 from test_query import check_query
+from thicket import Thicket
 
 
-def test_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_concat_thickets_index(mpi_scaling_cali):
+    th_27 = Thicket.from_caliperreader(mpi_scaling_cali[0])
+    th_64 = Thicket.from_caliperreader(mpi_scaling_cali[1])
+
+    tk = Thicket.concat_thickets([th_27, th_64])
+
+    # Check dataframe shape
+    tk.dataframe.shape == (90, 7)
+
+    # Check that the two Thickets are equivalent
+    assert tk
+
+    # Check specific values. Row order can vary so use "sum" to check
+    node = tk.dataframe.index.get_level_values("node")[8]
+    assert sum(tk.dataframe.loc[node, "Min time/rank"]) == 0.000453
+
+
+def test_concat_thickets_columns(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     # Check no original objects modified
     for i in range(len(thicket_list)):
         assert thicket_list[i].dataframe.equals(thicket_list_cp[i].dataframe)
@@ -55,8 +73,8 @@ def test_columnar_join(columnar_join_thicket):
     ).all()
 
 
-def test_filter_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_filter_concat_thickets_columns(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     # columns and corresponding values to filter by
     columns_values = {
         ("MPI1", "mpi.world.size"): [27],
@@ -67,8 +85,8 @@ def test_filter_columnar_join(columnar_join_thicket):
     filter_multiple_and(combined_th, columns_values)
 
 
-def test_filter_stats_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_filter_stats_concat_thickets_columns(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     # columns and corresponding values to filter by
     columns_values = {
         ("test", "test_string_column"): ["less than 20"],
@@ -86,8 +104,8 @@ def test_filter_stats_columnar_join(columnar_join_thicket):
     check_filter_stats(combined_th, columns_values)
 
 
-def test_query_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_query_concat_thickets_columns(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     # test arguments
     hnids = [0, 1, 2, 3, 5, 6, 8, 9]
     query = (

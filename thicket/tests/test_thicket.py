@@ -76,7 +76,7 @@ def test_statsframe(example_cali):
         """Test statsframe when headers are multiindexed."""
         th1 = Thicket.from_caliperreader(example_cali[0])
         th2 = Thicket.from_caliperreader(example_cali[1])
-        th_cj = Thicket.columnar_join([th1, th2])
+        th_cj = Thicket.concat_thickets([th1, th2], axis="columns")
 
         # Check column format
         assert ("name", "") in th_cj.statsframe.dataframe.columns
@@ -143,23 +143,6 @@ def test_thicketize_graphframe(example_cali):
     th1.dataframe.reset_index(level="profile", inplace=True)
     th1.dataframe.drop("profile", axis=1, inplace=True)
     assert ht1.dataframe.equals(th1.dataframe)
-
-
-def test_unify_ensemble(mpi_scaling_cali):
-    th_27 = Thicket.from_caliperreader(mpi_scaling_cali[0])
-    th_64 = Thicket.from_caliperreader(mpi_scaling_cali[1])
-
-    tk = Thicket.unify_ensemble([th_27, th_64])
-
-    # Check dataframe shape
-    tk.dataframe.shape == (90, 7)
-
-    # Check that the two Thickets are equivalent
-    assert tk
-
-    # Check specific values. Row order can vary so use "sum" to check
-    node = tk.dataframe.index.get_level_values("node")[8]
-    assert sum(tk.dataframe.loc[node, "Min time/rank"]) == 0.000453
 
 
 def test_unique_metadata_base_cuda(rajaperf_basecuda_xl_cali):

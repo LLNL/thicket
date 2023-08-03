@@ -263,7 +263,7 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def concat_thickets(thickets, axis="index", calltree="union", **kwargs):
-        """?
+        """Join thickets together on index or columns. The calltree can either be unioned or intersected which will affect the other structures.
 
         Arguments:
             thickets (list): list of thicket objects
@@ -657,7 +657,7 @@ class Thicket(GraphFrame):
             # Append copy to list
             th_copy_list.append(th_copy)
 
-        return Thicket._index(th_copy_list, superthicket=True)
+        return Thicket.concat_thickets(th_copy_list, superthicket=True)
 
     def to_json(self, ensemble=True, metadata=True, stats=True):
         jsonified_thicket = {}

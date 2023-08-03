@@ -12,8 +12,8 @@ from thicket import Thicket
 
 
 @pytest.fixture
-def columnar_join_thicket(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
-    """Generator for 'columnar_join' thicket.
+def thicket_axis_columns(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
+    """Generator for 'concat_thickets(axis="columns")' thicket.
 
     Arguments:
         mpi_scaling_cali (list): List of Caliper files for MPI scaling study.
@@ -39,16 +39,17 @@ def columnar_join_thicket(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
     th_mpi_2_deep = th_mpi_2.deepcopy()
     th_cuda128_deep = th_cuda128.deepcopy()
 
-    thicket_list = [th_mpi_1, th_mpi_2, th_cuda128]
-    thicket_list_cp = [th_mpi_1_deep, th_mpi_2_deep, th_cuda128_deep]
+    thickets = [th_mpi_1, th_mpi_2, th_cuda128]
+    thickets_cp = [th_mpi_1_deep, th_mpi_2_deep, th_cuda128_deep]
 
-    combined_th = Thicket.columnar_join(
-        thicket_list=thicket_list,
+    combined_th = Thicket.concat_thickets(
+        thickets=thickets,
+        axis="columns",
         header_list=["MPI1", "MPI2", "Cuda128"],
         column_name="ProblemSize",
     )
 
-    return thicket_list, thicket_list_cp, combined_th
+    return thickets, thickets_cp, combined_th
 
 
 @pytest.fixture
