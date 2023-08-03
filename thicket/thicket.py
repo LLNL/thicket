@@ -289,9 +289,9 @@ class Thicket(GraphFrame):
                 profile_mapping=thicket_parts[6],
             )
 
-        def _columns(thickets, header_list=None, column_name=None):
+        def _columns(thickets, headers=None, column_name=None):
             combined_thicket = Ensemble._columns(
-                thickets=thickets, header_list=header_list, column_name=column_name
+                thickets=thickets, headers=headers, column_name=column_name
             )
 
             return combined_thicket

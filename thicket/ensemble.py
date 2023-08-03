@@ -49,7 +49,7 @@ class Ensemble:
     @staticmethod
     def _columns(
         thickets,
-        header_list=None,
+        headers=None,
         column_name=None,
     ):
         """Join Thicket attributes. For DataFrames, this implies expanding
@@ -57,7 +57,7 @@ class Ensemble:
         under separate indexer headers.
 
         Arguments:
-            header_list (list): List of headers to use for the new columnar multi-index
+            headers (list): List of headers to use for the new columnar multi-index
             column_name (str): Name of the column from the metadata table to join on. If
                 no argument is provided, it is assumed that there is no profile-wise
                 relationship between the thickets.
@@ -127,7 +127,7 @@ class Ensemble:
             for i in range(len(thicket_list_cp)):
                 thicket_list_cp[i].metadata.columns = pd.MultiIndex.from_tuples(
                     _create_multiindex_columns(
-                        thicket_list_cp[i].metadata, header_list[i]
+                        thicket_list_cp[i].metadata, headers[i]
                     )
                 )
 
@@ -164,9 +164,9 @@ class Ensemble:
                 (dict): dictionary mapping old profiles to new profiles
             """
             # Create header list if not provided
-            nonlocal header_list
-            if header_list is None:
-                header_list = [i for i in range(len(thickets))]
+            nonlocal headers
+            if headers is None:
+                headers = [i for i in range(len(thickets))]
 
             # Update index to reflect performance data table index
             new_mappings = {}  # Dictionary mapping old profiles to new profiles
@@ -184,7 +184,7 @@ class Ensemble:
                         pd.Series(
                             thicket_list_cp[i]
                             .dataframe["new_profiles"]
-                            .map(lambda x: (x, header_list[i]))
+                            .map(lambda x: (x, headers[i]))
                             .values,
                             index=thicket_list_cp[i].dataframe["profile"],
                         ).to_dict()
@@ -206,7 +206,7 @@ class Ensemble:
                         pd.Series(
                             thicket_list_cp[i]
                             .dataframe[column_name]
-                            .map(lambda x: (x, header_list[i]))
+                            .map(lambda x: (x, headers[i]))
                             .values,
                             index=thicket_list_cp[i].dataframe["profile"],
                         ).to_dict()
@@ -219,7 +219,7 @@ class Ensemble:
 
             # Create tuple columns
             new_columns = [
-                _create_multiindex_columns(th.dataframe, header_list[i])
+                _create_multiindex_columns(th.dataframe, headers[i])
                 for i, th in enumerate(thicket_list_cp)
             ]
             # Clear old metrics (non-tuple)
@@ -250,7 +250,7 @@ class Ensemble:
             for node in nodes:
                 combined_th.dataframe.loc[node, "name"] = node.frame["name"]
             combined_th.dataframe.drop(
-                columns=[(header_list[i], "name") for i in range(len(header_list))],
+                columns=[(headers[i], "name") for i in range(len(headers))],
                 inplace=True,
             )
 
