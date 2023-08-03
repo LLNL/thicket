@@ -35,7 +35,13 @@ class Ensemble:
         # Unify graphs if "self" and "other" do not have the same graph
         union_graph = _thickets[0].graph
         for i in range(len(_thickets) - 1):
-            if _thickets[i].graph != _thickets[i + 1].graph:
+            # Check for same graph id (fast) if not -> check for equality (slow)
+            if (
+                _thickets[i].graph is _thickets[i + 1].graph
+                or _thickets[i].graph == _thickets[i + 1].graph
+            ):
+                continue
+            else:
                 union_graph = union_graph.union(_thickets[i + 1].graph)
         for i in range(len(_thickets)):
             # Set all graphs to the union graph
