@@ -138,9 +138,7 @@ class Ensemble:
         def _handle_misc():
             """Misceallaneous Thicket object operations."""
             for i in range(1, len(thickets_cp)):
-                combined_th.profile += thickets_cp[
-                    i
-                ].profile  # Update "profile" object
+                combined_th.profile += thickets_cp[i].profile  # Update "profile" object
                 combined_th.profile_mapping.update(
                     thickets_cp[i].profile_mapping
                 )  # Update "profile_mapping" object
@@ -174,9 +172,7 @@ class Ensemble:
                     thickets_cp[i].add_column_from_metadata_to_ensemble(
                         "new_profiles", drop=True
                     )
-                    thickets_cp[i].dataframe.reset_index(
-                        level="profile", inplace=True
-                    )
+                    thickets_cp[i].dataframe.reset_index(level="profile", inplace=True)
                     new_mappings.update(
                         pd.Series(
                             thickets_cp[i]
@@ -195,12 +191,8 @@ class Ensemble:
                     )
             else:  # Change second-level index to be from metadata's "metadata_key" column
                 for i in range(len(thickets_cp)):
-                    thickets_cp[i].add_column_from_metadata_to_ensemble(
-                        metadata_key
-                    )
-                    thickets_cp[i].dataframe.reset_index(
-                        level="profile", inplace=True
-                    )
+                    thickets_cp[i].add_column_from_metadata_to_ensemble(metadata_key)
+                    thickets_cp[i].dataframe.reset_index(level="profile", inplace=True)
                     new_mappings.update(
                         pd.Series(
                             thickets_cp[i]
