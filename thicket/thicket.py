@@ -313,23 +313,14 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def columnar_join(thicket_list, header_list=None, column_name=None):
-        warnings.warn(
-            "columnar_join is deprecated and will be removed in a future release. Use 'concat_thickets(axis='columns'...)' instead."
-        )
-        return Thicket.concat_thickets(
-            thickets=thicket_list,
-            axis="columns",
-            header_list=header_list,
-            column_name=column_name,
+        raise ValueError(
+            "columnar_join is deprecated. Use 'concat_thickets(axis='columns'...)' instead."
         )
 
     @staticmethod
     def unify_ensemble(th_list, superthicket=False):
-        warnings.warn(
-            "unify_ensemble is deprecated and will be removed in a future release. Use 'concat_thickets(axis='index'...)' instead."
-        )
-        return Thicket.concat_thickets(
-            thickets=th_list, axis="index", superthicket=superthicket
+        raise ValueError(
+            "unify_ensemble is deprecated. Use 'concat_thickets(axis='index'...)' instead."
         )
 
     @staticmethod
