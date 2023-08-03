@@ -50,8 +50,8 @@ def display_heatmap(thicket, columns=None, **kwargs):
             else:
                 cols.append(columns[i][1])
 
-        ax = sns.heatmap(
-            thicket.statsframe.dataframe[initial_idx][cols], **kwargs
-        ).set_title(initial_idx)
+        ax = sns.heatmap(thicket.statsframe.dataframe[initial_idx][cols], **kwargs)
+
+        ax.set_title(initial_idx)
 
         return ax
