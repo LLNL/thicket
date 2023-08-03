@@ -12,6 +12,11 @@ def test_intersection(example_cali):
 
     intersected_th = th_ens.intersection()
 
+    intersected_th_other = th.from_caliperreader(example_cali, intersection=True)
+
+    # Check other methodology
+    assert len(intersected_th.graph) == len(intersected_th_other.graph)
+
     # Check original and intersected thickets
     assert len(th_ens.dataframe) == 344
     assert len(intersected_th.dataframe) == 4
