@@ -117,7 +117,7 @@ def test_groupby_concat_thickets_columns(example_cali):
     combined_th = Thicket.concat_thickets(
         thickets=thickets,
         axis="columns",
-        column_name=selected_column,
+        metadata_key=selected_column,
     )
 
     test_concat_thickets_columns((thickets, thickets_cp, combined_th))
@@ -147,7 +147,7 @@ def test_groupby_concat_thickets_columns_subthickets(example_cali):
     combined_th = Thicket.concat_thickets(
         thickets=thickets,
         axis="columns",
-        column_name=selected_column,
+        metadata_key=selected_column,
     )
 
     test_concat_thickets_columns((thickets, thickets_cp, combined_th))

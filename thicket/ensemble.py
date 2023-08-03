@@ -50,16 +50,16 @@ class Ensemble:
     def _columns(
         thickets,
         headers=None,
-        column_name=None,
+        metadata_key=None,
     ):
-        """Join Thicket attributes. For DataFrames, this implies expanding
+        """Concatenate Thicket attributes horizontally. For DataFrames, this implies expanding
         in the column direction. New column multi-index will be created with columns
         under separate indexer headers.
 
         Arguments:
             headers (list): List of headers to use for the new columnar multi-index
-            column_name (str): Name of the column from the metadata table to join on. If
-                no argument is provided, it is assumed that there is no profile-wise
+            metadata_key (str): Name of the column from the metadata tables to replace the 'profile'
+                index. If no argument is provided, it is assumed that there is no profile-wise
                 relationship between the thickets.
 
         Returns:
@@ -73,10 +73,10 @@ class Ensemble:
                 verify_thicket_structures(th.dataframe, index=["node", "profile"])
                 verify_thicket_structures(th.statsframe.dataframe, index=["node"])
                 verify_thicket_structures(th.metadata, index=["profile"])
-            # Check for column_name in metadata
-            if column_name:
+            # Check for metadata_key in metadata
+            if metadata_key:
                 for th in thickets:
-                    verify_thicket_structures(th.metadata, columns=[column_name])
+                    verify_thicket_structures(th.metadata, columns=[metadata_key])
             # Check length of profiles match
             for i in range(len(thickets) - 1):
                 if len(thickets[i].profile) != len(thickets[i + 1].profile):
@@ -85,9 +85,9 @@ class Ensemble:
                             len(thickets[i].profile), len(thickets[i + 1].profile)
                         )
                     )
-            # Ensure all thickets profiles are sorted. Must be true when column_name=None to
+            # Ensure all thickets profiles are sorted. Must be true when metadata_key=None to
             # guarantee performance data table and metadata table match up.
-            if column_name is None:
+            if metadata_key is None:
                 for th in thickets:
                     verify_sorted_profile(th.dataframe)
                     verify_sorted_profile(th.metadata)
@@ -115,12 +115,12 @@ class Ensemble:
             # Update index to reflect performance data table index
             for i in range(len(thicket_list_cp)):
                 thicket_list_cp[i].metadata.reset_index(drop=True, inplace=True)
-            if column_name is None:
+            if metadata_key is None:
                 for i in range(len(thicket_list_cp)):
                     thicket_list_cp[i].metadata.index.set_names("profile", inplace=True)
             else:
                 for i in range(len(thicket_list_cp)):
-                    thicket_list_cp[i].metadata.set_index(column_name, inplace=True)
+                    thicket_list_cp[i].metadata.set_index(metadata_key, inplace=True)
                     thicket_list_cp[i].metadata.sort_index(inplace=True)
 
             # Create multi-index columns
@@ -135,7 +135,6 @@ class Ensemble:
             combined_th.metadata = pd.concat(
                 [thicket_list_cp[i].metadata for i in range(len(thicket_list_cp))],
                 axis="columns",
-                join="outer",
             )
 
         def _handle_misc():
@@ -170,7 +169,7 @@ class Ensemble:
 
             # Update index to reflect performance data table index
             new_mappings = {}  # Dictionary mapping old profiles to new profiles
-            if column_name is None:  # Create index from scratch
+            if metadata_key is None:  # Create index from scratch
                 new_profiles = [i for i in range(len(thicket_list_cp[0].profile))]
                 for i in range(len(thicket_list_cp)):
                     thicket_list_cp[i].metadata["new_profiles"] = new_profiles
@@ -196,16 +195,16 @@ class Ensemble:
                     thicket_list_cp[i].dataframe.index.rename(
                         "profile", level="new_profiles", inplace=True
                     )
-            else:  # Change second-level index to be from metadata's "column_name" column
+            else:  # Change second-level index to be from metadata's "metadata_key" column
                 for i in range(len(thicket_list_cp)):
-                    thicket_list_cp[i].add_column_from_metadata_to_ensemble(column_name)
+                    thicket_list_cp[i].add_column_from_metadata_to_ensemble(metadata_key)
                     thicket_list_cp[i].dataframe.reset_index(
                         level="profile", inplace=True
                     )
                     new_mappings.update(
                         pd.Series(
                             thicket_list_cp[i]
-                            .dataframe[column_name]
+                            .dataframe[metadata_key]
                             .map(lambda x: (x, headers[i]))
                             .values,
                             index=thicket_list_cp[i].dataframe["profile"],
@@ -213,7 +212,7 @@ class Ensemble:
                     )
                     thicket_list_cp[i].dataframe.drop("profile", axis=1, inplace=True)
                     thicket_list_cp[i].dataframe.set_index(
-                        column_name, append=True, inplace=True
+                        metadata_key, append=True, inplace=True
                     )
                     thicket_list_cp[i].dataframe.sort_index(inplace=True)
 
@@ -242,7 +241,6 @@ class Ensemble:
             combined_th.dataframe = pd.concat(
                 [thicket_list_cp[i].dataframe for i in range(len(thicket_list_cp))],
                 axis="columns",
-                join="outer",
             )
 
             # Extract "name" columns to upper level

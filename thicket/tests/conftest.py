@@ -46,7 +46,7 @@ def thicket_axis_columns(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
         thickets=thickets,
         axis="columns",
         headers=["MPI1", "MPI2", "Cuda128"],
-        column_name="ProblemSize",
+        metadata_key="ProblemSize",
     )
 
     return thickets, thickets_cp, combined_th

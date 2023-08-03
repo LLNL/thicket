@@ -263,12 +263,22 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def concat_thickets(thickets, axis="index", calltree="union", **kwargs):
-        """Join thickets together on index or columns. The calltree can either be unioned or intersected which will affect the other structures.
+        """Concatenate thickets together on index or columns. The calltree can either be unioned or
+        intersected which will affect the other structures.
 
         Arguments:
             thickets (list): list of thicket objects
             axis (str): axis to concatenate on -> "index" or "column"
             calltree (str): calltree to use -> "union" or "intersection"
+
+            valid kwargs:
+                if axis="index":
+                    superthicket (bool): Whether the result is a superthicket
+                if axis="columns":
+                    headers (list): List of headers to use for the new columnar multi-index.
+                    metadata_key (str): Name of the column from the metadata tables to replace the 'profile'
+                index. If no argument is provided, it is assumed that there is no profile-wise
+                relationship between the thickets.
 
         Returns:
             (thicket): concatenated thicket
@@ -289,9 +299,9 @@ class Thicket(GraphFrame):
                 profile_mapping=thicket_parts[6],
             )
 
-        def _columns(thickets, headers=None, column_name=None):
+        def _columns(thickets, headers=None, metadata_key=None):
             combined_thicket = Ensemble._columns(
-                thickets=thickets, headers=headers, column_name=column_name
+                thickets=thickets, headers=headers, metadata_key=metadata_key
             )
 
             return combined_thicket
@@ -312,7 +322,7 @@ class Thicket(GraphFrame):
         return ct
 
     @staticmethod
-    def columnar_join(thicket_list, header_list=None, column_name=None):
+    def columnar_join(thicket_list, header_list=None, metadata_key=None):
         raise ValueError(
             "columnar_join is deprecated. Use 'concat_thickets(axis='columns'...)' instead."
         )
@@ -369,36 +379,36 @@ class Thicket(GraphFrame):
         return th
 
     def add_column_from_metadata_to_ensemble(
-        self, column_name, overwrite=False, drop=False
+        self, metadata_key, overwrite=False, drop=False
     ):
         """Add a column from the metadata table to the performance data table.
 
         Arguments:
-            column_name (str): Name of the column from the metadata table
+            metadata_key (str): Name of the column from the metadata table
             overwrite (bool): Determines overriding behavior in performance data table
             drop (bool): Whether to drop the column from the metadata table afterwards
         """
         # Add warning if column already exists in performance data table
-        if column_name in self.dataframe.columns:
+        if metadata_key in self.dataframe.columns:
             # Drop column to overwrite, otherwise warn and return
             if overwrite:
-                self.dataframe.drop(column_name, axis=1, inplace=True)
+                self.dataframe.drop(metadata_key, axis=1, inplace=True)
             else:
                 warnings.warn(
                     "Column "
-                    + column_name
+                    + metadata_key
                     + " already exists. Set 'overwrite=True' to force update the column."
                 )
                 return
 
         # Add the column to the performance data table
         self.dataframe = self.dataframe.join(
-            self.metadata[column_name], on=self.dataframe.index.names[1]
+            self.metadata[metadata_key], on=self.dataframe.index.names[1]
         )
 
         # Drop column
         if drop:
-            self.metadata.drop(column_name, axis=1, inplace=True)
+            self.metadata.drop(metadata_key, axis=1, inplace=True)
 
     def squash(self, update_inc_cols=True):
         """Rewrite the Graph to include only nodes present in the performance
