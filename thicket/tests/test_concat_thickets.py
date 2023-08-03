@@ -33,37 +33,37 @@ def test_concat_thickets_index(mpi_scaling_cali):
 
 
 def test_concat_thickets_columns(thicket_axis_columns):
-    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+    thickets, thickets_cp, combined_th = thicket_axis_columns
     # Check no original objects modified
-    for i in range(len(thicket_list)):
-        assert thicket_list[i].dataframe.equals(thicket_list_cp[i].dataframe)
-        assert thicket_list[i].metadata.equals(thicket_list_cp[i].metadata)
+    for i in range(len(thickets)):
+        assert thickets[i].dataframe.equals(thickets_cp[i].dataframe)
+        assert thickets[i].metadata.equals(thickets_cp[i].metadata)
 
     # Check dataframe shape. Should be columnar-joined
     assert combined_th.dataframe.shape[0] <= sum(
-        [th.dataframe.shape[0] for th in thicket_list]
+        [th.dataframe.shape[0] for th in thickets]
     )  # Rows. Should be <= because some rows will exist across multiple thickets.
     assert (
         combined_th.dataframe.shape[1]
-        == sum([th.dataframe.shape[1] for th in thicket_list]) - len(thicket_list) + 1
+        == sum([th.dataframe.shape[1] for th in thickets]) - len(thickets) + 1
     )  # Columns. (-1) for each name column removed, (+1) singular name column created.
 
     # Check metadata shape. Should be columnar-joined
     assert combined_th.metadata.shape[0] == max(
-        [th.metadata.shape[0] for th in thicket_list]
+        [th.metadata.shape[0] for th in thickets]
     )  # Rows. Should be max because all rows should exist in all thickets.
     assert combined_th.metadata.shape[1] == sum(
-        [th.metadata.shape[1] for th in thicket_list]
+        [th.metadata.shape[1] for th in thickets]
     ) - len(
-        thicket_list
+        thickets
     )  # Columns. (-1) Since we added an additional column "ProblemSize".
 
     # Check profiles
-    assert len(combined_th.profile) == sum([len(th.profile) for th in thicket_list])
+    assert len(combined_th.profile) == sum([len(th.profile) for th in thickets])
 
     # Check profile_mapping
     assert len(combined_th.profile_mapping) == sum(
-        [len(th.profile_mapping) for th in thicket_list]
+        [len(th.profile_mapping) for th in thickets]
     )
 
     # PerfData and StatsFrame nodes should be in the same order.
@@ -74,7 +74,7 @@ def test_concat_thickets_columns(thicket_axis_columns):
 
 
 def test_filter_concat_thickets_columns(thicket_axis_columns):
-    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+    thickets, thickets_cp, combined_th = thicket_axis_columns
     # columns and corresponding values to filter by
     columns_values = {
         ("MPI1", "mpi.world.size"): [27],
@@ -86,7 +86,7 @@ def test_filter_concat_thickets_columns(thicket_axis_columns):
 
 
 def test_filter_stats_concat_thickets_columns(thicket_axis_columns):
-    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+    thickets, thickets_cp, combined_th = thicket_axis_columns
     # columns and corresponding values to filter by
     columns_values = {
         ("test", "test_string_column"): ["less than 20"],
@@ -105,7 +105,7 @@ def test_filter_stats_concat_thickets_columns(thicket_axis_columns):
 
 
 def test_query_concat_thickets_columns(thicket_axis_columns):
-    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+    thickets, thickets_cp, combined_th = thicket_axis_columns
     # test arguments
     hnids = [0, 1, 2, 3, 5, 6, 8, 9]
     query = (

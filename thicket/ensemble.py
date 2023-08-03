@@ -113,38 +113,36 @@ class Ensemble:
         def _handle_metadata():
             """Handle metadata table operations."""
             # Update index to reflect performance data table index
-            for i in range(len(thicket_list_cp)):
-                thicket_list_cp[i].metadata.reset_index(drop=True, inplace=True)
+            for i in range(len(thickets_cp)):
+                thickets_cp[i].metadata.reset_index(drop=True, inplace=True)
             if metadata_key is None:
-                for i in range(len(thicket_list_cp)):
-                    thicket_list_cp[i].metadata.index.set_names("profile", inplace=True)
+                for i in range(len(thickets_cp)):
+                    thickets_cp[i].metadata.index.set_names("profile", inplace=True)
             else:
-                for i in range(len(thicket_list_cp)):
-                    thicket_list_cp[i].metadata.set_index(metadata_key, inplace=True)
-                    thicket_list_cp[i].metadata.sort_index(inplace=True)
+                for i in range(len(thickets_cp)):
+                    thickets_cp[i].metadata.set_index(metadata_key, inplace=True)
+                    thickets_cp[i].metadata.sort_index(inplace=True)
 
             # Create multi-index columns
-            for i in range(len(thicket_list_cp)):
-                thicket_list_cp[i].metadata.columns = pd.MultiIndex.from_tuples(
-                    _create_multiindex_columns(
-                        thicket_list_cp[i].metadata, headers[i]
-                    )
+            for i in range(len(thickets_cp)):
+                thickets_cp[i].metadata.columns = pd.MultiIndex.from_tuples(
+                    _create_multiindex_columns(thickets_cp[i].metadata, headers[i])
                 )
 
             # Concat metadata together
             combined_th.metadata = pd.concat(
-                [thicket_list_cp[i].metadata for i in range(len(thicket_list_cp))],
+                [thickets_cp[i].metadata for i in range(len(thickets_cp))],
                 axis="columns",
             )
 
         def _handle_misc():
             """Misceallaneous Thicket object operations."""
-            for i in range(1, len(thicket_list_cp)):
-                combined_th.profile += thicket_list_cp[
+            for i in range(1, len(thickets_cp)):
+                combined_th.profile += thickets_cp[
                     i
                 ].profile  # Update "profile" object
                 combined_th.profile_mapping.update(
-                    thicket_list_cp[i].profile_mapping
+                    thickets_cp[i].profile_mapping
                 )  # Update "profile_mapping" object
             combined_th.profile = [new_mappings[prf] for prf in combined_th.profile]
             profile_mapping_cp = combined_th.profile_mapping.copy()
@@ -170,56 +168,58 @@ class Ensemble:
             # Update index to reflect performance data table index
             new_mappings = {}  # Dictionary mapping old profiles to new profiles
             if metadata_key is None:  # Create index from scratch
-                new_profiles = [i for i in range(len(thicket_list_cp[0].profile))]
-                for i in range(len(thicket_list_cp)):
-                    thicket_list_cp[i].metadata["new_profiles"] = new_profiles
-                    thicket_list_cp[i].add_column_from_metadata_to_ensemble(
+                new_profiles = [i for i in range(len(thickets_cp[0].profile))]
+                for i in range(len(thickets_cp)):
+                    thickets_cp[i].metadata["new_profiles"] = new_profiles
+                    thickets_cp[i].add_column_from_metadata_to_ensemble(
                         "new_profiles", drop=True
                     )
-                    thicket_list_cp[i].dataframe.reset_index(
+                    thickets_cp[i].dataframe.reset_index(
                         level="profile", inplace=True
                     )
                     new_mappings.update(
                         pd.Series(
-                            thicket_list_cp[i]
+                            thickets_cp[i]
                             .dataframe["new_profiles"]
                             .map(lambda x: (x, headers[i]))
                             .values,
-                            index=thicket_list_cp[i].dataframe["profile"],
+                            index=thickets_cp[i].dataframe["profile"],
                         ).to_dict()
                     )
-                    thicket_list_cp[i].dataframe.drop("profile", axis=1, inplace=True)
-                    thicket_list_cp[i].dataframe.set_index(
+                    thickets_cp[i].dataframe.drop("profile", axis=1, inplace=True)
+                    thickets_cp[i].dataframe.set_index(
                         "new_profiles", append=True, inplace=True
                     )
-                    thicket_list_cp[i].dataframe.index.rename(
+                    thickets_cp[i].dataframe.index.rename(
                         "profile", level="new_profiles", inplace=True
                     )
             else:  # Change second-level index to be from metadata's "metadata_key" column
-                for i in range(len(thicket_list_cp)):
-                    thicket_list_cp[i].add_column_from_metadata_to_ensemble(metadata_key)
-                    thicket_list_cp[i].dataframe.reset_index(
+                for i in range(len(thickets_cp)):
+                    thickets_cp[i].add_column_from_metadata_to_ensemble(
+                        metadata_key
+                    )
+                    thickets_cp[i].dataframe.reset_index(
                         level="profile", inplace=True
                     )
                     new_mappings.update(
                         pd.Series(
-                            thicket_list_cp[i]
+                            thickets_cp[i]
                             .dataframe[metadata_key]
                             .map(lambda x: (x, headers[i]))
                             .values,
-                            index=thicket_list_cp[i].dataframe["profile"],
+                            index=thickets_cp[i].dataframe["profile"],
                         ).to_dict()
                     )
-                    thicket_list_cp[i].dataframe.drop("profile", axis=1, inplace=True)
-                    thicket_list_cp[i].dataframe.set_index(
+                    thickets_cp[i].dataframe.drop("profile", axis=1, inplace=True)
+                    thickets_cp[i].dataframe.set_index(
                         metadata_key, append=True, inplace=True
                     )
-                    thicket_list_cp[i].dataframe.sort_index(inplace=True)
+                    thickets_cp[i].dataframe.sort_index(inplace=True)
 
             # Create tuple columns
             new_columns = [
                 _create_multiindex_columns(th.dataframe, headers[i])
-                for i, th in enumerate(thicket_list_cp)
+                for i, th in enumerate(thickets_cp)
             ]
             # Clear old metrics (non-tuple)
             combined_th.exc_metrics.clear()
@@ -227,19 +227,19 @@ class Ensemble:
             # Update inc/exc metrics
             for i in range(len(new_columns)):
                 for col_tuple in new_columns[i]:
-                    if col_tuple[1] in thicket_list_cp[i].exc_metrics:
+                    if col_tuple[1] in thickets_cp[i].exc_metrics:
                         combined_th.exc_metrics.append(col_tuple)
-                    if col_tuple[1] in thicket_list_cp[i].inc_metrics:
+                    if col_tuple[1] in thickets_cp[i].inc_metrics:
                         combined_th.inc_metrics.append(col_tuple)
             # Update columns
-            for i in range(len(thicket_list_cp)):
-                thicket_list_cp[i].dataframe.columns = pd.MultiIndex.from_tuples(
+            for i in range(len(thickets_cp)):
+                thickets_cp[i].dataframe.columns = pd.MultiIndex.from_tuples(
                     new_columns[i]
                 )
 
             # Concat performance data table together
             combined_th.dataframe = pd.concat(
-                [thicket_list_cp[i].dataframe for i in range(len(thicket_list_cp))],
+                [thickets_cp[i].dataframe for i in range(len(thickets_cp))],
                 axis="columns",
             )
 
@@ -271,12 +271,12 @@ class Ensemble:
         _check_structures()
         # Step 0B: Variable Initialization
         combined_th = thickets[0].deepcopy()
-        thicket_list_cp = [th.deepcopy() for th in thickets]
+        thickets_cp = [th.deepcopy() for th in thickets]
 
         # Step 1: Unify the thickets
-        union_graph, _thickets = Ensemble._unify(thicket_list_cp)
+        union_graph, _thickets = Ensemble._unify(thickets_cp)
         combined_th.graph = union_graph
-        thicket_list_cp = _thickets
+        thickets_cp = _thickets
 
         # Step 2A: Handle performance data tables
         new_mappings = _handle_perfdata()
