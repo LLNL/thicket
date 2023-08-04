@@ -689,7 +689,7 @@ class Thicket(GraphFrame):
         max_value=None,
     ):
         """Visualize the Thicket as a tree
-        
+
         Arguments:
             metric_column (str, tuple, list, optional): Columns to use the metrics from. Defaults to None.
             annotation_column (str, optional): Column to use as an annotation. Defaults to None.
@@ -707,7 +707,7 @@ class Thicket(GraphFrame):
             render_header (bool, optional): Shows the Preamble. Defaults to True.
             min_value (int, optional): Overwrites the min value for the coloring legend. Defaults to None.
             max_value (int, optional): Overwrites the max value for the coloring legend. Defaults to None.
-        
+
         Returns:
             str: String representation of the tree, ready to print
         """
