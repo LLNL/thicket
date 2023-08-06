@@ -5,6 +5,7 @@
 
 import copy
 import os
+import sys
 import json
 import warnings
 from collections import OrderedDict
@@ -18,6 +19,7 @@ from hatchet.query import AbstractQuery, QueryMatcher
 import thicket.helpers as helpers
 from .utils import verify_sorted_profile
 from .utils import verify_thicket_structures
+from .external.console import ThicketRenderer
 
 
 class Thicket(GraphFrame):
@@ -667,18 +669,88 @@ class Thicket(GraphFrame):
             statsframe=self.statsframe.deepcopy(),
         )
 
-    def tree(self):
-        """hatchet tree() function for a thicket"""
-        temp_df = self.statsframe.dataframe.copy()
-        # Adjustments specific for multi-index.
-        if isinstance(temp_df.columns, pd.MultiIndex):
-            temp_df.columns = temp_df.columns.to_flat_index()
-            temp_df.rename(columns={("name", ""): "name"}, inplace=True)
-        # Placeholder value. TODO: Enable selection from performance data table.
-        temp_df["thicket_tree"] = -1
-        return GraphFrame.tree(
-            self=Thicket(graph=self.graph, dataframe=temp_df),
-            metric_column="thicket_tree",
+    def tree(
+        self,
+        metric_column=None,
+        annotation_column=None,
+        precision=3,
+        name_column="name",
+        expand_name=False,
+        context_column="file",
+        rank=0,
+        thread=0,
+        depth=10000,
+        highlight_name=False,
+        colormap="RdYlGn",
+        invert_colormap=False,
+        colormap_annotations=None,
+        render_header=True,
+        min_value=None,
+        max_value=None,
+    ):
+        """Visualize the Thicket as a tree
+
+        Arguments:
+            metric_column (str, tuple, list, optional): Columns to use the metrics from. Defaults to None.
+            annotation_column (str, optional): Column to use as an annotation. Defaults to None.
+            precision (int, optional): Precision of shown numbers. Defaults to 3.
+            name_column (str, optional): Column of the node name. Defaults to "name".
+            expand_name (bool, optional): Limits the lenght of the node name. Defaults to False.
+            context_column (str, optional): Shows the file this function was called in (Available with HPCToolkit). Defaults to "file".
+            rank (int, optional): Specifies the rank to take the data from. Defaults to 0.
+            thread (int, optional): Specifies the thread to take the data from. Defaults to 0.
+            depth (int, optional): Sets the maximum depth of the tree. Defaults to 10000.
+            highlight_name (bool, optional): Highlights the names of the nodes. Defaults to False.
+            colormap (str, optional): Specifies a colormap to use. Defaults to "RdYlGn".
+            invert_colormap (bool, optional): Reverts the chosen colormap. Defaults to False.
+            colormap_annotations (str, list, dict, optional): Either provide the name of a colormap, a list of colors to use or a dictionary which maps the used annotations to a color. Defaults to None.
+            render_header (bool, optional): Shows the Preamble. Defaults to True.
+            min_value (int, optional): Overwrites the min value for the coloring legend. Defaults to None.
+            max_value (int, optional): Overwrites the max value for the coloring legend. Defaults to None.
+
+        Returns:
+            str: String representation of the tree, ready to print
+        """
+        color = sys.stdout.isatty()
+        shell = None
+        if metric_column is None:
+            metric_column = self.default_metric
+
+        if color is False:
+            try:
+                import IPython
+
+                shell = IPython.get_ipython().__class__.__name__
+            except ImportError:
+                pass
+            # Test if running in a Jupyter notebook or qtconsole
+            if shell == "ZMQInteractiveShell":
+                color = True
+
+        if sys.version_info.major == 2:
+            unicode = False
+        elif sys.version_info.major == 3:
+            unicode = True
+
+        return ThicketRenderer(unicode=unicode, color=color).render(
+            self.graph.roots,
+            self.statsframe.dataframe,
+            metric_column=metric_column,
+            annotation_column=annotation_column,
+            precision=precision,
+            name_column=name_column,
+            expand_name=expand_name,
+            context_column=context_column,
+            rank=rank,
+            thread=thread,
+            depth=depth,
+            highlight_name=highlight_name,
+            colormap=colormap,
+            invert_colormap=invert_colormap,
+            colormap_annotations=colormap_annotations,
+            render_header=render_header,
+            min_value=min_value,
+            max_value=max_value,
         )
 
     def unify_pair(self, other):
