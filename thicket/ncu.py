@@ -98,6 +98,10 @@ class NCUReader:
                 )
             # Loop through ranges in report
             for range in report:
+                # Setup rollup dict. Same for all actions
+                first_action = range.action_by_idx(0)
+                rollup_dict = {first_action[name].name(): first_action[name].rollup_operation() for name in first_action.metric_names()}
+
                 # Query action in range
                 for action in tqdm(range):
                     # Name of kernel
@@ -140,7 +144,6 @@ class NCUReader:
                         metric_dict = {}
                         for metric in [action[name] for name in action.metric_names()]:
                             metric_dict[metric.name()] = metric.value()
-                            rollup_dict[metric.name()] = metric.rollup_operation()
                         data_dict[(matched_node, ncu_hash)].append(metric_dict)
 
         return data_dict, rollup_dict
