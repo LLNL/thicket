@@ -489,11 +489,12 @@ class Thicket(GraphFrame):
             Arguments:
                 col (pd.Series): column of data
             """
-            agg_func = ncureader.rollup_operations[rollup_dict[col.name]]
+            rollup_operation = rollup_dict[col.name]
+            agg_func = ncureader.rollup_operations[rollup_operation]
             if agg_func is not None and pd.api.types.is_numeric_dtype(col):
                 return agg_func(col)
             else:
-                return col
+                return col[0]
 
         # Initialize reader
         ncureader = NCUReader()
@@ -510,10 +511,6 @@ class Thicket(GraphFrame):
             # Add node and profile
             agg_data["node"] = node_profile[0]
             agg_data["profile"] = node_profile[1]
-            # Discard other rows (should be duplicates).
-            agg_data = agg_data.loc[
-                0,
-            ]
             # Append to main df
             ncu_df = ncu_df.append(agg_data, ignore_index=True)
         ncu_df = ncu_df.set_index(["node", "profile"])
