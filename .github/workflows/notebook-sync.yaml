@@ -54,6 +54,13 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.SYNC_GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Jupyter + NBConvert
+        run: |
+          python3 -m pip install jupyter "nbconvert>=6.0.0"
       - name: Prints GitHub CLI Info
         run: |
           echo "GitHub CLI Version: $(gh --version)"
@@ -82,10 +89,15 @@ jobs:
               th_file=$(echo $elem | jq -r '.thicket_file')
               tut_file=$(echo $elem | jq -r '.tutorials_file')
               th_abs_file=$(realpath "./${th_file}")
+              if test ! -f $tut_abs_file; then
+                  echo "ERROR: tutorial file $tut_abs_file does not exist!"
+                  exit 1
+              fi
               tut_abs_file=$(realpath "${tutorials_dir}/${tut_file}")
               if test -f $tut_abs_file; then
                   rm $tut_abs_file
               fi
+              jupyter nbconvert --clear-output --inplace $tut_abs_file
               cp $th_abs_file $tut_abs_file
           done
           cd $tutorials_dir
