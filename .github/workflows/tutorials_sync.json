@@ -3,8 +3,16 @@
         "thicket_fname": "docs/thicket_tutorial.ipynb",
         "tutorial_fname": "notebooks/thicket_tutorial.ipynb"
     },
-    "test": {
-        "thicket_fname": "docs/test.ipynb",
-        "tutorial_fname": "notebooks/test.ipynb"
-    }
+    "thicket_query_language": {
+        "thicket_fname": "docs/thicket_query_language.ipynb",
+        "tutorial_fname": "notebooks/thicket_query_language.ipynb"
+    },
+    "thicket_rajaperf_clustering": {
+        "thicket_fname": "docs/thicket_rajaperf_clustering.ipynb",
+        "tutorial_fname": "notebooks/thicket_rajaperf_clustering.ipynb"
+    },
+    "extrap-with-metadata-aggregated": {
+        "thicket_fname": "docs/extrap-with-metadata-aggregated.ipynb",
+        "tutorial_fname": "notebooks/extrap-with-metadata-aggregated.ipynb"
+    },
 }
