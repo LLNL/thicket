@@ -117,7 +117,7 @@ class Ensemble:
             return new_idx
 
         def _handle_metadata():
-            """Handle metadata table operations."""
+            """Handle operations to create new concatenated columnar axis metadata table."""
             # Update index to reflect performance data table index
             for i in range(len(thickets_cp)):
                 thickets_cp[i].metadata.reset_index(drop=True, inplace=True)
@@ -159,7 +159,7 @@ class Ensemble:
             )
 
         def _handle_perfdata():
-            """Handle performance data table operations.
+            """Handle operations to create new concatenated columnar axis performance data table.
 
             Returns:
                 (dict): dictionary mapping old profiles to new profiles
@@ -256,7 +256,7 @@ class Ensemble:
             return new_mappings
 
         def _handle_statsframe():
-            """Handle aggregated statistics table operations."""
+            """Handle operations to create new concatenated columnar axis aggregated statistics table."""
             # Clear aggregated statistics table
             combined_th.statsframe = GraphFrame(
                 graph=combined_th.graph,
