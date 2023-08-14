@@ -21,7 +21,6 @@ The performance data table is a multi-dimensional, multi-indexed structure with 
 with each node of the call tree. Each row associated with a node of the call tree
 represents a different execution of the associated call tree node. Below is an 
 example of a performance data table stored in a thicket object. 
-TODO: Table and tree need to match
 
 .. figure:: images/ensembleframe.png
   :width: 600
