@@ -232,9 +232,11 @@ class Thicket(GraphFrame):
                 ens_list.append(Thicket.thicketize_graphframe(func(file), file))
         # if directory of files
         elif os.path.isdir(obj):
-            for file in os.listdir(obj):
-                f = os.path.join(obj, file)
-                ens_list.append(Thicket.thicketize_graphframe(func(f), f))
+            for root, dirs, files in os.walk(obj):
+                for file in files:
+                    if file.endswith(".cali"):
+                        f = os.path.join(root, file)
+                        ens_list.append(Thicket.thicketize_graphframe(func(f), f))
         # if single file
         elif os.path.isfile(obj):
             return Thicket.thicketize_graphframe(func(*args, **kwargs), args[0])
