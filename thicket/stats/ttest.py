@@ -22,7 +22,7 @@ def __ttest(thicket, columns, alpha=0.05, *args, **kwargs):
             Note, if using a columnar joined thicket a list of tuples must be passed in
             with the format (column index, column name).
         alpha (double): Threshold for statistical significance. Value must be between 0
-            and 1.
+            and 1. Default is 0.05.
 
     Returns:
        tvalue (double): Value to be used to determine a preference within preference.py.
