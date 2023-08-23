@@ -17,6 +17,7 @@ import pandas as pd
 from extrap.fileio import io_helper
 from extrap.modelers.model_generator import ModelGenerator
 
+import copy
 
 MODEL_TAG = "_extrap-model"
 
@@ -40,6 +41,15 @@ class ModelWrapper:
     def eval(self, val):
         """Evaluate function (self) at val. f(val) = result"""
         return self.mdl.hypothesis.function.evaluate(val)
+
+    def simplify_function(self, model_function):
+        """Simplify the created model function so it is easier to read. Shortens coefficients to 3 decimals."""
+        simplified_model_function = copy.deepcopy(model_function)
+        simplified_model_function.constant_coefficient = "{:.3f}".format(model_function.constant_coefficient)
+        for i in range(len(model_function.compound_terms)):
+            model_function.compound_terms[i].coefficient
+            simplified_model_function.compound_terms[i].coefficient = "{:.3f}".format(model_function.compound_terms[i].coefficient)
+        return simplified_model_function
 
     def display(self, RSS):
         """Display function
@@ -66,6 +76,9 @@ class ModelWrapper:
 
         # Y values
         y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
+        
+        # for optimal scaling line
+        y_optimal_scaling = [mean[0] for x in x_vals]
 
         plt.ioff()
         fig, ax = plt.subplots()
@@ -94,7 +107,49 @@ class ModelWrapper:
             )
         ax.legend(loc=1)
 
-        return fig, ax
+        #return fig, ax
+        
+        model_function = self.mdl.hypothesis.function
+        model_function = str(self.simplify_function(model_function))
+    
+        import plotly.graph_objects as go
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=x_vals, y=y_vals,
+            name=model_function
+        ))
+        fig.add_trace(go.Scatter(
+            x=params, y=mean,
+            mode='markers',
+            name='mean',
+            error_y=dict(
+                type='data',
+                array=errors[0],
+                arrayminus=errors[1],
+                color='black',
+                thickness=1.5,
+                width=3,
+            ),
+            marker=dict(color='black', size=7, symbol="x")
+        ))
+        fig.add_trace(go.Scatter(
+            x=params, y=median,
+            mode='markers',
+            name='median',
+            marker=dict(color='black', size=7, symbol="triangle-up",)
+        ))
+        fig.add_trace(go.Scatter(
+            x=x_vals, y=y_optimal_scaling,
+            name="optimal scaling",
+        ))
+        fig.update_layout(template="plotly_white", 
+                          title=str(self.mdl.callpath)+"()", 
+                          xaxis_title=str(self.param_name), 
+                          yaxis_title=str(self.mdl.metric))
+        #fig.show()
+
+        return fig
 
 
 class Modeling:
