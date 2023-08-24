@@ -16,6 +16,13 @@ import pandas as pd
 #)  # For some reason it errors if "Experiment" is not explicitly imported
 from extrap.fileio import io_helper
 from extrap.modelers.model_generator import ModelGenerator
+from extrap.entities.experiment import Experiment
+from extrap.entities.parameter import Parameter
+from extrap.fileio.io_helper import create_call_tree
+from extrap.entities.measurement import Measurement
+from extrap.entities.metric import Metric
+from extrap.entities.callpath import Callpath
+from extrap.entities.coordinate import Coordinate
 
 import copy
 
@@ -51,11 +58,142 @@ class ModelWrapper:
             simplified_model_function.compound_terms[i].coefficient = "{:.3f}".format(model_function.compound_terms[i].coefficient)
         return simplified_model_function
 
-    def display(self, RSS):
-        """Display function
+    def display_measurements(self):
+        """_summary_
+        """
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from matplotlib.widgets import Slider, Button
 
-        Arguments:
-            RSS (bool): whether to display Extra-P RSS on the plot
+
+        # The parametrized function to be plotted
+        def f(t, amplitude, frequency):
+            return amplitude * np.sin(2 * np.pi * frequency * t)
+
+        t = np.linspace(0, 1, 1000)
+
+        # Define initial parameters
+        init_amplitude = 5
+        init_frequency = 3
+
+        # Create the figure and the line that we will manipulate
+        fig, ax = plt.subplots()
+        line, = ax.plot(t, f(t, init_amplitude, init_frequency), lw=2)
+        ax.set_xlabel('Time [s]')
+
+        # adjust the main plot to make room for the sliders
+        fig.subplots_adjust(left=0.25, bottom=0.25)
+
+        # Make a horizontal slider to control the frequency.
+        axfreq = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+        freq_slider = Slider(
+            ax=axfreq,
+            label='Frequency [Hz]',
+            valmin=0.1,
+            valmax=30,
+            valinit=init_frequency,
+        )
+
+        # Make a vertically oriented slider to control the amplitude
+        axamp = fig.add_axes([0.1, 0.25, 0.0225, 0.63])
+        amp_slider = Slider(
+            ax=axamp,
+            label="Amplitude",
+            valmin=0,
+            valmax=10,
+            valinit=init_amplitude,
+            orientation="vertical"
+        )
+
+
+        # The function to be called anytime a slider's value changes
+        def update(val):
+            line.set_ydata(f(t, amp_slider.val, freq_slider.val))
+            fig.canvas.draw_idle()
+
+
+        # register the update function with each slider
+        freq_slider.on_changed(update)
+        amp_slider.on_changed(update)
+
+        # Create a `matplotlib.widgets.Button` to reset the sliders to initial values.
+        resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+        button = Button(resetax, 'Reset', hovercolor='0.975')
+
+
+        def reset(event):
+            freq_slider.reset()
+            amp_slider.reset()
+        button.on_clicked(reset)
+
+        #plt.show()
+        return fig
+        
+    def display_interactive(self):
+        """_summary_
+        """
+        # Sort based on x values
+        measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
+
+        # Scatter plot
+        params = [ms.coordinate[0] for ms in measures_sorted]  # X values
+        median = [ms.median for ms in measures_sorted]
+        mean = [ms.mean for ms in measures_sorted] # Y values
+        mins = [ms.minimum for ms in measures_sorted]
+        maxes = [ms.maximum for ms in measures_sorted]
+
+        # Line plot
+
+        plt.ioff()
+        fig, ax = plt.subplots()
+        fig.subplots_adjust(bottom=0.2)
+        
+        # Function to plot graph
+        # according to expression
+        def visualizeGraph(x_max):
+            # X value plotting range. Dynamic based off what the largest/smallest values are
+            x_vals = np.arange(
+                params[0], float(x_max), (params[-1] - params[0]) / 100.0
+            )
+            # Y values
+            y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
+            
+            # Plot line
+            l, = ax.plot(x_vals, y_vals, label=self.mdl.hypothesis.function)
+            #l, = ax.plot(t, np.zeros_like(t), lw=2)
+            l.set_ydata(y_vals)
+            ax.relim()
+            ax.autoscale_view()
+            plt.draw()
+            
+        # Adding TextBox to graph
+        from matplotlib.widgets import TextBox
+        graphBox = fig.add_axes([0.1, 0.05, 0.8, 0.075])
+        txtBox = TextBox(graphBox, "Max x: ")
+        txtBox.on_submit(visualizeGraph)
+        txtBox.set_val(str(1.5 * params[-1]))
+
+
+        # Plot scatter
+        
+        errors = [
+            np.subtract(mean, mins),
+            np.subtract(maxes, mean),
+        ]
+        
+        #ax.plot(params, measures, "ro", yerr=[min,maxs], label=self.mdl.callpath)
+        ax.errorbar(params, mean, yerr=errors, fmt=".k", label=self.mdl.callpath)
+        ax.plot(params, median, "+k", label="median")
+
+        ax.set_xlabel(self.param_name)
+        ax.set_ylabel(self.mdl.metric)
+        ax.legend(loc=1)
+
+        return plt
+        
+    
+    def display_plotly(self):
+        """_summary_
         """
         # Sort based on x values
         measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
@@ -77,40 +215,16 @@ class ModelWrapper:
         # Y values
         y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
         
+        model_function = self.mdl.hypothesis.function
+        model_function = str(self.simplify_function(model_function))
+        
         # for optimal scaling line
         y_optimal_scaling = [mean[0] for x in x_vals]
-
-        plt.ioff()
-        fig, ax = plt.subplots()
-
-        # Plot line
-        ax.plot(x_vals, y_vals, label=self.mdl.hypothesis.function)
-
-        # Plot scatter
         
         errors = [
             np.subtract(mean, mins),
             np.subtract(maxes, mean),
         ]
-        
-        #ax.plot(params, measures, "ro", yerr=[min,maxs], label=self.mdl.callpath)
-        ax.errorbar(params, mean, yerr=errors, fmt=".k", label=self.mdl.callpath)
-        ax.plot(params, median, "+k", label="median")
-
-        ax.set_xlabel(self.param_name)
-        ax.set_ylabel(self.mdl.metric)
-        if RSS:
-            ax.text(
-                x_vals[0],
-                max(y_vals + mean),
-                "RSS = " + str(self.mdl.hypothesis.RSS),
-            )
-        ax.legend(loc=1)
-
-        #return fig, ax
-        
-        model_function = self.mdl.hypothesis.function
-        model_function = str(self.simplify_function(model_function))
     
         import plotly.graph_objects as go
         
@@ -147,15 +261,69 @@ class ModelWrapper:
                           title=str(self.mdl.callpath)+"()", 
                           xaxis_title=str(self.param_name), 
                           yaxis_title=str(self.mdl.metric))
-        #fig.show()
-
         return fig
 
+    def display(self, RSS):
+        """Display function
+
+        Arguments:
+            RSS (bool): whether to display Extra-P RSS on the plot
+        """
+        # Sort based on x values
+        measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
+
+        # Scatter plot
+        params = [ms.coordinate[0] for ms in measures_sorted]  # X values
+        median = [ms.median for ms in measures_sorted]
+        mean = [ms.mean for ms in measures_sorted] # Y values
+        mins = [ms.minimum for ms in measures_sorted]
+        maxes = [ms.maximum for ms in measures_sorted]
+
+        # Line plot
+
+        # X value plotting range. Dynamic based off what the largest/smallest values are
+        x_vals = np.arange(
+            params[0], 1.5 * params[-1], (params[-1] - params[0]) / 100.0
+        )
+        
+        print("model:",self.mdl.hypothesis.function)
+
+        # Y values
+        y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
+        
+        plt.ioff()
+        fig, ax = plt.subplots()
+
+        # Plot line
+        ax.plot(x_vals, y_vals, label=self.mdl.hypothesis.function)
+
+        # Plot scatter
+        
+        errors = [
+            np.subtract(mean, mins),
+            np.subtract(maxes, mean),
+        ]
+        
+        #ax.plot(params, measures, "ro", yerr=[min,maxs], label=self.mdl.callpath)
+        ax.errorbar(params, mean, yerr=errors, fmt=".k", label=self.mdl.callpath)
+        ax.plot(params, median, "+k", label="median")
+
+        ax.set_xlabel(self.param_name)
+        ax.set_ylabel(self.mdl.metric)
+        if RSS:
+            ax.text(
+                x_vals[0],
+                max(y_vals + mean),
+                "RSS = " + str(self.mdl.hypothesis.RSS),
+            )
+        ax.legend(loc=1)
+
+        return fig, ax
 
 class Modeling:
     """Produce models for all the metrics across the given graphframes."""
 
-    def __init__(self, tht, param_name, params=None, chosen_metrics=None):
+    def __init__(self, tht, parameters=None, metrics=None):
         """Create a new model object.
 
         Adds a model column for each metric for each common frame across all the
@@ -166,46 +334,26 @@ class Modeling:
 
         Arguments:
             tht (Thicket): thicket object
-            param_name (str): arbitrary if 'params' is being provided, otherwise name of
-                the metadata column from which 'params' will be extracted
-            params (list): parameters list, domain for the model
-            chosen_metrics (list): metrics to be evaluated in the model, range for the
-                model
+            parameters (list): A list of String values of the parameters that will be considered for
+                modeling by Extra-P.
+            metrics (list): A list of String value of the metrics Extra-P will create models for.
         """
         self.tht = tht
-        self.param_name = param_name
-        #debug
-        print("self.param_name:",self.param_name)
-
-        # Assign param
-        # Get params from metadata table
-        if not params:
-            self.params = self.tht.metadata[param_name].tolist()
-            # remove duplicates from list
-            self.params = list(set(self.params))
-        # params must be provided by the user
+        
+        # if there were no parameters provided use the jobsize to create models,
+        # which should always be available
+        if not parameters:
+            self.parameters = ["jobsize"]
         else:
-            if not isinstance(params, dict):
-                raise TypeError("'params' must be provided as a dict")
-            elif len(params) != len(self.tht.profile):
-                raise ValueError(
-                    "length of params must equal amount of profiles "
-                    + len(params)
-                    + "!= "
-                    + len(self.tht.profile)
-                )
-            profile_mapping_flipped = {
-                v: k for k, v in self.tht.profile_mapping.items()
-            }
-            for file_name, value in params.items():
-                self.tht.metadata.at[
-                    profile_mapping_flipped[file_name], param_name
-                ] = value
-            self.params = tht.metadata[param_name].tolist()
-        if not chosen_metrics:
-            self.chosen_metrics = self.tht.exc_metrics + self.tht.inc_metrics
+            self.parameters = parameters
+        
+        # if no metrics have been provided create models for all existing metrics
+        if not metrics:
+            self.metrics = self.tht.exc_metrics + self.tht.inc_metrics
         else:
-            self.chosen_metrics = chosen_metrics
+            self.metrics = metrics
+            
+        self.experiment = None
 
     def to_html(self, RSS=False):
         def model_to_img_html(model_obj):
@@ -217,12 +365,24 @@ class Modeling:
             imgstr = '<img src="data:image/jpg;base64,{}" />'.format(figdata_jpg)
             plt.close(fig)
             return imgstr
-
-        frm_dict = {met + MODEL_TAG: model_to_img_html for met in self.chosen_metrics}
+        
+        # catch key errors when queriying for models with a callpath, metric combination
+        # that does not exist because there was no measurement object created for them
+        existing_metrics = []
+        for callpath in self.experiment.callpaths:
+            for metric in self.experiment.metrics:
+                try:
+                    self.experiment.modelers[0].models[(callpath, metric)]
+                    if str(metric) not in existing_metrics:
+                        existing_metrics.append(str(metric))
+                except KeyError:
+                    pass
+                
+        frm_dict = {met + MODEL_TAG: model_to_img_html for met in existing_metrics}
 
         # Subset of the aggregated statistics table with only the Extra-P columns selected
         return self.tht.statsframe.dataframe[
-            [met + MODEL_TAG for met in self.chosen_metrics]
+            [met + MODEL_TAG for met in existing_metrics]
         ].to_html(escape=False, formatters=frm_dict)
 
     def _add_extrap_statistics(self, node, metric):
@@ -253,7 +413,7 @@ class Modeling:
             node, metric + "_RE" + MODEL_TAG
         ] = hypothesis_fn.RE
 
-    def produce_models(self, use_median=True, scaling="weak", 
+    def produce_models(self, use_median=True, calc_total_metrics=False, 
                        scaling_parameter="jobsize", add_stats=True):
         """Produces an Extra-P model. Models are generated by calling Extra-P's
             ModelGenerator.
@@ -262,49 +422,54 @@ class Modeling:
             use_median (bool): Set how Extra-P aggregates repetitions of the same
                 measurement configuration. If set to True, Extra-P uses the median for 
                 model creation, otherwise it uses the mean. (Default=True)
-            scaling (String): Set the scaling for Extra-P model creation. Use "weak" to 
-                read in data as a weak scaling experiment. Use "strong" to read in data
-                as a strong scaling experiment. The strong scaling logic is only applied
-                to metrics that describe application performance per rank, such as 
-                time/rank. (Default="weak")
-            scaling_parameter (String): Set the scaling parameter for the experiment scaling.
-                Only used when using strong scaling. One needs to provide either the name of 
-                the parameter that models the resource allocation, e.g., the jobsize, or a 
-                a fixed int value as a String, when only scaling, e.g., the problem size, and
-                the resource allocation is fix. (Default="jobsize")
+            calc_total_metrics (bool): Set calc_total_metrics to True to let Extra-P 
+                internally calculate the total metric values for metrics measured 
+                per MPI rank, e.g., the average runtime/rank. (Default=False)
+            scaling_parameter (String): Set the scaling parameter for the total metric 
+                calculation. This parameter is only used when calc_total_metrics=True.
+                One needs to provide either the name of the parameter that models the 
+                resource allocation, e.g., the jobsize, or a fixed int value as a String,
+                when only scaling, e.g., the problem size, and the resource allocation 
+                is fix. (Default="jobsize")
             add_stats (bool): Option to add hypothesis function statistics to the
                 aggregated statistics table. (Default=True)
         """
             
         # create an extra-p experiment
-        from extrap.entities.experiment import Experiment
         experiment = Experiment()
         
         # create the model parameters
-        #NOTE: implementation does not work for multiple model parameters
-        from extrap.entities.parameter import Parameter
-        model_parameter = Parameter(self.param_name)
-        experiment.add_parameter(model_parameter)
+        for parameter in self.parameters:
+            experiment.add_parameter(Parameter(parameter))
+        print("Parameters:",experiment.parameters)
         
         # Mapping from metadata profiles to the parameter
-        meta_param_mapping = self.tht.metadata[self.param_name].to_dict()
+        #meta_param_mapping = self.tht.metadata[self.parameters].to_dict()
         
         # Ordering of profiles in the performance data table
         ensemble_profile_ordering = list(self.tht.dataframe.index.unique(level=1))
         
-        # create the measurement coordinates
-        #NOTE: implementation does not work for multiple model parameters
-        from extrap.entities.coordinate import Coordinate
+        profile_parameter_value_mapping = {}
         for profile in ensemble_profile_ordering:
-            if Coordinate(float(meta_param_mapping[profile])) not in experiment.coordinates:
-                experiment.add_coordinate(Coordinate(float(meta_param_mapping[profile])))
+            profile_parameter_value_mapping[profile] = []
+        
+        for parameter in self.parameters:
+            current_param_mapping = self.tht.metadata[parameter].to_dict()
+            for key, value in current_param_mapping.items():
+                profile_parameter_value_mapping[key].append(float(value))
+            
+        print("profile_parameter_value_mapping:",profile_parameter_value_mapping)
+        
+        # create the measurement coordinates
+        for profile in ensemble_profile_ordering:
+            if Coordinate(profile_parameter_value_mapping[profile]) not in experiment.coordinates:
+                experiment.add_coordinate(Coordinate(profile_parameter_value_mapping[profile]))
         # debug
         print("coordinates:",experiment.coordinates)
         print("len coordinates:",len(experiment.coordinates))
             
         # create the callpaths
         #NOTE: could add calltree later on, possibly from hatchet data if available
-        from extrap.entities.callpath import Callpath
         for node, _ in self.tht.dataframe.groupby(level=0):
             if Callpath(node.frame["name"]) not in experiment.callpaths:
                 experiment.add_callpath(Callpath(node.frame["name"]))
@@ -312,11 +477,12 @@ class Modeling:
         print("Callpaths:",experiment.callpaths)
         
         # create the metrics
-        from extrap.entities.metric import Metric
-        for metric in self.chosen_metrics:
+        for metric in self.metrics:
             experiment.add_metric(Metric(metric))
         # debug
         print("Metrics:",experiment.metrics)
+        
+        #TODO: check what happens when there are not enough measurements to create a model with extrap
         
         # iteratre over coordinates
         for coordinate in experiment.coordinates:
@@ -324,28 +490,31 @@ class Modeling:
             for callpath in experiment.callpaths:
                 # iterate over metrics
                 for metric in experiment.metrics:
-                    # iterate over measurements
-                    #TODO: figure out how to access these group by data frames directly
-                    # to remove these loops...
-                    values = []
-                    for node, single_node_df in self.tht.dataframe.groupby(level=0):
-                        if Callpath(node.frame["name"]) == callpath:
-                            for profile, single_prof_df in single_node_df.groupby(level=1):
-                                if Coordinate(float(meta_param_mapping[profile])) == coordinate:
-                                    # if no data is found for this config, do not anything
-                                    try:
-                                        value = single_prof_df[str(metric)].tolist()
+                    # iterate over the measured values in each profile
+                    try:
+                        values = []
+                        callpath_exists = False
+                        #NOTE: potentially there is a better way to access the dataframes without looping
+                        #NOTE: in addition it would be nice to have exceptions raised to let the user know
+                        # when a callpath does not exist in a profile, not only if it does not exist at all 
+                        for node, single_node_df in self.tht.dataframe.groupby(level=0):
+                            if Callpath(node.frame["name"]) == callpath:
+                                callpath_exists = True
+                                coordinate_exists = False
+                                for profile, single_prof_df in single_node_df.groupby(level=1):
+                                    if Coordinate(profile_parameter_value_mapping[profile]) == coordinate:
+                                        coordinate_exists = True
+                                        try:
+                                            value = single_prof_df[str(metric)].tolist()
+                                        except Exception:
+                                            raise Exception("The metric \'"+str(metric)+"\' does not exist in the profile \'"+str(profile)+"\'.")
                                         if len(value) == 1:
-                                            
-                                            # when measurements contain strong scaling data
-                                            # convert the data into a weak scaling experiment
-                                            if scaling == "strong":
-                                                
+                                            # calculate total metric values
+                                            if calc_total_metrics == True:
                                                 # convert only data for metrics that are measured per rank
                                                 if "/rank" in str(metric):
                                                     print("str(metric):",str(metric))
-                                                    
-                                                    # read out scaling parameter in case strong scaling is used
+                                                    # read out scaling parameter for total metric value calculation
                                                     # if the resource allocation is static
                                                     if scaling_parameter.isnumeric():
                                                         ranks = int(scaling_parameter)
@@ -353,52 +522,41 @@ class Modeling:
                                                     # otherwise read number of ranks from the provided parameter
                                                     else:
                                                         # check if the parameter exists
-                                                        if scaling_parameter in self.param_name:
+                                                        if scaling_parameter in self.parameters:
                                                             parameter_id = [i for i,x in enumerate(experiment.parameters) if x == Parameter(scaling_parameter)][0]
                                                             print("ranks:",coordinate.__getitem__(parameter_id))
                                                             ranks = coordinate.__getitem__(parameter_id)
                                                         # if the specified parameter does not exist
                                                         else:
-                                                            raise Exception("Specified scaling parameter could not be found in the passed list of model parameters.")
-
+                                                            raise Exception("The specified scaling parameter \'"+str(scaling_parameter)+"\' could not be found in the passed list of model parameters "+str(self.parameters)+".")
                                                     values.append(value[0] * ranks)
-                                                
                                                 # add values for all other metrics
                                                 else:
                                                     values.append(value[0])
-                                            
-                                            # standard weak scaling
+                                            # standard use case, simply add measured values without manipulating them
                                             else:
                                                 values.append(value[0])
-                                                
-                                            
-                                            
-                                    except Exception as e:
-                                        print("Could not add measured value for:", 
-                                              str(callpath), 
-                                              str(metric), 
-                                              str(coordinate),
-                                              ". See exception:", e)
-                    from extrap.entities.measurement import Measurement
+                                        else:
+                                            raise Exception("There are no values recorded for the metric \'"+str(metric)+"\' in the profile \'"+str(profile)+"\'.")
+                                if coordinate_exists == False:
+                                    raise Exception("The parameter value combintation \'"+str(coordinate)+"\' could not be matched to any of the profiles. This could indicate missing metadata values for one or more of the parameters specified for modeling.")
+                        if callpath_exists == False:
+                            raise Exception("The node/callpath \'"+str(callpath)+"\' does not exist in any of the profiles.")                            
+                    except Exception as e:
+                        print("WARNING: Could not create an Extra-P measurement for: callpath=\'"+str(callpath)+"\', metric=\'"+str(metric)+"\', coordinate=\'"+str(coordinate)+"\'. "+str(e))
+                                        
                     # if there was no data found at all for this config, do not add any measurement to the experiment
                     if len(values) > 0:
                         experiment.add_measurement(Measurement(coordinate, callpath, metric, values))
-                    else:
-                        print("Could not add measurement values for:",
-                              str(callpath), 
-                              str(metric), 
-                              str(coordinate),
-                              ". No measured values found for this particular configuration.")
-                        
+                    
                     # debug
                     print("DEBUG:", str(coordinate), str(callpath), str(metric), values)
             
         # debug
-        print("Measurements:",experiment.measurements)
+        #print("Measurements:",experiment.measurements)
         
         # create the calltree based on the callpaths
-        #TODO: could pip actual calltree in here...
-        from extrap.fileio.io_helper import create_call_tree
+        #NOTE: could pipe actual calltree in here
         experiment.call_tree = create_call_tree(experiment.callpaths)
                     
         # check the created experiment for its validty
@@ -407,6 +565,7 @@ class Modeling:
         # generate models using Extra-P model generator
         model_gen = ModelGenerator(experiment, name="Default Model", use_median=use_median)
         model_gen.model_all()
+        experiment.add_modeler(model_gen)
         
         # add the models, and statistics into the dataframe
         for callpath in experiment.callpaths:
@@ -414,12 +573,19 @@ class Modeling:
                 mkey = (callpath, metric)
                 for node, _ in self.tht.dataframe.groupby(level=0):
                     if Callpath(node.frame["name"]) == callpath:
-                        self.tht.statsframe.dataframe.at[node, str(metric) + MODEL_TAG] = ModelWrapper(
-                            model_gen.models[mkey], self.param_name
-                        )
-                        # Add statistics to aggregated statistics table
-                        if add_stats:
-                            self._add_extrap_statistics(node, str(metric))
+                        # catch key errors when queriying for models with a callpath, metric combination
+                        # that does not exist because there was no measurement object created for them
+                        try:
+                            self.tht.statsframe.dataframe.at[node, str(metric) + MODEL_TAG] = ModelWrapper(
+                                model_gen.models[mkey], self.parameters
+                            )
+                            # Add statistics to aggregated statistics table
+                            if add_stats:
+                                self._add_extrap_statistics(node, str(metric))
+                        except Exception:
+                            pass
+        
+        self.experiment = experiment
 
     def _componentize_function(model_object):
         """Componentize one Extra-P modeling object into a dictionary of its parts
