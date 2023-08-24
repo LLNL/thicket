@@ -4,16 +4,13 @@
 # SPDX-License-Identifier: MIT
 
 import base64
+import copy
 from io import BytesIO
-from statistics import mean
 
-import extrap.entities as xent
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-#from extrap.entities.experiment import (
-#    Experiment,
-#)  # For some reason it errors if "Experiment" is not explicitly imported
+
 from extrap.fileio import io_helper
 from extrap.modelers.model_generator import ModelGenerator
 from extrap.entities.experiment import Experiment
@@ -23,8 +20,6 @@ from extrap.entities.measurement import Measurement
 from extrap.entities.metric import Metric
 from extrap.entities.callpath import Callpath
 from extrap.entities.coordinate import Coordinate
-
-import copy
 
 MODEL_TAG = "_extrap-model"
 
@@ -459,10 +454,6 @@ class Modeling:
         # create the model parameters
         for parameter in self.parameters:
             experiment.add_parameter(Parameter(parameter))
-        print("Parameters:",experiment.parameters)
-        
-        # Mapping from metadata profiles to the parameter
-        #meta_param_mapping = self.tht.metadata[self.parameters].to_dict()
         
         # Ordering of profiles in the performance data table
         ensemble_profile_ordering = list(self.tht.dataframe.index.unique(level=1))
@@ -475,30 +466,21 @@ class Modeling:
             current_param_mapping = self.tht.metadata[parameter].to_dict()
             for key, value in current_param_mapping.items():
                 profile_parameter_value_mapping[key].append(float(value))
-            
-        print("profile_parameter_value_mapping:",profile_parameter_value_mapping)
         
         # create the measurement coordinates
         for profile in ensemble_profile_ordering:
             if Coordinate(profile_parameter_value_mapping[profile]) not in experiment.coordinates:
                 experiment.add_coordinate(Coordinate(profile_parameter_value_mapping[profile]))
-        # debug
-        print("coordinates:",experiment.coordinates)
-        print("len coordinates:",len(experiment.coordinates))
-            
+    
         # create the callpaths
         #NOTE: could add calltree later on, possibly from hatchet data if available
         for node, _ in self.tht.dataframe.groupby(level=0):
             if Callpath(node.frame["name"]) not in experiment.callpaths:
                 experiment.add_callpath(Callpath(node.frame["name"]))
-        # debug 
-        print("Callpaths:",experiment.callpaths)
         
         # create the metrics
         for metric in self.metrics:
             experiment.add_metric(Metric(metric))
-        # debug
-        print("Metrics:",experiment.metrics)
         
         # iteratre over coordinates
         for coordinate in experiment.coordinates:
@@ -529,18 +511,15 @@ class Modeling:
                                             if calc_total_metrics == True:
                                                 # convert only data for metrics that are measured per rank
                                                 if "/rank" in str(metric):
-                                                    print("str(metric):",str(metric))
                                                     # read out scaling parameter for total metric value calculation
                                                     # if the resource allocation is static
                                                     if scaling_parameter.isnumeric():
                                                         ranks = int(scaling_parameter)
-                                                        print("ranks:",ranks)
                                                     # otherwise read number of ranks from the provided parameter
                                                     else:
                                                         # check if the parameter exists
                                                         if scaling_parameter in self.parameters:
                                                             parameter_id = [i for i,x in enumerate(experiment.parameters) if x == Parameter(scaling_parameter)][0]
-                                                            print("ranks:",coordinate.__getitem__(parameter_id))
                                                             ranks = coordinate.__getitem__(parameter_id)
                                                         # if the specified parameter does not exist
                                                         else:
@@ -564,12 +543,6 @@ class Modeling:
                     # if there was no data found at all for this config, do not add any measurement to the experiment
                     if len(values) > 0:
                         experiment.add_measurement(Measurement(coordinate, callpath, metric, values))
-                    
-                    # debug
-                    print("DEBUG:", str(coordinate), str(callpath), str(metric), values)
-            
-        # debug
-        #print("Measurements:",experiment.measurements)
         
         # create the calltree based on the callpaths
         #NOTE: could pipe actual calltree in here
