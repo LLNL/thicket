@@ -28,7 +28,25 @@ import copy
 
 MODEL_TAG = "_extrap-model"
 
+class ExtrapReaderException(Exception):
+    """Custom exception class for raising exceptions while reading in data from 
+    a pandas type dataframe from a thicket object into the Extra-P experiment object.
 
+    Args:
+        Exception (Exception): Python base Exception object.
+    """
+    
+    def __init__(self, message: str, profile: int) -> None:
+        """Initialization function for the custom Extra-P reader exception class.
+
+        Args:
+            message (str): The message the exception should pass on.
+            profile (int): The hash of the profile that is currently read in as an int value.
+        """
+        super().__init__()
+        self.message = message
+        self.profile = profile
+        
 class ModelWrapper:
     """Wrapper for an Extra-P model.
 
@@ -482,8 +500,6 @@ class Modeling:
         # debug
         print("Metrics:",experiment.metrics)
         
-        #TODO: check what happens when there are not enough measurements to create a model with extrap
-        
         # iteratre over coordinates
         for coordinate in experiment.coordinates:
             # iterate over callpaths
@@ -494,20 +510,20 @@ class Modeling:
                     try:
                         values = []
                         callpath_exists = False
-                        #NOTE: potentially there is a better way to access the dataframes without looping
-                        #NOTE: in addition it would be nice to have exceptions raised to let the user know
-                        # when a callpath does not exist in a profile, not only if it does not exist at all 
+                        #NOTE: potentially there is a better way to access the dataframes without looping 
                         for node, single_node_df in self.tht.dataframe.groupby(level=0):
                             if Callpath(node.frame["name"]) == callpath:
                                 callpath_exists = True
                                 coordinate_exists = False
                                 for profile, single_prof_df in single_node_df.groupby(level=1):
+                                    if str(callpath) not in single_prof_df["name"].values:
+                                        raise ExtrapReaderException("The callpath \'"+str(callpath)+"\' does not exist in the profile \'"+str(profile)+"\'.", profile)
                                     if Coordinate(profile_parameter_value_mapping[profile]) == coordinate:
                                         coordinate_exists = True
                                         try:
                                             value = single_prof_df[str(metric)].tolist()
                                         except Exception:
-                                            raise Exception("The metric \'"+str(metric)+"\' does not exist in the profile \'"+str(profile)+"\'.")
+                                            raise ExtrapReaderException("The metric \'"+str(metric)+"\' does not exist in the profile \'"+str(profile)+"\'.", profile)
                                         if len(value) == 1:
                                             # calculate total metric values
                                             if calc_total_metrics == True:
@@ -528,7 +544,7 @@ class Modeling:
                                                             ranks = coordinate.__getitem__(parameter_id)
                                                         # if the specified parameter does not exist
                                                         else:
-                                                            raise Exception("The specified scaling parameter \'"+str(scaling_parameter)+"\' could not be found in the passed list of model parameters "+str(self.parameters)+".")
+                                                            raise ExtrapReaderException("The specified scaling parameter \'"+str(scaling_parameter)+"\' could not be found in the passed list of model parameters "+str(self.parameters)+".", profile)
                                                     values.append(value[0] * ranks)
                                                 # add values for all other metrics
                                                 else:
@@ -537,14 +553,14 @@ class Modeling:
                                             else:
                                                 values.append(value[0])
                                         else:
-                                            raise Exception("There are no values recorded for the metric \'"+str(metric)+"\' in the profile \'"+str(profile)+"\'.")
+                                            raise ExtrapReaderException("There are no values recorded for the metric \'"+str(metric)+"\' in the profile \'"+str(profile)+"\'.", profile)
                                 if coordinate_exists == False:
-                                    raise Exception("The parameter value combintation \'"+str(coordinate)+"\' could not be matched to any of the profiles. This could indicate missing metadata values for one or more of the parameters specified for modeling.")
+                                    raise ExtrapReaderException("The parameter value combintation \'"+str(coordinate)+"\' could not be matched to any of the profiles. This could indicate missing metadata values for one or more of the parameters specified for modeling.", profile)
                         if callpath_exists == False:
-                            raise Exception("The node/callpath \'"+str(callpath)+"\' does not exist in any of the profiles.")                            
-                    except Exception as e:
-                        print("WARNING: Could not create an Extra-P measurement for: callpath=\'"+str(callpath)+"\', metric=\'"+str(metric)+"\', coordinate=\'"+str(coordinate)+"\'. "+str(e))
-                                        
+                            raise ExtrapReaderException("The node/callpath \'"+str(callpath)+"\' does not exist in any of the profiles.", profile)                            
+                    except ExtrapReaderException as e:
+                        print("WARNING: Could not create an Extra-P measurement object for: callpath=\'"+str(callpath)+"\', metric=\'"+str(metric)+"\', coordinate=\'"+str(coordinate)+"\' from the profile: "+str(e.profile)+". "+str(e.message))
+                     
                     # if there was no data found at all for this config, do not add any measurement to the experiment
                     if len(values) > 0:
                         experiment.add_measurement(Measurement(coordinate, callpath, metric, values))
