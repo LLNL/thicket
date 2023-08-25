@@ -50,9 +50,9 @@ class ModelWrapper:
     the model.
     """
 
-    def __init__(self, mdl, param_name):
+    def __init__(self, mdl, parameters):
         self.mdl = mdl
-        self.param_name = param_name  # Needed for plotting / displaying the model
+        self.parameters = parameters
 
     def __str__(self):
         """Display self as a function"""
@@ -198,90 +198,19 @@ class ModelWrapper:
         ax.errorbar(params, mean, yerr=errors, fmt=".k", label=self.mdl.callpath)
         ax.plot(params, median, "+k", label="median")
 
-        ax.set_xlabel(self.param_name)
+        ax.set_xlabel(self.parameters)
         ax.set_ylabel(self.mdl.metric)
         ax.legend(loc=1)
 
         return plt
-        
     
-    def display_plotly(self):
-        """_summary_
-        """
-        # Sort based on x values
-        measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
-
-        # Scatter plot
-        params = [ms.coordinate[0] for ms in measures_sorted]  # X values
-        median = [ms.median for ms in measures_sorted]
-        mean = [ms.mean for ms in measures_sorted] # Y values
-        mins = [ms.minimum for ms in measures_sorted]
-        maxes = [ms.maximum for ms in measures_sorted]
-
-        # Line plot
-
-        # X value plotting range. Dynamic based off what the largest/smallest values are
-        x_vals = np.arange(
-            params[0], 1.5 * params[-1], (params[-1] - params[0]) / 100.0
-        )
-
-        # Y values
-        y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
-        
-        model_function = self.mdl.hypothesis.function
-        model_function = str(self.simplify_function(model_function))
-        
-        # for optimal scaling line
-        y_optimal_scaling = [mean[0] for x in x_vals]
-        
-        errors = [
-            np.subtract(mean, mins),
-            np.subtract(maxes, mean),
-        ]
-    
-        import plotly.graph_objects as go
-        
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=x_vals, y=y_vals,
-            name=model_function
-        ))
-        fig.add_trace(go.Scatter(
-            x=params, y=mean,
-            mode='markers',
-            name='mean',
-            error_y=dict(
-                type='data',
-                array=errors[0],
-                arrayminus=errors[1],
-                color='black',
-                thickness=1.5,
-                width=3,
-            ),
-            marker=dict(color='black', size=7, symbol="x")
-        ))
-        fig.add_trace(go.Scatter(
-            x=params, y=median,
-            mode='markers',
-            name='median',
-            marker=dict(color='black', size=7, symbol="triangle-up",)
-        ))
-        fig.add_trace(go.Scatter(
-            x=x_vals, y=y_optimal_scaling,
-            name="optimal scaling",
-        ))
-        fig.update_layout(template="plotly_white", 
-                          title=str(self.mdl.callpath)+"()", 
-                          xaxis_title=str(self.param_name), 
-                          yaxis_title=str(self.mdl.metric))
-        return fig
-
-    def display(self, RSS):
+    def display_one_parameter_model(self, RSS):
         """Display function
 
         Arguments:
             RSS (bool): whether to display Extra-P RSS on the plot
         """
+        
         # Sort based on x values
         measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
 
@@ -321,7 +250,7 @@ class ModelWrapper:
         ax.errorbar(params, mean, yerr=errors, fmt=".k", label=self.mdl.callpath)
         ax.plot(params, median, "+k", label="median")
 
-        ax.set_xlabel(self.param_name)
+        ax.set_xlabel(self.parameters[0])
         ax.set_ylabel(self.mdl.metric)
         if RSS:
             ax.text(
@@ -332,7 +261,81 @@ class ModelWrapper:
         ax.legend(loc=1)
 
         return fig, ax
+    
+    def display_two_parameter_model(self, RSS):
+        """Display function
 
+        Arguments:
+            RSS (bool): whether to display Extra-P RSS on the plot
+        """
+        
+        # Sort based on x and y values
+        measures_sorted = sorted(self.mdl.measurements, key=lambda x: (x.coordinate[0], x.coordinate[1]))
+
+        # Scatter plot
+        X_params = [ms.coordinate[0] for ms in measures_sorted]  # X values
+        Y_params = [ms.coordinate[1] for ms in measures_sorted]  # Y values
+        
+        # Z values
+        medians = [ms.median for ms in measures_sorted]
+        means = [ms.mean for ms in measures_sorted]
+        mins = [ms.minimum for ms in measures_sorted]
+        maxes = [ms.maximum for ms in measures_sorted]
+
+        # Surface plot
+        # X value plotting range. Dynamic based off what the largest/smallest values are
+        x_vals = np.linspace(
+            start=X_params[0], stop=1.5 * X_params[-1], num=100
+        )
+        # Y value plotting range. Dynamic based off what the largest/smallest values are
+        y_vals = np.linspace(
+            start=Y_params[0], stop=1.5 * Y_params[-1], num=100
+        )
+        
+        #print("model:",self.mdl.hypothesis.function)
+        
+        x_vals, y_vals = np.meshgrid(x_vals, y_vals)
+        
+        z_vals = self.mdl.hypothesis.function.evaluate([x_vals, y_vals])
+    
+        zuplims = np.subtract(means, mins)
+        zlolims = np.subtract(maxes, means)
+        
+        plt.ioff()
+        
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        
+        axis_lengths = [len(x_vals), len(y_vals), len(z_vals)]
+        
+        # plot model as surface plot
+        ax.plot_surface(x_vals, y_vals, z_vals, label=self.mdl.hypothesis.function)
+
+        # plot the measurement points
+        #ax.scatter(X_params, Y_params, medians, fmt=".k", label=self.mdl.callpath)
+        #ax.errorbar(X_params, Y_params, means, zuplims=zuplims, zlolims=zlolims, fmt=".k", label=self.mdl.callpath)
+       
+        return fig, ax
+
+    def display(self, RSS):
+        """Display function
+
+        Arguments:
+            RSS (bool): whether to display Extra-P RSS on the plot
+        """
+        
+        # check number of model parameters
+        if len(self.parameters) == 1:
+            fig, ax = self.display_one_parameter_model(RSS)
+        
+        elif len(self.parameters) == 2:
+            fig, ax = self.display_two_parameter_model(RSS)
+        
+        else:
+            raise Exception("Plotting performance models with "+str(len(self.parameters))+" parameters is currently not supported.")
+        
+        return fig, ax
+    
 class Modeling:
     """Produce models for all the metrics across the given graphframes."""
 
