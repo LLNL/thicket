@@ -8,6 +8,8 @@ import copy
 from io import BytesIO
 
 import matplotlib.pyplot as plt
+from matplotlib import patches as mpatches
+import matplotlib.lines as mlines
 import numpy as np
 import pandas as pd
 
@@ -262,12 +264,40 @@ class ModelWrapper:
 
         return fig, ax
     
+    def draw_legend(self, ax_all, dict_callpath_color):
+        # draw legend
+        handles = list()
+        for key, value in dict_callpath_color.items():
+            labelName = str(key)
+            if value[0] == "surface":
+                patch = mpatches.Patch(color=value[1], label=labelName)
+                handles.append(patch)
+            elif value[0] == "mean":
+                mark = mlines.Line2D([], [], color=value[1], marker='+', linestyle='None',
+                          markersize=10, label=labelName)
+                handles.append(mark)
+            elif value[0] == "median":
+                mark = mlines.Line2D([], [], color=value[1], marker='x', linestyle='None',
+                          markersize=10, label=labelName)
+                handles.append(mark)
+            elif value[0] == "min" or value[0] == "max":
+                mark = mlines.Line2D([], [], color=value[1], marker='_', linestyle='None',
+                          markersize=10, label=labelName)
+                handles.append(mark)
+            
+        ax_all.legend(handles=handles,
+                            loc="upper right", bbox_to_anchor=(2.5, 1))
+    
     def display_two_parameter_model(self, RSS):
         """Display function
 
         Arguments:
             RSS (bool): whether to display Extra-P RSS on the plot
         """
+        
+        #TODO: add parameters to display mean, median, min, max
+        # optiomal scaling surface
+        # change plot opacity based on if measurements are displayed
         
         # Sort based on x and y values
         measures_sorted = sorted(self.mdl.measurements, key=lambda x: (x.coordinate[0], x.coordinate[1]))
@@ -291,29 +321,53 @@ class ModelWrapper:
         y_vals = np.linspace(
             start=Y_params[0], stop=1.5 * Y_params[-1], num=100
         )
-        
-        #print("model:",self.mdl.hypothesis.function)
-        
+
         x_vals, y_vals = np.meshgrid(x_vals, y_vals)
-        
         z_vals = self.mdl.hypothesis.function.evaluate([x_vals, y_vals])
     
-        zuplims = np.subtract(means, mins)
-        zlolims = np.subtract(maxes, means)
-        
         plt.ioff()
         
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        
-        axis_lengths = [len(x_vals), len(y_vals), len(z_vals)]
-        
+    
         # plot model as surface plot
-        ax.plot_surface(x_vals, y_vals, z_vals, label=self.mdl.hypothesis.function)
+        ax.plot_surface(x_vals, y_vals, z_vals, label=str(self.mdl.hypothesis.function),
+                        rstride=1, cstride=1, antialiased=False, alpha=0.1)
+        
+        #rstride=1, cstride=1, antialiased=False, alpha=0.1
 
         # plot the measurement points
-        #ax.scatter(X_params, Y_params, medians, fmt=".k", label=self.mdl.callpath)
-        #ax.errorbar(X_params, Y_params, means, zuplims=zuplims, zlolims=zlolims, fmt=".k", label=self.mdl.callpath)
+        ax.scatter(X_params, Y_params, medians, c="black", marker="x", label="median")
+        ax.scatter(X_params, Y_params, means, c="black", marker="+", label="mean")
+        ax.scatter(X_params, Y_params, mins, c="black", marker="_", label="min")
+        ax.scatter(X_params, Y_params, maxes, c="black", marker="_", label="max")
+        
+        # Draw connecting line for min, max -> error bars
+        line_x, line_y, line_z = [], [], []
+        for x, y, min_v, max_v in zip(X_params, Y_params, mins, maxes):
+            line_x.append(x), line_x.append(x)
+            line_y.append(y), line_y.append(y)
+            line_z.append(min_v), line_z.append(max_v)
+            line_x.append(np.nan), line_y.append(np.nan), line_z.append(np.nan)
+        ax.plot(line_x, line_y, line_z, color="black")
+       
+        #ax.legend()
+        ax.set_xlabel(self.parameters[0])
+        ax.set_ylabel(self.parameters[1])
+        ax.set_zlabel(self.mdl.metric)
+        ax.set_title(str(self.mdl.callpath)+"()")
+        
+        dict_callpath_color = {}
+        #TODO: need to convert that model into a python evaluable function
+        #TODO: convert 0.00001234 to 1.234*10^2...
+        simple_function = self.simplify_function(self.mdl.hypothesis.function)
+        dict_callpath_color[str(simple_function)] = ["surface", "blue"]
+        dict_callpath_color["mean"] = ["mean", "black"]
+        dict_callpath_color["median"] = ["median", "black"]
+        dict_callpath_color["min"] = ["min", "black"]
+        dict_callpath_color["max"] = ["max", "black"]
+        
+        self.draw_legend(ax, dict_callpath_color)
        
         return fig, ax
 
