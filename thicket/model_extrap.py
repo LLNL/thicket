@@ -10,6 +10,7 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 from matplotlib import patches as mpatches
 import matplotlib.lines as mlines
+import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
 
@@ -64,85 +65,13 @@ class ModelWrapper:
         """Evaluate function (self) at val. f(val) = result"""
         return self.mdl.hypothesis.function.evaluate(val)
 
-    def simplify_function(self, model_function):
+    def simplify_coefficients(self, model_function):
         """Simplify the created model function so it is easier to read. Shortens coefficients to 3 decimals."""
         simplified_model_function = copy.deepcopy(model_function)
-        simplified_model_function.constant_coefficient = "{:.3f}".format(model_function.constant_coefficient)
+        simplified_model_function.constant_coefficient = "{:.3E}".format(model_function.constant_coefficient)
         for i in range(len(model_function.compound_terms)):
-            model_function.compound_terms[i].coefficient
-            simplified_model_function.compound_terms[i].coefficient = "{:.3f}".format(model_function.compound_terms[i].coefficient)
+            simplified_model_function.compound_terms[i].coefficient = "{:.3E}".format(model_function.compound_terms[i].coefficient)
         return simplified_model_function
-
-    def display_measurements(self):
-        """_summary_
-        """
-        import numpy as np
-        import matplotlib.pyplot as plt
-        from matplotlib.widgets import Slider, Button
-
-
-        # The parametrized function to be plotted
-        def f(t, amplitude, frequency):
-            return amplitude * np.sin(2 * np.pi * frequency * t)
-
-        t = np.linspace(0, 1, 1000)
-
-        # Define initial parameters
-        init_amplitude = 5
-        init_frequency = 3
-
-        # Create the figure and the line that we will manipulate
-        fig, ax = plt.subplots()
-        line, = ax.plot(t, f(t, init_amplitude, init_frequency), lw=2)
-        ax.set_xlabel('Time [s]')
-
-        # adjust the main plot to make room for the sliders
-        fig.subplots_adjust(left=0.25, bottom=0.25)
-
-        # Make a horizontal slider to control the frequency.
-        axfreq = fig.add_axes([0.25, 0.1, 0.65, 0.03])
-        freq_slider = Slider(
-            ax=axfreq,
-            label='Frequency [Hz]',
-            valmin=0.1,
-            valmax=30,
-            valinit=init_frequency,
-        )
-
-        # Make a vertically oriented slider to control the amplitude
-        axamp = fig.add_axes([0.1, 0.25, 0.0225, 0.63])
-        amp_slider = Slider(
-            ax=axamp,
-            label="Amplitude",
-            valmin=0,
-            valmax=10,
-            valinit=init_amplitude,
-            orientation="vertical"
-        )
-
-
-        # The function to be called anytime a slider's value changes
-        def update(val):
-            line.set_ydata(f(t, amp_slider.val, freq_slider.val))
-            fig.canvas.draw_idle()
-
-
-        # register the update function with each slider
-        freq_slider.on_changed(update)
-        amp_slider.on_changed(update)
-
-        # Create a `matplotlib.widgets.Button` to reset the sliders to initial values.
-        resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
-        button = Button(resetax, 'Reset', hovercolor='0.975')
-
-
-        def reset(event):
-            freq_slider.reset()
-            amp_slider.reset()
-        button.on_clicked(reset)
-
-        #plt.show()
-        return fig
         
     def display_interactive(self):
         """_summary_
@@ -206,7 +135,8 @@ class ModelWrapper:
 
         return plt
     
-    def display_one_parameter_model(self, RSS):
+    def display_one_parameter_model(self, show_mean=False, show_median=False,
+                                    show_min_max=False, RSS=False):
         """Display function
 
         Arguments:
@@ -231,6 +161,17 @@ class ModelWrapper:
         )
         
         print("model:",self.mdl.hypothesis.function)
+        
+        temp = str(self.simplify_coefficients(self.mdl.hypothesis.function))
+        temp = temp.replace("+-", "-")
+        temp = temp.replace("*", "\cdot")
+        temp = temp.replace("(", "{")
+        temp = temp.replace(")", "}")
+        temp = temp.replace("log2{p}", "\log_2(p)")
+        temp = "$" + temp + "$"
+        
+      
+        print("new function:",temp)
 
         # Y values
         y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
@@ -239,7 +180,7 @@ class ModelWrapper:
         fig, ax = plt.subplots()
 
         # Plot line
-        ax.plot(x_vals, y_vals, label=self.mdl.hypothesis.function)
+        ax.plot(x_vals, y_vals, label=temp)
 
         # Plot scatter
         
@@ -252,7 +193,7 @@ class ModelWrapper:
         ax.errorbar(params, mean, yerr=errors, fmt=".k", label=self.mdl.callpath)
         ax.plot(params, median, "+k", label="median")
 
-        ax.set_xlabel(self.parameters[0])
+        ax.set_xlabel(self.parameters[0] + " $p$")
         ax.set_ylabel(self.mdl.metric)
         if RSS:
             ax.text(
@@ -288,7 +229,8 @@ class ModelWrapper:
         ax_all.legend(handles=handles,
                             loc="upper right", bbox_to_anchor=(2.5, 1))
     
-    def display_two_parameter_model(self, RSS):
+    def display_two_parameter_model(self, show_mean=False, show_median=False,
+                                    show_min_max=False, RSS=False):
         """Display function
 
         Arguments:
@@ -298,6 +240,7 @@ class ModelWrapper:
         #TODO: add parameters to display mean, median, min, max
         # optiomal scaling surface
         # change plot opacity based on if measurements are displayed
+        # write function with real math script in legend
         
         # Sort based on x and y values
         measures_sorted = sorted(self.mdl.measurements, key=lambda x: (x.coordinate[0], x.coordinate[1]))
@@ -336,42 +279,45 @@ class ModelWrapper:
         
         #rstride=1, cstride=1, antialiased=False, alpha=0.1
 
-        # plot the measurement points
-        ax.scatter(X_params, Y_params, medians, c="black", marker="x", label="median")
-        ax.scatter(X_params, Y_params, means, c="black", marker="+", label="mean")
-        ax.scatter(X_params, Y_params, mins, c="black", marker="_", label="min")
-        ax.scatter(X_params, Y_params, maxes, c="black", marker="_", label="max")
-        
-        # Draw connecting line for min, max -> error bars
-        line_x, line_y, line_z = [], [], []
-        for x, y, min_v, max_v in zip(X_params, Y_params, mins, maxes):
-            line_x.append(x), line_x.append(x)
-            line_y.append(y), line_y.append(y)
-            line_z.append(min_v), line_z.append(max_v)
-            line_x.append(np.nan), line_y.append(np.nan), line_z.append(np.nan)
-        ax.plot(line_x, line_y, line_z, color="black")
+        # plot the measurement points if options selected
+        if show_median:
+            ax.scatter(X_params, Y_params, medians, c="black", marker="x", label="median")
+        if show_mean:
+            ax.scatter(X_params, Y_params, means, c="black", marker="+", label="mean")
+        if show_min_max:
+            ax.scatter(X_params, Y_params, mins, c="black", marker="_", label="min")
+            ax.scatter(X_params, Y_params, maxes, c="black", marker="_", label="max")
+            # Draw connecting line for min, max -> error bars
+            line_x, line_y, line_z = [], [], []
+            for x, y, min_v, max_v in zip(X_params, Y_params, mins, maxes):
+                line_x.append(x), line_x.append(x)
+                line_y.append(y), line_y.append(y)
+                line_z.append(min_v), line_z.append(max_v)
+                line_x.append(np.nan), line_y.append(np.nan), line_z.append(np.nan)
+            ax.plot(line_x, line_y, line_z, color="black")
        
-        #ax.legend()
         ax.set_xlabel(self.parameters[0])
         ax.set_ylabel(self.parameters[1])
         ax.set_zlabel(self.mdl.metric)
         ax.set_title(str(self.mdl.callpath)+"()")
         
         dict_callpath_color = {}
-        #TODO: need to convert that model into a python evaluable function
-        #TODO: convert 0.00001234 to 1.234*10^2...
         simple_function = self.simplify_function(self.mdl.hypothesis.function)
         dict_callpath_color[str(simple_function)] = ["surface", "blue"]
-        dict_callpath_color["mean"] = ["mean", "black"]
-        dict_callpath_color["median"] = ["median", "black"]
-        dict_callpath_color["min"] = ["min", "black"]
-        dict_callpath_color["max"] = ["max", "black"]
+        if show_mean:
+            dict_callpath_color["mean"] = ["mean", "black"]
+        if show_median:
+            dict_callpath_color["median"] = ["median", "black"]
+        if show_min_max:
+            dict_callpath_color["min"] = ["min", "black"]
+            dict_callpath_color["max"] = ["max", "black"]
         
         self.draw_legend(ax, dict_callpath_color)
        
         return fig, ax
 
-    def display(self, RSS):
+    def display(self, show_mean=False, show_median=False,
+                show_min_max=False, RSS=False):
         """Display function
 
         Arguments:
@@ -380,10 +326,10 @@ class ModelWrapper:
         
         # check number of model parameters
         if len(self.parameters) == 1:
-            fig, ax = self.display_one_parameter_model(RSS)
+            fig, ax = self.display_one_parameter_model(show_mean, show_median, show_min_max, RSS)
         
         elif len(self.parameters) == 2:
-            fig, ax = self.display_two_parameter_model(RSS)
+            fig, ax = self.display_two_parameter_model(show_mean, show_median, show_min_max, RSS)
         
         else:
             raise Exception("Plotting performance models with "+str(len(self.parameters))+" parameters is currently not supported.")
