@@ -13,31 +13,44 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
     """Determine a preference between compilers, architecture, platform, etc.
 
     Designed to take in a thicket and will append eight total columns to the
-    aggregated statistics table. These columns will included: std, mean, tvalue,
-    tstatistic, and preferred. As a note, preferred will stand for the preferred
+    aggregated statistics table. As a note, preferred will stand for the preferred
     choice between two options.
+        1. columns[0] mean
+        2. columns[0] std
+        3. columns[1] mean
+        4. columns[1] std
+        5. columns[0] + columns[1] tvalue
+        6. columns[0] + columns[1] tstatistic
+        7. columns[0] + columns[1] std preferred
+        8. columns[0] + columns[1] mean preferred
 
     Column names will have the following two formats:
-        1.column_name + _statistic where statistic could be either: std or mean
-        2.column_name + vs + column_name + _statistic where statistic could be
-          either: tvalue, tstatistic, or preferred
+        1. <column_name>_{std,mean}
+        2. <column_name> vs <column_name>_{tvalue,tstatistic,preferred}
 
     Arguments:
         thicket (thicket): Thicket object
         columns (list): List of hardware/timing metrics to determine a preference for.
             Note, if using a columnar joined thicket a list of tuples must be passed in
-            with the format (column index, column name).
+            with the format (column index, column name). List should be length 2.
         comparison_func (function): User-defined python or lambda function to decide a
             preference.
-        test (str): User selected test.
+        test (str): User-selected test.
     """
     if test not in __statistical_tests.keys():
         raise ValueError("Test is not available.")
+
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
     if test == "ttest":
         tvalue, t_statistics = __statistical_tests[test](
             thicket, columns, *args, **kwargs
+        )
+
+    if len(columns) > 2:
+        warnings.warn(
+            "More than 2 columns specified in columns=. Only calculating preference of first two columns.",
+            SyntaxWarning,
         )
 
     pref_mean = []

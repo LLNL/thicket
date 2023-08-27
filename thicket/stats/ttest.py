@@ -11,7 +11,7 @@ import thicket as th
 
 
 def __ttest(thicket, columns, alpha=0.05, *args, **kwargs):
-    """Perform a ttest on a user selected thicket and columns.
+    """Perform a ttest on a user-selected thicket and columns.
 
     Designed to take in a thicket and two columns. For this private function a tvalue
     and list of tstatistics will be returned to preference.py.
@@ -38,6 +38,7 @@ def __ttest(thicket, columns, alpha=0.05, *args, **kwargs):
         raise ValueError("Columns must be a list of length 2.")
 
     n = pd.unique(thicket.dataframe.reset_index()["node"])[0]
+
     # nobs for parameter one for ttest
     nobs_column1 = len(thicket.dataframe.loc[n][columns[0]])
     # nobs for parameter two for ttest
@@ -49,6 +50,7 @@ def __ttest(thicket, columns, alpha=0.05, *args, **kwargs):
 
     th.mean(thicket, columns)
     th.std(thicket, columns)
+
     # thicket object with columnar index
     if thicket.dataframe.columns.nlevels > 1:
         mean_columns = [(idx, col + "_mean") for idx, col in columns]
@@ -66,10 +68,12 @@ def __ttest(thicket, columns, alpha=0.05, *args, **kwargs):
             )
 
             t_statistics.append(tStatistic.statistic)
+
         # store results into thicket's aggregated statistics table
         aggregated_cols = (
             str(columns[0]).replace("'", "") + " vs " + str(columns[1]).replace("'", "")
         )
+
         thicket.statsframe.dataframe[
             (
                 "Preference",
@@ -105,6 +109,7 @@ def __ttest(thicket, columns, alpha=0.05, *args, **kwargs):
 
         # store results into thicket's aggregated statistics table
         aggregated_cols = columns[0] + " vs " + columns[1]
+
         thicket.statsframe.dataframe[aggregated_cols + "_tvalue"] = tvalue
         thicket.statsframe.dataframe[aggregated_cols + "_tstatistic"] = t_statistics
 
