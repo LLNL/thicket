@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+import warnings
+
 from ..utils import verify_thicket_structures
 from .ttest import __ttest
 
