@@ -3,8 +3,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-import warnings
-
 from ..utils import verify_thicket_structures
 from .ttest import __ttest
 
@@ -39,6 +37,9 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
             preference.
         test (str): User-selected test.
     """
+    if len(columns) != 2:
+        raise ValueError("Must specify 2 columns in columns=.")
+
     if test not in __statistical_tests.keys():
         raise ValueError("Test is not available.")
 
@@ -47,12 +48,6 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
     if test == "ttest":
         tvalue, t_statistics = __statistical_tests[test](
             thicket, columns, *args, **kwargs
-        )
-
-    if len(columns) > 2:
-        warnings.warn(
-            "More than 2 columns specified in columns=. Only calculating preference of first two columns.",
-            SyntaxWarning,
         )
 
     pref_mean = []
