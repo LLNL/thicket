@@ -146,13 +146,13 @@ class ModelWrapper:
         scientific_function = str(model_copy)
         scientific_function = scientific_function.replace("+-", "-")
         scientific_function = scientific_function.replace("+ -", "-")
-        scientific_function = scientific_function.replace("*", "\cdot")
+        scientific_function = scientific_function.replace("*", "\\cdot")
         scientific_function = scientific_function.replace("(", "{")
         scientific_function = scientific_function.replace(")", "}")
         scientific_function = scientific_function.replace(
-            "log2{p}", "\log_2(p)")
+            "log2{p}", "\\log_2(p)")
         scientific_function = scientific_function.replace(
-            "log2{q}", "\log_2(q)")
+            "log2{q}", "\\log_2(q)")
         scientific_function = "$" + scientific_function + "$"
         return scientific_function
 
@@ -164,6 +164,7 @@ class ModelWrapper:
         RSS=False,
         AR2=False,
         show_opt_scaling=False,
+        opt_scaling_func=None,
     ):
         """Display function to visualize performance models with one model parameter.
 
@@ -174,6 +175,7 @@ class ModelWrapper:
             RSS (bool, optional): whether to display Extra-P model RSS on the plot. Defaults to False.
             AR2 (bool, optional): whether to display Extra-P model AR2 on the plot. Defaults to False.
             show_opt_scaling (bool, optional): whether to display the optimal scaling curve. Defaults to False.
+            opt_scaling_func (str, optional): an optimal scaling function as a python interpretable string provided by the user. Defaults to None.
 
         Raises:
             Exception: Raises an exception if the optimal scaling curve can not be plotted for the given model parameter.
@@ -209,32 +211,20 @@ class ModelWrapper:
         plt.ioff()
         fig, ax = plt.subplots()
 
-        if show_opt_scaling == True:
-            y_vals_opt = []
-            if self.parameters[0] == "jobsize":
-                for _ in range(len(y_vals)):
-                    y_vals_opt.append(y_vals[0])
-                ax.plot(x_vals, y_vals_opt,
-                        label="optimal scaling", color="red")
-            else:
-                raise Exception(
-                    "Plotting the optimal scaling is currently not supported for other parameters."
-                )
-
         # plot the model
         ax.plot(x_vals, y_vals, label=scientific_function, color="blue")
 
         # plot optional features like min/max
-        if show_mean == True:
+        if show_mean is True:
             ax.plot(
                 params,
                 mean,
                 color="black",
                 marker="+",
-                label=self.mdl.callpath,
+                label="mean",
                 linestyle="None",
             )
-        if show_median == True:
+        if show_median is True:
             ax.plot(
                 params,
                 median,
@@ -243,7 +233,7 @@ class ModelWrapper:
                 label="median",
                 linestyle="None",
             )
-        if show_min_max == True:
+        if show_min_max is True:
             ax.plot(
                 params, mins, color="black", marker="_", label="min", linestyle="None"
             )
@@ -257,6 +247,32 @@ class ModelWrapper:
                 line_y.append(min_v), line_y.append(max_v)
                 line_x.append(np.nan), line_y.append(np.nan)
             ax.plot(line_x, line_y, color="black")
+
+        if show_opt_scaling is True:
+            # if the user provides a custom function
+            if opt_scaling_func is not None:
+                y_vals_opt = []
+                try:
+                    # needs to be p, because the diest model parameter chosen by extra-p is p
+                    for p in x_vals:
+                        from math import log2
+                        y_vals_opt.append(eval(opt_scaling_func))
+                    ax.plot(x_vals, y_vals_opt,
+                            label="optimal scaling", color="red")
+                except Exception as e:
+                    print("WARNING: optimal scaling curve could not be drawn. The function needs to be interpretable by the python eval() function and the parameters need to be the same as the ones shwon on the figures. See the following exception for more information: "+str(e))
+            # otherwise try to figure out the optimal scaling curve automatically
+            else:
+                if self.parameters[0] == "jobsize":
+                    y_vals_opt = []
+                    for _ in range(len(y_vals)):
+                        y_vals_opt.append(y_vals[0])
+                    ax.plot(x_vals, y_vals_opt,
+                            label="optimal scaling", color="red")
+                else:
+                    raise Exception(
+                        "Plotting the optimal scaling automatically is currently not supported for the chosen parameter."
+                    )
 
         # plot axes and titles
         ax.set_xlabel(self.parameters[0] + " $p$")
@@ -277,13 +293,13 @@ class ModelWrapper:
             ax.text(
                 x_vals[0],
                 y_pos_text,
-                "AR2 = " + ar2,
+                "AR\u00b2 = " + ar2,
             )
         elif RSS and AR2:
             ax.text(
                 x_vals[0],
                 y_pos_text,
-                "RSS = " + rss + "\nAR2 = " + ar2,
+                "RSS = " + rss + "\nAR\u00b2 = " + ar2,
             )
 
         # plot legend
@@ -350,6 +366,7 @@ class ModelWrapper:
         RSS=False,
         AR2=False,
         show_opt_scaling=False,
+        opt_scaling_func=None,
     ):
         """Display function to visualize performance models with two model parameters.
 
@@ -360,6 +377,7 @@ class ModelWrapper:
             RSS (bool, optional): whether to display Extra-P model RSS on the plot. Defaults to False.
             AR2 (bool, optional): whether to display Extra-P model AR2 on the plot. Defaults to False.
             show_opt_scaling (bool, optional): whether to display the optimal scaling curve. Defaults to False.
+            opt_scaling_func (str, optional): an optimal scaling function as a python interpretable string provided by the user. Defaults to None.
 
         Raises:
             Exception: Raises an exception if the optimal scaling curve can not be plotted for the given model parameter.
@@ -394,10 +412,14 @@ class ModelWrapper:
         x_vals, y_vals = np.meshgrid(x_vals, y_vals)
         z_vals = self.mdl.hypothesis.function.evaluate([x_vals, y_vals])
 
-        def opt_scaling_func(x, y):
+        # opt. scaling function used for auto. detection
+        def opt_scaling_func_auto(x, y):
             return (means[0] / 100) * y
 
-        z_vals2 = opt_scaling_func(x_vals, y_vals)
+        # opt. scaling function used for use defined inputs
+        def opt_scaling_func_user(p, q):
+            from numpy import log2
+            return eval(opt_scaling_func)
 
         plt.ioff()
 
@@ -405,18 +427,46 @@ class ModelWrapper:
         ax = fig.gca(projection="3d")
 
         if show_opt_scaling:
-            if self.parameters[0] == "jobsize" and self.parameters[1] == "problem_size":
-                ax.plot_surface(
-                    x_vals,
-                    y_vals,
-                    z_vals2,
-                    label="optimal scaling",
-                    rstride=1,
-                    cstride=1,
-                    antialiased=False,
-                    alpha=0.1,
-                    color="red",
-                )
+            # if the user provides a custom scaling function
+            if opt_scaling_func is not None:
+                z_vals_opt = []
+                try:
+                    # needs to be p,q, because these are the model parameter chosen by extra-p first
+                    # for p, q in x_vals, y_vals:
+                    #    z_vals_opt.append(eval(opt_scaling_func))
+                    z_vals_opt = opt_scaling_func_user(x_vals, y_vals)
+                    ax.plot_surface(
+                        x_vals,
+                        y_vals,
+                        z_vals_opt,
+                        label="optimal scaling",
+                        rstride=1,
+                        cstride=1,
+                        antialiased=False,
+                        alpha=0.1,
+                        color="red",
+                    )
+                except Exception as e:
+                    print("WARNING: optimal scaling curve could not be drawn. The function needs to be interpretable by the python eval() function and the parameters need to be the same as the ones shwon on the figures. See the following exception for more information: "+str(e))
+            # otherwise try to figure out the optimal scaling curve automatically
+            else:
+                if self.parameters[0] == "jobsize" and self.parameters[1] == "problem_size":
+                    z_vals_opt = opt_scaling_func_auto(x_vals, y_vals)
+                    ax.plot_surface(
+                        x_vals,
+                        y_vals,
+                        z_vals_opt,
+                        label="optimal scaling",
+                        rstride=1,
+                        cstride=1,
+                        antialiased=False,
+                        alpha=0.1,
+                        color="red",
+                    )
+                else:
+                    raise Exception(
+                        "Plotting the optimal scaling automatically is currently not supported for the chosen parameters."
+                    )
 
         # plot model as surface plot depending on options given
         if show_mean or show_median or show_min_max or show_opt_scaling:
@@ -504,14 +554,14 @@ class ModelWrapper:
             ax.text2D(
                 0,
                 0.75,
-                "AR2 = " + ar2,
+                "AR\u00b2 = " + ar2,
                 transform=ax.transAxes,
             )
         elif RSS and AR2:
             ax.text2D(
                 0,
                 0.75,
-                "RSS = " + rss + "\nAR2 = " + ar2,
+                "RSS = " + rss + "\nAR\u00b2 = " + ar2,
                 transform=ax.transAxes,
             )
 
@@ -528,6 +578,7 @@ class ModelWrapper:
         RSS=False,
         AR2=False,
         show_opt_scaling=False,
+        opt_scaling_func=None,
     ):
         """General display function for visualizing a performance model.
         Calls the specific display function depending on the number of
@@ -540,6 +591,7 @@ class ModelWrapper:
             RSS (bool, optional): whether to display Extra-P model RSS on the plot. Defaults to False.
             AR2 (bool, optional): whether to display Extra-P model AR2 on the plot. Defaults to False.
             show_opt_scaling (bool, optional): whether to display the optimal scaling curve. Defaults to False.
+            opt_scaling_func (str, optional): an optimal scaling function as a python interpretable string provided by the user. Defaults to None.
 
         Raises:
             Exception: Raises an exception if the user tries to display a model with a number of model parameters that is not supported.
@@ -551,12 +603,14 @@ class ModelWrapper:
         # check number of model parameters
         if len(self.parameters) == 1:
             fig, ax = self.display_one_parameter_model(
-                show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling
+                show_mean, show_median, show_min_max,
+                RSS, AR2, show_opt_scaling, opt_scaling_func
             )
 
         elif len(self.parameters) == 2:
             fig, ax = self.display_two_parameter_model(
-                show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling
+                show_mean, show_median, show_min_max,
+                RSS, AR2, show_opt_scaling, opt_scaling_func
             )
 
         else:
@@ -612,10 +666,11 @@ class Modeling:
         RSS=False,
         AR2=False,
         show_opt_scaling=False,
+        opt_scaling_func=None,
     ):
         def model_to_img_html(model_obj):
             fig, _ = model_obj.display(
-                show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling
+                show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling, opt_scaling_func
             )
             figfile = BytesIO()
             fig.savefig(figfile, format="jpg", transparent=False)
@@ -794,7 +849,7 @@ class Modeling:
                                             )
                                         if len(value) == 1:
                                             # calculate total metric values
-                                            if calc_total_metrics == True:
+                                            if calc_total_metrics is True:
                                                 # convert only data for metrics that are measured per rank
                                                 if "/rank" in str(metric):
                                                     # read out scaling parameter for total metric value calculation
@@ -851,14 +906,14 @@ class Modeling:
                                                 + "'.",
                                                 profile,
                                             )
-                                if coordinate_exists == False:
+                                if coordinate_exists is False:
                                     raise ExtrapReaderException(
                                         "The parameter value combintation '"
                                         + str(coordinate)
                                         + "' could not be matched to any of the profiles. This could indicate missing metadata values for one or more of the parameters specified for modeling.",
                                         profile,
                                     )
-                        if callpath_exists == False:
+                        if callpath_exists is False:
                             raise ExtrapReaderException(
                                 "The node/callpath '"
                                 + str(callpath)
