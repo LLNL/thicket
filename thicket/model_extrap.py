@@ -252,7 +252,7 @@ class ModelWrapper:
                 try:
                     # needs to be p, because the diest model parameter chosen by extra-p is p
                     for p in x_vals:
-                        from math import log2
+                        from math import log2  # noqa: F401
 
                         y_vals_opt.append(eval(opt_scaling_func))
                     ax.plot(x_vals, y_vals_opt, label="optimal scaling", color="red")
@@ -413,7 +413,7 @@ class ModelWrapper:
 
         # opt. scaling function used for use defined inputs
         def opt_scaling_func_user(p, q):
-            from numpy import log2
+            from numpy import log2  # noqa: F401
 
             return eval(opt_scaling_func)
 
