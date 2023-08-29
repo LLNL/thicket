@@ -54,159 +54,209 @@ class ModelWrapper:
     """
 
     def __init__(self, mdl, parameters):
+        """Init function of the ModelWrapper class.
+
+        Args:
+            mdl (Extra-P Model): An Extra-P model object.
+            parameters (list): A list of string parameters that will be considered for modeling.
+        """
         self.mdl = mdl
         self.parameters = parameters
 
-    def __str__(self):
-        """Display self as a function"""
+    def __str__(self) -> str:
+        """Returns the Extra-P performance model function as a string.
+
+        Returns:
+            str: The Extra-P performance model function.
+        """
         return str(self.mdl.hypothesis.function)
 
-    def eval(self, val):
-        """Evaluate function (self) at val. f(val) = result"""
-        return self.mdl.hypothesis.function.evaluate(val)
+    def eval(self, val: float) -> float:
+        """Evaluates the performance model function using a given value and returns the result.
 
-    def simplify_coefficients(self, model_function):
-        """Simplify the created model function so it is easier to read. Shortens coefficients to 3 decimals."""
-        simplified_model_function = copy.deepcopy(model_function)
-        simplified_model_function.constant_coefficient = "{:.3E}".format(model_function.constant_coefficient)
-        for i in range(len(model_function.compound_terms)):
-            simplified_model_function.compound_terms[i].coefficient = "{:.3E}".format(model_function.compound_terms[i].coefficient)
-        return simplified_model_function
-        
-    def display_interactive(self):
-        """_summary_
+        Args:
+            val (float): The value the function will be evaluated for.
+
+        Returns:
+            float: The result value.
         """
-        # Sort based on x values
-        measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
+        return self.mdl.hypothesis.function.evaluate(val)
+    
+    def convert_coefficient_to_scientific_notation(self, coefficient: float) -> str:
+        """This function converts an Extra-P model coefficient into scientific
+        notation and returns it as a string. It also shortes the coefficients
+        to three decimal places.
 
-        # Scatter plot
-        params = [ms.coordinate[0] for ms in measures_sorted]  # X values
-        median = [ms.median for ms in measures_sorted]
-        mean = [ms.mean for ms in measures_sorted] # Y values
-        mins = [ms.minimum for ms in measures_sorted]
-        maxes = [ms.maximum for ms in measures_sorted]
+        Args:
+            coefficient (float): A model coefficient from a Extra-P function.
 
-        # Line plot
+        Returns:
+            str: The coefficient in scientific notation.
+        """
+        f = mticker.ScalarFormatter(useMathText=True)
+        f.set_powerlimits((-3,3))
+        x = "{}".format(f.format_data(float(coefficient)))
+        terms = x.split(" ")
+        if not terms[0][:1].isnumeric():
+            coeff = terms[0][1:]
+            coeff = "{:.3f}".format(float(coeff))
+            new_coeff = ""
+            new_coeff += "-"
+            new_coeff += coeff
+            for i in range(len(terms)):
+                if i != 0:
+                    new_coeff += terms[i]
+            return new_coeff
+        else: 
+            coeff = terms[0]
+            coeff = "{:.3f}".format(float(coeff))
+            new_coeff = ""
+            new_coeff += coeff
+            for i in range(len(terms)):
+                if i != 0:
+                    new_coeff += terms[i]
+            return new_coeff
 
-        plt.ioff()
-        fig, ax = plt.subplots()
-        fig.subplots_adjust(bottom=0.2)
+    def convert_function_to_scientific_notation(self, model_function) -> str:
+        """This function converts the created performance model function into a
+        scientific notation in string format.
+
+        Args:
+            model_function (Extra-P Model): The Extra-P Model object containing the scaling function.
+
+        Returns:
+            str: The resulting scientific version of the performance function.
+        """
         
-        # Function to plot graph
-        # according to expression
-        def visualizeGraph(x_max):
-            # X value plotting range. Dynamic based off what the largest/smallest values are
-            x_vals = np.arange(
-                params[0], float(x_max), (params[-1] - params[0]) / 100.0
-            )
-            # Y values
-            y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
-            
-            # Plot line
-            l, = ax.plot(x_vals, y_vals, label=self.mdl.hypothesis.function)
-            #l, = ax.plot(t, np.zeros_like(t), lw=2)
-            l.set_ydata(y_vals)
-            ax.relim()
-            ax.autoscale_view()
-            plt.draw()
-            
-        # Adding TextBox to graph
-        from matplotlib.widgets import TextBox
-        graphBox = fig.add_axes([0.1, 0.05, 0.8, 0.075])
-        txtBox = TextBox(graphBox, "Max x: ")
-        txtBox.on_submit(visualizeGraph)
-        txtBox.set_val(str(1.5 * params[-1]))
-
-
-        # Plot scatter
-        
-        errors = [
-            np.subtract(mean, mins),
-            np.subtract(maxes, mean),
-        ]
-        
-        #ax.plot(params, measures, "ro", yerr=[min,maxs], label=self.mdl.callpath)
-        ax.errorbar(params, mean, yerr=errors, fmt=".k", label=self.mdl.callpath)
-        ax.plot(params, median, "+k", label="median")
-
-        ax.set_xlabel(self.parameters)
-        ax.set_ylabel(self.mdl.metric)
-        ax.legend(loc=1)
-
-        return plt
+        function_terms = len(model_function.compound_terms)
+        model_copy = copy.deepcopy(model_function)
+        model_copy.constant_coefficient = self.convert_coefficient_to_scientific_notation(model_function.constant_coefficient)
+        for i in range(function_terms):
+            model_copy.compound_terms[i].coefficient = self.convert_coefficient_to_scientific_notation(model_function.compound_terms[i].coefficient)
+        scientific_function = str(model_copy)
+        scientific_function = scientific_function.replace("+-", "-")
+        scientific_function = scientific_function.replace("+ -", "-")
+        scientific_function = scientific_function.replace("*", "\cdot")
+        scientific_function = scientific_function.replace("(", "{")
+        scientific_function = scientific_function.replace(")", "}")
+        scientific_function = scientific_function.replace("log2{p}", "\log_2(p)")
+        scientific_function = scientific_function.replace("log2{q}", "\log_2(q)")
+        scientific_function = "$" + scientific_function + "$"
+        return scientific_function
     
     def display_one_parameter_model(self, show_mean=False, show_median=False,
-                                    show_min_max=False, RSS=False):
-        """Display function
+                                    show_min_max=False, RSS=False, AR2=False,
+                                    show_opt_scaling=False):
+        """Display function to visualize performance models with one model parameter.
 
-        Arguments:
-            RSS (bool): whether to display Extra-P RSS on the plot
+        Args:
+            show_mean (bool, optional): whether to display mean values on the plot. Defaults to False.
+            show_median (bool, optional): whether to display median values on the plot. Defaults to False.
+            show_min_max (bool, optional): whether to display min/max values on the plot. Defaults to False.
+            RSS (bool, optional): whether to display Extra-P model RSS on the plot. Defaults to False.
+            AR2 (bool, optional): whether to display Extra-P model AR2 on the plot. Defaults to False.
+            show_opt_scaling (bool, optional): whether to display the optimal scaling curve. Defaults to False.
+
+        Raises:
+            Exception: Raises an exception if the optimal scaling curve can not be plotted for the given model parameter.
+
+        Returns:
+            fig, ax: The matplotlib figure and axis objects, so the user can display and manipulate the plot.
         """
         
-        # Sort based on x values
+        # sort based on x values
         measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
 
-        # Scatter plot
+        # compute means, medians, mins, maxes
         params = [ms.coordinate[0] for ms in measures_sorted]  # X values
         median = [ms.median for ms in measures_sorted]
         mean = [ms.mean for ms in measures_sorted] # Y values
         mins = [ms.minimum for ms in measures_sorted]
         maxes = [ms.maximum for ms in measures_sorted]
 
-        # Line plot
-
-        # X value plotting range. Dynamic based off what the largest/smallest values are
+        # x value plotting range, dynamic based off what the largest/smallest values are
         x_vals = np.arange(
             params[0], 1.5 * params[-1], (params[-1] - params[0]) / 100.0
         )
         
-        print("model:",self.mdl.hypothesis.function)
-        
-        temp = str(self.simplify_coefficients(self.mdl.hypothesis.function))
-        temp = temp.replace("+-", "-")
-        temp = temp.replace("*", "\cdot")
-        temp = temp.replace("(", "{")
-        temp = temp.replace(")", "}")
-        temp = temp.replace("log2{p}", "\log_2(p)")
-        temp = "$" + temp + "$"
-        
-      
-        print("new function:",temp)
+        # create a scientific representation of the created performance model
+        scientific_function = self.convert_function_to_scientific_notation(self.mdl.hypothesis.function)
 
-        # Y values
+        # compute y values for plotting
         y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
         
         plt.ioff()
         fig, ax = plt.subplots()
-
-        # Plot line
-        ax.plot(x_vals, y_vals, label=temp)
-
-        # Plot scatter
         
-        errors = [
-            np.subtract(mean, mins),
-            np.subtract(maxes, mean),
-        ]
-        
-        #ax.plot(params, measures, "ro", yerr=[min,maxs], label=self.mdl.callpath)
-        ax.errorbar(params, mean, yerr=errors, fmt=".k", label=self.mdl.callpath)
-        ax.plot(params, median, "+k", label="median")
+        if show_opt_scaling == True:
+            y_vals_opt = []
+            if self.parameters[0] == "jobsize":
+                for _ in range(len(y_vals)):
+                    y_vals_opt.append(y_vals[0])
+                ax.plot(x_vals, y_vals_opt, label="optimal scaling", color="red")
+            else:
+                raise Exception("Plotting the optimal scaling is currently not supported for other parameters.")
 
+        # plot the model
+        ax.plot(x_vals, y_vals, label=scientific_function, color="blue")
+        
+        # plot optional features like min/max
+        if show_mean == True:
+            ax.plot(params, mean, color="black", marker='+', label=self.mdl.callpath, linestyle = 'None')
+        if show_median == True:
+            ax.plot(params, median, color="black", marker='x', label="median", linestyle = 'None')
+        if show_min_max == True:
+            ax.plot(params, mins, color="black", marker='_', label="min", linestyle = 'None')
+            ax.plot(params, maxes, color="black", marker='_', label="max", linestyle = 'None')
+            # Draw connecting lines
+            line_x, line_y = [], []
+            for x, min_v, max_v in zip(params, mins, maxes):
+                line_x.append(x), line_x.append(x)
+                line_y.append(min_v), line_y.append(max_v)
+                line_x.append(np.nan), line_y.append(np.nan)
+            ax.plot(line_x, line_y, color="black")
+    
+        # plot axes and titles
         ax.set_xlabel(self.parameters[0] + " $p$")
         ax.set_ylabel(self.mdl.metric)
-        if RSS:
+        ax.set_title(str(self.mdl.callpath)+"()")
+        
+        # plot rss and ar2 values 
+        y_pos_text = max(maxes)-0.1*max(maxes)
+        rss = "{:.3f}".format(self.mdl.hypothesis.RSS)
+        ar2 = "{:.3f}".format(self.mdl.hypothesis.AR2)
+        if RSS and not AR2:
             ax.text(
                 x_vals[0],
-                max(y_vals + mean),
-                "RSS = " + str(self.mdl.hypothesis.RSS),
+                y_pos_text,
+                "RSS = " + rss,
             )
+        elif AR2 and not RSS:
+            ax.text(
+                x_vals[0],
+                y_pos_text,
+                "AR2 = " + ar2,
+            )
+        elif RSS and AR2:
+            ax.text(
+                x_vals[0],
+                y_pos_text,
+                "RSS = " + rss + "\nAR2 = " + ar2,
+            )
+            
+        # plot legend
         ax.legend(loc=1)
 
         return fig, ax
     
-    def draw_legend(self, ax_all, dict_callpath_color):
-        # draw legend
+    def draw_legend(self, axis, dict_callpath_color):
+        """This method draws a legend for 3D plots.
+
+        Args:
+            axis (_type_): The matplotlib axis of a figure object.
+            dict_callpath_color (dict): The color/marker dict for the elements displayed in the plot.
+        """
+       
         handles = list()
         for key, value in dict_callpath_color.items():
             labelName = str(key)
@@ -226,59 +276,77 @@ class ModelWrapper:
                           markersize=10, label=labelName)
                 handles.append(mark)
             
-        ax_all.legend(handles=handles,
-                            loc="upper right", bbox_to_anchor=(2.5, 1))
+        axis.legend(handles=handles,
+                            loc="center right", bbox_to_anchor=(2.75, 0.5))
     
     def display_two_parameter_model(self, show_mean=False, show_median=False,
-                                    show_min_max=False, RSS=False):
-        """Display function
+                                    show_min_max=False, RSS=False, AR2=False,
+                                    show_opt_scaling=False):
+        """Display function to visualize performance models with two model parameters.
 
-        Arguments:
-            RSS (bool): whether to display Extra-P RSS on the plot
+        Args:
+            show_mean (bool, optional): whether to display mean values on the plot. Defaults to False.
+            show_median (bool, optional): whether to display median values on the plot. Defaults to False.
+            show_min_max (bool, optional): whether to display min/max values on the plot. Defaults to False.
+            RSS (bool, optional): whether to display Extra-P model RSS on the plot. Defaults to False.
+            AR2 (bool, optional): whether to display Extra-P model AR2 on the plot. Defaults to False.
+            show_opt_scaling (bool, optional): whether to display the optimal scaling curve. Defaults to False.
+
+        Raises:
+            Exception: Raises an exception if the optimal scaling curve can not be plotted for the given model parameter.
+
+        Returns:
+            fig, ax: The matplotlib figure and axis objects, so the user can display and manipulate the plot.
         """
         
-        #TODO: add parameters to display mean, median, min, max
-        # optiomal scaling surface
-        # change plot opacity based on if measurements are displayed
-        # write function with real math script in legend
-        
-        # Sort based on x and y values
+        # sort based on x and y values
         measures_sorted = sorted(self.mdl.measurements, key=lambda x: (x.coordinate[0], x.coordinate[1]))
 
-        # Scatter plot
+        # get x, y value from measurements
         X_params = [ms.coordinate[0] for ms in measures_sorted]  # X values
         Y_params = [ms.coordinate[1] for ms in measures_sorted]  # Y values
         
-        # Z values
+        # get median, mean, min, and max values
         medians = [ms.median for ms in measures_sorted]
         means = [ms.mean for ms in measures_sorted]
         mins = [ms.minimum for ms in measures_sorted]
         maxes = [ms.maximum for ms in measures_sorted]
 
-        # Surface plot
-        # X value plotting range. Dynamic based off what the largest/smallest values are
+        # x value plotting range. Dynamic based off what the largest/smallest values are
         x_vals = np.linspace(
             start=X_params[0], stop=1.5 * X_params[-1], num=100
         )
-        # Y value plotting range. Dynamic based off what the largest/smallest values are
+        # y value plotting range. Dynamic based off what the largest/smallest values are
         y_vals = np.linspace(
             start=Y_params[0], stop=1.5 * Y_params[-1], num=100
         )
 
         x_vals, y_vals = np.meshgrid(x_vals, y_vals)
         z_vals = self.mdl.hypothesis.function.evaluate([x_vals, y_vals])
+        
+        def opt_scaling_func(x, y):
+            return (means[0]/100)*y
+
+        z_vals2 = opt_scaling_func(x_vals, y_vals)
     
         plt.ioff()
         
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-    
-        # plot model as surface plot
-        ax.plot_surface(x_vals, y_vals, z_vals, label=str(self.mdl.hypothesis.function),
-                        rstride=1, cstride=1, antialiased=False, alpha=0.1)
         
-        #rstride=1, cstride=1, antialiased=False, alpha=0.1
-
+        if show_opt_scaling:
+            if self.parameters[0] == "jobsize" and self.parameters[1] == "problem_size":
+                ax.plot_surface(x_vals, y_vals, z_vals2, label="optimal scaling",
+                                rstride=1, cstride=1, antialiased=False, alpha=0.1, color="red")
+    
+        # plot model as surface plot depending on options given 
+        if show_mean or show_median or show_min_max or show_opt_scaling:
+            ax.plot_surface(x_vals, y_vals, z_vals, label=str(self.mdl.hypothesis.function),
+                            rstride=1, cstride=1, antialiased=False, alpha=0.1, color="blue")
+        else:
+            ax.plot_surface(x_vals, y_vals, z_vals, label=str(self.mdl.hypothesis.function),
+                            rstride=1, cstride=1, antialiased=True, color="blue")
+        
         # plot the measurement points if options selected
         if show_median:
             ax.scatter(X_params, Y_params, medians, c="black", marker="x", label="median")
@@ -296,14 +364,18 @@ class ModelWrapper:
                 line_x.append(np.nan), line_y.append(np.nan), line_z.append(np.nan)
             ax.plot(line_x, line_y, line_z, color="black")
        
-        ax.set_xlabel(self.parameters[0])
-        ax.set_ylabel(self.parameters[1])
+        # axis labels and title
+        ax.set_xlabel(self.parameters[0] + " $p$")
+        ax.set_ylabel(self.parameters[1] + " $q$")
         ax.set_zlabel(self.mdl.metric)
         ax.set_title(str(self.mdl.callpath)+"()")
         
+        # create scientific representation of create performance model
+        scientific_function = self.convert_function_to_scientific_notation(self.mdl.hypothesis.function)
+        
+        # create dict for legend color and markers
         dict_callpath_color = {}
-        simple_function = self.simplify_function(self.mdl.hypothesis.function)
-        dict_callpath_color[str(simple_function)] = ["surface", "blue"]
+        dict_callpath_color[str(scientific_function)] = ["surface", "blue"]
         if show_mean:
             dict_callpath_color["mean"] = ["mean", "black"]
         if show_median:
@@ -311,25 +383,67 @@ class ModelWrapper:
         if show_min_max:
             dict_callpath_color["min"] = ["min", "black"]
             dict_callpath_color["max"] = ["max", "black"]
+        if show_opt_scaling:
+            dict_callpath_color["optimal scaling"] = ["surface", "red"]
+            
+        # plot rss and ar2 values 
+        rss = "{:.3f}".format(self.mdl.hypothesis.RSS)
+        ar2 = "{:.3f}".format(self.mdl.hypothesis.AR2)
+        if RSS and not AR2:
+            ax.text2D(
+                0,
+                0.75,
+                "RSS = " + rss,
+                transform=ax.transAxes,
+            )
+        elif AR2 and not RSS:
+            ax.text2D(
+                0,
+                0.75,
+                "AR2 = " + ar2,
+                transform=ax.transAxes,
+            )
+        elif RSS and AR2:
+            ax.text2D(
+                0,
+                0.75,
+                "RSS = " + rss + "\nAR2 = " + ar2,
+                transform=ax.transAxes,
+            )
         
+        # draw the legend
         self.draw_legend(ax, dict_callpath_color)
        
         return fig, ax
 
     def display(self, show_mean=False, show_median=False,
-                show_min_max=False, RSS=False):
-        """Display function
+                show_min_max=False, RSS=False, AR2=False,
+                show_opt_scaling=False):
+        """General display function for visualizing a performance model.
+        Calls the specific display function depending on the number of 
+        found model parameters automatically.
 
-        Arguments:
-            RSS (bool): whether to display Extra-P RSS on the plot
+        Args:
+            show_mean (bool, optional): whether to display mean values on the plot. Defaults to False.
+            show_median (bool, optional): whether to display median values on the plot. Defaults to False.
+            show_min_max (bool, optional): whether to display min/max values on the plot. Defaults to False.
+            RSS (bool, optional): whether to display Extra-P model RSS on the plot. Defaults to False.
+            AR2 (bool, optional): whether to display Extra-P model AR2 on the plot. Defaults to False.
+            show_opt_scaling (bool, optional): whether to display the optimal scaling curve. Defaults to False.
+
+        Raises:
+            Exception: Raises an exception if the user tries to display a model with a number of model parameters that is not supported.
+
+        Returns:
+            fig, ax: The matplotlib figure and axis objects, so the user can display and manipulate the plot.
         """
         
         # check number of model parameters
         if len(self.parameters) == 1:
-            fig, ax = self.display_one_parameter_model(show_mean, show_median, show_min_max, RSS)
+            fig, ax = self.display_one_parameter_model(show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling)
         
         elif len(self.parameters) == 2:
-            fig, ax = self.display_two_parameter_model(show_mean, show_median, show_min_max, RSS)
+            fig, ax = self.display_two_parameter_model(show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling)
         
         else:
             raise Exception("Plotting performance models with "+str(len(self.parameters))+" parameters is currently not supported.")
@@ -371,9 +485,11 @@ class Modeling:
             
         self.experiment = None
 
-    def to_html(self, RSS=False):
+    def to_html(self, show_mean=False, show_median=False,
+                show_min_max=False, RSS=False, AR2=False,
+                show_opt_scaling=False):
         def model_to_img_html(model_obj):
-            fig, ax = model_obj.display(RSS)
+            fig, _ = model_obj.display(show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling)
             figfile = BytesIO()
             fig.savefig(figfile, format="jpg", transparent=False)
             figfile.seek(0)
@@ -397,6 +513,8 @@ class Modeling:
         frm_dict = {met + MODEL_TAG: model_to_img_html for met in existing_metrics}
 
         # Subset of the aggregated statistics table with only the Extra-P columns selected
+        #TODO: to_html(escape=False, formatters=frm_dict), the formatter does not work for 3D stuff.
+        # need to find a workaround
         return self.tht.statsframe.dataframe[
             [met + MODEL_TAG for met in existing_metrics]
         ].to_html(escape=False, formatters=frm_dict)
