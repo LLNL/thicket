@@ -26,14 +26,15 @@ from extrap.entities.coordinate import Coordinate
 
 MODEL_TAG = "_extrap-model"
 
+
 class ExtrapReaderException(Exception):
-    """Custom exception class for raising exceptions while reading in data from 
+    """Custom exception class for raising exceptions while reading in data from
     a pandas type dataframe from a thicket object into the Extra-P experiment object.
 
     Args:
         Exception (Exception): Python base Exception object.
     """
-    
+
     def __init__(self, message: str, profile: int) -> None:
         """Initialization function for the custom Extra-P reader exception class.
 
@@ -44,7 +45,8 @@ class ExtrapReaderException(Exception):
         super().__init__()
         self.message = message
         self.profile = profile
-        
+
+
 class ModelWrapper:
     """Wrapper for an Extra-P model.
 
@@ -81,7 +83,7 @@ class ModelWrapper:
             float: The result value.
         """
         return self.mdl.hypothesis.function.evaluate(val)
-    
+
     def convert_coefficient_to_scientific_notation(self, coefficient: float) -> str:
         """This function converts an Extra-P model coefficient into scientific
         notation and returns it as a string. It also shortes the coefficients
@@ -94,7 +96,7 @@ class ModelWrapper:
             str: The coefficient in scientific notation.
         """
         f = mticker.ScalarFormatter(useMathText=True)
-        f.set_powerlimits((-3,3))
+        f.set_powerlimits((-3, 3))
         x = "{}".format(f.format_data(float(coefficient)))
         terms = x.split(" ")
         if not terms[0][:1].isnumeric():
@@ -107,7 +109,7 @@ class ModelWrapper:
                 if i != 0:
                     new_coeff += terms[i]
             return new_coeff
-        else: 
+        else:
             coeff = terms[0]
             coeff = "{:.3f}".format(float(coeff))
             new_coeff = ""
@@ -127,26 +129,42 @@ class ModelWrapper:
         Returns:
             str: The resulting scientific version of the performance function.
         """
-        
+
         function_terms = len(model_function.compound_terms)
         model_copy = copy.deepcopy(model_function)
-        model_copy.constant_coefficient = self.convert_coefficient_to_scientific_notation(model_function.constant_coefficient)
+        model_copy.constant_coefficient = (
+            self.convert_coefficient_to_scientific_notation(
+                model_function.constant_coefficient
+            )
+        )
         for i in range(function_terms):
-            model_copy.compound_terms[i].coefficient = self.convert_coefficient_to_scientific_notation(model_function.compound_terms[i].coefficient)
+            model_copy.compound_terms[
+                i
+            ].coefficient = self.convert_coefficient_to_scientific_notation(
+                model_function.compound_terms[i].coefficient
+            )
         scientific_function = str(model_copy)
         scientific_function = scientific_function.replace("+-", "-")
         scientific_function = scientific_function.replace("+ -", "-")
         scientific_function = scientific_function.replace("*", "\cdot")
         scientific_function = scientific_function.replace("(", "{")
         scientific_function = scientific_function.replace(")", "}")
-        scientific_function = scientific_function.replace("log2{p}", "\log_2(p)")
-        scientific_function = scientific_function.replace("log2{q}", "\log_2(q)")
+        scientific_function = scientific_function.replace(
+            "log2{p}", "\log_2(p)")
+        scientific_function = scientific_function.replace(
+            "log2{q}", "\log_2(q)")
         scientific_function = "$" + scientific_function + "$"
         return scientific_function
-    
-    def display_one_parameter_model(self, show_mean=False, show_median=False,
-                                    show_min_max=False, RSS=False, AR2=False,
-                                    show_opt_scaling=False):
+
+    def display_one_parameter_model(
+        self,
+        show_mean=False,
+        show_median=False,
+        show_min_max=False,
+        RSS=False,
+        AR2=False,
+        show_opt_scaling=False,
+    ):
         """Display function to visualize performance models with one model parameter.
 
         Args:
@@ -163,14 +181,15 @@ class ModelWrapper:
         Returns:
             fig, ax: The matplotlib figure and axis objects, so the user can display and manipulate the plot.
         """
-        
+
         # sort based on x values
-        measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
+        measures_sorted = sorted(
+            self.mdl.measurements, key=lambda x: x.coordinate[0])
 
         # compute means, medians, mins, maxes
         params = [ms.coordinate[0] for ms in measures_sorted]  # X values
         median = [ms.median for ms in measures_sorted]
-        mean = [ms.mean for ms in measures_sorted] # Y values
+        mean = [ms.mean for ms in measures_sorted]  # Y values
         mins = [ms.minimum for ms in measures_sorted]
         maxes = [ms.maximum for ms in measures_sorted]
 
@@ -178,36 +197,59 @@ class ModelWrapper:
         x_vals = np.arange(
             params[0], 1.5 * params[-1], (params[-1] - params[0]) / 100.0
         )
-        
+
         # create a scientific representation of the created performance model
-        scientific_function = self.convert_function_to_scientific_notation(self.mdl.hypothesis.function)
+        scientific_function = self.convert_function_to_scientific_notation(
+            self.mdl.hypothesis.function
+        )
 
         # compute y values for plotting
         y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
-        
+
         plt.ioff()
         fig, ax = plt.subplots()
-        
+
         if show_opt_scaling == True:
             y_vals_opt = []
             if self.parameters[0] == "jobsize":
                 for _ in range(len(y_vals)):
                     y_vals_opt.append(y_vals[0])
-                ax.plot(x_vals, y_vals_opt, label="optimal scaling", color="red")
+                ax.plot(x_vals, y_vals_opt,
+                        label="optimal scaling", color="red")
             else:
-                raise Exception("Plotting the optimal scaling is currently not supported for other parameters.")
+                raise Exception(
+                    "Plotting the optimal scaling is currently not supported for other parameters."
+                )
 
         # plot the model
         ax.plot(x_vals, y_vals, label=scientific_function, color="blue")
-        
+
         # plot optional features like min/max
         if show_mean == True:
-            ax.plot(params, mean, color="black", marker='+', label=self.mdl.callpath, linestyle = 'None')
+            ax.plot(
+                params,
+                mean,
+                color="black",
+                marker="+",
+                label=self.mdl.callpath,
+                linestyle="None",
+            )
         if show_median == True:
-            ax.plot(params, median, color="black", marker='x', label="median", linestyle = 'None')
+            ax.plot(
+                params,
+                median,
+                color="black",
+                marker="x",
+                label="median",
+                linestyle="None",
+            )
         if show_min_max == True:
-            ax.plot(params, mins, color="black", marker='_', label="min", linestyle = 'None')
-            ax.plot(params, maxes, color="black", marker='_', label="max", linestyle = 'None')
+            ax.plot(
+                params, mins, color="black", marker="_", label="min", linestyle="None"
+            )
+            ax.plot(
+                params, maxes, color="black", marker="_", label="max", linestyle="None"
+            )
             # Draw connecting lines
             line_x, line_y = [], []
             for x, min_v, max_v in zip(params, mins, maxes):
@@ -215,14 +257,14 @@ class ModelWrapper:
                 line_y.append(min_v), line_y.append(max_v)
                 line_x.append(np.nan), line_y.append(np.nan)
             ax.plot(line_x, line_y, color="black")
-    
+
         # plot axes and titles
         ax.set_xlabel(self.parameters[0] + " $p$")
         ax.set_ylabel(self.mdl.metric)
-        ax.set_title(str(self.mdl.callpath)+"()")
-        
-        # plot rss and ar2 values 
-        y_pos_text = max(maxes)-0.1*max(maxes)
+        ax.set_title(str(self.mdl.callpath) + "()")
+
+        # plot rss and ar2 values
+        y_pos_text = max(maxes) - 0.1 * max(maxes)
         rss = "{:.3f}".format(self.mdl.hypothesis.RSS)
         ar2 = "{:.3f}".format(self.mdl.hypothesis.AR2)
         if RSS and not AR2:
@@ -243,12 +285,12 @@ class ModelWrapper:
                 y_pos_text,
                 "RSS = " + rss + "\nAR2 = " + ar2,
             )
-            
+
         # plot legend
         ax.legend(loc=1)
 
         return fig, ax
-    
+
     def draw_legend(self, axis, dict_callpath_color):
         """This method draws a legend for 3D plots.
 
@@ -256,7 +298,7 @@ class ModelWrapper:
             axis (_type_): The matplotlib axis of a figure object.
             dict_callpath_color (dict): The color/marker dict for the elements displayed in the plot.
         """
-       
+
         handles = list()
         for key, value in dict_callpath_color.items():
             labelName = str(key)
@@ -264,24 +306,51 @@ class ModelWrapper:
                 patch = mpatches.Patch(color=value[1], label=labelName)
                 handles.append(patch)
             elif value[0] == "mean":
-                mark = mlines.Line2D([], [], color=value[1], marker='+', linestyle='None',
-                          markersize=10, label=labelName)
+                mark = mlines.Line2D(
+                    [],
+                    [],
+                    color=value[1],
+                    marker="+",
+                    linestyle="None",
+                    markersize=10,
+                    label=labelName,
+                )
                 handles.append(mark)
             elif value[0] == "median":
-                mark = mlines.Line2D([], [], color=value[1], marker='x', linestyle='None',
-                          markersize=10, label=labelName)
+                mark = mlines.Line2D(
+                    [],
+                    [],
+                    color=value[1],
+                    marker="x",
+                    linestyle="None",
+                    markersize=10,
+                    label=labelName,
+                )
                 handles.append(mark)
             elif value[0] == "min" or value[0] == "max":
-                mark = mlines.Line2D([], [], color=value[1], marker='_', linestyle='None',
-                          markersize=10, label=labelName)
+                mark = mlines.Line2D(
+                    [],
+                    [],
+                    color=value[1],
+                    marker="_",
+                    linestyle="None",
+                    markersize=10,
+                    label=labelName,
+                )
                 handles.append(mark)
-            
-        axis.legend(handles=handles,
-                            loc="center right", bbox_to_anchor=(2.75, 0.5))
-    
-    def display_two_parameter_model(self, show_mean=False, show_median=False,
-                                    show_min_max=False, RSS=False, AR2=False,
-                                    show_opt_scaling=False):
+
+        axis.legend(handles=handles, loc="center right",
+                    bbox_to_anchor=(2.75, 0.5))
+
+    def display_two_parameter_model(
+        self,
+        show_mean=False,
+        show_median=False,
+        show_min_max=False,
+        RSS=False,
+        AR2=False,
+        show_opt_scaling=False,
+    ):
         """Display function to visualize performance models with two model parameters.
 
         Args:
@@ -298,14 +367,17 @@ class ModelWrapper:
         Returns:
             fig, ax: The matplotlib figure and axis objects, so the user can display and manipulate the plot.
         """
-        
+
         # sort based on x and y values
-        measures_sorted = sorted(self.mdl.measurements, key=lambda x: (x.coordinate[0], x.coordinate[1]))
+        measures_sorted = sorted(
+            self.mdl.measurements, key=lambda x: (
+                x.coordinate[0], x.coordinate[1])
+        )
 
         # get x, y value from measurements
         X_params = [ms.coordinate[0] for ms in measures_sorted]  # X values
         Y_params = [ms.coordinate[1] for ms in measures_sorted]  # Y values
-        
+
         # get median, mean, min, and max values
         medians = [ms.median for ms in measures_sorted]
         means = [ms.mean for ms in measures_sorted]
@@ -314,65 +386,97 @@ class ModelWrapper:
 
         # x value plotting range. Dynamic based off what the largest/smallest values are
         x_vals = np.linspace(
-            start=X_params[0], stop=1.5 * X_params[-1], num=100
-        )
+            start=X_params[0], stop=1.5 * X_params[-1], num=100)
         # y value plotting range. Dynamic based off what the largest/smallest values are
         y_vals = np.linspace(
-            start=Y_params[0], stop=1.5 * Y_params[-1], num=100
-        )
+            start=Y_params[0], stop=1.5 * Y_params[-1], num=100)
 
         x_vals, y_vals = np.meshgrid(x_vals, y_vals)
         z_vals = self.mdl.hypothesis.function.evaluate([x_vals, y_vals])
-        
+
         def opt_scaling_func(x, y):
-            return (means[0]/100)*y
+            return (means[0] / 100) * y
 
         z_vals2 = opt_scaling_func(x_vals, y_vals)
-    
+
         plt.ioff()
-        
+
         fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        
+        ax = fig.gca(projection="3d")
+
         if show_opt_scaling:
             if self.parameters[0] == "jobsize" and self.parameters[1] == "problem_size":
-                ax.plot_surface(x_vals, y_vals, z_vals2, label="optimal scaling",
-                                rstride=1, cstride=1, antialiased=False, alpha=0.1, color="red")
-    
-        # plot model as surface plot depending on options given 
+                ax.plot_surface(
+                    x_vals,
+                    y_vals,
+                    z_vals2,
+                    label="optimal scaling",
+                    rstride=1,
+                    cstride=1,
+                    antialiased=False,
+                    alpha=0.1,
+                    color="red",
+                )
+
+        # plot model as surface plot depending on options given
         if show_mean or show_median or show_min_max or show_opt_scaling:
-            ax.plot_surface(x_vals, y_vals, z_vals, label=str(self.mdl.hypothesis.function),
-                            rstride=1, cstride=1, antialiased=False, alpha=0.1, color="blue")
+            ax.plot_surface(
+                x_vals,
+                y_vals,
+                z_vals,
+                label=str(self.mdl.hypothesis.function),
+                rstride=1,
+                cstride=1,
+                antialiased=False,
+                alpha=0.1,
+                color="blue",
+            )
         else:
-            ax.plot_surface(x_vals, y_vals, z_vals, label=str(self.mdl.hypothesis.function),
-                            rstride=1, cstride=1, antialiased=True, color="blue")
-        
+            ax.plot_surface(
+                x_vals,
+                y_vals,
+                z_vals,
+                label=str(self.mdl.hypothesis.function),
+                rstride=1,
+                cstride=1,
+                antialiased=True,
+                color="blue",
+            )
+
         # plot the measurement points if options selected
         if show_median:
-            ax.scatter(X_params, Y_params, medians, c="black", marker="x", label="median")
+            ax.scatter(
+                X_params, Y_params, medians, c="black", marker="x", label="median"
+            )
         if show_mean:
-            ax.scatter(X_params, Y_params, means, c="black", marker="+", label="mean")
+            ax.scatter(X_params, Y_params, means,
+                       c="black", marker="+", label="mean")
         if show_min_max:
-            ax.scatter(X_params, Y_params, mins, c="black", marker="_", label="min")
-            ax.scatter(X_params, Y_params, maxes, c="black", marker="_", label="max")
+            ax.scatter(X_params, Y_params, mins,
+                       c="black", marker="_", label="min")
+            ax.scatter(X_params, Y_params, maxes,
+                       c="black", marker="_", label="max")
             # Draw connecting line for min, max -> error bars
             line_x, line_y, line_z = [], [], []
             for x, y, min_v, max_v in zip(X_params, Y_params, mins, maxes):
                 line_x.append(x), line_x.append(x)
                 line_y.append(y), line_y.append(y)
                 line_z.append(min_v), line_z.append(max_v)
-                line_x.append(np.nan), line_y.append(np.nan), line_z.append(np.nan)
+                line_x.append(np.nan), line_y.append(
+                    np.nan), line_z.append(np.nan)
             ax.plot(line_x, line_y, line_z, color="black")
-       
+
         # axis labels and title
         ax.set_xlabel(self.parameters[0] + " $p$")
         ax.set_ylabel(self.parameters[1] + " $q$")
         ax.set_zlabel(self.mdl.metric)
-        ax.set_title(str(self.mdl.callpath)+"()")
-        
+        ax.set_title(str(self.mdl.callpath) + "()")
+
         # create scientific representation of create performance model
-        scientific_function = self.convert_function_to_scientific_notation(self.mdl.hypothesis.function)
-        
+        scientific_function = self.convert_function_to_scientific_notation(
+            self.mdl.hypothesis.function
+        )
+
         # create dict for legend color and markers
         dict_callpath_color = {}
         dict_callpath_color[str(scientific_function)] = ["surface", "blue"]
@@ -385,8 +489,8 @@ class ModelWrapper:
             dict_callpath_color["max"] = ["max", "black"]
         if show_opt_scaling:
             dict_callpath_color["optimal scaling"] = ["surface", "red"]
-            
-        # plot rss and ar2 values 
+
+        # plot rss and ar2 values
         rss = "{:.3f}".format(self.mdl.hypothesis.RSS)
         ar2 = "{:.3f}".format(self.mdl.hypothesis.AR2)
         if RSS and not AR2:
@@ -410,17 +514,23 @@ class ModelWrapper:
                 "RSS = " + rss + "\nAR2 = " + ar2,
                 transform=ax.transAxes,
             )
-        
+
         # draw the legend
         self.draw_legend(ax, dict_callpath_color)
-       
+
         return fig, ax
 
-    def display(self, show_mean=False, show_median=False,
-                show_min_max=False, RSS=False, AR2=False,
-                show_opt_scaling=False):
+    def display(
+        self,
+        show_mean=False,
+        show_median=False,
+        show_min_max=False,
+        RSS=False,
+        AR2=False,
+        show_opt_scaling=False,
+    ):
         """General display function for visualizing a performance model.
-        Calls the specific display function depending on the number of 
+        Calls the specific display function depending on the number of
         found model parameters automatically.
 
         Args:
@@ -437,19 +547,28 @@ class ModelWrapper:
         Returns:
             fig, ax: The matplotlib figure and axis objects, so the user can display and manipulate the plot.
         """
-        
+
         # check number of model parameters
         if len(self.parameters) == 1:
-            fig, ax = self.display_one_parameter_model(show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling)
-        
+            fig, ax = self.display_one_parameter_model(
+                show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling
+            )
+
         elif len(self.parameters) == 2:
-            fig, ax = self.display_two_parameter_model(show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling)
-        
+            fig, ax = self.display_two_parameter_model(
+                show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling
+            )
+
         else:
-            raise Exception("Plotting performance models with "+str(len(self.parameters))+" parameters is currently not supported.")
-        
+            raise Exception(
+                "Plotting performance models with "
+                + str(len(self.parameters))
+                + " parameters is currently not supported."
+            )
+
         return fig, ax
-    
+
+
 class Modeling:
     """Produce models for all the metrics across the given graphframes."""
 
@@ -469,35 +588,44 @@ class Modeling:
             metrics (list): A list of String value of the metrics Extra-P will create models for.
         """
         self.tht = tht
-        
+
         # if there were no parameters provided use the jobsize to create models,
         # which should always be available
         if not parameters:
             self.parameters = ["jobsize"]
         else:
             self.parameters = parameters
-        
+
         # if no metrics have been provided create models for all existing metrics
         if not metrics:
             self.metrics = self.tht.exc_metrics + self.tht.inc_metrics
         else:
             self.metrics = metrics
-            
+
         self.experiment = None
 
-    def to_html(self, show_mean=False, show_median=False,
-                show_min_max=False, RSS=False, AR2=False,
-                show_opt_scaling=False):
+    def to_html(
+        self,
+        show_mean=False,
+        show_median=False,
+        show_min_max=False,
+        RSS=False,
+        AR2=False,
+        show_opt_scaling=False,
+    ):
         def model_to_img_html(model_obj):
-            fig, _ = model_obj.display(show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling)
+            fig, _ = model_obj.display(
+                show_mean, show_median, show_min_max, RSS, AR2, show_opt_scaling
+            )
             figfile = BytesIO()
             fig.savefig(figfile, format="jpg", transparent=False)
             figfile.seek(0)
             figdata_jpg = base64.b64encode(figfile.getvalue()).decode()
-            imgstr = '<img src="data:image/jpg;base64,{}" />'.format(figdata_jpg)
+            imgstr = '<img src="data:image/jpg;base64,{}" />'.format(
+                figdata_jpg)
             plt.close(fig)
             return imgstr
-        
+
         # catch key errors when queriying for models with a callpath, metric combination
         # that does not exist because there was no measurement object created for them
         existing_metrics = []
@@ -509,11 +637,12 @@ class Modeling:
                         existing_metrics.append(str(metric))
                 except KeyError:
                     pass
-                
-        frm_dict = {met + MODEL_TAG: model_to_img_html for met in existing_metrics}
+
+        frm_dict = {
+            met + MODEL_TAG: model_to_img_html for met in existing_metrics}
 
         # Subset of the aggregated statistics table with only the Extra-P columns selected
-        #TODO: to_html(escape=False, formatters=frm_dict), the formatter does not work for 3D stuff.
+        # TODO: to_html(escape=False, formatters=frm_dict), the formatter does not work for 3D stuff.
         # need to find a workaround
         return self.tht.statsframe.dataframe[
             [met + MODEL_TAG for met in existing_metrics]
@@ -547,62 +676,73 @@ class Modeling:
             node, metric + "_RE" + MODEL_TAG
         ] = hypothesis_fn.RE
 
-    def produce_models(self, use_median=True, calc_total_metrics=False, 
-                       scaling_parameter="jobsize", add_stats=True):
+    def produce_models(
+        self,
+        use_median=True,
+        calc_total_metrics=False,
+        scaling_parameter="jobsize",
+        add_stats=True,
+    ):
         """Produces an Extra-P model. Models are generated by calling Extra-P's
             ModelGenerator.
 
         Arguments:
             use_median (bool): Set how Extra-P aggregates repetitions of the same
-                measurement configuration. If set to True, Extra-P uses the median for 
+                measurement configuration. If set to True, Extra-P uses the median for
                 model creation, otherwise it uses the mean. (Default=True)
-            calc_total_metrics (bool): Set calc_total_metrics to True to let Extra-P 
-                internally calculate the total metric values for metrics measured 
+            calc_total_metrics (bool): Set calc_total_metrics to True to let Extra-P
+                internally calculate the total metric values for metrics measured
                 per MPI rank, e.g., the average runtime/rank. (Default=False)
-            scaling_parameter (String): Set the scaling parameter for the total metric 
+            scaling_parameter (String): Set the scaling parameter for the total metric
                 calculation. This parameter is only used when calc_total_metrics=True.
-                One needs to provide either the name of the parameter that models the 
+                One needs to provide either the name of the parameter that models the
                 resource allocation, e.g., the jobsize, or a fixed int value as a String,
-                when only scaling, e.g., the problem size, and the resource allocation 
+                when only scaling, e.g., the problem size, and the resource allocation
                 is fix. (Default="jobsize")
             add_stats (bool): Option to add hypothesis function statistics to the
                 aggregated statistics table. (Default=True)
         """
-            
+
         # create an extra-p experiment
         experiment = Experiment()
-        
+
         # create the model parameters
         for parameter in self.parameters:
             experiment.add_parameter(Parameter(parameter))
-        
+
         # Ordering of profiles in the performance data table
-        ensemble_profile_ordering = list(self.tht.dataframe.index.unique(level=1))
-        
+        ensemble_profile_ordering = list(
+            self.tht.dataframe.index.unique(level=1))
+
         profile_parameter_value_mapping = {}
         for profile in ensemble_profile_ordering:
             profile_parameter_value_mapping[profile] = []
-        
+
         for parameter in self.parameters:
             current_param_mapping = self.tht.metadata[parameter].to_dict()
             for key, value in current_param_mapping.items():
                 profile_parameter_value_mapping[key].append(float(value))
-        
+
         # create the measurement coordinates
         for profile in ensemble_profile_ordering:
-            if Coordinate(profile_parameter_value_mapping[profile]) not in experiment.coordinates:
-                experiment.add_coordinate(Coordinate(profile_parameter_value_mapping[profile]))
-    
+            if (
+                Coordinate(profile_parameter_value_mapping[profile])
+                not in experiment.coordinates
+            ):
+                experiment.add_coordinate(
+                    Coordinate(profile_parameter_value_mapping[profile])
+                )
+
         # create the callpaths
-        #NOTE: could add calltree later on, possibly from hatchet data if available
+        # NOTE: could add calltree later on, possibly from hatchet data if available
         for node, _ in self.tht.dataframe.groupby(level=0):
             if Callpath(node.frame["name"]) not in experiment.callpaths:
                 experiment.add_callpath(Callpath(node.frame["name"]))
-        
+
         # create the metrics
         for metric in self.metrics:
             experiment.add_metric(Metric(metric))
-        
+
         # iteratre over coordinates
         for coordinate in experiment.coordinates:
             # iterate over callpaths
@@ -613,20 +753,45 @@ class Modeling:
                     try:
                         values = []
                         callpath_exists = False
-                        #NOTE: potentially there is a better way to access the dataframes without looping 
+                        # NOTE: potentially there is a better way to access the dataframes without looping
                         for node, single_node_df in self.tht.dataframe.groupby(level=0):
                             if Callpath(node.frame["name"]) == callpath:
                                 callpath_exists = True
                                 coordinate_exists = False
-                                for profile, single_prof_df in single_node_df.groupby(level=1):
-                                    if str(callpath) not in single_prof_df["name"].values:
-                                        raise ExtrapReaderException("The callpath \'"+str(callpath)+"\' does not exist in the profile \'"+str(profile)+"\'.", profile)
-                                    if Coordinate(profile_parameter_value_mapping[profile]) == coordinate:
+                                for profile, single_prof_df in single_node_df.groupby(
+                                    level=1
+                                ):
+                                    if (
+                                        str(callpath)
+                                        not in single_prof_df["name"].values
+                                    ):
+                                        raise ExtrapReaderException(
+                                            "The callpath '"
+                                            + str(callpath)
+                                            + "' does not exist in the profile '"
+                                            + str(profile)
+                                            + "'.",
+                                            profile,
+                                        )
+                                    if (
+                                        Coordinate(
+                                            profile_parameter_value_mapping[profile]
+                                        )
+                                        == coordinate
+                                    ):
                                         coordinate_exists = True
                                         try:
-                                            value = single_prof_df[str(metric)].tolist()
+                                            value = single_prof_df[str(
+                                                metric)].tolist()
                                         except Exception:
-                                            raise ExtrapReaderException("The metric \'"+str(metric)+"\' does not exist in the profile \'"+str(profile)+"\'.", profile)
+                                            raise ExtrapReaderException(
+                                                "The metric '"
+                                                + str(metric)
+                                                + "' does not exist in the profile '"
+                                                + str(profile)
+                                                + "'.",
+                                                profile,
+                                            )
                                         if len(value) == 1:
                                             # calculate total metric values
                                             if calc_total_metrics == True:
@@ -635,17 +800,42 @@ class Modeling:
                                                     # read out scaling parameter for total metric value calculation
                                                     # if the resource allocation is static
                                                     if scaling_parameter.isnumeric():
-                                                        ranks = int(scaling_parameter)
+                                                        ranks = int(
+                                                            scaling_parameter)
                                                     # otherwise read number of ranks from the provided parameter
                                                     else:
                                                         # check if the parameter exists
-                                                        if scaling_parameter in self.parameters:
-                                                            parameter_id = [i for i,x in enumerate(experiment.parameters) if x == Parameter(scaling_parameter)][0]
-                                                            ranks = coordinate.__getitem__(parameter_id)
+                                                        if (
+                                                            scaling_parameter
+                                                            in self.parameters
+                                                        ):
+                                                            parameter_id = [
+                                                                i
+                                                                for i, x in enumerate(
+                                                                    experiment.parameters
+                                                                )
+                                                                if x
+                                                                == Parameter(
+                                                                    scaling_parameter
+                                                                )
+                                                            ][0]
+                                                            ranks = (
+                                                                coordinate.__getitem__(
+                                                                    parameter_id
+                                                                )
+                                                            )
                                                         # if the specified parameter does not exist
                                                         else:
-                                                            raise ExtrapReaderException("The specified scaling parameter \'"+str(scaling_parameter)+"\' could not be found in the passed list of model parameters "+str(self.parameters)+".", profile)
-                                                    values.append(value[0] * ranks)
+                                                            raise ExtrapReaderException(
+                                                                "The specified scaling parameter '"
+                                                                + str(scaling_parameter)
+                                                                + "' could not be found in the passed list of model parameters "
+                                                                + str(self.parameters)
+                                                                + ".",
+                                                                profile,
+                                                            )
+                                                    values.append(
+                                                        value[0] * ranks)
                                                 # add values for all other metrics
                                                 else:
                                                     values.append(value[0])
@@ -653,30 +843,62 @@ class Modeling:
                                             else:
                                                 values.append(value[0])
                                         else:
-                                            raise ExtrapReaderException("There are no values recorded for the metric \'"+str(metric)+"\' in the profile \'"+str(profile)+"\'.", profile)
+                                            raise ExtrapReaderException(
+                                                "There are no values recorded for the metric '"
+                                                + str(metric)
+                                                + "' in the profile '"
+                                                + str(profile)
+                                                + "'.",
+                                                profile,
+                                            )
                                 if coordinate_exists == False:
-                                    raise ExtrapReaderException("The parameter value combintation \'"+str(coordinate)+"\' could not be matched to any of the profiles. This could indicate missing metadata values for one or more of the parameters specified for modeling.", profile)
+                                    raise ExtrapReaderException(
+                                        "The parameter value combintation '"
+                                        + str(coordinate)
+                                        + "' could not be matched to any of the profiles. This could indicate missing metadata values for one or more of the parameters specified for modeling.",
+                                        profile,
+                                    )
                         if callpath_exists == False:
-                            raise ExtrapReaderException("The node/callpath \'"+str(callpath)+"\' does not exist in any of the profiles.", profile)                            
+                            raise ExtrapReaderException(
+                                "The node/callpath '"
+                                + str(callpath)
+                                + "' does not exist in any of the profiles.",
+                                profile,
+                            )
                     except ExtrapReaderException as e:
-                        print("WARNING: Could not create an Extra-P measurement object for: callpath=\'"+str(callpath)+"\', metric=\'"+str(metric)+"\', coordinate=\'"+str(coordinate)+"\' from the profile: "+str(e.profile)+". "+str(e.message))
-                     
+                        print(
+                            "WARNING: Could not create an Extra-P measurement object for: callpath='"
+                            + str(callpath)
+                            + "', metric='"
+                            + str(metric)
+                            + "', coordinate='"
+                            + str(coordinate)
+                            + "' from the profile: "
+                            + str(e.profile)
+                            + ". "
+                            + str(e.message)
+                        )
+
                     # if there was no data found at all for this config, do not add any measurement to the experiment
                     if len(values) > 0:
-                        experiment.add_measurement(Measurement(coordinate, callpath, metric, values))
-        
+                        experiment.add_measurement(
+                            Measurement(coordinate, callpath, metric, values)
+                        )
+
         # create the calltree based on the callpaths
-        #NOTE: could pipe actual calltree in here
+        # NOTE: could pipe actual calltree in here
         experiment.call_tree = create_call_tree(experiment.callpaths)
-                    
+
         # check the created experiment for its validty
         io_helper.validate_experiment(experiment)
-            
+
         # generate models using Extra-P model generator
-        model_gen = ModelGenerator(experiment, name="Default Model", use_median=use_median)
+        model_gen = ModelGenerator(
+            experiment, name="Default Model", use_median=use_median
+        )
         model_gen.model_all()
         experiment.add_modeler(model_gen)
-        
+
         # add the models, and statistics into the dataframe
         for callpath in experiment.callpaths:
             for metric in experiment.metrics:
@@ -686,15 +908,15 @@ class Modeling:
                         # catch key errors when queriying for models with a callpath, metric combination
                         # that does not exist because there was no measurement object created for them
                         try:
-                            self.tht.statsframe.dataframe.at[node, str(metric) + MODEL_TAG] = ModelWrapper(
-                                model_gen.models[mkey], self.parameters
-                            )
+                            self.tht.statsframe.dataframe.at[
+                                node, str(metric) + MODEL_TAG
+                            ] = ModelWrapper(model_gen.models[mkey], self.parameters)
                             # Add statistics to aggregated statistics table
                             if add_stats:
                                 self._add_extrap_statistics(node, str(metric))
                         except Exception:
                             pass
-        
+
         self.experiment = experiment
 
     def _componentize_function(model_object):
@@ -716,7 +938,8 @@ class Modeling:
         # Terms of form "coefficient * variables"
         for term in fnc.compound_terms:
             # Join variables of the same term together
-            variable_column = " * ".join(t.to_string() for t in term.simple_terms)
+            variable_column = " * ".join(t.to_string()
+                                         for t in term.simple_terms)
 
             term_dict[variable_column] = term.coefficient
 
