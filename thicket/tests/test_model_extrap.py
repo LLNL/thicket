@@ -77,8 +77,7 @@ def test_componentize_functions(mpi_scaling_cali):
     # Check values
     epsilon = 1e-10  # Account for rounding/approximation
 
-    val = xp_comp_df[("Avg time/rank_extrap-model",
-                      "p^(4/3) * log2(p)^(1)")].iloc[5]
+    val = xp_comp_df[("Avg time/rank_extrap-model", "p^(4/3) * log2(p)^(1)")].iloc[5]
     assert abs(val - 7.635268e-09) < epsilon
 
     val = xp_comp_df[("Avg time/rank_extrap-model", "log2(p)^(1)")].iloc[10]
