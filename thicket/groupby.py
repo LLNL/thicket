@@ -1,3 +1,8 @@
+# Copyright 2022 Lawrence Livermore National Security, LLC and other
+# Thicket Project Developers. See the top-level LICENSE file for details.
+#
+# SPDX-License-Identifier: MIT
+
 from collections import defaultdict
 from pandas.api.types import is_numeric_dtype, is_string_dtype
 
