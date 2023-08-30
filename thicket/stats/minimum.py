@@ -29,7 +29,7 @@ def minimum(thicket, columns=None):
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
-        df = thicket.dataframe.reset_index().groupby("node").agg(min)
+        df = thicket.dataframe[columns].reset_index().groupby("node").agg(min)
         for column in columns:
             thicket.statsframe.dataframe[column + "_min"] = df[column]
             # check to see if exclusive metric
@@ -40,7 +40,7 @@ def minimum(thicket, columns=None):
                 thicket.statsframe.inc_metrics.append(column + "_min")
     # columnar joined thicket object
     else:
-        df = thicket.dataframe.reset_index(level=1).groupby("node").agg(min)
+        df = thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(min)
         for idx, column in columns:
             thicket.statsframe.dataframe[(idx, column + "_min")] = df[(idx, column)]
             # check to see if exclusive metric

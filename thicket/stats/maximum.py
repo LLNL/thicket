@@ -29,7 +29,7 @@ def maximum(thicket, columns=None):
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
-        df = thicket.dataframe.reset_index().groupby("node").agg(max)
+        df = thicket.dataframe[columns].reset_index().groupby("node").agg(max)
         for column in columns:
             thicket.statsframe.dataframe[column + "_max"] = df[column]
             # check to see if exclusive metric
@@ -41,7 +41,7 @@ def maximum(thicket, columns=None):
 
     # columnar joined thicket object
     else:
-        df = thicket.dataframe.reset_index(level=1).groupby("node").agg(max)
+        df = thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(max)
         for idx, column in columns:
             thicket.statsframe.dataframe[(idx, column + "_max")] = df[(idx, column)]
             # check to see if exclusive metric
