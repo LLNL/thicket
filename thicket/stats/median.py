@@ -41,7 +41,12 @@ def median(thicket, columns=None):
 
     # columnar joined thicket object
     else:
-        df = thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(np.median)
+        df = (
+            thicket.dataframe[columns]
+            .reset_index(level=1)
+            .groupby("node")
+            .agg(np.median)
+        )
         for idx, column in columns:
             thicket.statsframe.dataframe[(idx, column + "_median")] = df[(idx, column)]
             # check to see if exclusive metric

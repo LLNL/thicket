@@ -40,7 +40,9 @@ def mean(thicket, columns=None):
                 thicket.statsframe.inc_metrics.append(column + "_mean")
     # columnar joined thicket object
     else:
-        df = thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(np.mean)
+        df = (
+            thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(np.mean)
+        )
         for idx, column in columns:
             thicket.statsframe.dataframe[(idx, column + "_mean")] = df[(idx, column)]
             # check to see if exclusive metric
