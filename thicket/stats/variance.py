@@ -32,7 +32,7 @@ def variance(thicket, columns=None):
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
-        df = thicket.dataframe.reset_index().groupby("node").agg(np.var)
+        df = thicket.dataframe[columns].reset_index().groupby("node").agg(np.var)
         for column in columns:
             thicket.statsframe.dataframe[column + "_var"] = df[column]
             # check to see if exclusive metric
@@ -43,7 +43,7 @@ def variance(thicket, columns=None):
                 thicket.statsframe.inc_metrics.append(column + "_var")
     # columnar joined thicket object
     else:
-        df = thicket.dataframe.reset_index(level=1).groupby("node").agg(np.var)
+        df = thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(np.var)
         for idx, column in columns:
             thicket.statsframe.dataframe[(idx, column + "_var")] = df[(idx, column)]
             # check to see if exclusive metric
