@@ -303,8 +303,9 @@ def test_normality(rajaperf_basecuda_xl_cali):
     assert "Min time/rank_normality" in th_ens.statsframe.show_metric_columns()
 
 
-def test_normality_columnar_join(columnar_join_thicket):
+def test_normality_columnar_join(columnar_join_thicket, stats_columnar_join_thicket):
     thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+    sthicket_list, sthicket_list_cp, scombined_th = stats_columnar_join_thicket
     # new data must be added before uncommenting, need 3 or more datapoints
     # idx = combined_th.dataframe.columns.levels[0][0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
@@ -315,23 +316,18 @@ def test_normality_columnar_join(columnar_join_thicket):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    # new data must be added before uncommenting these tests, need 3 or more datapoints
-    # th.check_normality(combined_th, columns=[(idx, "Min time/rank")])
+    for idx in ["Cuda 1", "Cuda 2"]:
+        th.check_normality(scombined_th, columns=[(idx, "Min time/rank")])
 
-    # assert combined_th.statsframe.dataframe[(idx, "Min time/rank_normality")][132] in {
-    #    "True",
-    #    "False",
-    # }
-
-    # assert (idx, "Min time/rank_normality") in combined_th.statsframe.dataframe.columns
-    # assert (
-    #    idx,
-    #    "Min time/rank_normality",
-    # ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    # assert (
-    #    idx,
-    #    "Min time/rank_normality",
-    # ) in combined_th.statsframe.show_metric_columns()
+        assert (idx, "Min time/rank_normality") in scombined_th.statsframe.dataframe.columns
+        assert (
+        idx,
+        "Min time/rank_normality",
+        ) in scombined_th.statsframe.exc_metrics + scombined_th.statsframe.inc_metrics
+        assert (
+        idx,
+        "Min time/rank_normality",
+        ) in scombined_th.statsframe.show_metric_columns()
 
 
 def test_correlation(rajaperf_basecuda_xl_cali):
