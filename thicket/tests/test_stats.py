@@ -319,14 +319,20 @@ def test_normality_columnar_join(columnar_join_thicket, stats_columnar_join_thic
     for idx in ["Cuda 1", "Cuda 2"]:
         th.check_normality(scombined_th, columns=[(idx, "Min time/rank")])
 
-        assert (idx, "Min time/rank_normality") in scombined_th.statsframe.dataframe.columns
         assert (
-        idx,
-        "Min time/rank_normality",
-        ) in scombined_th.statsframe.exc_metrics + scombined_th.statsframe.inc_metrics
+            idx,
+            "Min time/rank_normality",
+        ) in scombined_th.statsframe.dataframe.columns
         assert (
-        idx,
-        "Min time/rank_normality",
+            (
+                idx,
+                "Min time/rank_normality",
+            )
+            in scombined_th.statsframe.exc_metrics + scombined_th.statsframe.inc_metrics
+        )
+        assert (
+            idx,
+            "Min time/rank_normality",
         ) in scombined_th.statsframe.show_metric_columns()
 
 
