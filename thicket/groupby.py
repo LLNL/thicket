@@ -14,8 +14,8 @@ class GroupBy(dict):
         """Aggregate the Thickets' PerfData numerical columns in a GroupBy object.
 
         Arguments:
-            func (dict): Mapping from str -> function, where the str will be added to the Thicket's column's name after the aggregation function is applied.
-            gb_cols (str, optional): Optional column to group on in addition to "node". can be from PerfData or MetaData. Default grouping is on "node".
+            func (dict): Dictionary mapping from {str: function}, where the str will be added to the Thicket's column's name after the aggregation function is applied.
+            gb_col (str, optional): Optional column to group on in addition to "node". Can be from PerfData or MetaData. Default grouping is on "node".
 
         Returns:
             (self): Aggregated GroupBy object.
@@ -33,12 +33,14 @@ class GroupBy(dict):
         Arguments:
             tk (Thicket): Thicket object to aggregate.
             func (dict): See agg()
+            gb_col (str, optional): See agg()
 
         Returns:
             (Thicket): New Thicket object with aggregated attributes.
         """
 
         def rename_col(total_cols, tname):
+            """Helper function for renaming columns"""
             tcols = {}
             for col in total_cols:
                 tcols[col] = col + "_" + tname
