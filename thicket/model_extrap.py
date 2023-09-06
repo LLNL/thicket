@@ -8,12 +8,17 @@ import copy
 from io import BytesIO
 
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 from matplotlib import patches as mpatches
 import matplotlib.lines as mlines
 import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
+from pandas import DataFrame
 from scipy.stats import rankdata
+
+from hatchet import node
 
 from extrap.fileio import io_helper
 from extrap.modelers.model_generator import ModelGenerator
@@ -24,6 +29,8 @@ from extrap.entities.measurement import Measurement
 from extrap.entities.metric import Metric
 from extrap.entities.callpath import Callpath
 from extrap.entities.coordinate import Coordinate
+from extrap.entities.model import Model
+from extrap.entities.functions import Function
 
 MODEL_TAG = "_extrap-model"
 
@@ -56,7 +63,7 @@ class ModelWrapper:
     the model.
     """
 
-    def __init__(self, mdl, parameters):
+    def __init__(self, mdl: Model, parameters: list[str]) -> None:
         """Init function of the ModelWrapper class.
 
         Args:
@@ -102,7 +109,10 @@ class ModelWrapper:
         terms = x.split(" ")
         if not terms[0][:1].isnumeric():
             coeff = terms[0][1:]
-            coeff = "{:.3f}".format(float(coeff))
+            try:
+                coeff = "{:.3f}".format(float(coeff))
+            except ValueError:
+                pass
             new_coeff = ""
             new_coeff += "-"
             new_coeff += coeff
@@ -112,7 +122,10 @@ class ModelWrapper:
             return new_coeff
         else:
             coeff = terms[0]
-            coeff = "{:.3f}".format(float(coeff))
+            try:
+                coeff = "{:.3f}".format(float(coeff))
+            except ValueError:
+                pass
             new_coeff = ""
             new_coeff += coeff
             for i in range(len(terms)):
@@ -120,7 +133,7 @@ class ModelWrapper:
                     new_coeff += terms[i]
             return new_coeff
 
-    def convert_function_to_scientific_notation(self, model_function) -> str:
+    def convert_function_to_scientific_notation(self, model_function: Function) -> str:
         """This function converts the created performance model function into a
         scientific notation in string format.
 
@@ -150,21 +163,23 @@ class ModelWrapper:
         scientific_function = scientific_function.replace("*", "\\cdot")
         scientific_function = scientific_function.replace("(", "{")
         scientific_function = scientific_function.replace(")", "}")
-        scientific_function = scientific_function.replace("log2{p}", "\\log_2(p)")
-        scientific_function = scientific_function.replace("log2{q}", "\\log_2(q)")
+        scientific_function = scientific_function.replace(
+            "log2{p}", "\\log_2(p)")
+        scientific_function = scientific_function.replace(
+            "log2{q}", "\\log_2(q)")
         scientific_function = "$" + scientific_function + "$"
         return scientific_function
 
     def display_one_parameter_model(
         self,
-        show_mean=False,
-        show_median=False,
-        show_min_max=False,
-        RSS=False,
-        AR2=False,
-        show_opt_scaling=False,
-        opt_scaling_func=None,
-    ):
+        show_mean: bool = False,
+        show_median: bool = False,
+        show_min_max: bool = False,
+        RSS: bool = False,
+        AR2: bool = False,
+        show_opt_scaling: bool = False,
+        opt_scaling_func: str = None,
+    ) -> tuple[Figure, Axes]:
         """Display function to visualize performance models with one model parameter.
 
         Args:
@@ -184,7 +199,8 @@ class ModelWrapper:
         """
 
         # sort based on x values
-        measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
+        measures_sorted = sorted(
+            self.mdl.measurements, key=lambda x: x.coordinate[0])
 
         # compute means, medians, mins, maxes
         params = [ms.coordinate[0] for ms in measures_sorted]  # X values
@@ -256,7 +272,8 @@ class ModelWrapper:
                         from math import log2  # noqa: F401
 
                         y_vals_opt.append(eval(opt_scaling_func))
-                    ax.plot(x_vals, y_vals_opt, label="optimal scaling", color="red")
+                    ax.plot(x_vals, y_vals_opt,
+                            label="optimal scaling", color="red")
                 except Exception as e:
                     print(
                         "WARNING: optimal scaling curve could not be drawn. The function needs to be interpretable by the python eval() function and the parameters need to be the same as the ones shwon on the figures. See the following exception for more information: "
@@ -268,7 +285,8 @@ class ModelWrapper:
                     y_vals_opt = []
                     for _ in range(len(y_vals)):
                         y_vals_opt.append(y_vals[0])
-                    ax.plot(x_vals, y_vals_opt, label="optimal scaling", color="red")
+                    ax.plot(x_vals, y_vals_opt,
+                            label="optimal scaling", color="red")
                 else:
                     raise Exception(
                         "Plotting the optimal scaling automatically is currently not supported for the chosen parameter."
@@ -307,7 +325,7 @@ class ModelWrapper:
 
         return fig, ax
 
-    def draw_legend(self, axis, dict_callpath_color):
+    def draw_legend(self, axis: Axes, dict_callpath_color: dict[str, list[str]]) -> None:
         """This method draws a legend for 3D plots.
 
         Args:
@@ -355,18 +373,19 @@ class ModelWrapper:
                 )
                 handles.append(mark)
 
-        axis.legend(handles=handles, loc="center right", bbox_to_anchor=(2.75, 0.5))
+        axis.legend(handles=handles, loc="center right",
+                    bbox_to_anchor=(2.75, 0.5))
 
     def display_two_parameter_model(
         self,
-        show_mean=False,
-        show_median=False,
-        show_min_max=False,
-        RSS=False,
-        AR2=False,
-        show_opt_scaling=False,
-        opt_scaling_func=None,
-    ):
+        show_mean: bool = False,
+        show_median: bool = False,
+        show_min_max: bool = False,
+        RSS: bool = False,
+        AR2: bool = False,
+        show_opt_scaling: bool = False,
+        opt_scaling_func: str = None,
+    ) -> tuple[Figure, Axes]:
         """Display function to visualize performance models with two model parameters.
 
         Args:
@@ -387,7 +406,8 @@ class ModelWrapper:
 
         # sort based on x and y values
         measures_sorted = sorted(
-            self.mdl.measurements, key=lambda x: (x.coordinate[0], x.coordinate[1])
+            self.mdl.measurements, key=lambda x: (
+                x.coordinate[0], x.coordinate[1])
         )
 
         # get x, y value from measurements
@@ -401,9 +421,11 @@ class ModelWrapper:
         maxes = [ms.maximum for ms in measures_sorted]
 
         # x value plotting range. Dynamic based off what the largest/smallest values are
-        x_vals = np.linspace(start=X_params[0], stop=1.5 * X_params[-1], num=100)
+        x_vals = np.linspace(
+            start=X_params[0], stop=1.5 * X_params[-1], num=100)
         # y value plotting range. Dynamic based off what the largest/smallest values are
-        y_vals = np.linspace(start=Y_params[0], stop=1.5 * Y_params[-1], num=100)
+        y_vals = np.linspace(
+            start=Y_params[0], stop=1.5 * Y_params[-1], num=100)
 
         x_vals, y_vals = np.meshgrid(x_vals, y_vals)
         z_vals = self.mdl.hypothesis.function.evaluate([x_vals, y_vals])
@@ -502,17 +524,21 @@ class ModelWrapper:
                 X_params, Y_params, medians, c="black", marker="x", label="median"
             )
         if show_mean:
-            ax.scatter(X_params, Y_params, means, c="black", marker="+", label="mean")
+            ax.scatter(X_params, Y_params, means,
+                       c="black", marker="+", label="mean")
         if show_min_max:
-            ax.scatter(X_params, Y_params, mins, c="black", marker="_", label="min")
-            ax.scatter(X_params, Y_params, maxes, c="black", marker="_", label="max")
+            ax.scatter(X_params, Y_params, mins,
+                       c="black", marker="_", label="min")
+            ax.scatter(X_params, Y_params, maxes,
+                       c="black", marker="_", label="max")
             # Draw connecting line for min, max -> error bars
             line_x, line_y, line_z = [], [], []
             for x, y, min_v, max_v in zip(X_params, Y_params, mins, maxes):
                 line_x.append(x), line_x.append(x)
                 line_y.append(y), line_y.append(y)
                 line_z.append(min_v), line_z.append(max_v)
-                line_x.append(np.nan), line_y.append(np.nan), line_z.append(np.nan)
+                line_x.append(np.nan), line_y.append(
+                    np.nan), line_z.append(np.nan)
             ax.plot(line_x, line_y, line_z, color="black")
 
         # axis labels and title
@@ -571,14 +597,14 @@ class ModelWrapper:
 
     def display(
         self,
-        show_mean=False,
-        show_median=False,
-        show_min_max=False,
-        RSS=False,
-        AR2=False,
-        show_opt_scaling=False,
-        opt_scaling_func=None,
-    ):
+        show_mean: bool = False,
+        show_median: bool = False,
+        show_min_max: bool = False,
+        RSS: bool = False,
+        AR2: bool = False,
+        show_opt_scaling: bool = False,
+        opt_scaling_func: str = None,
+    ) -> tuple[Figure, Axes]:
         """General display function for visualizing a performance model.
         Calls the specific display function depending on the number of
         found model parameters automatically.
@@ -635,7 +661,7 @@ class ModelWrapper:
 class Modeling:
     """Produce models for all the metrics across the given graphframes."""
 
-    def __init__(self, tht, parameters=None, metrics=None):
+    def __init__(self, tht, parameters: list[str] = None, metrics: list[str] = None) -> None:
         """Create a new model object.
 
         Adds a model column for each metric for each common frame across all the
@@ -669,15 +695,37 @@ class Modeling:
 
     def to_html(
         self,
-        show_mean=False,
-        show_median=False,
-        show_min_max=False,
-        RSS=False,
-        AR2=False,
-        show_opt_scaling=False,
-        opt_scaling_func=None,
-    ):
-        def model_to_img_html(model_obj):
+        show_mean: bool = False,
+        show_median: bool = False,
+        show_min_max: bool = False,
+        RSS: bool = False,
+        AR2: bool = False,
+        show_opt_scaling: bool = False,
+        opt_scaling_func: str = None,
+    ) -> DataFrame:
+        """Converts the DataFrame into an html version that can be displayed in jupyter notebooks.
+
+        Args:
+            show_mean (bool, optional): whether to display mean values on the plot. Defaults to False.
+            show_median (bool, optional): whether to display median values on the plot. Defaults to False.
+            show_min_max (bool, optional): whether to display min/max values on the plot. Defaults to False.
+            RSS (bool, optional): whether to display Extra-P model RSS on the plot. Defaults to False.
+            AR2 (bool, optional): whether to display Extra-P model AR2 on the plot. Defaults to False.
+            show_opt_scaling (bool, optional): whether to display the optimal scaling curve. Defaults to False.
+            opt_scaling_func (str, optional): an optimal scaling function as a python interpretable string provided by the user. Defaults to None.
+
+        Returns:
+            DataFrame: A Pandas DataFrame with the added matplotlib plots.
+        """
+        def model_to_img_html(model_obj: Model) -> str:
+            """Converts the maplotlib plot of a given model into an image html representation.
+
+            Args:
+                model_obj (Model): The Extra-P Model for which the plot should be converted.
+
+            Returns:
+                str: The maplotlib plot in a image html format.
+            """
             fig, _ = model_obj.display(
                 show_mean,
                 show_median,
@@ -691,7 +739,8 @@ class Modeling:
             fig.savefig(figfile, format="jpg", transparent=False)
             figfile.seek(0)
             figdata_jpg = base64.b64encode(figfile.getvalue()).decode()
-            imgstr = '<img src="data:image/jpg;base64,{}" />'.format(figdata_jpg)
+            imgstr = '<img src="data:image/jpg;base64,{}" />'.format(
+                figdata_jpg)
             plt.close(fig)
             return imgstr
 
@@ -707,7 +756,8 @@ class Modeling:
                 except KeyError:
                     pass
 
-        frm_dict = {met + MODEL_TAG: model_to_img_html for met in existing_metrics}
+        frm_dict = {
+            met + MODEL_TAG: model_to_img_html for met in existing_metrics}
 
         # Subset of the aggregated statistics table with only the Extra-P columns selected
         # TODO: to_html(escape=False, formatters=frm_dict), the formatter does not work for 3D stuff.
@@ -716,12 +766,12 @@ class Modeling:
             [met + MODEL_TAG for met in existing_metrics]
         ].to_html(escape=False, formatters=frm_dict)
 
-    def _add_extrap_statistics(self, node, metric):
+    def _add_extrap_statistics(self, node: node, metric: str) -> None:
         """Insert the Extra-P hypothesis function statistics into the aggregated
             statistics table. Has to be called after "produce_models".
 
         Arguments:
-            node (hatchet.Node): The node for which statistics should be calculated
+            node (hatchet.node): The node for which statistics should be calculated
             metric (str): The metric for which statistics should be calculated
         """
         hypothesis_fn = self.tht.statsframe.dataframe.at[
@@ -746,11 +796,11 @@ class Modeling:
 
     def produce_models(
         self,
-        use_median=True,
-        calc_total_metrics=False,
-        scaling_parameter="jobsize",
-        add_stats=True,
-    ):
+        use_median: bool = True,
+        calc_total_metrics: bool = False,
+        scaling_parameter: str = "jobsize",
+        add_stats: bool = True,
+    ) -> None:
         """Produces an Extra-P model. Models are generated by calling Extra-P's
             ModelGenerator.
 
@@ -779,7 +829,8 @@ class Modeling:
             experiment.add_parameter(Parameter(parameter))
 
         # Ordering of profiles in the performance data table
-        ensemble_profile_ordering = list(self.tht.dataframe.index.unique(level=1))
+        ensemble_profile_ordering = list(
+            self.tht.dataframe.index.unique(level=1))
 
         profile_parameter_value_mapping = {}
         for profile in ensemble_profile_ordering:
@@ -848,7 +899,8 @@ class Modeling:
                                     ):
                                         coordinate_exists = True
                                         try:
-                                            value = single_prof_df[str(metric)].tolist()
+                                            value = single_prof_df[str(
+                                                metric)].tolist()
                                         except Exception:
                                             raise ExtrapReaderException(
                                                 "The metric '"
@@ -866,7 +918,8 @@ class Modeling:
                                                     # read out scaling parameter for total metric value calculation
                                                     # if the resource allocation is static
                                                     if scaling_parameter.isnumeric():
-                                                        ranks = int(scaling_parameter)
+                                                        ranks = int(
+                                                            scaling_parameter)
                                                     # otherwise read number of ranks from the provided parameter
                                                     else:
                                                         # check if the parameter exists
@@ -899,7 +952,8 @@ class Modeling:
                                                                 + ".",
                                                                 profile,
                                                             )
-                                                    values.append(value[0] * ranks)
+                                                    values.append(
+                                                        value[0] * ranks)
                                                 # add values for all other metrics
                                                 else:
                                                     values.append(value[0])
@@ -984,7 +1038,7 @@ class Modeling:
         self.experiment = experiment
 
     # TODO: add multi parameter support
-    def _componentize_function(model_object):
+    def _componentize_function(model_object: Model) -> dict[str, float]:
         """Componentize one Extra-P modeling object into a dictionary of its parts
 
         Arguments:
@@ -1003,14 +1057,15 @@ class Modeling:
         # Terms of form "coefficient * variables"
         for term in fnc.compound_terms:
             # Join variables of the same term together
-            variable_column = " * ".join(t.to_string() for t in term.simple_terms)
+            variable_column = " * ".join(t.to_string()
+                                         for t in term.simple_terms)
 
             term_dict[variable_column] = term.coefficient
 
         return term_dict
 
     # TODO: add multi parameter support
-    def componentize_statsframe(self, columns=None):
+    def componentize_statsframe(self, columns: list[str] = None) -> None:
         """Componentize multiple Extra-P modeling objects in the aggregated statistics
         table
 
@@ -1064,7 +1119,18 @@ class Modeling:
         self.tht.statsframe.dataframe = pd.concat(all_dfs, axis=1)
 
     # TODO: add multi parameter support
-    def _analyze_complexity(model_object, eval_target, col):
+    def _analyze_complexity(model_object: Model, eval_target: float, col: str) -> dict[str, str]:
+        """Analyzes the complexity of a given Extra-P model by evaluating it for a given target scale and column (metric).
+
+        Args:
+            model_object (Model): The Extra-P Model, which the complexity analysis should be performed for.
+            eval_target (float): The target scale for the evaluation.
+            col (str): The column (metric) to evaluate for.
+
+        Returns:
+            dict[str, str]: A dictionary containing the new column names for the thicket DataFrame (key) and the found complexity class/their coefficients (values).
+        """
+
         # Model object hypothesis function
         fnc = model_object.mdl.hypothesis.function
         complexity_class = ""
@@ -1110,7 +1176,18 @@ class Modeling:
         return return_value
 
     # TODO: add multi parameter support
-    def complexity_statsframe(self, columns=None, eval_target=None):
+    def complexity_statsframe(self, columns: list[str] = None, eval_target: float = None) -> None:
+        """Analyzes the complexity of the Extra-P models for the given thicket statsframe and the list of selected columns (metrics) for a given target evaluation scale. Then adds the results back into the statsframe.
+
+        Args:
+            columns (list[str], optional): A list of columns (metrics) that should be considered. Defaults to None.
+            eval_target (float, optional): The target scale the evaluation should be done for. Defaults to None.
+
+        Raises:
+            Exception: Raises an exception if the target scale is not provided.
+            ValueError: Raises a ValueError is not in the aggregates statistics table. 
+            TypeError: Raises a TypeError if the column is not of the right type.
+        """
         if eval_target is None:
             raise Exception(
                 "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
@@ -1201,7 +1278,19 @@ class Modeling:
             all_dfs.insert(0, self.tht.statsframe.dataframe)
             self.tht.statsframe.dataframe = pd.concat(all_dfs, axis=1)
 
-    def phase_statsframe(self, columns=None, eval_target=None):
+    def phase_statsframe(self, columns: list[str] = None, eval_target: float = None) -> DataFrame:
+        """Analysis the thicket statsframe by grouping application phases such as computation and communication together to create performance models for these phases.
+
+        Args:
+            columns (list[str], optional): The list of columns (metrics) that should be considered or the phase analysis. Defaults to None.
+            eval_target (float, optional): The target evaluation scale for the phase analysis. Defaults to None.
+
+        Raises:
+            Exception: Raises an exception if the target scale is not provided.
+
+        Returns:
+            DataFrame: A thicket DataFrame that contains only the phase results.
+        """
         if eval_target is None:
             raise Exception(
                 "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
