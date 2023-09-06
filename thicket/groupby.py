@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: MIT
 
 from collections import defaultdict
-from pandas.api.types import is_numeric_dtype, is_string_dtype
 
 
 class GroupBy(dict):
@@ -76,10 +75,7 @@ class GroupBy(dict):
             new_profile_idx = "profile"
             gb_cols = ["node"]
         if not aux_cols:
-            aux_cols = []
-            for col in tk.dataframe.columns:
-                if is_string_dtype(tk.dataframe[col]):
-                    aux_cols.append(col)
+            aux_cols = list(tk.dataframe.select_dtypes(exclude="number").columns)
 
         # Get gb_cols into index
         index_names = tk_c.dataframe.index.names
@@ -95,10 +91,7 @@ class GroupBy(dict):
 
         # agg_cols is all numeric columns
         if not agg_cols:
-            agg_cols = []
-            for col in tk.dataframe.columns:
-                if is_numeric_dtype(tk.dataframe[col]):
-                    agg_cols.append(col)
+            agg_cols = list(tk.dataframe.select_dtypes(include="number").columns)
 
         # Compute stats
         snames = list(func.keys())
