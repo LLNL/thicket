@@ -36,7 +36,7 @@ def check_normality(thicket, columns=None):
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         df = (
-            thicket.dataframe.select_dtypes(include='number')
+            thicket.dataframe.select_dtypes(include="number")
             .reset_index()
             .groupby("node")
             .agg(stats.shapiro)
@@ -66,7 +66,7 @@ def check_normality(thicket, columns=None):
     # columnar joined thicket object
     else:
         df = (
-            thicket.dataframe.select_dtypes(include='number')
+            thicket.dataframe.select_dtypes(include="number")
             .reset_index(level=1)
             .groupby("node")
             .agg(stats.shapiro)
