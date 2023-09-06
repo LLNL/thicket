@@ -10,33 +10,29 @@ class GroupBy(dict):
     def __init__(self, *args, **kwargs):
         super(GroupBy, self).__init__(*args, **kwargs)
 
-    def agg(self, func, gb_col=None, agg_cols=None, aux_cols=None):
-        """Aggregate the Thickets in a GroupBy object.
+    def agg(self, func, gb_col=None):
+        """Aggregate the Thickets' PerfData numerical columns in a GroupBy object.
 
         Arguments:
             func (dict): Mapping from str -> function, where the str will be added to the Thicket's column's name after the aggregation function is applied.
             gb_cols (str, optional): Optional column to group on in addition to "node". can be from PerfData or MetaData. Default grouping is on "node".
-            gb_cols (list(str), optional): Specify which numerical columns to aggregate.
-            aux_cols (list(str), optional): Additional existing columns from the previous Thicket.dataframe to pull into the new aggregated dataframe.
 
         Returns:
             (self): Aggregated GroupBy object.
         """
         for k, v in self.items():
             self[k] = GroupBy.aggregate_thicket(
-                tk=v, func=func, gb_col=gb_col, agg_cols=agg_cols, aux_cols=aux_cols
+                tk=v, func=func, gb_col=gb_col
             )
         return self
 
     @staticmethod
-    def aggregate_thicket(tk, func, gb_col=None, agg_cols=None, aux_cols=None):
+    def aggregate_thicket(tk, func, gb_col=None):
         """Aggregate a Thicket's numerical columns given a statistical function.
 
         Arguments:
             tk (Thicket): Thicket object to aggregate.
             func (dict): See agg()
-            gb_cols(str, optional):: See agg()
-            aux_cols (list(str), optional): See agg()
 
         Returns:
             (Thicket): New Thicket object with aggregated attributes.
@@ -74,8 +70,10 @@ class GroupBy(dict):
         else:
             new_profile_idx = "profile"
             gb_cols = ["node"]
-        if not aux_cols:
-            aux_cols = list(tk.dataframe.select_dtypes(exclude="number").columns)
+        # agg_cols is all numeric columns
+        agg_cols = list(tk.dataframe.select_dtypes(include="number").columns)
+        # other_cols is agg_cols complement
+        other_cols = list(tk.dataframe.select_dtypes(exclude="number").columns)
 
         # Get gb_cols into index
         index_names = tk_c.dataframe.index.names
@@ -88,10 +86,6 @@ class GroupBy(dict):
                     tk_c.dataframe = tk_c.dataframe.set_index(col, append=True)
                 else:
                     raise KeyError(f'"{col}" is not in the PerfData or MetaData.')
-
-        # agg_cols is all numeric columns
-        if not agg_cols:
-            agg_cols = list(tk.dataframe.select_dtypes(include="number").columns)
 
         # Compute stats
         snames = list(func.keys())
@@ -106,15 +100,15 @@ class GroupBy(dict):
                 on=gb_cols,
             )
 
-        # Create new df with auxilliary columns
+        # Create new df with other columns
         all_cols = gb_cols.copy()
-        all_cols.extend(aux_cols)
-        aux_df = (
+        all_cols.extend(other_cols)
+        other_df = (
             tk_c.dataframe.reset_index()[all_cols]
             .drop_duplicates(all_cols)
             .set_index(gb_cols)
         )
-        agg_df = agg_df.merge(right=aux_df, how="left", on=gb_cols)
+        agg_df = agg_df.merge(right=other_df, how="left", on=gb_cols)
 
         # Create profile and profile mapping
         if new_profile_idx == "profile":
