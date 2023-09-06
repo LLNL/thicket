@@ -312,8 +312,6 @@ def test_normality_columnar_join(columnar_join_thicket, stats_columnar_join_thic
         combined_th.statsframe.dataframe.index.values
     )
 
-    print(combined_th.dataframe)
-
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
     for idx in ["Cuda 1", "Cuda 2"]:
