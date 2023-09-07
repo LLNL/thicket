@@ -1147,15 +1147,14 @@ class Modeling:
         all_dfs.insert(0, self.tht.statsframe.dataframe)
         self.tht.statsframe.dataframe = pd.concat(all_dfs, axis=1)
 
-    # TODO: add multi parameter support
     def _analyze_complexity(
-        model_object: Model, eval_target: float, col: str
+        model_object: Model, eval_target: list[float], col: str, parameters: list[str]
     ) -> dict[str, str]:
         """Analyzes the complexity of a given Extra-P model by evaluating it for a given target scale and column (metric).
 
         Args:
             model_object (Model): The Extra-P Model, which the complexity analysis should be performed for.
-            eval_target (float): The target scale for the evaluation.
+            eval_target (list[float]): The target scale for the evaluation.
             col (str): The column (metric) to evaluate for.
 
         Returns:
@@ -1178,25 +1177,54 @@ class Modeling:
             return_value[col + "_coefficient"] = coefficient
 
         else:
-            for term in fnc.compound_terms:
-                result = term.evaluate(eval_target)
-                term_values.append(result)
-                terms.append(term)
+            if len(parameters) == 1:
+                for term in fnc.compound_terms:
+                    result = term.evaluate(eval_target[0])
+                    term_values.append(result)
+                    terms.append(term)
+            else:
+                for term in fnc.compound_terms:
+                    result = term.evaluate(eval_target)
+                    term_values.append(result)
+                    terms.append(term)
 
             max_index = term_values.index(max(term_values))
 
             if max(term_values) > fnc.constant_coefficient:
                 comp = ""
-                for simple_term in terms[max_index].simple_terms:
-                    if comp == "":
-                        comp += simple_term.to_string()
-                    else:
-                        comp = comp + "*" + simple_term.to_string()
-                comp = comp.replace("^", "**")
-                complexity_class = "O(" + comp + ")"
-                coefficient = terms[max_index].coefficient
-                return_value[col + "_complexity"] = complexity_class
-                return_value[col + "_coefficient"] = coefficient
+                if len(parameters) == 1:
+                    for simple_term in terms[max_index].simple_terms:
+                        if comp == "":
+                            comp += simple_term.to_string()
+                        else:
+                            comp = comp + "*" + simple_term.to_string()
+                    comp = comp.replace("^", "**")
+                    complexity_class = "O(" + comp + ")"
+                    coefficient = terms[max_index].coefficient
+                    return_value[col + "_complexity"] = complexity_class
+                    return_value[col + "_coefficient"] = coefficient
+                else:
+                    comp = ""
+                    for parameter_term_pair in terms[max_index].parameter_term_pairs:
+                        # [0] to get the index of the paramete
+                        term_parameter_str = DEFAULT_PARAM_NAMES[parameter_term_pair[0]]
+                        # [1] to get the term
+                        if comp == "":
+                            comp += parameter_term_pair[1].to_string(
+                                parameter=term_parameter_str
+                            )
+                        else:
+                            comp = (
+                                comp
+                                + "*"
+                                + parameter_term_pair[1].to_string(
+                                    parameter=term_parameter_str
+                                )
+                            )
+                    comp = comp.replace("^", "**")
+                    complexity_class = "O(" + comp + ")"
+                    return_value[col + "_complexity"] = complexity_class
+                    return_value[col + "_coefficient"] = term.coefficient
 
             else:
                 complexity_class = "O(1)"
@@ -1206,15 +1234,14 @@ class Modeling:
 
         return return_value
 
-    # TODO: add multi parameter support
     def complexity_statsframe(
-        self, columns: list[str] = None, eval_target: float = None
+        self, columns: list[str] = None, eval_target: list[float] = None
     ) -> None:
         """Analyzes the complexity of the Extra-P models for the given thicket statsframe and the list of selected columns (metrics) for a given target evaluation scale. Then adds the results back into the statsframe.
 
         Args:
             columns (list[str], optional): A list of columns (metrics) that should be considered. Defaults to None.
-            eval_target (float, optional): The target scale the evaluation should be done for. Defaults to None.
+            eval_target (list[float], optional): The target scale the evaluation should be done for. Defaults to None.
 
         Raises:
             Exception: Raises an exception if the target scale is not provided.
@@ -1224,6 +1251,10 @@ class Modeling:
         if eval_target is None:
             raise Exception(
                 "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
+            )
+        elif len(eval_target) != len(self.parameters):
+            raise Exception(
+                "The number of given parameter values for the evaluation target need to be the same as the number of model parameters."
             )
         else:
             # Use all Extra-P columns
@@ -1252,7 +1283,9 @@ class Modeling:
             for col in columns:
                 # Get list of components for this column
                 components = [
-                    Modeling._analyze_complexity(model_obj, eval_target, col)
+                    Modeling._analyze_complexity(
+                        model_obj, eval_target, col, self.parameters
+                    )
                     for model_obj in self.tht.statsframe.dataframe[col]
                 ]
 
