@@ -890,8 +890,10 @@ class Modeling:
                         values = []
                         callpath_exists = False
                         # NOTE: potentially there is a better way to access the dataframes without looping
-                        for node, single_node_df in self.tht.dataframe.groupby(level=0):
-                            if Callpath(node.frame["name"]) == callpath:
+                        for thicket_node, single_node_df in self.tht.dataframe.groupby(
+                            level=0
+                        ):
+                            if Callpath(thicket_node.frame["name"]) == callpath:
                                 callpath_exists = True
                                 coordinate_exists = False
                                 for profile, single_prof_df in single_node_df.groupby(
@@ -993,7 +995,7 @@ class Modeling:
                                     )
                         if callpath_exists is False:
                             raise ExtrapReaderException(
-                                "The node/callpath '"
+                                "The thicket node/callpath '"
                                 + str(callpath)
                                 + "' does not exist in any of the profiles.",
                                 profile,
@@ -1036,17 +1038,17 @@ class Modeling:
         for callpath in experiment.callpaths:
             for metric in experiment.metrics:
                 mkey = (callpath, metric)
-                for node, _ in self.tht.dataframe.groupby(level=0):
-                    if Callpath(node.frame["name"]) == callpath:
+                for thicket_node, _ in self.tht.dataframe.groupby(level=0):
+                    if Callpath(thicket_node.frame["name"]) == callpath:
                         # catch key errors when queriying for models with a callpath, metric combination
                         # that does not exist because there was no measurement object created for them
                         try:
                             self.tht.statsframe.dataframe.at[
-                                node, str(metric) + MODEL_TAG
+                                thicket_node, str(metric) + MODEL_TAG
                             ] = ModelWrapper(model_gen.models[mkey], self.parameters)
                             # Add statistics to aggregated statistics table
                             if add_stats:
-                                self._add_extrap_statistics(node, str(metric))
+                                self._add_extrap_statistics(thicket_node, str(metric))
                         except Exception:
                             pass
 
