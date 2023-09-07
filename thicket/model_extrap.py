@@ -871,9 +871,9 @@ class Modeling:
 
         # create the callpaths
         # NOTE: could add calltree later on, possibly from hatchet data if available
-        for node, _ in self.tht.dataframe.groupby(level=0):
-            if Callpath(node.frame["name"]) not in experiment.callpaths:
-                experiment.add_callpath(Callpath(node.frame["name"]))
+        for thicket_node, _ in self.tht.dataframe.groupby(level=0):
+            if Callpath(thicket_node.frame["name"]) not in experiment.callpaths:
+                experiment.add_callpath(Callpath(thicket_node.frame["name"]))
 
         # create the metrics
         for metric in self.metrics:
