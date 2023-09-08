@@ -10,28 +10,28 @@ class GroupBy(dict):
     def __init__(self, *args, **kwargs):
         super(GroupBy, self).__init__(*args, **kwargs)
 
-    def agg(self, func, gb_col=None):
+    def agg(self, func, index=None):
         """Aggregate the Thickets' PerfData numerical columns in a GroupBy object.
 
         Arguments:
             func (dict): Dictionary mapping from {str: function}, where the str will be added to the Thicket's column's name after the aggregation function is applied.
-            gb_col (str, optional): Optional column to group on in addition to "node". Can be from PerfData or MetaData. Default grouping is on "node".
+            index (str, optional): Optional column to group on in addition to "node". Can be from PerfData or MetaData. Default grouping is on "node".
 
         Returns:
             (self): Aggregated GroupBy object.
         """
         for k, v in self.items():
-            self[k] = GroupBy.aggregate_thicket(tk=v, func=func, gb_col=gb_col)
+            self[k] = GroupBy.aggregate_thicket(tk=v, func=func, index=index)
         return self
 
     @staticmethod
-    def aggregate_thicket(tk, func, gb_col=None):
+    def aggregate_thicket(tk, func, index=None):
         """Aggregate a Thicket's numerical columns given a statistical function.
 
         Arguments:
             tk (Thicket): Thicket object to aggregate.
             func (dict): See agg()
-            gb_col (str, optional): See agg()
+            index (str, optional): See agg()
 
         Returns:
             (Thicket): New Thicket object with aggregated attributes.
@@ -64,21 +64,21 @@ class GroupBy(dict):
         tk_c = tk.deepcopy()
 
         # Set variables
-        if gb_col:
-            new_profile_idx = gb_col
-            gb_cols = ["node", gb_col]
+        if index:
+            new_profile_idx = index
+            indicies = ["node", index]
         else:
             new_profile_idx = "profile"
-            gb_cols = ["node"]
+            indicies = ["node"]
         # agg_cols is all numeric columns
         agg_cols = list(tk.dataframe.select_dtypes(include="number").columns)
         # other_cols is agg_cols complement
         other_cols = list(tk.dataframe.select_dtypes(exclude="number").columns)
 
-        # Get gb_cols into index
+        # Get indicies into index
         index_names = tk_c.dataframe.index.names
         df_columns = tk_c.dataframe.columns
-        for col in gb_cols:
+        for col in indicies:
             if col not in index_names:
                 if col in tk_c.metadata.columns or col in df_columns:
                     if col not in df_columns:
@@ -90,25 +90,25 @@ class GroupBy(dict):
         # Compute stats
         snames = list(func.keys())
         sfuncs = list(func.values())
-        agg_df = tk_c.dataframe[agg_cols].groupby(gb_cols).agg(sfuncs[0])
+        agg_df = tk_c.dataframe[agg_cols].groupby(indicies).agg(sfuncs[0])
         agg_df = agg_df.rename(columns=rename_col(agg_cols, snames[0]))
         for i in range(1, len(func)):
-            t_agg_df = tk_c.dataframe[agg_cols].groupby(gb_cols).agg(sfuncs[i])
+            t_agg_df = tk_c.dataframe[agg_cols].groupby(indicies).agg(sfuncs[i])
             t_agg_df = t_agg_df.rename(columns=rename_col(agg_cols, snames[i]))
             agg_df = agg_df.merge(
                 right=t_agg_df,
-                on=gb_cols,
+                on=indicies,
             )
 
         # Create new df with other columns
-        all_cols = gb_cols.copy()
+        all_cols = indicies.copy()
         all_cols.extend(other_cols)
         other_df = (
             tk_c.dataframe.reset_index()[all_cols]
             .drop_duplicates(all_cols)
-            .set_index(gb_cols)
+            .set_index(indicies)
         )
-        agg_df = agg_df.merge(right=other_df, how="left", on=gb_cols)
+        agg_df = agg_df.merge(right=other_df, how="left", on=indicies)
 
         # Create profile and profile mapping
         if new_profile_idx == "profile":
