@@ -56,7 +56,11 @@ def verify_sorted_profile(thicket_component):
     """
 
     profile_index_values = list(
-        OrderedDict.fromkeys(thicket_component.index.get_level_values(thicket_component.index.nlevels-1))
+        OrderedDict.fromkeys(
+            thicket_component.index.get_level_values(
+                thicket_component.index.nlevels - 1
+            ) # Innermost index
+        )
     )
     if profile_index_values != sorted(profile_index_values):
         raise ValueError(

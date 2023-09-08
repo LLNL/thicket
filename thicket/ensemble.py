@@ -202,7 +202,9 @@ class Ensemble:
             else:  # Change second-level index to be from metadata's "metadata_key" column
                 for i in range(len(thickets_cp)):
                     if metadata_key not in thickets_cp[i].dataframe.index.names:
-                        thickets_cp[i].add_column_from_metadata_to_ensemble(metadata_key)
+                        thickets_cp[i].add_column_from_metadata_to_ensemble(
+                            metadata_key
+                        )
                     thickets_cp[i].dataframe.reset_index(level=inner_idx, inplace=True)
                     new_mappings.update(
                         pd.Series(
