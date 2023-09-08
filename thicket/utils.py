@@ -54,8 +54,9 @@ def verify_sorted_profile(thicket_component):
     Arguments:
         thicket_component (DataFrame): component of thicket to check
     """
+
     profile_index_values = list(
-        OrderedDict.fromkeys(thicket_component.index.get_level_values("profile"))
+        OrderedDict.fromkeys(thicket_component.index.get_level_values(thicket_component.index.nlevels-1))
     )
     if profile_index_values != sorted(profile_index_values):
         raise ValueError(
