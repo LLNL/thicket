@@ -59,7 +59,7 @@ def verify_sorted_profile(thicket_component):
         OrderedDict.fromkeys(
             thicket_component.index.get_level_values(
                 thicket_component.index.nlevels - 1
-            ) # Innermost index
+            )  # Innermost index
         )
     )
     if profile_index_values != sorted(profile_index_values):
