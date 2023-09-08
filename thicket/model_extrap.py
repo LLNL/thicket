@@ -7,6 +7,8 @@ import base64
 import copy
 from io import BytesIO
 
+from typing import Tuple
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
@@ -207,7 +209,7 @@ class ModelWrapper:
         AR2: bool = False,
         show_opt_scaling: bool = False,
         opt_scaling_func: str = None,
-    ) -> tuple[Figure, Axes]:
+    ) -> Tuple[Figure, Axes]:
         """Display function to visualize performance models with one model parameter.
 
         Args:
@@ -411,7 +413,7 @@ class ModelWrapper:
         AR2: bool = False,
         show_opt_scaling: bool = False,
         opt_scaling_func: str = None,
-    ) -> tuple[Figure, Axes]:
+    ) -> Tuple[Figure, Axes]:
         """Display function to visualize performance models with two model parameters.
 
         Args:
@@ -623,7 +625,7 @@ class ModelWrapper:
         AR2: bool = False,
         show_opt_scaling: bool = False,
         opt_scaling_func: str = None,
-    ) -> tuple[Figure, Axes]:
+    ) -> Tuple[Figure, Axes]:
         """General display function for visualizing a performance model.
         Calls the specific display function depending on the number of
         found model parameters automatically.
