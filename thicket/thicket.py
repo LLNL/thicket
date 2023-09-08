@@ -642,14 +642,19 @@ class Thicket(GraphFrame):
 
             th_id = th_names[i]
 
+            if profiles_from_meta is None:
+                idx_name = "profile"
+            else:
+                idx_name = profiles_from_meta
+
             # Modify graph
             # Necessary so node ids match up
             th_copy.graph = th_copy.statsframe.graph
 
             # Modify the performance data table
             df = th_copy.statsframe.dataframe
-            df["thicket"] = th_id
-            df.set_index("thicket", inplace=True, append=True)
+            df[idx_name] = th_id
+            df.set_index(idx_name, inplace=True, append=True)
             th_copy.dataframe = df
 
             # Adjust profile and profile_mapping
@@ -658,9 +663,25 @@ class Thicket(GraphFrame):
             th_copy.profile_mapping = OrderedDict({th_id: profile_paths})
 
             # Modify metadata dataframe
-            idx_name = "new_idx"
             th_copy.metadata[idx_name] = th_id
             th_copy.metadata.set_index(idx_name, inplace=True)
+
+            def _agg_to_set(obj):
+                """Aggregate values in 'obj' into a set to remove duplicates."""
+                if len(obj) <= 1:
+                    return obj
+                else:
+                    if isinstance(obj.iloc[0], list) or isinstance(obj.iloc[0], set):
+                        _set = set(tuple(i) for i in obj)
+                    else:
+                        _set = set(obj)
+                    if len(_set) == 1:
+                        return _set.pop()
+                    else:
+                        return _set
+
+            # Execute aggregation
+            th_copy.metadata = th_copy.metadata.groupby(idx_name).agg(_agg_to_set)
 
             # Append copy to list
             th_copy_list.append(th_copy)
