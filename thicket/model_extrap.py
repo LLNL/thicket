@@ -1336,11 +1336,20 @@ class Modeling:
                 if all_dfs[0][column_key][i] not in unique_classes:
                     unique_classes.append(all_dfs[0][column_key][i])
             range_values = np.arange(0, 1, 1/len(unique_classes))
-            cmap = mpl.cm.get_cmap('Spectral')
+            # cmap = mpl.cm.get_cmap('brg')
+            cmap = mpl.cm.get_cmap('tab20b')
             for i in range(len(range_values)):
                 range_val = range_values[i]
                 rgba = cmap(range_val)
-                color_map_dict[unique_classes[i]] = rgba
+                red = rgba[0]
+                green = rgba[1]
+                blue = rgba[2]
+                red = int(red / (1 / 255))
+                green = int(green / (1 / 255))
+                blue = int(blue / (1 / 255))
+                ansi_color_str = "\033[38;2;" + \
+                    str(red)+";"+str(green)+";"+str(blue)+"m"
+                color_map_dict[unique_classes[i]] = ansi_color_str
 
             # Concatenate dataframes horizontally
             all_dfs.insert(0, self.tht.statsframe.dataframe)
