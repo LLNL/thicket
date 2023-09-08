@@ -126,6 +126,8 @@ def _resolve_missing_indicies(th_list):
 def _sync_nodes(gh, df):
     """Set the node objects to be equal in both the graph and the dataframe.
 
+    Operations: (n tree nodes) X (m df nodes) X (m)
+
     id(graph_node) == id(df_node) after this function for nodes with equivalent hatchet
     nid's.
     """
