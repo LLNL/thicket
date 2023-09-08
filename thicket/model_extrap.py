@@ -7,7 +7,7 @@ import base64
 import copy
 from io import BytesIO
 
-import matplotlib.pyplot as plt
+import matplotlib as mpl
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from matplotlib import patches as mpatches
@@ -192,8 +192,10 @@ class ModelWrapper:
         scientific_function = scientific_function.replace("*", "\\cdot")
         scientific_function = scientific_function.replace("(", "{")
         scientific_function = scientific_function.replace(")", "}")
-        scientific_function = scientific_function.replace("log2{p}", "\\log_2(p)")
-        scientific_function = scientific_function.replace("log2{q}", "\\log_2(q)")
+        scientific_function = scientific_function.replace(
+            "log2{p}", "\\log_2(p)")
+        scientific_function = scientific_function.replace(
+            "log2{q}", "\\log_2(q)")
         scientific_function = "$" + scientific_function + "$"
         return scientific_function
 
@@ -226,7 +228,8 @@ class ModelWrapper:
         """
 
         # sort based on x values
-        measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
+        measures_sorted = sorted(
+            self.mdl.measurements, key=lambda x: x.coordinate[0])
 
         # compute means, medians, mins, maxes
         params = [ms.coordinate[0] for ms in measures_sorted]  # X values
@@ -298,7 +301,8 @@ class ModelWrapper:
                         from math import log2  # noqa: F401
 
                         y_vals_opt.append(eval(opt_scaling_func))
-                    ax.plot(x_vals, y_vals_opt, label="optimal scaling", color="red")
+                    ax.plot(x_vals, y_vals_opt,
+                            label="optimal scaling", color="red")
                 except Exception as e:
                     print(
                         "WARNING: optimal scaling curve could not be drawn. The function needs to be interpretable by the python eval() function and the parameters need to be the same as the ones shwon on the figures. See the following exception for more information: "
@@ -310,7 +314,8 @@ class ModelWrapper:
                     y_vals_opt = []
                     for _ in range(len(y_vals)):
                         y_vals_opt.append(y_vals[0])
-                    ax.plot(x_vals, y_vals_opt, label="optimal scaling", color="red")
+                    ax.plot(x_vals, y_vals_opt,
+                            label="optimal scaling", color="red")
                 else:
                     raise Exception(
                         "Plotting the optimal scaling automatically is currently not supported for the chosen parameter."
@@ -399,7 +404,8 @@ class ModelWrapper:
                 )
                 handles.append(mark)
 
-        axis.legend(handles=handles, loc="center right", bbox_to_anchor=(2.75, 0.5))
+        axis.legend(handles=handles, loc="center right",
+                    bbox_to_anchor=(2.75, 0.5))
 
     def display_two_parameter_model(
         self,
@@ -431,7 +437,8 @@ class ModelWrapper:
 
         # sort based on x and y values
         measures_sorted = sorted(
-            self.mdl.measurements, key=lambda x: (x.coordinate[0], x.coordinate[1])
+            self.mdl.measurements, key=lambda x: (
+                x.coordinate[0], x.coordinate[1])
         )
 
         # get x, y value from measurements
@@ -445,9 +452,11 @@ class ModelWrapper:
         maxes = [ms.maximum for ms in measures_sorted]
 
         # x value plotting range. Dynamic based off what the largest/smallest values are
-        x_vals = np.linspace(start=X_params[0], stop=1.5 * X_params[-1], num=100)
+        x_vals = np.linspace(
+            start=X_params[0], stop=1.5 * X_params[-1], num=100)
         # y value plotting range. Dynamic based off what the largest/smallest values are
-        y_vals = np.linspace(start=Y_params[0], stop=1.5 * Y_params[-1], num=100)
+        y_vals = np.linspace(
+            start=Y_params[0], stop=1.5 * Y_params[-1], num=100)
 
         x_vals, y_vals = np.meshgrid(x_vals, y_vals)
         z_vals = self.mdl.hypothesis.function.evaluate([x_vals, y_vals])
@@ -546,17 +555,21 @@ class ModelWrapper:
                 X_params, Y_params, medians, c="black", marker="x", label="median"
             )
         if show_mean:
-            ax.scatter(X_params, Y_params, means, c="black", marker="+", label="mean")
+            ax.scatter(X_params, Y_params, means,
+                       c="black", marker="+", label="mean")
         if show_min_max:
-            ax.scatter(X_params, Y_params, mins, c="black", marker="_", label="min")
-            ax.scatter(X_params, Y_params, maxes, c="black", marker="_", label="max")
+            ax.scatter(X_params, Y_params, mins,
+                       c="black", marker="_", label="min")
+            ax.scatter(X_params, Y_params, maxes,
+                       c="black", marker="_", label="max")
             # Draw connecting line for min, max -> error bars
             line_x, line_y, line_z = [], [], []
             for x, y, min_v, max_v in zip(X_params, Y_params, mins, maxes):
                 line_x.append(x), line_x.append(x)
                 line_y.append(y), line_y.append(y)
                 line_z.append(min_v), line_z.append(max_v)
-                line_x.append(np.nan), line_y.append(np.nan), line_z.append(np.nan)
+                line_x.append(np.nan), line_y.append(
+                    np.nan), line_z.append(np.nan)
             ax.plot(line_x, line_y, line_z, color="black")
 
         # axis labels and title
@@ -760,7 +773,8 @@ class Modeling:
             fig.savefig(figfile, format="jpg", transparent=False)
             figfile.seek(0)
             figdata_jpg = base64.b64encode(figfile.getvalue()).decode()
-            imgstr = '<img src="data:image/jpg;base64,{}" />'.format(figdata_jpg)
+            imgstr = '<img src="data:image/jpg;base64,{}" />'.format(
+                figdata_jpg)
             plt.close(fig)
             return imgstr
 
@@ -776,7 +790,8 @@ class Modeling:
                 except KeyError:
                     pass
 
-        frm_dict = {met + MODEL_TAG: model_to_img_html for met in existing_metrics}
+        frm_dict = {
+            met + MODEL_TAG: model_to_img_html for met in existing_metrics}
 
         # Subset of the aggregated statistics table with only the Extra-P columns selected
         # TODO: to_html(escape=False, formatters=frm_dict), the formatter does not work for 3D stuff.
@@ -848,7 +863,8 @@ class Modeling:
             experiment.add_parameter(Parameter(parameter))
 
         # Ordering of profiles in the performance data table
-        ensemble_profile_ordering = list(self.tht.dataframe.index.unique(level=1))
+        ensemble_profile_ordering = list(
+            self.tht.dataframe.index.unique(level=1))
 
         profile_parameter_value_mapping = {}
         for profile in ensemble_profile_ordering:
@@ -919,7 +935,8 @@ class Modeling:
                                     ):
                                         coordinate_exists = True
                                         try:
-                                            value = single_prof_df[str(metric)].tolist()
+                                            value = single_prof_df[str(
+                                                metric)].tolist()
                                         except Exception:
                                             raise ExtrapReaderException(
                                                 "The metric '"
@@ -937,7 +954,8 @@ class Modeling:
                                                     # read out scaling parameter for total metric value calculation
                                                     # if the resource allocation is static
                                                     if scaling_parameter.isnumeric():
-                                                        ranks = int(scaling_parameter)
+                                                        ranks = int(
+                                                            scaling_parameter)
                                                     # otherwise read number of ranks from the provided parameter
                                                     else:
                                                         # check if the parameter exists
@@ -970,7 +988,8 @@ class Modeling:
                                                                 + ".",
                                                                 profile,
                                                             )
-                                                    values.append(value[0] * ranks)
+                                                    values.append(
+                                                        value[0] * ranks)
                                                 # add values for all other metrics
                                                 else:
                                                     values.append(value[0])
@@ -1048,7 +1067,8 @@ class Modeling:
                             ] = ModelWrapper(model_gen.models[mkey], self.parameters)
                             # Add statistics to aggregated statistics table
                             if add_stats:
-                                self._add_extrap_statistics(thicket_node, str(metric))
+                                self._add_extrap_statistics(
+                                    thicket_node, str(metric))
                         except Exception:
                             pass
 
@@ -1076,7 +1096,8 @@ class Modeling:
         for term in fnc.compound_terms:
             if len(parameters) == 1:
                 # Join variables of the same term together
-                variable_column = " * ".join(t.to_string() for t in term.simple_terms)
+                variable_column = " * ".join(t.to_string()
+                                             for t in term.simple_terms)
 
                 term_dict[variable_column] = term.coefficient
             else:
@@ -1282,6 +1303,7 @@ class Modeling:
 
             # Process each column
             all_dfs = []
+            all_dfs_columns = []
             for col in columns:
                 # Get list of components for this column
                 components = [
@@ -1297,8 +1319,28 @@ class Modeling:
                 )
 
                 # Add column name as index level
-                # comp_df.columns = "[col], comp_df.columns.to_list()"
+                all_dfs_columns.append(comp_df.columns)
                 all_dfs.append(comp_df)
+
+            # add color coding for complexity classes to data frame
+            color_map_dict = {}
+            column_key = None
+            for col in all_dfs_columns[0].values:
+                if "model_complexity" in col:
+                    column_key = col
+                    break
+            unique_classes = []
+            complexity_list = []
+            for i in range(len(all_dfs[0][column_key])):
+                complexity_list.append(all_dfs[0][column_key][i])
+                if all_dfs[0][column_key][i] not in unique_classes:
+                    unique_classes.append(all_dfs[0][column_key][i])
+            range_values = np.arange(0, 1, 1/len(unique_classes))
+            cmap = mpl.cm.get_cmap('Spectral')
+            for i in range(len(range_values)):
+                range_val = range_values[i]
+                rgba = cmap(range_val)
+                color_map_dict[unique_classes[i]] = rgba
 
             # Concatenate dataframes horizontally
             all_dfs.insert(0, self.tht.statsframe.dataframe)
@@ -1338,9 +1380,20 @@ class Modeling:
                     data=ranking_list, index=self.tht.statsframe.dataframe.index
                 )
 
-                # Add column name as index level
-                # comp_df.columns = "[col], comp_df.columns.to_list()"
                 all_dfs.append(comp_df)
+
+                color_list = []
+                for i in range(len(complexity_list)):
+                    color_list_dict = {}
+                    color_list_dict[col +
+                                    "_colormapping"] = color_map_dict[complexity_list[i]]
+                    color_list.append(color_list_dict)
+
+                color_map_df = pd.DataFrame(
+                    data=color_list, index=self.tht.statsframe.dataframe.index
+                )
+
+                all_dfs.append(color_map_df)
 
             # Concatenate dataframes horizontally
             all_dfs.insert(0, self.tht.statsframe.dataframe)
