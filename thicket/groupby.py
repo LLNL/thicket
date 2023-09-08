@@ -21,9 +21,7 @@ class GroupBy(dict):
             (self): Aggregated GroupBy object.
         """
         for k, v in self.items():
-            self[k] = GroupBy.aggregate_thicket(
-                tk=v, func=func, gb_col=gb_col
-            )
+            self[k] = GroupBy.aggregate_thicket(tk=v, func=func, gb_col=gb_col)
         return self
 
     @staticmethod
