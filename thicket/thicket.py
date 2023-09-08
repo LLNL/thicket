@@ -642,10 +642,10 @@ class Thicket(GraphFrame):
 
             th_id = th_names[i]
 
-            if profiles_from_meta is None:
+            if metadata_key is None:
                 idx_name = "profile"
             else:
-                idx_name = profiles_from_meta
+                idx_name = metadata_key
 
             # Modify graph
             # Necessary so node ids match up
