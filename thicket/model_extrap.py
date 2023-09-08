@@ -8,6 +8,7 @@ import copy
 from io import BytesIO
 
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from matplotlib import patches as mpatches
