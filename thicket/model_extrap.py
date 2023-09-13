@@ -167,8 +167,10 @@ class ModelWrapper:
         scientific_function = scientific_function.replace("*", "\\cdot")
         scientific_function = scientific_function.replace("(", "{")
         scientific_function = scientific_function.replace(")", "}")
-        scientific_function = scientific_function.replace("log2{p}", "\\log_2(p)")
-        scientific_function = scientific_function.replace("log2{q}", "\\log_2(q)")
+        scientific_function = scientific_function.replace(
+            "log2{p}", "\\log_2(p)")
+        scientific_function = scientific_function.replace(
+            "log2{q}", "\\log_2(q)")
         scientific_function = "$" + scientific_function + "$"
         return scientific_function
 
@@ -201,7 +203,8 @@ class ModelWrapper:
         """
 
         # sort based on x values
-        measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
+        measures_sorted = sorted(
+            self.mdl.measurements, key=lambda x: x.coordinate[0])
 
         # compute means, medians, mins, maxes
         params = [ms.coordinate[0] for ms in measures_sorted]  # X values
@@ -273,7 +276,8 @@ class ModelWrapper:
                         from math import log2  # noqa: F401
 
                         y_vals_opt.append(eval(opt_scaling_func))
-                    ax.plot(x_vals, y_vals_opt, label="optimal scaling", color="red")
+                    ax.plot(x_vals, y_vals_opt,
+                            label="optimal scaling", color="red")
                 except Exception as e:
                     print(
                         "WARNING: optimal scaling curve could not be drawn. The function needs to be interpretable by the python eval() function and the parameters need to be the same as the ones shwon on the figures. See the following exception for more information: "
@@ -285,7 +289,8 @@ class ModelWrapper:
                     y_vals_opt = []
                     for _ in range(len(y_vals)):
                         y_vals_opt.append(y_vals[0])
-                    ax.plot(x_vals, y_vals_opt, label="optimal scaling", color="red")
+                    ax.plot(x_vals, y_vals_opt,
+                            label="optimal scaling", color="red")
                 else:
                     raise Exception(
                         "Plotting the optimal scaling automatically is currently not supported for the chosen parameter."
@@ -374,7 +379,8 @@ class ModelWrapper:
                 )
                 handles.append(mark)
 
-        axis.legend(handles=handles, loc="center right", bbox_to_anchor=(2.75, 0.5))
+        axis.legend(handles=handles, loc="center right",
+                    bbox_to_anchor=(2.75, 0.5))
 
     def display_two_parameter_model(
         self,
@@ -406,7 +412,8 @@ class ModelWrapper:
 
         # sort based on x and y values
         measures_sorted = sorted(
-            self.mdl.measurements, key=lambda x: (x.coordinate[0], x.coordinate[1])
+            self.mdl.measurements, key=lambda x: (
+                x.coordinate[0], x.coordinate[1])
         )
 
         # get x, y value from measurements
@@ -420,9 +427,11 @@ class ModelWrapper:
         maxes = [ms.maximum for ms in measures_sorted]
 
         # x value plotting range. Dynamic based off what the largest/smallest values are
-        x_vals = np.linspace(start=X_params[0], stop=1.5 * X_params[-1], num=100)
+        x_vals = np.linspace(
+            start=X_params[0], stop=1.5 * X_params[-1], num=100)
         # y value plotting range. Dynamic based off what the largest/smallest values are
-        y_vals = np.linspace(start=Y_params[0], stop=1.5 * Y_params[-1], num=100)
+        y_vals = np.linspace(
+            start=Y_params[0], stop=1.5 * Y_params[-1], num=100)
 
         x_vals, y_vals = np.meshgrid(x_vals, y_vals)
         z_vals = self.mdl.hypothesis.function.evaluate([x_vals, y_vals])
@@ -440,7 +449,7 @@ class ModelWrapper:
         plt.ioff()
 
         fig = plt.figure()
-        ax = fig.gca(projection="3d")
+        ax = fig.add_subplot(projection="3d")
 
         if show_opt_scaling:
             # if the user provides a custom scaling function
@@ -521,17 +530,21 @@ class ModelWrapper:
                 X_params, Y_params, medians, c="black", marker="x", label="median"
             )
         if show_mean:
-            ax.scatter(X_params, Y_params, means, c="black", marker="+", label="mean")
+            ax.scatter(X_params, Y_params, means,
+                       c="black", marker="+", label="mean")
         if show_min_max:
-            ax.scatter(X_params, Y_params, mins, c="black", marker="_", label="min")
-            ax.scatter(X_params, Y_params, maxes, c="black", marker="_", label="max")
+            ax.scatter(X_params, Y_params, mins,
+                       c="black", marker="_", label="min")
+            ax.scatter(X_params, Y_params, maxes,
+                       c="black", marker="_", label="max")
             # Draw connecting line for min, max -> error bars
             line_x, line_y, line_z = [], [], []
             for x, y, min_v, max_v in zip(X_params, Y_params, mins, maxes):
                 line_x.append(x), line_x.append(x)
                 line_y.append(y), line_y.append(y)
                 line_z.append(min_v), line_z.append(max_v)
-                line_x.append(np.nan), line_y.append(np.nan), line_z.append(np.nan)
+                line_x.append(np.nan), line_y.append(
+                    np.nan), line_z.append(np.nan)
             ax.plot(line_x, line_y, line_z, color="black")
 
         # axis labels and title
@@ -735,7 +748,8 @@ class Modeling:
             fig.savefig(figfile, format="jpg", transparent=False)
             figfile.seek(0)
             figdata_jpg = base64.b64encode(figfile.getvalue()).decode()
-            imgstr = '<img src="data:image/jpg;base64,{}" />'.format(figdata_jpg)
+            imgstr = '<img src="data:image/jpg;base64,{}" />'.format(
+                figdata_jpg)
             plt.close(fig)
             return imgstr
 
@@ -751,7 +765,8 @@ class Modeling:
                 except KeyError:
                     pass
 
-        frm_dict = {met + MODEL_TAG: model_to_img_html for met in existing_metrics}
+        frm_dict = {
+            met + MODEL_TAG: model_to_img_html for met in existing_metrics}
 
         # Subset of the aggregated statistics table with only the Extra-P columns selected
         # TODO: to_html(escape=False, formatters=frm_dict), the formatter does not work for 3D stuff.
@@ -823,7 +838,8 @@ class Modeling:
             experiment.add_parameter(Parameter(parameter))
 
         # Ordering of profiles in the performance data table
-        ensemble_profile_ordering = list(self.tht.dataframe.index.unique(level=1))
+        ensemble_profile_ordering = list(
+            self.tht.dataframe.index.unique(level=1))
 
         profile_parameter_value_mapping = {}
         for profile in ensemble_profile_ordering:
@@ -894,7 +910,8 @@ class Modeling:
                                     ):
                                         coordinate_exists = True
                                         try:
-                                            value = single_prof_df[str(metric)].tolist()
+                                            value = single_prof_df[str(
+                                                metric)].tolist()
                                         except Exception:
                                             raise ExtrapReaderException(
                                                 "The metric '"
@@ -912,7 +929,8 @@ class Modeling:
                                                     # read out scaling parameter for total metric value calculation
                                                     # if the resource allocation is static
                                                     if scaling_parameter.isnumeric():
-                                                        ranks = int(scaling_parameter)
+                                                        ranks = int(
+                                                            scaling_parameter)
                                                     # otherwise read number of ranks from the provided parameter
                                                     else:
                                                         # check if the parameter exists
@@ -945,7 +963,8 @@ class Modeling:
                                                                 + ".",
                                                                 profile,
                                                             )
-                                                    values.append(value[0] * ranks)
+                                                    values.append(
+                                                        value[0] * ranks)
                                                 # add values for all other metrics
                                                 else:
                                                     values.append(value[0])
@@ -1023,7 +1042,8 @@ class Modeling:
                             ] = ModelWrapper(model_gen.models[mkey], self.parameters)
                             # Add statistics to aggregated statistics table
                             if add_stats:
-                                self._add_extrap_statistics(thicket_node, str(metric))
+                                self._add_extrap_statistics(
+                                    thicket_node, str(metric))
                         except Exception:
                             pass
 
@@ -1051,7 +1071,8 @@ class Modeling:
         for term in fnc.compound_terms:
             if len(parameters) == 1:
                 # Join variables of the same term together
-                variable_column = " * ".join(t.to_string() for t in term.simple_terms)
+                variable_column = " * ".join(t.to_string()
+                                             for t in term.simple_terms)
 
                 term_dict[variable_column] = term.coefficient
             else:
@@ -1084,7 +1105,7 @@ class Modeling:
             columns = [
                 col
                 for col in self.tht.statsframe.dataframe
-                if isinstance(self.tht.statsframe.dataframe[col][0], ModelWrapper)
+                if isinstance(self.tht.statsframe.dataframe[col].iloc[0], ModelWrapper)
             ]
 
         # Error checking
@@ -1093,7 +1114,7 @@ class Modeling:
                 raise ValueError(
                     "column " + c + " is not in the aggregated statistics table."
                 )
-            elif not isinstance(self.tht.statsframe.dataframe[c][0], ModelWrapper):
+            elif not isinstance(self.tht.statsframe.dataframe[c].iloc[0], ModelWrapper):
                 raise TypeError(
                     "column "
                     + c
@@ -1147,11 +1168,18 @@ class Modeling:
         term_values = []
         terms = []
 
+        target_str = "("
+        for param_value in eval_target:
+            target_str += str(param_value)
+            target_str += ","
+        target_str = target_str[:-1]
+        target_str += ")"
+
         if len(fnc.compound_terms) == 0:
-            complexity_class = "O(1)"
+            complexity_class = "1"
             coefficient = fnc.constant_coefficient
-            return_value[col + "_complexity"] = complexity_class
-            return_value[col + "_coefficient"] = coefficient
+            return_value[col + "_complexity_" + target_str] = complexity_class
+            return_value[col + "_coefficient_" + target_str] = coefficient
 
         else:
             if len(parameters) == 1:
@@ -1176,10 +1204,12 @@ class Modeling:
                         else:
                             comp = comp + "*" + simple_term.to_string()
                     comp = comp.replace("^", "**")
-                    complexity_class = "O(" + comp + ")"
+                    complexity_class = "" + comp + ""
                     coefficient = terms[max_index].coefficient
-                    return_value[col + "_complexity"] = complexity_class
-                    return_value[col + "_coefficient"] = coefficient
+                    return_value[col + "_complexity_" +
+                                 target_str] = complexity_class
+                    return_value[col + "_coefficient_" +
+                                 target_str] = coefficient
                 else:
                     comp = ""
                     for parameter_term_pair in terms[max_index].parameter_term_pairs:
@@ -1199,170 +1229,201 @@ class Modeling:
                                 )
                             )
                     comp = comp.replace("^", "**")
-                    complexity_class = "O(" + comp + ")"
-                    return_value[col + "_complexity"] = complexity_class
-                    return_value[col + "_coefficient"] = term.coefficient
+                    complexity_class = "" + comp + ""
+                    return_value[col + "_complexity_" +
+                                 target_str] = complexity_class
+                    return_value[col + "_coefficient_" +
+                                 target_str] = term.coefficient
 
             else:
-                complexity_class = "O(1)"
+                complexity_class = "1"
                 coefficient = fnc.constant_coefficient
-                return_value[col + "_complexity"] = complexity_class
-                return_value[col + "_coefficient"] = coefficient
+                return_value[col + "_complexity_" +
+                             target_str] = complexity_class
+                return_value[col + "_coefficient_" + target_str] = coefficient
 
         return return_value
 
+    from typing import List
+
     def complexity_statsframe(
-        self, columns: list[str] = None, eval_target: list[float] = None
+        self, columns: list[str] = None, eval_targets: list[list[float]] = None
     ) -> None:
         """Analyzes the complexity of the Extra-P models for the given thicket statsframe and the list of selected columns (metrics) for a given target evaluation scale. Then adds the results back into the statsframe.
 
         Args:
             columns (list[str], optional): A list of columns (metrics) that should be considered. Defaults to None.
-            eval_target (list[float], optional): The target scale the evaluation should be done for. Defaults to None.
+            eval_targets (list[list(float)], optional): A list of target scales (parameter-value list) the evaluation should be done for. Defaults to None.
 
         Raises:
             Exception: Raises an exception if the target scale is not provided.
             ValueError: Raises a ValueError is not in the aggregates statistics table.
             TypeError: Raises a TypeError if the column is not of the right type.
         """
-        if eval_target is None:
+        targets = []
+        if eval_targets is None:
             raise Exception(
                 "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
             )
-        elif len(eval_target) != len(self.parameters):
-            raise Exception(
-                "The number of given parameter values for the evaluation target need to be the same as the number of model parameters."
-            )
-        else:
-            # Use all Extra-P columns
-            if columns is None:
-                columns = [
-                    col
-                    for col in self.tht.statsframe.dataframe
-                    if isinstance(self.tht.statsframe.dataframe[col][0], ModelWrapper)
-                ]
+        elif len(eval_targets) > 0:
 
-            # Error checking
-            for c in columns:
-                if c not in self.tht.statsframe.dataframe.columns:
-                    raise ValueError(
-                        "column " + c + " is not in the aggregated statistics table."
-                    )
-                elif not isinstance(self.tht.statsframe.dataframe[c][0], ModelWrapper):
-                    raise TypeError(
-                        "column "
-                        + c
-                        + " is not the right type (thicket.model_extrap.ModelWrapper)."
-                    )
+            # for each evaluation target check if the number of values matches the number of parameters
+            for target in eval_targets:
+                if len(target) != len(self.parameters):
+                    print(
+                        "The number of given parameter values for the evaluation target need to be the same as the number of model parameters.")
+                else:
+                    targets.append(target)
 
-            # Process each column
-            all_dfs = []
-            all_dfs_columns = []
-            for col in columns:
-                # Get list of components for this column
-                components = [
-                    Modeling._analyze_complexity(
-                        model_obj, eval_target, col, self.parameters
-                    )
-                    for model_obj in self.tht.statsframe.dataframe[col]
-                ]
+        # if there are targets to evaluate for
+        if len(targets) > 0:
 
-                # Component dataframe
-                comp_df = pd.DataFrame(
-                    data=components, index=self.tht.statsframe.dataframe.index
-                )
+            for target in targets:
 
-                # Add column name as index level
-                all_dfs_columns.append(comp_df.columns)
-                all_dfs.append(comp_df)
+                target_str = "("
+                for param_value in target:
+                    target_str += str(param_value)
+                    target_str += ","
+                target_str = target_str[:-1]
+                target_str += ")"
 
-            # add color coding for complexity classes to data frame
-            color_map_dict = {}
-            column_key = None
-            for col in all_dfs_columns[0].values:
-                if "model_complexity" in col:
-                    column_key = col
-                    break
-            unique_classes = []
-            complexity_list = []
-            for i in range(len(all_dfs[0][column_key])):
-                complexity_list.append(all_dfs[0][column_key][i])
-                if all_dfs[0][column_key][i] not in unique_classes:
-                    unique_classes.append(all_dfs[0][column_key][i])
-            range_values = np.arange(0, 1, 1 / len(unique_classes))
-            # cmap = mpl.cm.get_cmap('brg')
-            cmap = mpl.cm.get_cmap("tab20b")
-            for i in range(len(range_values)):
-                range_val = range_values[i]
-                rgba = cmap(range_val)
-                red = rgba[0]
-                green = rgba[1]
-                blue = rgba[2]
-                red = int(red / (1 / 255))
-                green = int(green / (1 / 255))
-                blue = int(blue / (1 / 255))
-                ansi_color_str = (
-                    "\033[38;2;" + str(red) + ";" + str(green) + ";" + str(blue) + "m"
-                )
-                color_map_dict[unique_classes[i]] = ansi_color_str
-
-            # Concatenate dataframes horizontally
-            all_dfs.insert(0, self.tht.statsframe.dataframe)
-            self.tht.statsframe.dataframe = pd.concat(all_dfs, axis=1)
-
-            # Add callpath ranking to the dataframe
-            all_dfs = []
-            for col in columns:
-                total_metric_value = 0
-                metric_values = []
-                for model_obj in self.tht.statsframe.dataframe[col]:
-                    metric_value = model_obj.mdl.hypothesis.function.evaluate(
-                        eval_target
-                    )
-                    total_metric_value += metric_value
-                    metric_values.append(metric_value)
-                percentages = []
-                for value in metric_values:
-                    percentage = value / (total_metric_value / 100)
-                    if percentage < 0:
-                        percentages.append(0)
-                    else:
-                        percentages.append(percentage)
-                reverse_ranking = len(percentages) - rankdata(
-                    percentages, method="ordinal"
-                ).astype(int)
-                for i in range(len(reverse_ranking)):
-                    reverse_ranking[i] += 1
-                ranking_list = []
-                for i in range(len(reverse_ranking)):
-                    ranking_dict = {}
-                    ranking_dict[col + "_growth_rank"] = reverse_ranking[i]
-                    ranking_list.append(ranking_dict)
-
-                # Component dataframe
-                comp_df = pd.DataFrame(
-                    data=ranking_list, index=self.tht.statsframe.dataframe.index
-                )
-
-                all_dfs.append(comp_df)
-
-                color_list = []
-                for i in range(len(complexity_list)):
-                    color_list_dict = {}
-                    color_list_dict[col + "_colormapping"] = color_map_dict[
-                        complexity_list[i]
+                # Use all Extra-P columns
+                if columns is None:
+                    columns = [
+                        col
+                        for col in self.tht.statsframe.dataframe
+                        if isinstance(self.tht.statsframe.dataframe[col].iloc[0], ModelWrapper)
                     ]
-                    color_list.append(color_list_dict)
 
-                color_map_df = pd.DataFrame(
-                    data=color_list, index=self.tht.statsframe.dataframe.index
-                )
+                # Error checking
+                for c in columns:
+                    if c not in self.tht.statsframe.dataframe.columns:
+                        raise ValueError(
+                            "column " + c + " is not in the aggregated statistics table."
+                        )
+                    elif not isinstance(self.tht.statsframe.dataframe[c].iloc[0], ModelWrapper):
+                        raise TypeError(
+                            "column "
+                            + c
+                            + " is not the right type (thicket.model_extrap.ModelWrapper)."
+                        )
 
-                all_dfs.append(color_map_df)
+                # Process each column
+                all_dfs = []
+                all_dfs_columns = []
+                for col in columns:
+                    # Get list of components for this column
+                    components = [
+                        Modeling._analyze_complexity(
+                            model_obj, target, col, self.parameters
+                        )
+                        for model_obj in self.tht.statsframe.dataframe[col]
+                    ]
 
-            # Concatenate dataframes horizontally
-            all_dfs.insert(0, self.tht.statsframe.dataframe)
-            self.tht.statsframe.dataframe = pd.concat(all_dfs, axis=1)
+                    # Component dataframe
+                    comp_df = pd.DataFrame(
+                        data=components, index=self.tht.statsframe.dataframe.index
+                    )
+
+                    # Add column name as index level
+                    all_dfs_columns.append(comp_df.columns)
+                    all_dfs.append(comp_df)
+
+                # add color coding for complexity classes to data frame
+                color_map_dict = {}
+                column_key = None
+                for col in all_dfs_columns[0].values:
+                    if "model_complexity" in col:
+                        column_key = col
+                        break
+                unique_classes = []
+                complexity_list = []
+                for i in range(len(all_dfs[0][column_key])):
+                    complexity_list.append(all_dfs[0][column_key].iloc[i])
+                    if all_dfs[0][column_key].iloc[i] not in unique_classes:
+                        unique_classes.append(all_dfs[0][column_key].iloc[i])
+                range_values = np.arange(0, 1, 1 / len(unique_classes))
+                # cmap = mpl.cm.get_cmap('brg')
+                cmap = mpl.cm.get_cmap("tab20b")
+                for i in range(len(range_values)):
+                    range_val = range_values[i]
+                    rgba = cmap(range_val)
+                    red = rgba[0]
+                    green = rgba[1]
+                    blue = rgba[2]
+                    red = int(red / (1 / 255))
+                    green = int(green / (1 / 255))
+                    blue = int(blue / (1 / 255))
+                    ansi_color_str = (
+                        "\033[38;2;" + str(red) + ";" +
+                        str(green) + ";" + str(blue) + "m"
+                    )
+                    color_map_dict[unique_classes[i]] = ansi_color_str
+
+                # Concatenate dataframes horizontally
+                all_dfs.insert(0, self.tht.statsframe.dataframe)
+                self.tht.statsframe.dataframe = pd.concat(all_dfs, axis=1)
+
+                # Add callpath ranking to the dataframe
+                all_dfs = []
+                for col in columns:
+                    total_metric_value = 0
+                    metric_values = []
+                    for model_obj in self.tht.statsframe.dataframe[col]:
+                        metric_value = model_obj.mdl.hypothesis.function.evaluate(
+                            target
+                        )
+                        total_metric_value += metric_value
+                        metric_values.append(metric_value)
+                    percentages = []
+                    for value in metric_values:
+                        percentage = value / (total_metric_value / 100)
+                        if percentage < 0:
+                            percentages.append(0)
+                        else:
+                            percentages.append(percentage)
+                    reverse_ranking = len(percentages) - rankdata(
+                        percentages, method="ordinal"
+                    ).astype(int)
+                    for i in range(len(reverse_ranking)):
+                        reverse_ranking[i] += 1
+                    ranking_list = []
+                    for i in range(len(reverse_ranking)):
+                        ranking_dict = {}
+                        ranking_dict[col + "_growth_rank_" +
+                                     target_str] = reverse_ranking[i]
+                        ranking_list.append(ranking_dict)
+
+                    # Component dataframe
+                    comp_df = pd.DataFrame(
+                        data=ranking_list, index=self.tht.statsframe.dataframe.index
+                    )
+
+                    all_dfs.append(comp_df)
+
+                    color_list = []
+                    for i in range(len(complexity_list)):
+                        color_list_dict = {}
+                        color_list_dict[col + "_colormapping_" + target_str] = color_map_dict[
+                            complexity_list[i]
+                        ]
+                        color_list.append(color_list_dict)
+
+                    color_map_df = pd.DataFrame(
+                        data=color_list, index=self.tht.statsframe.dataframe.index
+                    )
+
+                    all_dfs.append(color_map_df)
+
+                # Concatenate dataframes horizontally
+                all_dfs.insert(0, self.tht.statsframe.dataframe)
+                self.tht.statsframe.dataframe = pd.concat(all_dfs, axis=1)
+
+        # otherwise rais Exception
+        else:
+            raise Exception(
+                "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
+            )
 
     def phase_statsframe(
         self, columns: list[str] = None, eval_target: float = None
