@@ -34,37 +34,9 @@ from extrap.entities.callpath import Callpath
 from extrap.entities.coordinate import Coordinate
 from extrap.entities.model import Model
 from extrap.entities.functions import Function
+from extrap.entities.terms import DEFAULT_PARAM_NAMES
 
 MODEL_TAG = "_extrap-model"
-
-DEFAULT_PARAM_NAMES = (
-    "p",
-    "q",
-    "r",
-    "s",
-    "t",
-    "u",
-    "v",
-    "w",
-    "x",
-    "y",
-    "z",
-    "a",
-    "b",
-    "c",
-    "d",
-    "e",
-    "f",
-    "g",
-    "h",
-    "i",
-    "j",
-    "k",
-    "l",
-    "m",
-    "n",
-    "o",
-)
 
 
 class ExtrapReaderException(Exception):
