@@ -5,6 +5,7 @@
 
 from collections import defaultdict
 
+
 class GroupBy(dict):
     def __init__(self, by=None, *args, **kwargs):
         super(GroupBy, self).__init__(*args, **kwargs)
@@ -24,7 +25,7 @@ class GroupBy(dict):
             agg_tks[k] = self.aggregate_thicket(tk=v, func=func)
 
         values_list = list(agg_tks.values())
-        first_tk = values_list[0] # TODO: Hack to avoid circular import.
+        first_tk = values_list[0]  # TODO: Hack to avoid circular import.
         agg_tk = first_tk.concat_thickets(values_list)
 
         return agg_tk
@@ -91,16 +92,29 @@ class GroupBy(dict):
                     raise KeyError(f'"{col}" is not in the PerfData or MetaData.')
 
         # Make new profile and profile_mapping
-        new_profile_label_mapping_df = tk_c.dataframe.reset_index().drop(list(tk_c.dataframe.columns) + ["node"], axis=1).drop_duplicates().set_index("profile")
-        if len(new_profile_label_mapping_df.columns) > 1: # Make tuple values if more than 1 column
-            new_profile_label_mapping_df = new_profile_label_mapping_df.apply(tuple, axis=1)
-        else: # Squeeze single column df into series
+        new_profile_label_mapping_df = (
+            tk_c.dataframe.reset_index()
+            .drop(list(tk_c.dataframe.columns) + ["node"], axis=1)
+            .drop_duplicates()
+            .set_index("profile")
+        )
+        if (
+            len(new_profile_label_mapping_df.columns) > 1
+        ):  # Make tuple values if more than 1 column
+            new_profile_label_mapping_df = new_profile_label_mapping_df.apply(
+                tuple, axis=1
+            )
+        else:  # Squeeze single column df into series
             new_profile_label_mapping_df = new_profile_label_mapping_df.squeeze()
-        new_profile_label_mapping = new_profile_label_mapping_df.to_dict() # Convert df to dict
+        new_profile_label_mapping = (
+            new_profile_label_mapping_df.to_dict()
+        )  # Convert df to dict
         new_profile = list(set(new_profile_label_mapping.values()))
         new_profile_mapping = defaultdict(list)
         for p in tk_c.profile:
-            new_profile_mapping[new_profile_label_mapping[p]].append(tk_c.profile_mapping[p])
+            new_profile_mapping[new_profile_label_mapping[p]].append(
+                tk_c.profile_mapping[p]
+            )
         tk_c.profile = new_profile
         tk_c.profile_mapping = new_profile_mapping
 
