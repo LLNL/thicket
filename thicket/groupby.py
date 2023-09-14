@@ -15,10 +15,9 @@ class GroupBy(dict):
 
         Arguments:
             func (dict): Dictionary mapping from {str: function}, where the str will be added to the Thicket's column's name after the aggregation function is applied.
-            index (str, optional): Optional column to group on in addition to "node". Can be from PerfData or MetaData. Default grouping is on "node".
 
         Returns:
-            (self): Aggregated GroupBy object.
+            (Thicket): Aggregated Thicket object.
         """
         agg_tks = {}
         for k, v in self.items():
@@ -36,7 +35,6 @@ class GroupBy(dict):
         Arguments:
             tk (Thicket): Thicket object to aggregate.
             func (dict): See agg()
-            index (str, optional): See agg()
 
         Returns:
             (Thicket): New Thicket object with aggregated attributes.
