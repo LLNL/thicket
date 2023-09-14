@@ -922,7 +922,7 @@ class Thicket(GraphFrame):
         print(len(sub_thickets), " thickets created...")
         print(sub_thickets)
 
-        return GroupBy(sub_thickets)
+        return GroupBy(by, sub_thickets)
 
     def filter_stats(self, filter_function):
         """Filter thicket object based on a stats column.

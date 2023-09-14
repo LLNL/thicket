@@ -5,12 +5,12 @@
 
 from collections import defaultdict
 
-
 class GroupBy(dict):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, by=None, *args, **kwargs):
         super(GroupBy, self).__init__(*args, **kwargs)
+        self.by = by
 
-    def agg(self, func, index=None):
+    def agg(self, func):
         """Aggregate the Thickets' PerfData numerical columns in a GroupBy object.
 
         Arguments:
@@ -20,12 +20,17 @@ class GroupBy(dict):
         Returns:
             (self): Aggregated GroupBy object.
         """
+        agg_tks = {}
         for k, v in self.items():
-            self[k] = GroupBy.aggregate_thicket(tk=v, func=func, index=index)
-        return self
+            agg_tks[k] = self.aggregate_thicket(tk=v, func=func)
 
-    @staticmethod
-    def aggregate_thicket(tk, func, index=None):
+        values_list = list(agg_tks.values())
+        first_tk = values_list[0] # TODO: Hack to avoid circular import.
+        agg_tk = first_tk.concat_thickets(values_list)
+
+        return agg_tk
+
+    def aggregate_thicket(self, tk, func):
         """Aggregate a Thicket's numerical columns given a statistical function.
 
         Arguments:
@@ -63,22 +68,22 @@ class GroupBy(dict):
         # Make copy
         tk_c = tk.deepcopy()
 
-        # Set variables
-        if index:
-            new_profile_idx = index
-            indicies = ["node", index]
-        else:
-            new_profile_idx = "profile"
-            indicies = ["node"]
+        # Set perf_indices
+        perf_indices = ["node"]
+        if self.by is not None:
+            other_indices = self.by
+            if isinstance(self.by, str):
+                other_indices = [other_indices]
+            perf_indices.extend(other_indices)
         # agg_cols is all numeric columns
         agg_cols = list(tk.dataframe.select_dtypes(include="number").columns)
         # other_cols is agg_cols complement
         other_cols = list(tk.dataframe.select_dtypes(exclude="number").columns)
 
-        # Get indicies into index
+        # Get perf_indices into index
         index_names = tk_c.dataframe.index.names
         df_columns = tk_c.dataframe.columns
-        for col in indicies:
+        for col in perf_indices:
             if col not in index_names:
                 if col in tk_c.metadata.columns or col in df_columns:
                     if col not in df_columns:
@@ -87,56 +92,44 @@ class GroupBy(dict):
                 else:
                     raise KeyError(f'"{col}" is not in the PerfData or MetaData.')
 
+        # Make new profile and profile_mapping
+        new_profile_label_mapping_df = tk_c.dataframe.reset_index().drop(list(tk_c.dataframe.columns) + ["node"], axis=1).drop_duplicates().set_index("profile")
+        if len(new_profile_label_mapping_df.columns) > 1: # Make tuple values if more than 1 column
+            new_profile_label_mapping_df = new_profile_label_mapping_df.apply(tuple, axis=1)
+        else: # Squeeze single column df into series
+            new_profile_label_mapping_df = new_profile_label_mapping_df.squeeze()
+        new_profile_label_mapping = new_profile_label_mapping_df.to_dict() # Convert df to dict
+        new_profile = list(set(new_profile_label_mapping.values()))
+        new_profile_mapping = defaultdict(list)
+        for p in tk_c.profile:
+            new_profile_mapping[new_profile_label_mapping[p]].append(tk_c.profile_mapping[p])
+        tk_c.profile = new_profile
+        tk_c.profile_mapping = new_profile_mapping
+
         # Compute stats
         snames = list(func.keys())
         sfuncs = list(func.values())
-        agg_df = tk_c.dataframe[agg_cols].groupby(indicies).agg(sfuncs[0])
+        agg_df = tk_c.dataframe[agg_cols].groupby(perf_indices).agg(sfuncs[0])
         agg_df = agg_df.rename(columns=rename_col(agg_cols, snames[0]))
         for i in range(1, len(func)):
-            t_agg_df = tk_c.dataframe[agg_cols].groupby(indicies).agg(sfuncs[i])
+            t_agg_df = tk_c.dataframe[agg_cols].groupby(perf_indices).agg(sfuncs[i])
             t_agg_df = t_agg_df.rename(columns=rename_col(agg_cols, snames[i]))
             agg_df = agg_df.merge(
                 right=t_agg_df,
-                on=indicies,
+                on=perf_indices,
             )
 
         # Create new df with other columns
-        all_cols = indicies.copy()
+        all_cols = perf_indices.copy()
         all_cols.extend(other_cols)
         other_df = (
             tk_c.dataframe.reset_index()[all_cols]
             .drop_duplicates(all_cols)
-            .set_index(indicies)
+            .set_index(perf_indices)
         )
-        agg_df = agg_df.merge(right=other_df, how="left", on=indicies)
-
-        # Create profile and profile mapping
-        if new_profile_idx == "profile":
-            new_profiles = [0]
-            new_profile_mapping = defaultdict(list)
-            new_profile_mapping[0] = list(tk_c.profile_mapping.keys())
-            # Aggregate metadata dataframe
-            tk_c.metadata = tk_c.metadata.reset_index(drop=True)
-            tk_c.metadata["profile"] = 0
-            tk_c.metadata = tk_c.metadata.set_index("profile")
-            tk_c.metadata = tk_c.metadata.groupby("profile").agg(_agg_rows)
-        else:
-            mapping_to_new_profiles = (
-                tk_c.dataframe.reset_index()[["profile", new_profile_idx]]
-                .drop_duplicates()
-                .set_index("profile")
-                .to_dict()[new_profile_idx]
-            )
-            new_profile_mapping = defaultdict(list)
-            for k, v in mapping_to_new_profiles.items():
-                new_profile_mapping[v].append(tk_c.profile_mapping[k])
-            new_profiles = list(new_profile_mapping.keys())
-            # Aggregate metadata dataframe
-            tk_c.metadata = tk_c.metadata.groupby(new_profile_idx).agg(_agg_rows)
+        agg_df = agg_df.merge(right=other_df, how="left", on=perf_indices)
 
         # Set other attributes
         tk_c.dataframe = agg_df
-        tk_c.profile = new_profiles
-        tk_c.profile_mapping = new_profile_mapping
 
         return tk_c
