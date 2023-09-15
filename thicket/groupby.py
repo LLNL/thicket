@@ -117,6 +117,13 @@ class GroupBy(dict):
             )
         tk_c.profile = new_profile
         tk_c.profile_mapping = new_profile_mapping
+        # Aggregate metadata
+        tk_c.metadata = tk_c.metadata.reset_index()
+        tk_c.metadata["profile"] = tk_c.metadata["profile"].map(
+            new_profile_label_mapping
+        )
+        tk_c.metadata = tk_c.metadata.set_index("profile")
+        tk_c.metadata = tk_c.metadata.groupby("profile").agg(_agg_rows)
 
         # Compute stats
         snames = list(func.keys())
