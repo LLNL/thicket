@@ -74,11 +74,6 @@ class GroupBy(dict):
             if isinstance(self.by, str):
                 other_indices = [other_indices]
             perf_indices.extend(other_indices)
-        # agg_cols is all numeric columns
-        agg_cols = list(tk.dataframe.select_dtypes(include="number").columns)
-        # other_cols is agg_cols complement
-        other_cols = list(tk.dataframe.select_dtypes(exclude="number").columns)
-
         # Get perf_indices into index
         index_names = tk_c.dataframe.index.names
         df_columns = tk_c.dataframe.columns
@@ -90,6 +85,10 @@ class GroupBy(dict):
                     tk_c.dataframe = tk_c.dataframe.set_index(col, append=True)
                 else:
                     raise KeyError(f'"{col}" is not in the PerfData or MetaData.')
+        # agg_cols is all numeric columns
+        agg_cols = list(tk_c.dataframe.select_dtypes(include="number").columns)
+        # other_cols is agg_cols complement
+        other_cols = list(tk_c.dataframe.select_dtypes(exclude="number").columns)
 
         # Make new profile and profile_mapping
         new_profile_label_mapping_df = (
