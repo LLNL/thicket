@@ -1397,55 +1397,275 @@ class Modeling:
             )
 
     def phase_statsframe(
-        self, columns: list[str] = None, eval_target: float = None
+        self, columns: list[str] = None, add_stats=True
     ) -> DataFrame:
         """Analysis the thicket statsframe by grouping application phases such as computation and communication together to create performance models for these phases.
-
-        Args:
-            columns (list[str], optional): The list of columns (metrics) that should be considered or the phase analysis. Defaults to None.
-            eval_target (float, optional): The target evaluation scale for the phase analysis. Defaults to None.
-
-        Raises:
-            Exception: Raises an exception if the target scale is not provided.
 
         Returns:
             DataFrame: A thicket DataFrame that contains only the phase results.
         """
-        if eval_target is None:
-            raise Exception(
-                "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
-            )
-        else:
-            # Use all Extra-P columns
-            if columns is None:
-                columns = [
-                    col
-                    for col in self.tht.statsframe.dataframe
-                    if isinstance(self.tht.statsframe.dataframe[col][0], ModelWrapper)
-                ]
 
-            print("columns:", columns)
+        """# Use all Extra-P columns
+        if columns is None:
+            columns = [
+                col
+                for col in self.tht.statsframe.dataframe
+                if isinstance(self.tht.statsframe.dataframe[col].iloc[0], ModelWrapper)
+            ]"""
 
-            callpaths = self.tht.statsframe.dataframe["name"].values.tolist()
-            print("callpaths:", callpaths)
+        # TODO: should either use all metrics available in the data frame or use the one provided by the user...
+        print("columns:", columns)
 
-            communication = {}
-            computation = {}
-            for i in range(len(callpaths)):
-                if "MPI" in callpaths[i]:
-                    communication[callpaths[i]] = i
+        # differentiate between computation and communication functions
+        # NOTE: this code could be more sophisticated but also depends on the application being analyzed
+        callpaths = self.tht.statsframe.dataframe["name"].values.tolist()
+        communication = {}
+        computation = {}
+        for i in range(len(callpaths)):
+            if "MPI" in callpaths[i]:
+                communication[callpaths[i]] = i
+            else:
+                computation[callpaths[i]] = i
+
+        print("communication:", communication)
+        print("computation:", computation)
+
+        # aggregate measurements inside the extra-p models from all communication functions
+        comm_measurements = {}
+        for _, value in communication.items():
+            measurement_list = self.tht.statsframe.dataframe[
+                "Avg time/rank (exc)_extrap-model"].iloc[value].mdl.measurements
+            for i in range(len(measurement_list)):
+                measurement_list[i].coordinate
+                measurement_list[i].median
+                if measurement_list[i].coordinate not in comm_measurements:
+                    comm_measurements[measurement_list[i]
+                                      .coordinate] = measurement_list[i].median
                 else:
-                    computation[callpaths[i]] = i
+                    comm_measurements[measurement_list[i]
+                                      .coordinate] += measurement_list[i].median
 
-            print("communication:", communication)
-            print("computation:", computation)
+        # aggregate measurements inside the extra-p models from all computation functions
+        comp_measurements = {}
+        for _, value in computation.items():
+            measurement_list = self.tht.statsframe.dataframe[
+                "Avg time/rank (exc)_extrap-model"].iloc[value].mdl.measurements
+            for i in range(len(measurement_list)):
+                measurement_list[i].coordinate
+                measurement_list[i].median
+                if measurement_list[i].coordinate not in comp_measurements:
+                    comp_measurements[measurement_list[i]
+                                      .coordinate] = measurement_list[i].median
+                else:
+                    comp_measurements[measurement_list[i]
+                                      .coordinate] += measurement_list[i].median
 
-            # TODO: aggregate the functions for both types and come up with one that describes all of them
+        print("comm_measurements:", comm_measurements)
+        print("comp_measurements:", comp_measurements)
 
-            # TODO: how to return the data back, because pandas can't aggregate functions with each other,
-            # so there is no point in introducing an extra column type(MPI,comp) to group by that...
+        # create a new Extra-P experiment, one for each phase model
+        experiment = Experiment()
+        # Parameter()
+        # experiment.add_parameter(Parameter(parameter))
 
-            d = {'col1': [1, 2], 'col2': [3, 4]}
-            df = pd.DataFrame(data=d)
+        # TODO: automtically
+        metric = Metric("Avg time/rank (exc)_extrap-model")
+        experiment.add_metric(metric)
 
-            return df
+        com_callpath = Callpath("communication")
+        experiment.add_callpath(com_callpath)
+        comp_callpath = Callpath("computation")
+        experiment.add_callpath(comp_callpath)
+
+        for i in range(len(next(iter(comp_measurements)))):
+            experiment.add_parameter(
+                Parameter(str(DEFAULT_PARAM_NAMES[i])))
+
+        for key, value in comp_measurements.items():
+            if key not in experiment.coordinates:
+                experiment.add_coordinate(key)
+            measurement = Measurement(
+                key, comp_callpath, metric, value)
+            experiment.add_measurement(measurement)
+
+        for key, value in comm_measurements.items():
+            if key not in experiment.coordinates:
+                experiment.add_coordinate(key)
+            measurement = Measurement(
+                key, com_callpath, metric, value)
+            experiment.add_measurement(measurement)
+
+        # create models using the new experiment for aggregated functions
+        model_gen = ModelGenerator(
+            experiment, name="Default Model", use_median=True
+        )
+        model_gen.model_all()
+        experiment.add_modeler(model_gen)
+
+        # create new empty thicket dataframe
+        df = DataFrame()
+
+        # create deepcopy of thicket
+        new_thicket = self.tht.deepcopy()
+        # x = new_thicket.statsframe.dataframe
+        # print(new_thicket)
+        # print(x)
+
+        """d = {"node": [{"name": "communication", "type": "function"}, {
+            "name": "computation", "type": "function"}], "name": ["communication", "computation"]}"""
+        dx = pd.DataFrame({"name": ["computation"], "type": ["function"]})
+        # dx = pd.DataFrame(data=x)
+        print(dx)
+        dy = pd.DataFrame({"name": ["communication"], "type": ["function"]})
+        # dy = pd.DataFrame(data=y)
+
+        d = {"node": [dx, dy], "name": ["communication", "computation"]}
+        df = pd.DataFrame(data=d)
+        print(df)
+
+        """from collections import defaultdict
+        data_dict = defaultdict(list)
+        data_dict["node"].append(matches[0])"""
+
+        import thicket.helpers as helpers
+        new_thicket.statsframe.dataframe = helpers._new_statsframe_df(
+            df)
+        print(new_thicket.statsframe.dataframe)
+
+        # add the models in the new data frame
+        params = [str(p) for p in experiment.parameters]
+        for callpath in experiment.callpaths:
+            for metric in experiment.metrics:
+                mkey = (callpath, metric)
+                for thicket_node, _ in self.tht.dataframe.groupby(level=0):
+                    if Callpath(thicket_node.frame["name"]) == callpath:
+                        # catch key errors when queriying for models with a callpath, metric combination
+                        # that does not exist because there was no measurement object created for them
+                        try:
+                            # TODO: need to be replaced with the new statsframe that I need to create
+                            self.tht.statsframe.dataframe.at[
+                                thicket_node, str(metric) + MODEL_TAG
+                            ] = ModelWrapper(model_gen.models[mkey], params)
+                            # Add statistics to aggregated statistics table
+                            if add_stats:
+                                self._add_extrap_statistics(
+                                    thicket_node, str(metric))
+                        except Exception:
+                            pass
+
+        # TODO: how to return the data back, because pandas can't aggregate functions with each other,
+        # so there is no point in introducing an extra column type(MPI,comp) to group by that...
+
+        d = {'col1': [1, 2], 'col2': [3, 4]}
+        df = pd.DataFrame(data=d)
+
+        return df
+
+
+def multi_display_one_parameter_model(model_objects):
+    pass
+
+
+def multi_display_two_parameter_model(model_objects):
+
+    plt.ioff()
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="3d")
+
+    # create dict for legend color and markers
+    dict_callpath_color = {}
+
+    # sort based on x and y values
+    measures_sorted = sorted(
+        model_objects[0].mdl.measurements, key=lambda x: (
+            x.coordinate[0], x.coordinate[1])
+    )
+
+    # get x, y value from measurements
+    X_params = [ms.coordinate[0] for ms in measures_sorted]  # X values
+    Y_params = [ms.coordinate[1] for ms in measures_sorted]  # Y values
+
+    # get median, mean, min, and max values
+    # medians = [ms.median for ms in measures_sorted]
+    # means = [ms.mean for ms in measures_sorted]
+    # mins = [ms.minimum for ms in measures_sorted]
+    # maxes = [ms.maximum for ms in measures_sorted]
+
+    # x value plotting range. Dynamic based off what the largest/smallest values are
+    x_vals = np.linspace(
+        start=X_params[0], stop=1.5 * X_params[-1], num=100)
+    # y value plotting range. Dynamic based off what the largest/smallest values are
+    y_vals = np.linspace(
+        start=Y_params[0], stop=1.5 * Y_params[-1], num=100)
+
+    x_vals, y_vals = np.meshgrid(x_vals, y_vals)
+
+    for i in range(len(model_objects)):
+
+        # sort based on x and y values
+        measures_sorted = sorted(
+            model_objects[i].mdl.measurements, key=lambda x: (
+                x.coordinate[0], x.coordinate[1])
+        )
+
+        if isinstance(model_objects[i].mdl.hypothesis.function, ConstantFunction) is True:
+            zy = []
+            for i in range(len(x_vals)):
+                zx = []
+                for j in range(len(x_vals[0])):
+                    zx.append(model_objects[i].mdl.hypothesis.function.evaluate(
+                        [x_vals, y_vals]))
+                zy.append(zx)
+            z_vals = np.reshape(zy, (len(x_vals), len(y_vals))).T
+        else:
+            z_vals = model_objects[i].mdl.hypothesis.function.evaluate([
+                                                                       x_vals, y_vals])
+
+        ax.plot_surface(
+            x_vals,
+            y_vals,
+            z_vals,
+            label=str(model_objects[i].mdl.hypothesis.function),
+            rstride=1,
+            cstride=1,
+            antialiased=False,
+            alpha=0.1,
+            color="blue",
+        )
+
+        # create scientific representation of create performance model
+        # scientific_function = convert_function_to_scientific_notation(
+        #    self.mdl.hypothesis.function
+        # )
+
+        # dict_callpath_color[str(scientific_function)] = ["surface", "blue"]
+
+    # axis labels and title
+    ax.set_xlabel(model_objects[0].parameters[0] + " $p$")
+    ax.set_ylabel(model_objects[0].parameters[1] + " $q$")
+    ax.set_zlabel(model_objects[0].mdl.metric)
+    # TODO: do we need a title for this plots?
+    # ax.set_title(str(model_objects[0].mdl.callpath) + "()")
+
+    # draw the legend
+    # draw_legend(ax, dict_callpath_color, len(str(scientific_function)))
+
+    return fig, ax
+
+
+def multi_display(model_objects):
+    # check number of model parameters
+    if len(model_objects[0].parameters) == 1:
+        fig, ax = multi_display_one_parameter_model(model_objects)
+
+    elif len(model_objects[0].parameters) == 2:
+        fig, ax = multi_display_two_parameter_model(model_objects)
+
+    else:
+        raise Exception(
+            "Plotting performance models with "
+            + str(len(model_objects[0].parameters))
+            + " parameters is currently not supported."
+        )
+
+    return fig, ax
