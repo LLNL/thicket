@@ -1422,11 +1422,19 @@ class Modeling:
                     measurement_list[i].coordinate
                     measurement_list[i].median
                     if measurement_list[i].coordinate not in agg_measurements:
-                        agg_measurements[measurement_list[i]
-                                         .coordinate] = measurement_list[i].median
+                        if use_median is True:
+                            agg_measurements[measurement_list[i]
+                                             .coordinate] = measurement_list[i].median
+                        else:
+                            agg_measurements[measurement_list[i]
+                                             .coordinate] = measurement_list[i].mean
                     else:
-                        agg_measurements[measurement_list[i]
-                                         .coordinate] += measurement_list[i].median
+                        if use_median is True:
+                            agg_measurements[measurement_list[i]
+                                             .coordinate] += measurement_list[i].median
+                        else:
+                            agg_measurements[measurement_list[i]
+                                             .coordinate] += measurement_list[i].mean
             agg_measurements_list.append(agg_measurements)
 
         # create a new Extra-P experiment, one for each phase model
@@ -1480,6 +1488,7 @@ class Modeling:
                 aggregated_df.insert(len(aggregated_df.columns),
                                      str(metric)+"_RSS_extrap-model", None)
 
+        new_row = ["aggregated_nodes"]
         for metric in self.metrics:
             model = model_gen.models[(aggregated_callpath, metric)]
             RSS = model.hypothesis._RSS
@@ -1487,25 +1496,16 @@ class Modeling:
             SMAPE = model.hypothesis._SMAPE
             AR2 = model.hypothesis._AR2
             RE = model.hypothesis._RE
-            # params = [str(i) for i in experiment.parameters]
             mdl = ModelWrapper(
                 model_gen.models[(aggregated_callpath, metric)], parameters)
             if add_stats is True:
-                aggregated_df.loc[len(aggregated_df)] = [
-                    "aggregated_nodes",
-                    mdl,
-                    RSS,
-                    rRSS,
-                    SMAPE,
-                    AR2,
-                    RE,
-                ]
-            else:
-                aggregated_df.loc[len(aggregated_df)] = [
-                    "aggregated_nodes",
-                    mdl,
-                ]
-
+                new_row.append(mdl)
+                new_row.append(RSS)
+                new_row.append(rRSS)
+                new_row.append(SMAPE)
+                new_row.append(AR2)
+                new_row.append(RE)
+        aggregated_df.loc[len(aggregated_df)] = new_row
         return aggregated_df
 
 
