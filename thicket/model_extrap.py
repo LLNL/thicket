@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from scipy.stats import rankdata
+from math import sqrt
 
 from hatchet import node
 
@@ -77,6 +78,7 @@ class ModelWrapper:
         """
         self.mdl = mdl
         self.parameters = parameters
+        self.default_param_names = DEFAULT_PARAM_NAMES
 
     def __str__(self) -> str:
         """Returns the Extra-P performance model function as a string.
@@ -169,9 +171,9 @@ class ModelWrapper:
         scientific_function = scientific_function.replace("(", "{")
         scientific_function = scientific_function.replace(")", "}")
         scientific_function = scientific_function.replace(
-            "log2{p}", "\\log_2(p)")
+            "log2{"+str(DEFAULT_PARAM_NAMES[0])+"}", "\\log_2("+str(DEFAULT_PARAM_NAMES[0])+")")
         scientific_function = scientific_function.replace(
-            "log2{q}", "\\log_2(q)")
+            "log2{"+str(DEFAULT_PARAM_NAMES[1])+"}", "\\log_2("+str(DEFAULT_PARAM_NAMES[1])+")")
         scientific_function = "$" + scientific_function + "$"
         return scientific_function
 
@@ -298,7 +300,8 @@ class ModelWrapper:
                     )
 
         # plot axes and titles
-        ax.set_xlabel(self.parameters[0] + " $p$")
+        ax.set_xlabel(self.parameters[0] + " $" +
+                      str(DEFAULT_PARAM_NAMES[0])+"$")
         ax.set_ylabel(self.mdl.metric)
         ax.set_title(str(self.mdl.callpath) + "()")
 
@@ -560,8 +563,10 @@ class ModelWrapper:
             ax.plot(line_x, line_y, line_z, color="black")
 
         # axis labels and title
-        ax.set_xlabel(self.parameters[0] + " $p$")
-        ax.set_ylabel(self.parameters[1] + " $q$")
+        ax.set_xlabel(self.parameters[0] + " $" +
+                      str(DEFAULT_PARAM_NAMES[0])+"$")
+        ax.set_ylabel(self.parameters[1] + " $" +
+                      str(DEFAULT_PARAM_NAMES[1])+"$")
         ax.set_zlabel(self.mdl.metric)
         ax.set_title(str(self.mdl.callpath) + "()")
 
@@ -1404,9 +1409,13 @@ class Modeling:
 
         # aggregate measurements inside the extra-p models from all communication functions
         agg_measurements_list = []
+        parameters = None
         for metric in self.metrics:
             agg_measurements = {}
             for i in range(len(callpaths)):
+                if parameters is None:
+                    parameters = self.tht.statsframe.dataframe[
+                        str(metric)+"_extrap-model"].iloc[i].parameters
                 measurement_list = self.tht.statsframe.dataframe[
                     str(metric)+"_extrap-model"].iloc[i].mdl.measurements
                 for i in range(len(measurement_list)):
@@ -1419,8 +1428,6 @@ class Modeling:
                         agg_measurements[measurement_list[i]
                                          .coordinate] += measurement_list[i].median
             agg_measurements_list.append(agg_measurements)
-
-            print("agg_measurements:", agg_measurements)
 
         # create a new Extra-P experiment, one for each phase model
         experiment = Experiment()
@@ -1480,11 +1487,13 @@ class Modeling:
             SMAPE = model.hypothesis._SMAPE
             AR2 = model.hypothesis._AR2
             RE = model.hypothesis._RE
-            function = str(model.hypothesis.function)
+            # params = [str(i) for i in experiment.parameters]
+            mdl = ModelWrapper(
+                model_gen.models[(aggregated_callpath, metric)], parameters)
             if add_stats is True:
                 aggregated_df.loc[len(aggregated_df)] = [
                     "aggregated_nodes",
-                    function,
+                    mdl,
                     RSS,
                     rRSS,
                     SMAPE,
@@ -1494,14 +1503,73 @@ class Modeling:
             else:
                 aggregated_df.loc[len(aggregated_df)] = [
                     "aggregated_nodes",
-                    function,
+                    mdl,
                 ]
 
         return aggregated_df
 
 
 def multi_display_one_parameter_model(model_objects):
-    pass
+
+    functions = []
+    for model_object in model_objects:
+        functions.append(model_object.mdl.hypothesis.function)
+
+    # create scientific representation of created performance models
+    scientific_functions = convert_functions_to_scientific_notations(
+        functions
+    )
+
+    # sort based on x values
+    measures_sorted = sorted(
+        model_objects[0].mdl.measurements, key=lambda x: x.coordinate[0])
+
+    # compute means, medians, mins, maxes
+    params = [ms.coordinate[0] for ms in measures_sorted]  # X values
+
+    # x value plotting range, dynamic based off what the largest/smallest values are
+    x_vals = np.arange(
+        params[0], 1.5 * params[-1], (params[-1] - params[0]) / 100.0
+    )
+
+    y_vals_list = []
+    for model_object in model_objects:
+        # compute y values for plotting
+        y_vals = [model_object.mdl.hypothesis.function.evaluate(
+            x) for x in x_vals]
+        y_vals_list.append(y_vals)
+
+    plt.ioff()
+    fig, ax = plt.subplots()
+
+    range_values = np.arange(
+        0, 1, 1 / len(model_objects))
+    if len(model_objects) <= 20:
+        colormap = "tab20"
+    else:
+        colormap = "Spectral"
+    cmap = mpl.cm.get_cmap(colormap)
+    rgbas = []
+    for value in range_values:
+        rgba = cmap(value)
+        rgbas.append(rgba)
+
+    # plot the model
+    for i in range(len(model_objects)):
+        ax.plot(x_vals, y_vals_list[i],
+                label=str(model_objects[i].mdl.callpath) +
+                ": "+scientific_functions[i],
+                color=rgbas[i])
+
+    # plot axes and titles
+    ax.set_xlabel(model_objects[0].parameters[0] + " $" +
+                  str(DEFAULT_PARAM_NAMES[0])+"$")
+    ax.set_ylabel(model_objects[0].mdl.metric)
+
+    # plot legend
+    ax.legend(loc=1)
+
+    return fig, ax
 
 
 def multi_display_two_parameter_model(model_objects):
@@ -1529,6 +1597,41 @@ def multi_display_two_parameter_model(model_objects):
     for value in range_values:
         rgba = cmap(value)
         rgbas.append(rgba)
+    sorted_colors = {}
+    for rgba in rgbas:
+        luminance = sqrt(0.299*rgba[0]**2 + 0.587 *
+                         rgba[1]**2 + 0.114*rgba[2]**2)
+        sorted_colors[luminance] = rgba
+    sorted_colors_keys = list(sorted_colors.keys())
+    sorted_colors_keys.sort()
+    sorted_colors = {i: sorted_colors[i] for i in sorted_colors_keys}
+    rgbas = []
+    for _, value in sorted_colors.items():
+        x = (value[0], value[1], value[2])
+        rgbas.append(x)
+
+    # Model object hypothesis function
+    measures = model_objects[0].mdl.measurements
+    xmax = None
+    ymax = None
+    for measure in measures:
+        x = measure.coordinate._values[0]
+        y = measure.coordinate._values[1]
+        if xmax is None:
+            xmax = x
+        else:
+            if x > xmax:
+                xmax = x
+        if ymax is None:
+            ymax = y
+        else:
+            if y > ymax:
+                ymax = y
+    eval_results = {}
+    for function in functions:
+        result = function.evaluate((xmax, ymax))
+        eval_results[result] = function
+    print("DEBUG eval_results:", eval_results)
 
     # create dict for legend color and markers
     dict_callpath_color = {}
@@ -1546,6 +1649,26 @@ def multi_display_two_parameter_model(model_objects):
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
 
+    sorted_model_object = {}
+    for model_object in model_objects:
+        result = None
+        for key, value in eval_results.items():
+            if value == model_object.mdl.hypothesis.function:
+                result = key
+                break
+        sorted_model_object[result] = model_object
+
+    sorted_model_object_keys = list(sorted_model_object.keys())
+    sorted_model_object_keys.sort()
+    sorted_model_object = {
+        i: sorted_model_object[i] for i in sorted_model_object_keys}
+
+    print("DEBUG sorted_model_object:", sorted_model_object)
+
+    model_objects = []
+    for _, value in sorted_model_object.items():
+        model_objects.append(value)
+
     # sort based on x and y values
     measures_sorted = sorted(
         model_objects[0].mdl.measurements, key=lambda x: (
@@ -1558,17 +1681,20 @@ def multi_display_two_parameter_model(model_objects):
     X, Y, Z_List, z_List = calculate_z_models(
         maxX, maxY, model_objects, parameters)
 
+    temp = [1, 2, 0]
     for i in range(len(Z_List)):
         ax.plot_surface(
-            X, Y, Z_List[i], label="optimal scaling",
+            X, Y, Z_List[i],
             rstride=1,
             cstride=1,
             antialiased=False,
-            alpha=0.3, color=rgbas[i])
+            alpha=0.3, color=rgbas[temp[i]])
 
     # axis labels and title
-    ax.set_xlabel(model_objects[0].parameters[0] + " $p$")
-    ax.set_ylabel(model_objects[0].parameters[1] + " $q$")
+    ax.set_xlabel(model_objects[0].parameters[0] +
+                  " $"+str(DEFAULT_PARAM_NAMES[0])+"$")
+    ax.set_ylabel(model_objects[0].parameters[1] +
+                  " $"+str(DEFAULT_PARAM_NAMES[1])+"$")
     ax.set_zlabel(model_objects[0].mdl.metric)
 
     # draw the legend
@@ -1700,9 +1826,9 @@ def convert_functions_to_scientific_notations(model_functions: list[Function]) -
         scientific_function = scientific_function.replace("(", "{")
         scientific_function = scientific_function.replace(")", "}")
         scientific_function = scientific_function.replace(
-            "log2{p}", "\\log_2(p)")
+            "log2{"+str(DEFAULT_PARAM_NAMES[0])+"}", "\\log_2("+str(DEFAULT_PARAM_NAMES[0])+")")
         scientific_function = scientific_function.replace(
-            "log2{q}", "\\log_2(q)")
+            "log2{"+str(DEFAULT_PARAM_NAMES[1])+"}", "\\log_2("+str(DEFAULT_PARAM_NAMES[1])+")")
         scientific_function = "$" + scientific_function + "$"
         scientific_functions.append(scientific_function)
     return scientific_functions
