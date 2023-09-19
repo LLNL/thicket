@@ -1396,104 +1396,53 @@ class Modeling:
                 "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
             )
 
-    def phase_statsframe(
-        self, columns: list[str] = None, add_stats=True
-    ) -> DataFrame:
+    def produce_aggregated_model(self, use_median: bool = True, add_stats=True) -> DataFrame:
         """Analysis the thicket statsframe by grouping application phases such as computation and communication together to create performance models for these phases.
-
-        Returns:
-            DataFrame: A thicket DataFrame that contains only the phase results.
         """
 
-        """# Use all Extra-P columns
-        if columns is None:
-            columns = [
-                col
-                for col in self.tht.statsframe.dataframe
-                if isinstance(self.tht.statsframe.dataframe[col].iloc[0], ModelWrapper)
-            ]"""
-
-        # TODO: should either use all metrics available in the data frame or use the one provided by the user...
-        print("columns:", columns)
-
-        # differentiate between computation and communication functions
-        # NOTE: this code could be more sophisticated but also depends on the application being analyzed
         callpaths = self.tht.statsframe.dataframe["name"].values.tolist()
-        communication = {}
-        computation = {}
-        for i in range(len(callpaths)):
-            if "MPI" in callpaths[i]:
-                communication[callpaths[i]] = i
-            else:
-                computation[callpaths[i]] = i
-
-        print("communication:", communication)
-        print("computation:", computation)
 
         # aggregate measurements inside the extra-p models from all communication functions
-        comm_measurements = {}
-        for _, value in communication.items():
-            measurement_list = self.tht.statsframe.dataframe[
-                "Avg time/rank (exc)_extrap-model"].iloc[value].mdl.measurements
-            for i in range(len(measurement_list)):
-                measurement_list[i].coordinate
-                measurement_list[i].median
-                if measurement_list[i].coordinate not in comm_measurements:
-                    comm_measurements[measurement_list[i]
-                                      .coordinate] = measurement_list[i].median
-                else:
-                    comm_measurements[measurement_list[i]
-                                      .coordinate] += measurement_list[i].median
+        agg_measurements_list = []
+        for metric in self.metrics:
+            agg_measurements = {}
+            for i in range(len(callpaths)):
+                measurement_list = self.tht.statsframe.dataframe[
+                    str(metric)+"_extrap-model"].iloc[i].mdl.measurements
+                for i in range(len(measurement_list)):
+                    measurement_list[i].coordinate
+                    measurement_list[i].median
+                    if measurement_list[i].coordinate not in agg_measurements:
+                        agg_measurements[measurement_list[i]
+                                         .coordinate] = measurement_list[i].median
+                    else:
+                        agg_measurements[measurement_list[i]
+                                         .coordinate] += measurement_list[i].median
+            agg_measurements_list.append(agg_measurements)
 
-        # aggregate measurements inside the extra-p models from all computation functions
-        comp_measurements = {}
-        for _, value in computation.items():
-            measurement_list = self.tht.statsframe.dataframe[
-                "Avg time/rank (exc)_extrap-model"].iloc[value].mdl.measurements
-            for i in range(len(measurement_list)):
-                measurement_list[i].coordinate
-                measurement_list[i].median
-                if measurement_list[i].coordinate not in comp_measurements:
-                    comp_measurements[measurement_list[i]
-                                      .coordinate] = measurement_list[i].median
-                else:
-                    comp_measurements[measurement_list[i]
-                                      .coordinate] += measurement_list[i].median
-
-        print("comm_measurements:", comm_measurements)
-        print("comp_measurements:", comp_measurements)
+            print("agg_measurements:", agg_measurements)
 
         # create a new Extra-P experiment, one for each phase model
         experiment = Experiment()
-        # Parameter()
-        # experiment.add_parameter(Parameter(parameter))
 
-        # TODO: automtically
-        metric = Metric("Avg time/rank (exc)_extrap-model")
-        experiment.add_metric(metric)
+        for metric in self.metrics:
+            metric = Metric(str(metric))
+            experiment.add_metric(metric)
 
-        com_callpath = Callpath("communication")
-        experiment.add_callpath(com_callpath)
-        comp_callpath = Callpath("computation")
-        experiment.add_callpath(comp_callpath)
+        aggregated_callpath = Callpath("aggregated_nodes")
+        experiment.add_callpath(aggregated_callpath)
 
-        for i in range(len(next(iter(comp_measurements)))):
+        for i in range(len(next(iter(agg_measurements)))):
             experiment.add_parameter(
                 Parameter(str(DEFAULT_PARAM_NAMES[i])))
 
-        for key, value in comp_measurements.items():
-            if key not in experiment.coordinates:
-                experiment.add_coordinate(key)
-            measurement = Measurement(
-                key, comp_callpath, metric, value)
-            experiment.add_measurement(measurement)
-
-        for key, value in comm_measurements.items():
-            if key not in experiment.coordinates:
-                experiment.add_coordinate(key)
-            measurement = Measurement(
-                key, com_callpath, metric, value)
-            experiment.add_measurement(measurement)
+        for metric in self.metrics:
+            for key, value in agg_measurements.items():
+                if key not in experiment.coordinates:
+                    experiment.add_coordinate(key)
+                measurement = Measurement(
+                    key, aggregated_callpath, metric, value)
+                experiment.add_measurement(measurement)
 
         # create models using the new experiment for aggregated functions
         model_gen = ModelGenerator(
@@ -1502,64 +1451,53 @@ class Modeling:
         model_gen.model_all()
         experiment.add_modeler(model_gen)
 
-        # create new empty thicket dataframe
-        df = DataFrame()
+        # create empty pandas dataframe with columns only
+        aggregated_df = pd.DataFrame(columns=["name"])
+        for metric in self.metrics:
+            if add_stats is True:
+                aggregated_df.insert(len(aggregated_df.columns),
+                                     str(metric)+"_extrap-model", None)
+                aggregated_df.insert(len(aggregated_df.columns),
+                                     str(metric)+"_RSS_extrap-model", None)
+                aggregated_df.insert(len(aggregated_df.columns),
+                                     str(metric)+"_rRSS_extrap-model", None)
+                aggregated_df.insert(len(aggregated_df.columns),
+                                     str(metric)+"_SMAPE_extrap-model", None)
+                aggregated_df.insert(len(aggregated_df.columns),
+                                     str(metric)+"_AR2_extrap-model", None)
+                aggregated_df.insert(len(aggregated_df.columns),
+                                     str(metric)+"_RE_extrap-model", None)
+            else:
+                aggregated_df.insert(len(aggregated_df.columns),
+                                     str(metric)+"_extrap-model", None)
+                aggregated_df.insert(len(aggregated_df.columns),
+                                     str(metric)+"_RSS_extrap-model", None)
 
-        # create deepcopy of thicket
-        new_thicket = self.tht.deepcopy()
-        # x = new_thicket.statsframe.dataframe
-        # print(new_thicket)
-        # print(x)
+        for metric in self.metrics:
+            model = model_gen.models[(aggregated_callpath, metric)]
+            RSS = model.hypothesis._RSS
+            rRSS = model.hypothesis._rRSS
+            SMAPE = model.hypothesis._SMAPE
+            AR2 = model.hypothesis._AR2
+            RE = model.hypothesis._RE
+            function = str(model.hypothesis.function)
+            if add_stats is True:
+                aggregated_df.loc[len(aggregated_df)] = [
+                    "aggregated_nodes",
+                    function,
+                    RSS,
+                    rRSS,
+                    SMAPE,
+                    AR2,
+                    RE,
+                ]
+            else:
+                aggregated_df.loc[len(aggregated_df)] = [
+                    "aggregated_nodes",
+                    function,
+                ]
 
-        """d = {"node": [{"name": "communication", "type": "function"}, {
-            "name": "computation", "type": "function"}], "name": ["communication", "computation"]}"""
-        dx = pd.DataFrame({"name": ["computation"], "type": ["function"]})
-        # dx = pd.DataFrame(data=x)
-        print(dx)
-        dy = pd.DataFrame({"name": ["communication"], "type": ["function"]})
-        # dy = pd.DataFrame(data=y)
-
-        d = {"node": [dx, dy], "name": ["communication", "computation"]}
-        df = pd.DataFrame(data=d)
-        print(df)
-
-        """from collections import defaultdict
-        data_dict = defaultdict(list)
-        data_dict["node"].append(matches[0])"""
-
-        import thicket.helpers as helpers
-        new_thicket.statsframe.dataframe = helpers._new_statsframe_df(
-            df)
-        print(new_thicket.statsframe.dataframe)
-
-        # add the models in the new data frame
-        params = [str(p) for p in experiment.parameters]
-        for callpath in experiment.callpaths:
-            for metric in experiment.metrics:
-                mkey = (callpath, metric)
-                for thicket_node, _ in self.tht.dataframe.groupby(level=0):
-                    if Callpath(thicket_node.frame["name"]) == callpath:
-                        # catch key errors when queriying for models with a callpath, metric combination
-                        # that does not exist because there was no measurement object created for them
-                        try:
-                            # TODO: need to be replaced with the new statsframe that I need to create
-                            self.tht.statsframe.dataframe.at[
-                                thicket_node, str(metric) + MODEL_TAG
-                            ] = ModelWrapper(model_gen.models[mkey], params)
-                            # Add statistics to aggregated statistics table
-                            if add_stats:
-                                self._add_extrap_statistics(
-                                    thicket_node, str(metric))
-                        except Exception:
-                            pass
-
-        # TODO: how to return the data back, because pandas can't aggregate functions with each other,
-        # so there is no point in introducing an extra column type(MPI,comp) to group by that...
-
-        d = {'col1': [1, 2], 'col2': [3, 4]}
-        df = pd.DataFrame(data=d)
-
-        return df
+        return aggregated_df
 
 
 def multi_display_one_parameter_model(model_objects):
@@ -1582,7 +1520,11 @@ def multi_display_two_parameter_model(model_objects):
     # chose the color map to take the colors from dynamically
     range_values = np.arange(
         0, 1, 1 / len(model_objects))
-    cmap = mpl.cm.get_cmap("brg")
+    if len(model_objects) <= 20:
+        colormap = "tab20"
+    else:
+        colormap = "Spectral"
+    cmap = mpl.cm.get_cmap(colormap)
     rgbas = []
     for value in range_values:
         rgba = cmap(value)
