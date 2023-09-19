@@ -1568,87 +1568,77 @@ def multi_display_one_parameter_model(model_objects):
 
 def multi_display_two_parameter_model(model_objects):
 
-    plt.ioff()
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="3d")
+    parameters = model_objects[0].parameters
+
+    functions = []
+    for model_object in model_objects:
+        functions.append(model_object.mdl.hypothesis.function)
+
+    # create scientific representation of created performance models
+    scientific_functions = convert_functions_to_scientific_notations(
+        functions
+    )
+
+    # chose the color map to take the colors from dynamically
+    range_values = np.arange(
+        0, 1, 1 / len(model_objects))
+    cmap = mpl.cm.get_cmap("brg")
+    rgbas = []
+    for value in range_values:
+        rgba = cmap(value)
+        rgbas.append(rgba)
 
     # create dict for legend color and markers
     dict_callpath_color = {}
+    function_char_len = 0
+    for i in range(len(scientific_functions)):
+        dict_callpath_color[str(model_objects[i].mdl.callpath)+": "+str(scientific_functions[i])] = [
+            "surface", rgbas[i]]
+        if i == 0:
+            function_char_len = len(str(scientific_functions[i]))
+        else:
+            if len(str(scientific_functions[i])) > function_char_len:
+                function_char_len = len(str(scientific_functions[i]))
+
+    plt.ioff()
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
 
     # sort based on x and y values
     measures_sorted = sorted(
         model_objects[0].mdl.measurements, key=lambda x: (
             x.coordinate[0], x.coordinate[1])
     )
+    X_params = [ms.coordinate[0] for ms in measures_sorted]
+    Y_params = [ms.coordinate[1] for ms in measures_sorted]
+    maxX = 1.5 * X_params[-1]
+    maxY = 1.5 * Y_params[-1]
+    X, Y, Z_List, z_List = calculate_z_models(
+        maxX, maxY, model_objects, parameters)
 
-    # get x, y value from measurements
-    X_params = [ms.coordinate[0] for ms in measures_sorted]  # X values
-    Y_params = [ms.coordinate[1] for ms in measures_sorted]  # Y values
-
-    # get median, mean, min, and max values
-    # medians = [ms.median for ms in measures_sorted]
-    # means = [ms.mean for ms in measures_sorted]
-    # mins = [ms.minimum for ms in measures_sorted]
-    # maxes = [ms.maximum for ms in measures_sorted]
-
-    # x value plotting range. Dynamic based off what the largest/smallest values are
-    x_vals = np.linspace(
-        start=X_params[0], stop=1.5 * X_params[-1], num=100)
-    # y value plotting range. Dynamic based off what the largest/smallest values are
-    y_vals = np.linspace(
-        start=Y_params[0], stop=1.5 * Y_params[-1], num=100)
-
-    x_vals, y_vals = np.meshgrid(x_vals, y_vals)
-
-    for i in range(len(model_objects)):
-
-        # sort based on x and y values
-        measures_sorted = sorted(
-            model_objects[i].mdl.measurements, key=lambda x: (
-                x.coordinate[0], x.coordinate[1])
-        )
-
-        if isinstance(model_objects[i].mdl.hypothesis.function, ConstantFunction) is True:
-            zy = []
-            for i in range(len(x_vals)):
-                zx = []
-                for j in range(len(x_vals[0])):
-                    zx.append(model_objects[i].mdl.hypothesis.function.evaluate(
-                        [x_vals, y_vals]))
-                zy.append(zx)
-            z_vals = np.reshape(zy, (len(x_vals), len(y_vals))).T
-        else:
-            z_vals = model_objects[i].mdl.hypothesis.function.evaluate([
-                                                                       x_vals, y_vals])
-
+    for i in range(len(Z_List)):
         ax.plot_surface(
-            x_vals,
-            y_vals,
-            z_vals,
-            label=str(model_objects[i].mdl.hypothesis.function),
+            X, Y, Z_List[i], label="optimal scaling",
             rstride=1,
             cstride=1,
             antialiased=False,
-            alpha=0.1,
-            color="blue",
-        )
-
-        # create scientific representation of create performance model
-        # scientific_function = convert_function_to_scientific_notation(
-        #    self.mdl.hypothesis.function
-        # )
-
-        # dict_callpath_color[str(scientific_function)] = ["surface", "blue"]
+            alpha=0.3, color=rgbas[i])
 
     # axis labels and title
     ax.set_xlabel(model_objects[0].parameters[0] + " $p$")
     ax.set_ylabel(model_objects[0].parameters[1] + " $q$")
     ax.set_zlabel(model_objects[0].mdl.metric)
-    # TODO: do we need a title for this plots?
-    # ax.set_title(str(model_objects[0].mdl.callpath) + "()")
 
     # draw the legend
-    # draw_legend(ax, dict_callpath_color, len(str(scientific_function)))
+    handles = list()
+    for key, value in dict_callpath_color.items():
+        labelName = str(key)
+        if value[0] == "surface":
+            patch = mpatches.Patch(color=value[1], label=labelName)
+            handles.append(patch)
+
+    ax.legend(handles=handles, loc="center right",
+              bbox_to_anchor=(2+(function_char_len)*0.01, 0.5))
 
     return fig, ax
 
@@ -1669,3 +1659,150 @@ def multi_display(model_objects):
         )
 
     return fig, ax
+
+
+def calculate_z_models(maxX, maxY, model_list, parameters, max_z=0):
+    # define grid parameters based on max x and max y value
+    pixelGap_x, pixelGap_y = calculate_grid_parameters(maxX, maxY)
+    # Get the grid of the x and y values
+    x = np.arange(1.0, maxX, pixelGap_x)
+    y = np.arange(1.0, maxY, pixelGap_y)
+    X, Y = np.meshgrid(x, y)
+    # Get the z value for the x and y value
+    z_List = list()
+    Z_List = list()
+    previous = np.seterr(invalid='ignore', divide='ignore')
+    for model in model_list:
+        function = model.mdl.hypothesis.function
+        zs = calculate_z_optimized(X, Y, function, parameters, maxX, maxY)
+        Z = zs.reshape(X.shape)
+        z_List.append(zs)
+        Z_List.append(Z)
+        max_z = max(max_z, np.max(zs[np.logical_not(np.isinf(zs))]))
+    np.seterr(**previous)
+    for z, Z in zip(z_List, Z_List):
+        z[np.isinf(z)] = max_z
+        Z[np.isinf(Z)] = max_z
+    return X, Y, Z_List, z_List
+
+
+def calculate_grid_parameters(maxX, maxY):
+    number_of_pixels_x = 50
+    number_of_pixels_y = 50
+
+    pixel_gap_x = getPixelGap(0, maxX, number_of_pixels_x)
+    pixel_gap_y = getPixelGap(0, maxY, number_of_pixels_y)
+    return pixel_gap_x, pixel_gap_y
+
+
+def getPixelGap(lowerlimit, upperlimit, numberOfPixels):
+    """
+        This function calculate the gap in pixels based on number of pixels and max value
+    """
+    pixelGap = (upperlimit - lowerlimit) / numberOfPixels
+    return pixelGap
+
+
+def calculate_z_optimized(X, Y, function, parameters, maxX, maxY):
+    """
+       This function evaluates the function passed to it.
+    """
+    xs, ys = X.reshape(-1), Y.reshape(-1)
+    points = np.ndarray(
+        (len(parameters), len(xs)))
+
+    points[0] = maxX
+    points[1] = maxY
+    param1 = 0
+    param2 = 1
+    if param1 >= 0:
+        points[param1] = xs
+    if param2 >= 0:
+        points[param2] = ys
+
+    z_value = function.evaluate(points)
+    return z_value
+
+
+def convert_functions_to_scientific_notations(model_functions: list[Function]) -> list[str]:
+    """This function converts the created performance model function into a
+    scientific notation in string format.
+
+    Args:
+        list[model_function] (Extra-P Model): The Extra-P Model object list containing the scaling functions.
+
+    Returns:
+        list[str]: The resulting scientific version of the performance functions in a list.
+    """
+
+    scientific_functions = []
+    for model_function in model_functions:
+
+        function_terms = len(model_function.compound_terms)
+        model_copy = copy.deepcopy(model_function)
+        model_copy.constant_coefficient = (
+            convert_coefficient_to_science_notation(
+                model_function.constant_coefficient
+            )
+        )
+        for i in range(function_terms):
+            model_copy.compound_terms[
+                i
+            ].coefficient = convert_coefficient_to_science_notation(
+                model_function.compound_terms[i].coefficient
+            )
+        scientific_function = str(model_copy)
+        scientific_function = scientific_function.replace("+-", "-")
+        scientific_function = scientific_function.replace("+ -", "-")
+        scientific_function = scientific_function.replace("*", "\\cdot")
+        scientific_function = scientific_function.replace("(", "{")
+        scientific_function = scientific_function.replace(")", "}")
+        scientific_function = scientific_function.replace(
+            "log2{p}", "\\log_2(p)")
+        scientific_function = scientific_function.replace(
+            "log2{q}", "\\log_2(q)")
+        scientific_function = "$" + scientific_function + "$"
+        scientific_functions.append(scientific_function)
+    return scientific_functions
+
+
+def convert_coefficient_to_science_notation(coefficient: float) -> str:
+    """This function converts an Extra-P model coefficient into scientific
+    notation and returns it as a string. It also shortes the coefficients
+    to three decimal places.
+
+    Args:
+        coefficient (float): A model coefficient from a Extra-P function.
+
+    Returns:
+        str: The coefficient in scientific notation.
+    """
+    f = mticker.ScalarFormatter(useMathText=True)
+    f.set_powerlimits((-3, 3))
+    x = "{}".format(f.format_data(float(coefficient)))
+    terms = x.split(" ")
+    if not terms[0][:1].isnumeric():
+        coeff = terms[0][1:]
+        try:
+            coeff = "{:.3f}".format(float(coeff))
+        except ValueError:
+            pass
+        new_coeff = ""
+        new_coeff += "-"
+        new_coeff += coeff
+        for i in range(len(terms)):
+            if i != 0:
+                new_coeff += terms[i]
+        return new_coeff
+    else:
+        coeff = terms[0]
+        try:
+            coeff = "{:.3f}".format(float(coeff))
+        except ValueError:
+            pass
+        new_coeff = ""
+        new_coeff += coeff
+        for i in range(len(terms)):
+            if i != 0:
+                new_coeff += terms[i]
+        return new_coeff
