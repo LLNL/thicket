@@ -1628,10 +1628,10 @@ def multi_display_two_parameter_model(model_objects):
             if y > ymax:
                 ymax = y
     eval_results = {}
-    for function in functions:
-        result = function.evaluate((xmax, ymax))
-        eval_results[result] = function
-    print("DEBUG eval_results:", eval_results)
+    for model_object in model_objects:
+        function = model_object.mdl.hypothesis.function
+        result = function.evaluate((xmax*1.5, ymax*1.5))
+        eval_results[result] = (function, model_object)
 
     # create dict for legend color and markers
     dict_callpath_color = {}
@@ -1649,25 +1649,14 @@ def multi_display_two_parameter_model(model_objects):
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
 
-    sorted_model_object = {}
-    for model_object in model_objects:
-        result = None
-        for key, value in eval_results.items():
-            if value == model_object.mdl.hypothesis.function:
-                result = key
-                break
-        sorted_model_object[result] = model_object
-
-    sorted_model_object_keys = list(sorted_model_object.keys())
-    sorted_model_object_keys.sort()
-    sorted_model_object = {
-        i: sorted_model_object[i] for i in sorted_model_object_keys}
-
-    print("DEBUG sorted_model_object:", sorted_model_object)
+    sorted_eval_results_keys = list(eval_results.keys())
+    sorted_eval_results_keys.sort()
+    eval_results = {
+        i: eval_results[i] for i in sorted_eval_results_keys}
 
     model_objects = []
-    for _, value in sorted_model_object.items():
-        model_objects.append(value)
+    for _, value in eval_results.items():
+        model_objects.append(value[1])
 
     # sort based on x and y values
     measures_sorted = sorted(
@@ -1681,14 +1670,13 @@ def multi_display_two_parameter_model(model_objects):
     X, Y, Z_List, z_List = calculate_z_models(
         maxX, maxY, model_objects, parameters)
 
-    temp = [1, 2, 0]
     for i in range(len(Z_List)):
         ax.plot_surface(
             X, Y, Z_List[i],
             rstride=1,
             cstride=1,
             antialiased=False,
-            alpha=0.3, color=rgbas[temp[i]])
+            alpha=0.3, color=rgbas[i])
 
     # axis labels and title
     ax.set_xlabel(model_objects[0].parameters[0] +
