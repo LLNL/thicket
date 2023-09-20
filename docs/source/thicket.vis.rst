@@ -1,11 +1,11 @@
 thicket.vis package
-===============
+===================
 
 Submodules
 ----------
 
-thicket.vis.static_fixer module
---------------------
+thicket.vis.static\_fixer module
+--------------------------------
 
 .. automodule:: thicket.vis.static_fixer
    :members:
@@ -13,7 +13,7 @@ thicket.vis.static_fixer module
    :show-inheritance:
 
 thicket.vis.visualizations module
---------------------
+---------------------------------
 
 .. automodule:: thicket.vis.visualizations
    :members:

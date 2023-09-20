@@ -7,22 +7,31 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   thicket.external
    thicket.stats
    thicket.vis
 
 Submodules
 ----------
 
+thicket.ensemble module
+-----------------------
+
+.. automodule:: thicket.ensemble
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 thicket.helpers module
---------------------
+----------------------
 
 .. automodule:: thicket.helpers
    :members:
    :undoc-members:
    :show-inheritance:
 
-thicket.model_extrap module
---------------------
+thicket.model\_extrap module
+----------------------------
 
 .. automodule:: thicket.model_extrap
    :members:
@@ -30,23 +39,15 @@ thicket.model_extrap module
    :show-inheritance:
 
 thicket.ncu module
---------------------
+------------------
 
 .. automodule:: thicket.ncu
    :members:
    :undoc-members:
    :show-inheritance:
 
-thicket.statspreference module
---------------------
-
-.. automodule:: thicket.statspreference
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 thicket.thicket module
---------------------
+----------------------
 
 .. automodule:: thicket.thicket
    :members:
@@ -62,7 +63,7 @@ thicket.utils module
    :show-inheritance:
 
 thicket.version module
---------------------
+----------------------
 
 .. automodule:: thicket.version
    :members:
