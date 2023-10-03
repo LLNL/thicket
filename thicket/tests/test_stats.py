@@ -25,8 +25,8 @@ def test_mean(example_cali):
     assert "Min time/rank_mean" in th_ens.statsframe.show_metric_columns()
 
 
-def test_mean_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_mean_columnar_join(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     idx = combined_th.dataframe.columns.levels[0][0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values
@@ -63,8 +63,8 @@ def test_median(example_cali):
     assert "Min time/rank_median" in th_ens.statsframe.show_metric_columns()
 
 
-def test_median_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_median_columnar_join(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     idx = combined_th.dataframe.columns.levels[0][0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values
@@ -101,8 +101,8 @@ def test_minimum(example_cali):
     assert "Min time/rank_min" in th_ens.statsframe.show_metric_columns()
 
 
-def test_minimum_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_minimum_columnar_join(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     idx = combined_th.dataframe.columns.levels[0][0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values
@@ -139,8 +139,8 @@ def test_maximum(example_cali):
     assert "Min time/rank_max" in th_ens.statsframe.show_metric_columns()
 
 
-def test_maximum_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_maximum_columnar_join(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     idx = combined_th.dataframe.columns.levels[0][0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values
@@ -177,8 +177,8 @@ def test_std(example_cali):
     assert "Min time/rank_std" in th_ens.statsframe.show_metric_columns()
 
 
-def test_std_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_std_columnar_join(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     idx = combined_th.dataframe.columns.levels[0][0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values
@@ -216,8 +216,8 @@ def test_percentiles(example_cali):
     assert "Min time/rank_percentiles" in th_ens.statsframe.show_metric_columns()
 
 
-def test_percentiles_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_percentiles_columnar_join(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     idx = combined_th.dataframe.columns.levels[0][0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values
@@ -260,8 +260,8 @@ def test_variance(example_cali):
     assert "Min time/rank_var" in th_ens.statsframe.show_metric_columns()
 
 
-def test_variance_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_variance_columnar_join(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     idx = combined_th.dataframe.columns.levels[0][0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values
@@ -303,9 +303,9 @@ def test_normality(rajaperf_basecuda_xl_cali):
     assert "Min time/rank_normality" in th_ens.statsframe.show_metric_columns()
 
 
-def test_normality_columnar_join(columnar_join_thicket, stats_columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
-    sthicket_list, sthicket_list_cp, scombined_th = stats_columnar_join_thicket
+def test_normality_columnar_join(thicket_axis_columns, stats_thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+    sthicket_list, sthicket_list_cp, scombined_th = stats_thicket_axis_columns
     # new data must be added before uncommenting, need 3 or more datapoints
     # idx = combined_th.dataframe.columns.levels[0][0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
@@ -352,8 +352,8 @@ def test_correlation(rajaperf_basecuda_xl_cali):
     )
 
 
-def test_correlation_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_correlation_columnar_join(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     idx = combined_th.dataframe.columns.levels[0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values
@@ -458,8 +458,8 @@ def test_boxplot(example_cali):
     )
 
 
-def test_boxplot_columnar_join(columnar_join_thicket):
-    thicket_list, thicket_list_cp, combined_th = columnar_join_thicket
+def test_boxplot_columnar_join(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     idx = combined_th.dataframe.columns.levels[0][0]
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values

@@ -12,8 +12,8 @@ from thicket import Thicket
 
 
 @pytest.fixture
-def columnar_join_thicket(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
-    """Generator for 'columnar_join' thicket.
+def thicket_axis_columns(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
+    """Generator for 'concat_thickets(axis="columns")' thicket.
 
     Arguments:
         mpi_scaling_cali (list): List of Caliper files for MPI scaling study.
@@ -21,7 +21,7 @@ def columnar_join_thicket(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
 
     Returns:
         list: List of original thickets, list of deepcopies of original thickets, and
-            columnar-joined thicket.
+            column-joined thicket.
     """
     th_mpi_1 = Thicket.from_caliperreader(mpi_scaling_cali[0:2])
     th_mpi_2 = Thicket.from_caliperreader(mpi_scaling_cali[2:4])
@@ -39,29 +39,29 @@ def columnar_join_thicket(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
     th_mpi_2_deep = th_mpi_2.deepcopy()
     th_cuda128_deep = th_cuda128.deepcopy()
 
-    thicket_list = [th_mpi_1, th_mpi_2, th_cuda128]
-    thicket_list_cp = [th_mpi_1_deep, th_mpi_2_deep, th_cuda128_deep]
+    thickets = [th_mpi_1, th_mpi_2, th_cuda128]
+    thickets_cp = [th_mpi_1_deep, th_mpi_2_deep, th_cuda128_deep]
 
-    combined_th = Thicket.columnar_join(
-        thicket_list=thicket_list,
-        header_list=["MPI1", "MPI2", "Cuda128"],
-        column_name="ProblemSize",
+    combined_th = Thicket.concat_thickets(
+        thickets=thickets,
+        axis="columns",
+        headers=["MPI1", "MPI2", "Cuda128"],
+        metadata_key="ProblemSize",
     )
 
-    return thicket_list, thicket_list_cp, combined_th
+    return thickets, thickets_cp, combined_th
 
 
 @pytest.fixture
-def stats_columnar_join_thicket(rajaperf_basecuda_xl_cali):
-    """Generator for 'columnar_join' thicket for test_stats.py.
+def stats_thicket_axis_columns(rajaperf_basecuda_xl_cali):
+    """Generator for 'concat_thickets(axis="columns")' thicket for test_stats.py.
 
     Arguments:
-        mpi_scaling_cali (list): List of Caliper files for MPI scaling study.
         rajaperf_basecuda_xl_cali (list): List of Caliper files for base cuda variant.
 
     Returns:
         list: List of original thickets, list of deepcopies of original thickets, and
-            columnar-joined thicket.
+            column-joined thicket.
     """
     th_cuda128_1 = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali[0:4])
     th_cuda128_2 = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali[5:9])
@@ -69,15 +69,16 @@ def stats_columnar_join_thicket(rajaperf_basecuda_xl_cali):
     # To check later if modifications were unexpectedly made
     th_cuda128_1_deep = th_cuda128_1.deepcopy()
     th_cuda128_2_deep = th_cuda128_2.deepcopy()
-    thicket_list = [th_cuda128_1, th_cuda128_2]
-    thicket_list_cp = [th_cuda128_1_deep, th_cuda128_2_deep]
+    thickets = [th_cuda128_1, th_cuda128_2]
+    thickets_cp = [th_cuda128_1_deep, th_cuda128_2_deep]
 
-    combined_th = Thicket.columnar_join(
-        thicket_list=thicket_list,
-        header_list=["Cuda 1", "Cuda 2"],
+    combined_th = Thicket.concat_thickets(
+        thickets=thickets,
+        axis="columns",
+        headers=["Cuda 1", "Cuda 2"],
     )
 
-    return thicket_list, thicket_list_cp, combined_th
+    return thickets, thickets_cp, combined_th
 
 
 @pytest.fixture
