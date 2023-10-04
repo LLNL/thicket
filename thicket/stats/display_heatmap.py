@@ -23,7 +23,7 @@ def display_heatmap(thicket, columns=None, **kwargs):
     """
     if columns is None:
         raise ValueError(
-            "To see a list of valid columns, run Thicket.get_perf_columns()."
+            "To see a list of valid columns, run 'Thicket.performance_cols'."
         )
 
     verify_thicket_structures(

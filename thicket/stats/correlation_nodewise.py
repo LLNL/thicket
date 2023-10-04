@@ -30,7 +30,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
     """
     if column1 is None or column2 is None:
         raise ValueError(
-            "To see a list of valid columns, please run Thicket.get_perf_columns()."
+            "To see a list of valid columns, run 'Thicket.performance_cols'."
         )
 
     verify_thicket_structures(
