@@ -6,7 +6,7 @@
 from thicket import Thicket as th
 
 
-def test_make_superthicket(mpi_scaling_cali):
+def test_from_statsframes(mpi_scaling_cali):
     th_list = []
     for file in mpi_scaling_cali:
         th_list.append(th.from_caliperreader(file))
@@ -17,10 +17,10 @@ def test_make_superthicket(mpi_scaling_cali):
         t.statsframe.dataframe["test"] = t_val
         t_val += 2
 
-    superthicket = th.make_superthicket(th_list)
+    tk = th.from_statsframes(th_list)
 
     # Check level values
-    assert set(superthicket.dataframe.index.get_level_values("thicket")) == {
+    assert set(tk.dataframe.index.get_level_values("thicket")) == {
         0,
         1,
         2,
@@ -28,14 +28,12 @@ def test_make_superthicket(mpi_scaling_cali):
         4,
     }
     # Check performance data table values
-    assert set(superthicket.dataframe["test"]) == {0, 2, 4, 6, 8}
+    assert set(tk.dataframe["test"]) == {0, 2, 4, 6, 8}
 
-    superthicket_named = th.make_superthicket(
-        th_list, profiles_from_meta="mpi.world.size"
-    )
+    tk_named = th.from_statsframes(th_list, profiles_from_meta="mpi.world.size")
 
     # Check level values
-    assert set(superthicket_named.dataframe.index.get_level_values("thicket")) == {
+    assert set(tk_named.dataframe.index.get_level_values("thicket")) == {
         27,
         64,
         125,
@@ -43,4 +41,4 @@ def test_make_superthicket(mpi_scaling_cali):
         343,
     }
     # Check performance data table values
-    assert set(superthicket_named.dataframe["test"]) == {0, 2, 4, 6, 8}
+    assert set(tk_named.dataframe["test"]) == {0, 2, 4, 6, 8}
