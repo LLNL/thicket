@@ -176,7 +176,7 @@ class Ensemble:
                 new_profiles = [i for i in range(len(thickets_cp[0].profile))]
                 for i in range(len(thickets_cp)):
                     thickets_cp[i].metadata["new_profiles"] = new_profiles
-                    thickets_cp[i].add_column_from_metadata_to_ensemble(
+                    thickets_cp[i].metadata_column_to_perfdata(
                         "new_profiles", drop=True
                     )
                     thickets_cp[i].dataframe.reset_index(level="profile", inplace=True)
@@ -198,7 +198,7 @@ class Ensemble:
                     )
             else:  # Change second-level index to be from metadata's "metadata_key" column
                 for i in range(len(thickets_cp)):
-                    thickets_cp[i].add_column_from_metadata_to_ensemble(metadata_key)
+                    thickets_cp[i].metadata_column_to_perfdata(metadata_key)
                     thickets_cp[i].dataframe.reset_index(level="profile", inplace=True)
                     new_mappings.update(
                         pd.Series(

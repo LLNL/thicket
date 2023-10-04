@@ -117,7 +117,7 @@ def test_add_column_from_metadata(mpi_scaling_cali):
     # Assume second level index is profile
     assert t_ens.dataframe.index.names[1] == "profile"
 
-    t_ens.add_column_from_metadata_to_ensemble(example_column)
+    t_ens.metadata_column_to_perfdata(example_column)
 
     # Column should be in performance data table
     assert example_column in t_ens.dataframe
