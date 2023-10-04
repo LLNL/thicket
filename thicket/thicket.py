@@ -597,7 +597,7 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
-    def from_statsframes(th_list, profiles_from_meta=None):
+    def from_statsframes(th_list, metadata_key=None):
         """Compose a list of Thickets with data in their statsframes.
 
         The Thicket's individual aggregated statistics tables are ensembled and become the
@@ -605,7 +605,7 @@ class Thicket(GraphFrame):
 
         Arguments:
             th_list (list): list of thickets
-            profiles_from_meta (str, optional): name of the metadata column to use as
+            metadata_key (str, optional): name of the metadata column to use as
                 the new second-level index. Uses the first value so this only makes
                 sense if provided column is all equal values and each thicket's columns
                 differ in value.
@@ -624,17 +624,17 @@ class Thicket(GraphFrame):
 
         # Setup names list
         th_names = []
-        if profiles_from_meta is None:
+        if metadata_key is None:
             for i in range(len(th_list)):
                 th_names.append(i)
-        else:  # profiles_from_meta was provided.
+        else:  # metadata_key was provided.
             for th in th_list:
                 # Get name from metadata table
-                name_list = th.metadata[profiles_from_meta].tolist()
+                name_list = th.metadata[metadata_key].tolist()
 
                 if len(name_list) > 1:
                     warnings.warn(
-                        f"Multiple values for name {name_list} at thicket.metadata[{profiles_from_meta}]. Only the first will be used."
+                        f"Multiple values for name {name_list} at thicket.metadata[{metadata_key}]. Only the first will be used."
                     )
                 th_names.append(name_list[0])
 

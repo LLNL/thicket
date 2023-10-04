@@ -30,7 +30,7 @@ def test_from_statsframes(mpi_scaling_cali):
     # Check performance data table values
     assert set(tk.dataframe["test"]) == {0, 2, 4, 6, 8}
 
-    tk_named = th.from_statsframes(th_list, profiles_from_meta="mpi.world.size")
+    tk_named = th.from_statsframes(th_list, metadata_key="mpi.world.size")
 
     # Check level values
     assert set(tk_named.dataframe.index.get_level_values("thicket")) == {
