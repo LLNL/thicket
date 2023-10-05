@@ -76,19 +76,23 @@ class Ensemble:
             """Check that the structures of the thicket objects are valid for the incoming operations."""
             # Required/expected format of the data
             for th in thickets:
-                verify_thicket_structures(th.dataframe, index=["node", "profile"])
-                verify_thicket_structures(th.statsframe.dataframe, index=["node"])
+                verify_thicket_structures(
+                    th.dataframe, index=["node", "profile"])
+                verify_thicket_structures(
+                    th.statsframe.dataframe, index=["node"])
                 verify_thicket_structures(th.metadata, index=["profile"])
             # Check for metadata_key in metadata
             if metadata_key:
                 for th in thickets:
-                    verify_thicket_structures(th.metadata, columns=[metadata_key])
+                    verify_thicket_structures(
+                        th.metadata, columns=[metadata_key])
             # Check length of profiles match
             for i in range(len(thickets) - 1):
                 if len(thickets[i].profile) != len(thickets[i + 1].profile):
                     raise ValueError(
                         "Length of all thicket profiles must match. {} != {}".format(
-                            len(thickets[i].profile), len(thickets[i + 1].profile)
+                            len(thickets[i].profile), len(
+                                thickets[i + 1].profile)
                         )
                     )
             # Ensure all thickets profiles are sorted. Must be true when metadata_key=None to
@@ -123,16 +127,19 @@ class Ensemble:
                 thickets_cp[i].metadata.reset_index(drop=True, inplace=True)
             if metadata_key is None:
                 for i in range(len(thickets_cp)):
-                    thickets_cp[i].metadata.index.set_names("profile", inplace=True)
+                    thickets_cp[i].metadata.index.set_names(
+                        "profile", inplace=True)
             else:
                 for i in range(len(thickets_cp)):
-                    thickets_cp[i].metadata.set_index(metadata_key, inplace=True)
+                    thickets_cp[i].metadata.set_index(
+                        metadata_key, inplace=True)
                     thickets_cp[i].metadata.sort_index(inplace=True)
 
             # Create multi-index columns
             for i in range(len(thickets_cp)):
                 thickets_cp[i].metadata.columns = pd.MultiIndex.from_tuples(
-                    _create_multiindex_columns(thickets_cp[i].metadata, headers[i])
+                    _create_multiindex_columns(
+                        thickets_cp[i].metadata, headers[i])
                 )
 
             # Concat metadata together
@@ -144,11 +151,13 @@ class Ensemble:
         def _handle_misc():
             """Misceallaneous Thicket object operations."""
             for i in range(1, len(thickets_cp)):
-                combined_th.profile += thickets_cp[i].profile  # Update "profile" object
+                # Update "profile" object
+                combined_th.profile += thickets_cp[i].profile
                 combined_th.profile_mapping.update(
                     thickets_cp[i].profile_mapping
                 )  # Update "profile_mapping" object
-            combined_th.profile = [new_mappings[prf] for prf in combined_th.profile]
+            combined_th.profile = [new_mappings[prf]
+                                   for prf in combined_th.profile]
             profile_mapping_cp = combined_th.profile_mapping.copy()
             for k, v in profile_mapping_cp.items():
                 combined_th.profile_mapping[
@@ -178,7 +187,8 @@ class Ensemble:
                     thickets_cp[i].add_column_from_metadata_to_ensemble(
                         "new_profiles", drop=True
                     )
-                    thickets_cp[i].dataframe.reset_index(level="profile", inplace=True)
+                    thickets_cp[i].dataframe.reset_index(
+                        level="profile", inplace=True)
                     new_mappings.update(
                         pd.Series(
                             thickets_cp[i]
@@ -188,7 +198,8 @@ class Ensemble:
                             index=thickets_cp[i].dataframe["profile"],
                         ).to_dict()
                     )
-                    thickets_cp[i].dataframe.drop("profile", axis=1, inplace=True)
+                    thickets_cp[i].dataframe.drop(
+                        "profile", axis=1, inplace=True)
                     thickets_cp[i].dataframe.set_index(
                         "new_profiles", append=True, inplace=True
                     )
@@ -197,8 +208,10 @@ class Ensemble:
                     )
             else:  # Change second-level index to be from metadata's "metadata_key" column
                 for i in range(len(thickets_cp)):
-                    thickets_cp[i].add_column_from_metadata_to_ensemble(metadata_key)
-                    thickets_cp[i].dataframe.reset_index(level="profile", inplace=True)
+                    thickets_cp[i].add_column_from_metadata_to_ensemble(
+                        metadata_key)
+                    thickets_cp[i].dataframe.reset_index(
+                        level="profile", inplace=True)
                     new_mappings.update(
                         pd.Series(
                             thickets_cp[i]
@@ -208,7 +221,8 @@ class Ensemble:
                             index=thickets_cp[i].dataframe["profile"],
                         ).to_dict()
                     )
-                    thickets_cp[i].dataframe.drop("profile", axis=1, inplace=True)
+                    thickets_cp[i].dataframe.drop(
+                        "profile", axis=1, inplace=True)
                     thickets_cp[i].dataframe.set_index(
                         metadata_key, append=True, inplace=True
                     )
@@ -367,10 +381,11 @@ class Ensemble:
             # Extend dataframe
             unify_df = pd.concat([th.dataframe, unify_df])
         # Sort by keys
-        unify_profile_mapping = OrderedDict(sorted(unify_profile_mapping.items()))
+        unify_profile_mapping = OrderedDict(
+            sorted(unify_profile_mapping.items()))
 
         # Insert missing rows in dataframe
-        unify_df = _fill_perfdata(unify_df)
+        # unify_df = _fill_perfdata(unify_df)
 
         # Metadata-specific operations
         if superthicket:

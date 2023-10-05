@@ -21,6 +21,7 @@ import pandas as pd
 from pandas import DataFrame
 from scipy.stats import rankdata
 from math import sqrt
+import math
 
 from hatchet import node
 
@@ -99,84 +100,6 @@ class ModelWrapper:
         """
         return self.mdl.hypothesis.function.evaluate(val)
 
-    def convert_coefficient_to_scientific_notation(self, coefficient: float) -> str:
-        """This function converts an Extra-P model coefficient into scientific
-        notation and returns it as a string. It also shortes the coefficients
-        to three decimal places.
-
-        Args:
-            coefficient (float): A model coefficient from a Extra-P function.
-
-        Returns:
-            str: The coefficient in scientific notation.
-        """
-        f = mticker.ScalarFormatter(useMathText=True)
-        f.set_powerlimits((-3, 3))
-        x = "{}".format(f.format_data(float(coefficient)))
-        terms = x.split(" ")
-        if not terms[0][:1].isnumeric():
-            coeff = terms[0][1:]
-            try:
-                coeff = "{:.3f}".format(float(coeff))
-            except ValueError:
-                pass
-            new_coeff = ""
-            new_coeff += "-"
-            new_coeff += coeff
-            for i in range(len(terms)):
-                if i != 0:
-                    new_coeff += terms[i]
-            return new_coeff
-        else:
-            coeff = terms[0]
-            try:
-                coeff = "{:.3f}".format(float(coeff))
-            except ValueError:
-                pass
-            new_coeff = ""
-            new_coeff += coeff
-            for i in range(len(terms)):
-                if i != 0:
-                    new_coeff += terms[i]
-            return new_coeff
-
-    def convert_function_to_scientific_notation(self, model_function: Function) -> str:
-        """This function converts the created performance model function into a
-        scientific notation in string format.
-
-        Args:
-            model_function (Extra-P Model): The Extra-P Model object containing the scaling function.
-
-        Returns:
-            str: The resulting scientific version of the performance function.
-        """
-
-        function_terms = len(model_function.compound_terms)
-        model_copy = copy.deepcopy(model_function)
-        model_copy.constant_coefficient = (
-            self.convert_coefficient_to_scientific_notation(
-                model_function.constant_coefficient
-            )
-        )
-        for i in range(function_terms):
-            model_copy.compound_terms[
-                i
-            ].coefficient = self.convert_coefficient_to_scientific_notation(
-                model_function.compound_terms[i].coefficient
-            )
-        scientific_function = str(model_copy)
-        scientific_function = scientific_function.replace("+-", "-")
-        scientific_function = scientific_function.replace("+ -", "-")
-        scientific_function = scientific_function.replace("*", "\\cdot")
-        scientific_function = scientific_function.replace("(", "{")
-        scientific_function = scientific_function.replace(")", "}")
-        scientific_function = scientific_function.replace(
-            "log2{"+str(DEFAULT_PARAM_NAMES[0])+"}", "\\log_2("+str(DEFAULT_PARAM_NAMES[0])+")")
-        scientific_function = scientific_function.replace(
-            "log2{"+str(DEFAULT_PARAM_NAMES[1])+"}", "\\log_2("+str(DEFAULT_PARAM_NAMES[1])+")")
-        scientific_function = "$" + scientific_function + "$"
-        return scientific_function
-
     def display_one_parameter_model(
         self,
         show_mean: bool = False,
@@ -221,10 +144,8 @@ class ModelWrapper:
             params[0], 1.5 * params[-1], (params[-1] - params[0]) / 100.0
         )
 
-        # create a scientific representation of the created performance model
-        scientific_function = self.convert_function_to_scientific_notation(
-            self.mdl.hypothesis.function
-        )
+        scientific_function = self.mdl.hypothesis.function.to_latex_string(
+            Parameter(DEFAULT_PARAM_NAMES[0]))
 
         # compute y values for plotting
         y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
@@ -571,9 +492,8 @@ class ModelWrapper:
         ax.set_title(str(self.mdl.callpath) + "()")
 
         # create scientific representation of create performance model
-        scientific_function = self.convert_function_to_scientific_notation(
-            self.mdl.hypothesis.function
-        )
+        scientific_function = self.mdl.hypothesis.function.to_latex_string(
+            Parameter(DEFAULT_PARAM_NAMES[0]), Parameter(DEFAULT_PARAM_NAMES[1]))
 
         # create dict for legend color and markers
         dict_callpath_color = {}
@@ -615,7 +535,7 @@ class ModelWrapper:
 
         # draw the legend
         self.draw_legend(ax, dict_callpath_color,
-                         len(str(scientific_function)))
+                         len(scientific_function))
 
         return fig, ax
 
@@ -1079,32 +999,33 @@ class Modeling:
         # Dictionary of variables mapped to coefficients
         term_dict = {}
         # Model object hypothesis function
-        fnc = model_object.mdl.hypothesis.function
-        # Constant "c" column
-        term_dict["c"] = fnc.constant_coefficient
+        if not isinstance(model_object, float):
+            fnc = model_object.mdl.hypothesis.function
+            # Constant "c" column
+            term_dict["c"] = fnc.constant_coefficient
 
-        # Terms of form "coefficient * variables"
-        for term in fnc.compound_terms:
-            if len(parameters) == 1:
-                # Join variables of the same term together
-                variable_column = " * ".join(t.to_string()
-                                             for t in term.simple_terms)
+            # Terms of form "coefficient * variables"
+            for term in fnc.compound_terms:
+                if len(parameters) == 1:
+                    # Join variables of the same term together
+                    variable_column = " * ".join(t.to_string()
+                                                 for t in term.simple_terms)
 
-                term_dict[variable_column] = term.coefficient
-            else:
-                x = term.parameter_term_pairs
-                term_str = ""
-                for i in range(len(x)):
-                    # [0] is the x mpterm
-                    # [1] is the term object
-                    term_parameter_str = DEFAULT_PARAM_NAMES[x[i][0]]
-                    y = x[i][1].to_string(parameter=term_parameter_str)
-                    if i == 0:
-                        term_str += y
-                    else:
-                        term_str = term_str + " * " + y
+                    term_dict[variable_column] = term.coefficient
+                else:
+                    x = term.parameter_term_pairs
+                    term_str = ""
+                    for i in range(len(x)):
+                        # [0] is the x mpterm
+                        # [1] is the term object
+                        term_parameter_str = DEFAULT_PARAM_NAMES[x[i][0]]
+                        y = x[i][1].to_string(parameter=term_parameter_str)
+                        if i == 0:
+                            term_str += y
+                        else:
+                            term_str = term_str + " * " + y
 
-                term_dict[term_str] = term.coefficient
+                    term_dict[term_str] = term.coefficient
 
         return term_dict
 
@@ -1176,87 +1097,90 @@ class Modeling:
         """
 
         # Model object hypothesis function
-        fnc = model_object.mdl.hypothesis.function
-        complexity_class = ""
-        coefficient = 0
-
         return_value = {}
-        term_values = []
-        terms = []
+        if not isinstance(model_object, float):
+            fnc = model_object.mdl.hypothesis.function
+            complexity_class = ""
+            coefficient = 0
 
-        target_str = "("
-        for param_value in eval_target:
-            target_str += str(param_value)
-            target_str += ","
-        target_str = target_str[:-1]
-        target_str += ")"
+            term_values = []
+            terms = []
 
-        if len(fnc.compound_terms) == 0:
-            complexity_class = "1"
-            coefficient = fnc.constant_coefficient
-            return_value[col + "_complexity_" + target_str] = complexity_class
-            return_value[col + "_coefficient_" + target_str] = coefficient
+            target_str = "("
+            for param_value in eval_target:
+                target_str += str(param_value)
+                target_str += ","
+            target_str = target_str[:-1]
+            target_str += ")"
 
-        else:
-            if len(parameters) == 1:
-                for term in fnc.compound_terms:
-                    result = term.evaluate(eval_target[0])
-                    term_values.append(result)
-                    terms.append(term)
-            else:
-                for term in fnc.compound_terms:
-                    result = term.evaluate(eval_target)
-                    term_values.append(result)
-                    terms.append(term)
-
-            max_index = term_values.index(max(term_values))
-
-            if max(term_values) > fnc.constant_coefficient:
-                comp = ""
-                if len(parameters) == 1:
-                    for simple_term in terms[max_index].simple_terms:
-                        if comp == "":
-                            comp += simple_term.to_string()
-                        else:
-                            comp = comp + "*" + simple_term.to_string()
-                    comp = comp.replace("^", "**")
-                    complexity_class = "" + comp + ""
-                    coefficient = terms[max_index].coefficient
-                    return_value[col + "_complexity_" +
-                                 target_str] = complexity_class
-                    return_value[col + "_coefficient_" +
-                                 target_str] = coefficient
-                else:
-                    comp = ""
-                    for parameter_term_pair in terms[max_index].parameter_term_pairs:
-                        # [0] to get the index of the paramete
-                        term_parameter_str = DEFAULT_PARAM_NAMES[parameter_term_pair[0]]
-                        # [1] to get the term
-                        if comp == "":
-                            comp += parameter_term_pair[1].to_string(
-                                parameter=term_parameter_str
-                            )
-                        else:
-                            comp = (
-                                comp
-                                + "*"
-                                + parameter_term_pair[1].to_string(
-                                    parameter=term_parameter_str
-                                )
-                            )
-                    comp = comp.replace("^", "**")
-                    complexity_class = "" + comp + ""
-                    return_value[col + "_complexity_" +
-                                 target_str] = complexity_class
-                    return_value[col + "_coefficient_" +
-                                 target_str] = term.coefficient
-
-            else:
+            if len(fnc.compound_terms) == 0:
                 complexity_class = "1"
                 coefficient = fnc.constant_coefficient
                 return_value[col + "_complexity_" +
                              target_str] = complexity_class
                 return_value[col + "_coefficient_" + target_str] = coefficient
+
+            else:
+                if len(parameters) == 1:
+                    for term in fnc.compound_terms:
+                        result = term.evaluate(eval_target[0])
+                        term_values.append(result)
+                        terms.append(term)
+                else:
+                    for term in fnc.compound_terms:
+                        result = term.evaluate(eval_target)
+                        term_values.append(result)
+                        terms.append(term)
+
+                max_index = term_values.index(max(term_values))
+
+                if max(term_values) > fnc.constant_coefficient:
+                    comp = ""
+                    if len(parameters) == 1:
+                        for simple_term in terms[max_index].simple_terms:
+                            if comp == "":
+                                comp += simple_term.to_string()
+                            else:
+                                comp = comp + "*" + simple_term.to_string()
+                        comp = comp.replace("^", "**")
+                        complexity_class = "" + comp + ""
+                        coefficient = terms[max_index].coefficient
+                        return_value[col + "_complexity_" +
+                                     target_str] = complexity_class
+                        return_value[col + "_coefficient_" +
+                                     target_str] = coefficient
+                    else:
+                        comp = ""
+                        for parameter_term_pair in terms[max_index].parameter_term_pairs:
+                            # [0] to get the index of the paramete
+                            term_parameter_str = DEFAULT_PARAM_NAMES[parameter_term_pair[0]]
+                            # [1] to get the term
+                            if comp == "":
+                                comp += parameter_term_pair[1].to_string(
+                                    parameter=term_parameter_str
+                                )
+                            else:
+                                comp = (
+                                    comp
+                                    + "*"
+                                    + parameter_term_pair[1].to_string(
+                                        parameter=term_parameter_str
+                                    )
+                                )
+                        comp = comp.replace("^", "**")
+                        complexity_class = "" + comp + ""
+                        return_value[col + "_complexity_" +
+                                     target_str] = complexity_class
+                        return_value[col + "_coefficient_" +
+                                     target_str] = term.coefficient
+
+                else:
+                    complexity_class = "1"
+                    coefficient = fnc.constant_coefficient
+                    return_value[col + "_complexity_" +
+                                 target_str] = complexity_class
+                    return_value[col + "_coefficient_" +
+                                 target_str] = coefficient
 
         return return_value
 
@@ -1359,9 +1283,12 @@ class Modeling:
                     total_metric_value = 0
                     metric_values = []
                     for model_obj in self.tht.statsframe.dataframe[col]:
-                        metric_value = model_obj.mdl.hypothesis.function.evaluate(
-                            target
-                        )
+                        if not isinstance(model_obj, float):
+                            metric_value = model_obj.mdl.hypothesis.function.evaluate(
+                                target
+                            )
+                        else:
+                            metric_value = math.nan
                         total_metric_value += metric_value
                         metric_values.append(metric_value)
                     percentages = []
@@ -1778,87 +1705,3 @@ def calculate_z_optimized(X, Y, function, parameters, maxX, maxY):
 
     z_value = function.evaluate(points)
     return z_value
-
-
-def convert_functions_to_scientific_notations(model_functions: list[Function]) -> list[str]:
-    """This function converts the created performance model function into a
-    scientific notation in string format.
-
-    Args:
-        list[model_function] (Extra-P Model): The Extra-P Model object list containing the scaling functions.
-
-    Returns:
-        list[str]: The resulting scientific version of the performance functions in a list.
-    """
-
-    scientific_functions = []
-    for model_function in model_functions:
-
-        function_terms = len(model_function.compound_terms)
-        model_copy = copy.deepcopy(model_function)
-        model_copy.constant_coefficient = (
-            convert_coefficient_to_science_notation(
-                model_function.constant_coefficient
-            )
-        )
-        for i in range(function_terms):
-            model_copy.compound_terms[
-                i
-            ].coefficient = convert_coefficient_to_science_notation(
-                model_function.compound_terms[i].coefficient
-            )
-        scientific_function = str(model_copy)
-        scientific_function = scientific_function.replace("+-", "-")
-        scientific_function = scientific_function.replace("+ -", "-")
-        scientific_function = scientific_function.replace("*", "\\cdot")
-        scientific_function = scientific_function.replace("(", "{")
-        scientific_function = scientific_function.replace(")", "}")
-        scientific_function = scientific_function.replace(
-            "log2{"+str(DEFAULT_PARAM_NAMES[0])+"}", "\\log_2("+str(DEFAULT_PARAM_NAMES[0])+")")
-        scientific_function = scientific_function.replace(
-            "log2{"+str(DEFAULT_PARAM_NAMES[1])+"}", "\\log_2("+str(DEFAULT_PARAM_NAMES[1])+")")
-        scientific_function = "$" + scientific_function + "$"
-        scientific_functions.append(scientific_function)
-    return scientific_functions
-
-
-def convert_coefficient_to_science_notation(coefficient: float) -> str:
-    """This function converts an Extra-P model coefficient into scientific
-    notation and returns it as a string. It also shortes the coefficients
-    to three decimal places.
-
-    Args:
-        coefficient (float): A model coefficient from a Extra-P function.
-
-    Returns:
-        str: The coefficient in scientific notation.
-    """
-    f = mticker.ScalarFormatter(useMathText=True)
-    f.set_powerlimits((-3, 3))
-    x = "{}".format(f.format_data(float(coefficient)))
-    terms = x.split(" ")
-    if not terms[0][:1].isnumeric():
-        coeff = terms[0][1:]
-        try:
-            coeff = "{:.3f}".format(float(coeff))
-        except ValueError:
-            pass
-        new_coeff = ""
-        new_coeff += "-"
-        new_coeff += coeff
-        for i in range(len(terms)):
-            if i != 0:
-                new_coeff += terms[i]
-        return new_coeff
-    else:
-        coeff = terms[0]
-        try:
-            coeff = "{:.3f}".format(float(coeff))
-        except ValueError:
-            pass
-        new_coeff = ""
-        new_coeff += coeff
-        for i in range(len(terms)):
-            if i != 0:
-                new_coeff += terms[i]
-        return new_coeff
