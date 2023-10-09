@@ -288,11 +288,11 @@ class Ensemble:
         return combined_th
 
     @staticmethod
-    def _index(thickets, superthicket=False):
+    def _index(thickets, from_statsframes=False):
         """Unify a list of thickets into a single thicket
 
         Arguments:
-            superthicket (bool): whether the result is a superthicket
+            from_statsframes (bool): Whether this method was invoked from from_statsframes
 
         Returns:
             unify_graph (hatchet.Graph): unified graph,
@@ -316,7 +316,7 @@ class Ensemble:
 
             return perfdata
 
-        def _superthicket_metadata(metadata):
+        def _from_statsframes_metadata(metadata):
             """Aggregate data in Metadata"""
 
             def _agg_to_set(obj):
@@ -373,8 +373,8 @@ class Ensemble:
         unify_df = _fill_perfdata(unify_df)
 
         # Metadata-specific operations
-        if superthicket:
-            _superthicket_metadata(unify_metadata)
+        if from_statsframes:
+            _from_statsframes_metadata(unify_metadata)
 
         # Sort PerfData
         unify_df.sort_index(inplace=True)
