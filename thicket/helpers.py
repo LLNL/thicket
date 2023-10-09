@@ -158,11 +158,15 @@ def _sync_nodes_frame(gh, df):
     gh_node_list = []
     for gh_node in gh.traverse():
         gh_node_list.append(gh_node)
+    # Sort the graph node list
+    gh_node_list.sort(key=lambda node: hash(node))
 
     num_profiles = len(df.groupby(level=1))
     index_names = df.index.names
+    df_node_list = list(set(df.index.get_level_values("node")))
     df.reset_index(inplace=True)
-    df_node_list = df["node"][::num_profiles].to_list()
+    # Check list sorted
+    assert(sorted(df_node_list, key=lambda node: hash(node)))
 
     # Sequentially walk through graph and dataframe and modify dataframe hnid's based off graph equivalent
     i = 0
