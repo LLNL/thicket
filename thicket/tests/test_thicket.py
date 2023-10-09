@@ -104,7 +104,7 @@ def test_statsframe(example_cali):
     assert bool(re.search("1.000.*CalcFBHourglassForceForElems", tree_output))
 
 
-def test_add_column_from_metadata(mpi_scaling_cali):
+def test_metadata_column_to_perfdata(mpi_scaling_cali):
     t_ens = Thicket.from_caliperreader(mpi_scaling_cali)
 
     example_column = "jobsize"
