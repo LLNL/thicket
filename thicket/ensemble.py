@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 import thicket.helpers as helpers
-from .utils import verify_sorted_profile, verify_thicket_structures
+from .utils import validate_dataframe, verify_sorted_profile, verify_thicket_structures
 
 
 class Ensemble:
@@ -285,6 +285,9 @@ class Ensemble:
         # Step 2D: Handle other Thicket objects.
         _handle_misc()
 
+        # Validate dataframe
+        validate_dataframe(combined_th.dataframe)
+
         return combined_th
 
     @staticmethod
@@ -384,6 +387,9 @@ class Ensemble:
         # Remove duplicates in metrics
         unify_inc_metrics = list(set(unify_inc_metrics))
         unify_exc_metrics = list(set(unify_exc_metrics))
+
+        # Validate unify_df
+        validate_dataframe(unify_df)
 
         unify_parts = (
             unify_graph,
