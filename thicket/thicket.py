@@ -275,7 +275,7 @@ class Thicket(GraphFrame):
 
             valid kwargs:
                 if axis="index":
-                    superthicket (bool): Whether the result is a superthicket
+                    from_statsframes (bool): Whether this method was invoked from from_statsframes
                 if axis="columns":
                     headers (list): List of headers to use for the new columnar multi-index.
                     metadata_key (str): Name of the column from the metadata tables to replace the 'profile'
@@ -286,9 +286,9 @@ class Thicket(GraphFrame):
             (thicket): concatenated thicket
         """
 
-        def _index(thickets, superthicket=False):
+        def _index(thickets, from_statsframes=False):
             thicket_parts = Ensemble._index(
-                thickets=thickets, superthicket=superthicket
+                thickets=thickets, from_statsframes=from_statsframes
             )
 
             return Thicket(
@@ -330,7 +330,7 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
-    def unify_ensemble(th_list, superthicket=False):
+    def unify_ensemble(th_list, from_statsframes=False):
         raise ValueError(
             "unify_ensemble is deprecated. Use 'concat_thickets(axis='index'...)' instead."
         )
@@ -599,21 +599,21 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
-    def make_superthicket(th_list, profiles_from_meta=None):
-        """Convert a list of thickets into a 'superthicket'.
+    def from_statsframes(th_list, metadata_key=None):
+        """Compose a list of Thickets with data in their statsframes.
 
-        Their individual aggregated statistics table are ensembled and become the
-        superthicket's performance data table.
+        The Thicket's individual aggregated statistics tables are ensembled and become the
+        new Thickets performance data table.
 
         Arguments:
             th_list (list): list of thickets
-            profiles_from_meta (str, optional): name of the metadata column to use as
+            metadata_key (str, optional): name of the metadata column to use as
                 the new second-level index. Uses the first value so this only makes
                 sense if provided column is all equal values and each thicket's columns
                 differ in value.
 
         Returns:
-            (thicket): superthicket
+            (thicket): New Thicket object.
         """
         # Pre-check of data structures
         for th in th_list:
@@ -626,17 +626,17 @@ class Thicket(GraphFrame):
 
         # Setup names list
         th_names = []
-        if profiles_from_meta is None:
+        if metadata_key is None:
             for i in range(len(th_list)):
                 th_names.append(i)
-        else:  # profiles_from_meta was provided.
+        else:  # metadata_key was provided.
             for th in th_list:
                 # Get name from metadata table
-                name_list = th.metadata[profiles_from_meta].tolist()
+                name_list = th.metadata[metadata_key].tolist()
 
                 if len(name_list) > 1:
                     warnings.warn(
-                        f"Multiple values for name {name_list} at thicket.metadata[{profiles_from_meta}]. Only the first will be used."
+                        f"Multiple values for name {name_list} at thicket.metadata[{metadata_key}]. Only the first will be used."
                     )
                 th_names.append(name_list[0])
 
@@ -669,7 +669,7 @@ class Thicket(GraphFrame):
             # Append copy to list
             th_copy_list.append(th_copy)
 
-        return Thicket.concat_thickets(th_copy_list, superthicket=True)
+        return Thicket.concat_thickets(th_copy_list, from_statsframes=True)
 
     def to_json(self, ensemble=True, metadata=True, stats=True):
         jsonified_thicket = {}

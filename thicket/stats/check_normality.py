@@ -28,7 +28,7 @@ def check_normality(thicket, columns=None):
     """
     if columns is None:
         raise ValueError(
-            "To see a list of valid columns, please run Thicket.get_perf_columns()."
+            "To see a list of valid columns, run 'Thicket.performance_cols'."
         )
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)

@@ -26,7 +26,7 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
     """
     if column is None or node is None:
         raise ValueError(
-            "To see a list of valid columns, run Thicket.get_perf_columns()."
+            "To see a list of valid columns, run 'Thicket.performance_cols'."
         )
 
     if not isinstance(node, ht.node.Node):
