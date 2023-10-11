@@ -79,7 +79,6 @@ class ModelWrapper:
         """
         self.mdl = mdl
         self.parameters = parameters
-        self.default_param_names = DEFAULT_PARAM_NAMES
 
     def __str__(self) -> str:
         """Returns the Extra-P performance model function as a string.
@@ -87,7 +86,14 @@ class ModelWrapper:
         Returns:
             str: The Extra-P performance model function.
         """
-        return str(self.mdl.hypothesis.function)
+        if len(self.parameters) == 1:
+            return self.mdl.hypothesis.function.to_latex_string(Parameter(DEFAULT_PARAM_NAMES[0]))
+        elif len(self.parameters) == 2:
+            return self.mdl.hypothesis.function.to_latex_string(Parameter(DEFAULT_PARAM_NAMES[0]), Parameter(DEFAULT_PARAM_NAMES[1]))
+        elif len(self.parameters) == 3:
+            return self.mdl.hypothesis.function.to_latex_string(Parameter(DEFAULT_PARAM_NAMES[0]), Parameter(DEFAULT_PARAM_NAMES[1]), Parameter(DEFAULT_PARAM_NAMES[2]))
+        else:
+            return 1
 
     def eval(self, val: float) -> float:
         """Evaluates the performance model function using a given value and returns the result.
@@ -1343,25 +1349,27 @@ class Modeling:
                 if parameters is None:
                     parameters = self.tht.statsframe.dataframe[
                         str(metric)+"_extrap-model"].iloc[i].parameters
-                measurement_list = self.tht.statsframe.dataframe[
-                    str(metric)+"_extrap-model"].iloc[i].mdl.measurements
-                for i in range(len(measurement_list)):
-                    measurement_list[i].coordinate
-                    measurement_list[i].median
-                    if measurement_list[i].coordinate not in agg_measurements:
-                        if use_median is True:
-                            agg_measurements[measurement_list[i]
-                                             .coordinate] = measurement_list[i].median
+                if not isinstance(self.tht.statsframe.dataframe[
+                        str(metric)+"_extrap-model"].iloc[i], float):
+                    measurement_list = self.tht.statsframe.dataframe[
+                        str(metric)+"_extrap-model"].iloc[i].mdl.measurements
+                    for i in range(len(measurement_list)):
+                        measurement_list[i].coordinate
+                        measurement_list[i].median
+                        if measurement_list[i].coordinate not in agg_measurements:
+                            if use_median is True:
+                                agg_measurements[measurement_list[i]
+                                                 .coordinate] = measurement_list[i].median
+                            else:
+                                agg_measurements[measurement_list[i]
+                                                 .coordinate] = measurement_list[i].mean
                         else:
-                            agg_measurements[measurement_list[i]
-                                             .coordinate] = measurement_list[i].mean
-                    else:
-                        if use_median is True:
-                            agg_measurements[measurement_list[i]
-                                             .coordinate] += measurement_list[i].median
-                        else:
-                            agg_measurements[measurement_list[i]
-                                             .coordinate] += measurement_list[i].mean
+                            if use_median is True:
+                                agg_measurements[measurement_list[i]
+                                                 .coordinate] += measurement_list[i].median
+                            else:
+                                agg_measurements[measurement_list[i]
+                                                 .coordinate] += measurement_list[i].mean
             agg_measurements_list.append(agg_measurements)
 
         # create a new Extra-P experiment, one for each phase model
@@ -1439,13 +1447,11 @@ class Modeling:
 def multi_display_one_parameter_model(model_objects):
 
     functions = []
+    scientific_functions = []
     for model_object in model_objects:
         functions.append(model_object.mdl.hypothesis.function)
-
-    # create scientific representation of created performance models
-    scientific_functions = convert_functions_to_scientific_notations(
-        functions
-    )
+        scientific_functions.append(
+            model_object.mdl.hypothesis.function.to_latex_string(Parameter(DEFAULT_PARAM_NAMES[0])))
 
     # sort based on x values
     measures_sorted = sorted(
@@ -1504,13 +1510,11 @@ def multi_display_two_parameter_model(model_objects):
     parameters = model_objects[0].parameters
 
     functions = []
+    scientific_functions = []
     for model_object in model_objects:
         functions.append(model_object.mdl.hypothesis.function)
-
-    # create scientific representation of created performance models
-    scientific_functions = convert_functions_to_scientific_notations(
-        functions
-    )
+        scientific_functions.append(
+            model_object.mdl.hypothesis.function.to_latex_string(Parameter(DEFAULT_PARAM_NAMES[0]), Parameter(DEFAULT_PARAM_NAMES[1])))
 
     # chose the color map to take the colors from dynamically
     range_values = np.arange(
