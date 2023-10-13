@@ -54,7 +54,7 @@ requirements_path = "./requirements.txt"
 
 with TemporaryDirectory() as tmpdir:
     subprocess.run(
-        "git clone https://github.com/LLNL/thicket-tutorial.git",
+        "git clone -b {} https://github.com/LLNL/thicket-tutorial.git".format(tutorial_target_branch),
         shell=True,
         cwd=os.path.abspath(tmpdir),
         check=True
