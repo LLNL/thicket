@@ -22,6 +22,68 @@ import os
 
 import pkg_resources
 
+# -- Fetch notebooks from Thicket Tutorial -----------------------------------
+import thicket as th
+import shutil
+import subprocess
+from tempfile import TemporaryDirectory
+
+
+tutorial_target_branch = "develop"
+tutorial_notebooks = {
+    "notebooks/01_thicket_tutorial.ipynb": "./thicket_tutorial.ipynb",
+    "notebooks/03_thicket_rajaperf_clustering.ipynb": "./thicket_rajaperf_clustering.ipynb",
+    "notebooks/02_extrap-with-metadata-aggregated.ipynb": "./extrap-with-metadata-aggregated.ipynb",
+}
+extra_python_packages = [
+    "sphinx-thebe",
+    "nbsphinx",
+    "myst-parser",
+    "sphinx-rtd-theme",
+    "papermill"
+]
+requirements_path = "./requirements.txt"
+
+# Verify that Thicket is an editable install. If not, the notebooks
+# would be run with an old version of Thicket, which we don't want.
+# So, error out
+# thicket_package_dir = os.path.abspath(os.path.expanduser(os.path.dirname(th.__file__)))
+# correct_package_dir = os.path.abspath(os.path.expanduser("../thicket"))
+# if thicket_package_dir != correct_package_dir:
+#     raise ValueError("conf.py requires Thicket to be an editable install")
+
+with TemporaryDirectory() as tmpdir:
+    subprocess.run(
+        "git clone https://github.com/LLNL/thicket-tutorial.git",
+        shell=True,
+        cwd=os.path.abspath(tmpdir),
+        check=True
+    )
+
+    th_tmpdir = os.path.join(os.path.abspath(tmpdir), "thicket-tutorial")
+
+    if not os.path.exists(os.path.abspath(os.path.expanduser(requirements_path))):
+        shutil.copy2(os.path.join(os.path.abspath(th_tmpdir), "requirements.txt"), os.path.abspath(requirements_path))
+        with open(requirements_path, "a") as f:
+            f.write("\n" + "\n".join(extra_python_packages))
+
+    for src, dest in tutorial_notebooks.items():
+        if not os.path.exists(os.path.abspath(os.path.expanduser(dest))):
+            rundir = os.path.join(os.path.abspath(th_tmpdir), os.path.dirname(src))
+            subprocess.run(
+                "papermill {} {}".format(os.path.basename(src), os.path.abspath(os.path.expanduser(dest))),
+                shell=True,
+                cwd=rundir,
+                check=True
+            )
+
+
+def clean_downloaded_content():
+    for dest_files in tutorial_notebooks.values():
+        os.remove(os.path.abspath(os.path.expanduser(dest_files)))
+    os.remove(os.path.abspath(os.path.expanduser(requirements_path)))
+
+
 # -- Project information -----------------------------------------------------
 
 project = "thicket"
