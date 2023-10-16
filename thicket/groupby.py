@@ -5,6 +5,8 @@
 
 from collections import defaultdict
 
+import pandas as pd
+
 
 class GroupBy(dict):
     def __init__(self, by=None, *args, **kwargs):
@@ -15,7 +17,7 @@ class GroupBy(dict):
         """Aggregate the Thickets' PerfData numerical columns in a GroupBy object.
 
         Arguments:
-            func (dict): Dictionary mapping from {str: function}, where the str will be added to the Thicket's column's name after the aggregation function is applied.
+            func (function, list or dict): See pandas.DataFrame.aggregate API
 
         Returns:
             (Thicket): Aggregated Thicket object.
@@ -41,7 +43,7 @@ class GroupBy(dict):
             (Thicket): New Thicket object with aggregated attributes.
         """
 
-        def rename_col(total_cols, tname):
+        def _rename_col(total_cols, tname):
             """Helper function for renaming columns"""
             tcols = {}
             for col in total_cols:
@@ -124,18 +126,46 @@ class GroupBy(dict):
         tk_c.metadata = tk_c.metadata.set_index("profile")
         tk_c.metadata = tk_c.metadata.groupby("profile").agg(_agg_rows)
 
-        # Compute stats
-        snames = list(func.keys())
-        sfuncs = list(func.values())
-        agg_df = tk_c.dataframe[agg_cols].groupby(perf_indices).agg(sfuncs[0])
-        agg_df = agg_df.rename(columns=rename_col(agg_cols, snames[0]))
-        for i in range(1, len(func)):
-            t_agg_df = tk_c.dataframe[agg_cols].groupby(perf_indices).agg(sfuncs[i])
-            t_agg_df = t_agg_df.rename(columns=rename_col(agg_cols, snames[i]))
-            agg_df = agg_df.merge(
-                right=t_agg_df,
-                on=perf_indices,
-            )
+        def _compute_agg_df(col_names, functions, _tk, _agg_cols, _perf_indices):
+            agg_df = _tk.dataframe[_agg_cols].groupby(_perf_indices).agg(functions[0])
+            if isinstance(agg_df, pd.core.series.Series):
+                agg_df = agg_df.to_frame()
+            agg_df = agg_df.rename(columns=_rename_col(_agg_cols, col_names[0]))
+            for i in range(1, len(functions)):
+                t_agg_df = (
+                    _tk.dataframe[_agg_cols].groupby(_perf_indices).agg(functions[i])
+                )
+                if isinstance(t_agg_df, pd.core.series.Series):
+                    t_agg_df = t_agg_df.to_frame()
+                t_agg_df = t_agg_df.rename(columns=_rename_col(_agg_cols, col_names[i]))
+                agg_df = agg_df.merge(
+                    right=t_agg_df,
+                    on=_perf_indices,
+                )
+            return agg_df
+
+        if type(func) == dict:
+            cols = list(func.keys())
+            # force list structure
+            funcs = [[f] if type(f) is not list else f for f in func.values()]
+            snames = [[f.__name__ for f in func] for func in funcs]
+            agg_df = _compute_agg_df(snames[0], funcs[0], tk_c, [cols[0]], perf_indices)
+            for i in range(1, len(funcs)):
+                t_agg_df = _compute_agg_df(
+                    snames[i], funcs[i], tk_c, [cols[i]], perf_indices
+                )
+                agg_df = agg_df.merge(
+                    right=t_agg_df,
+                    on=perf_indices,
+                )
+        else:
+            if type(func) == list:
+                snames = [f.__name__ for f in func]
+                sfuncs = func
+            else:  # Assume single value function
+                snames = [func.__name__]
+                sfuncs = [func]
+            agg_df = _compute_agg_df(snames, sfuncs, tk_c, agg_cols, perf_indices)
 
         # Create new df with other columns
         all_cols = perf_indices.copy()
