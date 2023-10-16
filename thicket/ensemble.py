@@ -83,6 +83,15 @@ class Ensemble:
             if metadata_key:
                 for th in thickets:
                     verify_thicket_structures(th.metadata, columns=[metadata_key])
+            # Check length of profiles match if metadata key is not provided
+            if metadata_key is None:
+                for i in range(len(thickets) - 1):
+                    if len(thickets[i].profile) != len(thickets[i + 1].profile):
+                        raise ValueError(
+                            "Length of all thicket profiles must match if 'metadata_key' is not provided. {} != {}".format(
+                                len(thickets[i].profile), len(thickets[i + 1].profile)
+                            )
+                        )
             # Ensure all thickets profiles are sorted. Must be true when metadata_key=None to
             # guarantee performance data table and metadata table match up.
             if metadata_key is None:
