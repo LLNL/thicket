@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import numpy as np
 import pytest
 
 from thicket import Thicket, EmptyMetadataTable
@@ -78,6 +79,41 @@ def check_groupby(th, columns_values):
     # check for empty metadata table exception
     with pytest.raises(EmptyMetadataTable):
         th.groupby(["user"])
+
+
+def test_aggregate(rajaperf_basecuda_xl_cali):
+    tk = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+    gb = tk.groupby("spot.format.version")
+
+    epsilon = 0.0001
+
+    def _check_values(_tk_agg):
+        base_cuda_node = [
+            node
+            for node in _tk_agg.dataframe.index.get_level_values("node")
+            if node.frame["name"] == "Base_CUDA"
+        ][0]
+        assert (
+            _tk_agg.dataframe.loc[base_cuda_node, 2]["Min time/rank_mean"]
+            - 1.8716947000000002
+            < epsilon
+        )
+
+        algorithm_node = [
+            node
+            for node in _tk_agg.dataframe.index.get_level_values("node")
+            if node.frame["name"] == "Algorithm"
+        ][0]
+        assert (
+            _tk_agg.dataframe.loc[algorithm_node, 2]["Min time/rank_var"]
+            - 1.1537333333333264e-09
+            < epsilon
+        )
+
+    tk_agg = gb.agg(func={"Min time/rank": [np.mean, np.var], "Total time": np.mean})
+    _check_values(tk_agg)
+    tk_agg = gb.agg(func=[np.mean, np.var])
+    _check_values(tk_agg)
 
 
 def test_groupby(example_cali):
