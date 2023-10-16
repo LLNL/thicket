@@ -9,16 +9,16 @@ from collections import OrderedDict
 def validate_dataframe(df):
     """Check validity of a Thicket DataFrame."""
 
-    def _check_duplicate_outer_idx(df):
-        """Check for duplicate values in the outer index."""
+    def _check_duplicate_inner_idx(df):
+        """Check for duplicate values in the innermost index."""
         for node in set(df.index.get_level_values("node")):
-            outer_idx_values = sorted(
+            inner_idx_values = sorted(
                 df.loc[node].index.get_level_values(df.index.nlevels - 2).tolist()
             )
-            outer_idx_values_set = sorted(list(set(outer_idx_values)))
-            if outer_idx_values != outer_idx_values_set:
+            inner_idx_values_set = sorted(list(set(inner_idx_values)))
+            if inner_idx_values != inner_idx_values_set:
                 raise IndexError(
-                    f"The Thicket.dataframe's index has duplicate values. {outer_idx_values}"
+                    f"The Thicket.dataframe's index has duplicate values. {inner_idx_values}"
                 )
 
     def _check_missing_hnid(df):
@@ -43,7 +43,7 @@ def validate_dataframe(df):
                         f"Value in the Thicket.dataframe's 'name' column is not valid. {name} != {node_name}"
                     )
 
-    _check_duplicate_outer_idx(df)
+    _check_duplicate_inner_idx(df)
     _check_missing_hnid(df)
     _validate_name_column(df)
 
