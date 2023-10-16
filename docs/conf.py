@@ -23,65 +23,64 @@ import os
 import pkg_resources
 
 # -- Fetch notebooks from Thicket Tutorial -----------------------------------
-import thicket as th
 import shutil
 import subprocess
 from tempfile import TemporaryDirectory
 
 
-tutorial_target_branch = "develop"
+tutorial_target_branch = "docker_local"
 tutorial_notebooks = {
     "notebooks/01_thicket_tutorial.ipynb": "./thicket_tutorial.ipynb",
     "notebooks/03_thicket_rajaperf_clustering.ipynb": "./thicket_rajaperf_clustering.ipynb",
     "notebooks/02_extrap-with-metadata-aggregated.ipynb": "./extrap-with-metadata-aggregated.ipynb",
 }
-extra_python_packages = [
-    "sphinx-thebe",
-    "nbsphinx",
-    "myst-parser",
-    "sphinx-rtd-theme",
-    "papermill"
-]
-requirements_path = "./requirements.txt"
 
-# Verify that Thicket is an editable install. If not, the notebooks
-# would be run with an old version of Thicket, which we don't want.
-# So, error out
-# thicket_package_dir = os.path.abspath(os.path.expanduser(os.path.dirname(th.__file__)))
-# correct_package_dir = os.path.abspath(os.path.expanduser("../thicket"))
-# if thicket_package_dir != correct_package_dir:
-#     raise ValueError("conf.py requires Thicket to be an editable install")
+notebooks_to_build = {}
+for key, value in tutorial_notebooks.items():
+    if not os.path.exists(os.path.abspath(os.path.expanduser(value))):
+        notebooks_to_build[key] = value
 
-with TemporaryDirectory() as tmpdir:
-    subprocess.run(
-        "git clone -b {} https://github.com/LLNL/thicket-tutorial.git".format(tutorial_target_branch),
-        shell=True,
-        cwd=os.path.abspath(tmpdir),
-        check=True
-    )
+if len(notebooks_to_build) > 0:
+    with TemporaryDirectory() as tmpdir:
+        subprocess.run(
+            "git clone -b {} https://github.com/TauferLab/thicket-tutorial.git".format(tutorial_target_branch),
+            shell=True,
+            cwd=os.path.abspath(tmpdir),
+            check=True
+        )
 
-    th_tmpdir = os.path.join(os.path.abspath(tmpdir), "thicket-tutorial")
+        th_tmpdir = os.path.join(os.path.abspath(tmpdir), "thicket-tutorial")
+        
+        subprocess.run(
+            "docker build --no-cache -t thicket-tutorial -f local_run/Dockerfile.spawn .",
+            shell=True,
+            cwd=th_tmpdir,
+            check=True
+        )
+        subprocess.run(
+            "docker network create jupyterhub",
+            shell=True,
+            cwd=th_tmpdir
+        )
+        subprocess.run(
+            "docker run --rm -it --entrypoint /run_all.sh -v /var/run/docker.sock:/var/run/docker.sock -v {}:/home/jovyan --net jupyterhub --name jupyterhub -p 8888:8888 thicket-tutorial {}".format(th_tmpdir, " ".join(tutorial_notebooks.keys())),
+            shell=True,
+            cwd=th_tmpdir,
+            check=True
+        )
+        subprocess.run(
+            "docker network prune -f",
+            shell=True,
+            cwd=th_tmpdir
+        )
 
-    if not os.path.exists(os.path.abspath(os.path.expanduser(requirements_path))):
-        shutil.copy2(os.path.join(os.path.abspath(th_tmpdir), "requirements.txt"), os.path.abspath(requirements_path))
-        with open(requirements_path, "a") as f:
-            f.write("\n" + "\n".join(extra_python_packages))
-
-    for src, dest in tutorial_notebooks.items():
-        if not os.path.exists(os.path.abspath(os.path.expanduser(dest))):
-            rundir = os.path.join(os.path.abspath(th_tmpdir), os.path.dirname(src))
-            subprocess.run(
-                "papermill {} {}".format(os.path.basename(src), os.path.abspath(os.path.expanduser(dest))),
-                shell=True,
-                cwd=rundir,
-                check=True
-            )
+        for src, dest in notebooks_to_build.items():
+            shutil.copy2(os.path.join(th_tmpdir, src), os.path.abspath(os.path.expanduser(dest)))
 
 
 def clean_downloaded_content():
     for dest_files in tutorial_notebooks.values():
         os.remove(os.path.abspath(os.path.expanduser(dest_files)))
-    os.remove(os.path.abspath(os.path.expanduser(requirements_path)))
 
 
 # -- Project information -----------------------------------------------------

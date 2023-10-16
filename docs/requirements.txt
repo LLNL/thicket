@@ -1,0 +1,4 @@
+sphinx-thebe
+nbsphinx
+myst-parser
+sphinx-rtd-theme
