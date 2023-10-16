@@ -20,7 +20,7 @@ def test_from_statsframes(mpi_scaling_cali):
     tk = th.from_statsframes(th_list)
 
     # Check level values
-    assert set(superthicket.dataframe.index.get_level_values("profile")) == {
+    assert set(tk.dataframe.index.get_level_values("profile")) == {
         0,
         1,
         2,
@@ -30,11 +30,11 @@ def test_from_statsframes(mpi_scaling_cali):
     # Check performance data table values
     assert set(tk.dataframe["test"]) == {0, 2, 4, 6, 8}
 
-    superthicket_named = th.make_superthicket(th_list, metadata_key="mpi.world.size")
+    tk_named = th.from_statsframes(th_list, metadata_key="mpi.world.size")
 
     # Check level values
     assert set(
-        superthicket_named.dataframe.index.get_level_values("mpi.world.size")
+        tk_named.dataframe.index.get_level_values("mpi.world.size")
     ) == {
         27,
         64,
