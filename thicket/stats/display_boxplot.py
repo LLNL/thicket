@@ -6,6 +6,7 @@
 import pandas as pd
 import seaborn as sns
 import hatchet as ht
+import plotly.express as px
 
 from ..utils import verify_thicket_structures
 
@@ -65,19 +66,21 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
             return sns.boxplot(data=filtered_df, x="node", y=" ", **kwargs)
     # columnar joined thicket object
     else:
-        initial_idx, initial_col = columns[0][0], columns[0][1]
-        cols = [initial_col]
-        for i in range(1, len(columns)):
-            if initial_idx != columns[i][0]:
-                raise ValueError(
-                    "Columns specified as tuples must have the same column index (first element)"
-                )
-            else:
-                cols.append(columns[i][1])
 
-        df_subset = thicket.dataframe[initial_idx].reset_index()
+        """
+            New code that allows for columns to be selected from different indexes of a columnar joined thicket
+        """
+        def column_name_mapper(current_cols):
+            if current_cols[0] in ["node", "name"]:
+                return current_cols[0]
+
+            return str(current_cols)
+
+        cols = [str(c) for c in columns]
+        df_subset = thicket.dataframe[[("name", ""), *columns]].reset_index()
+        df_subset.columns = df_subset.columns.to_flat_index().map(column_name_mapper)
         df_subset["name"] = thicket.dataframe["name"].tolist()
-
+        # End new code
         df = pd.melt(
             df_subset,
             id_vars=["node", "name"],
@@ -99,6 +102,7 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
         )
 
         if len(columns) > 1:
+            
             return sns.boxplot(
                 data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
             )
