@@ -126,6 +126,8 @@ def display_violinplot(thicket, nodes=[], columns=[], percentiles = [], percenti
             var_name="Performance counter",
             value_name=" ",
         )
+
+
         position = []
         for node in nodes:
             idx = df.index[df["node"] == node]
@@ -136,127 +138,14 @@ def display_violinplot(thicket, nodes=[], columns=[], percentiles = [], percenti
         # will be node names
         filtered_df = df.loc[position].rename(
             columns={"node": "hatchet node", "name": "node"}
-        )        
-
-    #User specified percentile value lines to plot
-    if len(percentiles) != 0:
+        )
+        # print(filtered_df)
+        # print(filtered_df.columns)
         if len(columns) > 1:
-            return _add_percentile_lines_node(
-                    sns.violinplot( data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs), 
-                    thicket, 
-                    nodes, 
-                    columns, 
-                    percentiles,
-                    linestyles,
-                    linecolors), filtered_df
-        else:
-            return _add_percentile_lines_node(
-                    sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs),
-                    thicket,
-                    nodes,
-                    columns,
-                    percentiles,
-                    linestyles,
-                    linecolors)
-    else: #User did not specify percentiles, just return violinplot
-        if len(columns) > 1:
+            #return px.violin(filtered_df)
+            #return px.violin(filtered_df, x="node", y=' ', box=True, points="all", hover_data=['Category'], title='Violin Plot')
             return sns.violinplot(
                 data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
-            ), filtered_df
+            )
         else:
             return sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
-
-
-
-def display_violinplot_thicket(thickets, nodes=None, columns=None, x_order = [], percentiles = [], percentile_linestyles = [], percentile_colors = [], **kwargs):
-    """Display a boxplot for each user passed node(s) and column(s). The passed nodes
-    and columns must be from the performance data table.
-
-    Designed to take in a thicket, and display a plot with one or more boxplots
-    depending on the number of nodes and columns passed.
-
-    Arguments:
-        thicket (dictionary): Thicket object
-        nodes (dictionaryu): List of nodes to view on the x-axis
-        column (dictionary): List of hardware/timing metrics to view on the y-axis. Note, if
-            using a columnar joined thicket a list of tuples must be passed in with the
-            format (column index, column name).
-
-    Returns:
-        (matplotlib Axes): Object for managing boxplot.
-    """
-
-    def column_name_mapper(current_cols):
-        if current_cols[0] in ["node", "name"]:
-            return current_cols[0]
-
-        return str(current_cols)
-
-    if nodes is None:
-        raise ValueError("Nodes must be a dictionary, specifying nodes for each Thicket passed in")
-
-    if columns is None:
-        raise ValueError("Columns must be a dictionary, specifying columns for each Thicket passed in")
-
-    #Ensures that both nodes and columns is a list of lists
-    if isinstance(dictionary, dict) == False or all(isinstance(n, list) for n in nodes.items()) == False:
-        raise ValueError("Nodes must be a list of lists, specifying nodes for each Thicket passed in")
-    
-    if isinstance(columns, dict) == False or all(isinstance(c, list) for c in columns.items()) == False:
-        raise ValueError("Nodes must be a list of lists, specifying nodes for each Thicket passed in")
-    
-    return
-    #Ensures that each Thicket has corresponding nodes, and columns. Otherwise throw an error
-    if len(thicket_dictionary) != len(columns):
-        raise ValueError("Length of columns does not match number of thickets")
-    if len(thicket_dictionary) != len(nodes):
-        raise ValueError("Length of nodes does not match number of thickets")
-
-    #Verify that each node in the nodes lists are node types
-    for node_list in nodes:
-        if not all(isinstance(n, ht.node.Node) for n in node_list):
-            raise ValueError(
-                "Value(s) passed to node argument must be of type hatchet.node.Node."
-            )
-
-    for idx, thicket in enumerate(thicket_dictionary.items()):
-        verify_thicket_structures(thicket[1].dataframe, index=["node"], columns=columns[idx])
-    
-    filtered_dfs = [None] * len(thicket_dictionary) #Holds the final dataframe for each thicket that we will plot
-    sub_dataframes = [None] * len(thicket_dictionary) #Holds the intermediate dataframe for each thicket
-
-    for curr_thicket_indx, thicket in enumerate(thicket_dictionary.items()):
-        cols = [str(c) for c in columns[curr_thicket_indx]]
-        sub_dataframes[curr_thicket_indx] = thicket[1].dataframe[[("name", ""), *columns[curr_thicket_indx]]].reset_index()
-        sub_dataframes[curr_thicket_indx].columns = sub_dataframes[curr_thicket_indx].columns.to_flat_index().map(column_name_mapper)
-        sub_dataframes[curr_thicket_indx]["name"] = thicket[1].dataframe["name"].tolist()
-        
-        melted_df = pd.melt(
-            sub_dataframes[curr_thicket_indx],
-            id_vars=["node", "name"],
-            value_vars=cols,
-            var_name="Performance counter",
-            value_name=" ",
-        )
-
-        position = []
-
-        #Grab the indices of the nodes that we are interested in
-        for node in nodes[curr_thicket_indx]:
-            idx_c = melted_df.index[melted_df["node"] == node]
-            for pos in idx_c:
-                position.append(pos)
-
-        # rename columns such that the x-axis label is "node" and not "name", tick marks
-        # will be node names
-        # This is where we grab the actual data for a node that was passed in!
-        filtered_dfs[curr_thicket_indx] = melted_df.loc[position].rename( columns={"node": "hatchet node", "name": "node"})
-        thicket_name = [str(thicket[0]) + str()] * len(filtered_dfs[curr_thicket_indx]["node"])
-        filtered_dfs[curr_thicket_indx]["node"] = thicket_name
-        #display(filtered_dfs[curr_thicket_indx])
-
-    master_df = pd.concat(filtered_dfs, ignore_index=True)
-   
-    #display(master_df)
-
-    return sns.violinplot( data=master_df, x="node", y=" ", hue="Performance counter", **kwargs)
