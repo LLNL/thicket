@@ -6,7 +6,7 @@
 import base64
 import copy
 from io import BytesIO
-
+from itertools import chain
 from typing import Tuple
 
 import matplotlib as mpl
@@ -24,9 +24,14 @@ from math import sqrt
 import math
 
 from hatchet import node
+from thicket.thicket import Thicket
 
 from extrap.fileio import io_helper
 from extrap.modelers.model_generator import ModelGenerator
+from extrap.modelers.multi_parameter.multi_parameter_modeler import MultiParameterModeler
+from extrap.util.options_parser import SINGLE_PARAMETER_MODELER_KEY, SINGLE_PARAMETER_OPTIONS_KEY
+from extrap.modelers import single_parameter
+from extrap.modelers import multi_parameter
 from extrap.entities.experiment import Experiment
 from extrap.entities.parameter import Parameter
 from extrap.fileio.io_helper import create_call_tree
@@ -40,6 +45,20 @@ from extrap.entities.terms import DEFAULT_PARAM_NAMES
 from extrap.entities.functions import ConstantFunction
 
 MODEL_TAG = "_extrap-model"
+
+
+class ModelerOptions():
+    """
+    """
+
+    def __init__(self, allow_log_terms: bool = True,
+                 use_crossvalidation: bool = True,
+                 compare_with_RSS: bool = False):
+        """
+        """
+        self.allow_log_terms = allow_log_terms
+        self.use_crossvalidation = use_crossvalidation
+        self.compare_with_RSS = compare_with_RSS
 
 
 class ExtrapReaderException(Exception):
@@ -70,7 +89,7 @@ class ModelWrapper:
     the model.
     """
 
-    def __init__(self, mdl: Model, parameters: list[str]) -> None:
+    def __init__(self, mdl: Model, parameters: list[str], name: str) -> None:
         """Init function of the ModelWrapper class.
 
         Args:
@@ -79,6 +98,8 @@ class ModelWrapper:
         """
         self.mdl = mdl
         self.parameters = parameters
+        self.default_param_names = DEFAULT_PARAM_NAMES
+        self.name = name
 
     def __str__(self) -> str:
         """Returns the Extra-P performance model function as a string.
@@ -87,13 +108,23 @@ class ModelWrapper:
             str: The Extra-P performance model function.
         """
         if len(self.parameters) == 1:
-            return self.mdl.hypothesis.function.to_latex_string(Parameter(DEFAULT_PARAM_NAMES[0]))
+            return self.mdl.hypothesis.function.to_latex_string(
+                Parameter(DEFAULT_PARAM_NAMES[0])
+            )
         elif len(self.parameters) == 2:
-            return self.mdl.hypothesis.function.to_latex_string(Parameter(DEFAULT_PARAM_NAMES[0]), Parameter(DEFAULT_PARAM_NAMES[1]))
+            return self.mdl.hypothesis.function.to_latex_string(
+                Parameter(DEFAULT_PARAM_NAMES[0]),
+                Parameter(DEFAULT_PARAM_NAMES[1])
+            )
         elif len(self.parameters) == 3:
-            return self.mdl.hypothesis.function.to_latex_string(Parameter(DEFAULT_PARAM_NAMES[0]), Parameter(DEFAULT_PARAM_NAMES[1]), Parameter(DEFAULT_PARAM_NAMES[2]))
+            return self.mdl.hypothesis.function.to_latex_string(
+                Parameter(DEFAULT_PARAM_NAMES[0]),
+                Parameter(DEFAULT_PARAM_NAMES[1]),
+                Parameter(DEFAULT_PARAM_NAMES[2])
+            )
         else:
             return 1
+        # return str(self.mdl.hypothesis.function)
 
     def eval(self, val: float) -> float:
         """Evaluates the performance model function using a given value and returns the result.
@@ -215,7 +246,7 @@ class ModelWrapper:
                     )
             # otherwise try to figure out the optimal scaling curve automatically
             else:
-                if self.parameters[0] == "jobsize":
+                if parameters[0] == "jobsize":
                     y_vals_opt = []
                     for _ in range(len(y_vals)):
                         y_vals_opt.append(y_vals[0])
@@ -227,7 +258,7 @@ class ModelWrapper:
                     )
 
         # plot axes and titles
-        ax.set_xlabel(self.parameters[0] + " $" +
+        ax.set_xlabel(parameters[0] + " $" +
                       str(DEFAULT_PARAM_NAMES[0])+"$")
         ax.set_ylabel(self.mdl.metric)
         ax.set_title(str(self.mdl.callpath) + "()")
@@ -421,8 +452,8 @@ class ModelWrapper:
             # otherwise try to figure out the optimal scaling curve automatically
             else:
                 if (
-                    self.parameters[0] == "jobsize"
-                    and self.parameters[1] == "problem_size"
+                    parameters[0] == "jobsize"
+                    and parameters[1] == "problem_size"
                 ):
                     z_vals_opt = opt_scaling_func_auto(x_vals, y_vals)
                     ax.plot_surface(
@@ -490,9 +521,9 @@ class ModelWrapper:
             ax.plot(line_x, line_y, line_z, color="black")
 
         # axis labels and title
-        ax.set_xlabel(self.parameters[0] + " $" +
+        ax.set_xlabel(parameters[0] + " $" +
                       str(DEFAULT_PARAM_NAMES[0])+"$")
-        ax.set_ylabel(self.parameters[1] + " $" +
+        ax.set_ylabel(parameters[1] + " $" +
                       str(DEFAULT_PARAM_NAMES[1])+"$")
         ax.set_zlabel(self.mdl.metric)
         ax.set_title(str(self.mdl.callpath) + "()")
@@ -576,7 +607,7 @@ class ModelWrapper:
         """
 
         # check number of model parameters
-        if len(self.parameters) == 1:
+        if len(parameters) == 1:
             fig, ax = self.display_one_parameter_model(
                 show_mean,
                 show_median,
@@ -587,7 +618,7 @@ class ModelWrapper:
                 opt_scaling_func,
             )
 
-        elif len(self.parameters) == 2:
+        elif len(parameters) == 2:
             fig, ax = self.display_two_parameter_model(
                 show_mean,
                 show_median,
@@ -601,49 +632,21 @@ class ModelWrapper:
         else:
             raise Exception(
                 "Plotting performance models with "
-                + str(len(self.parameters))
+                + str(len(parameters))
                 + " parameters is currently not supported."
             )
 
         return fig, ax
 
 
-class Modeling:
-    """Produce models for all the metrics across the given graphframes."""
+class ExtrapInterface:
+    """A class that functions as an interface between Thicket and Extra-P 
+    to load the data from a thicket into Extra-P, create performance models,
+    append them to a thicket, and display the models."""
 
-    def __init__(
-        self, tht, parameters: list[str] = None, metrics: list[str] = None
-    ) -> None:
-        """Create a new model object.
-
-        Adds a model column for each metric for each common frame across all the
-        graphframes.
-
-        The given list of params contains the parameters to build the models.  For
-        example, MPI ranks, input sizes, and so on.
-
-        Arguments:
-            tht (Thicket): thicket object
-            parameters (list): A list of String values of the parameters that will be considered for
-                modeling by Extra-P.
-            metrics (list): A list of String value of the metrics Extra-P will create models for.
-        """
-        self.tht = tht
-
-        # if there were no parameters provided use the jobsize to create models,
-        # which should always be available
-        if not parameters:
-            self.parameters = ["jobsize"]
-        else:
-            self.parameters = parameters
-
-        # if no metrics have been provided create models for all existing metrics
-        if not metrics:
-            self.metrics = self.tht.exc_metrics + self.tht.inc_metrics
-        else:
-            self.metrics = metrics
-
-        self.experiment = None
+    def __init__(self) -> None:
+        """Create a new Extra-P Interface object."""
+        pass
 
     def to_html(
         self,
@@ -713,82 +716,119 @@ class Modeling:
             met + MODEL_TAG: model_to_img_html for met in existing_metrics}
 
         # Subset of the aggregated statistics table with only the Extra-P columns selected
-        return self.tht.statsframe.dataframe[
+        return thicket.statsframe.dataframe[
             [met + MODEL_TAG for met in existing_metrics]
         ].to_html(escape=False, formatters=frm_dict)
 
-    def _add_extrap_statistics(self, node: node, metric: str) -> None:
+    def _add_extrap_statistics(self, tht: Thicket, node: node, metric: str) -> None:
         """Insert the Extra-P hypothesis function statistics into the aggregated
-            statistics table. Has to be called after "produce_models".
+            statistics table. Has to be called after "create_models".
 
         Arguments:
             node (hatchet.node): The node for which statistics should be calculated
             metric (str): The metric for which statistics should be calculated
         """
-        hypothesis_fn = self.tht.statsframe.dataframe.at[
+        hypothesis_fn = tht.statsframe.dataframe.at[
             node, metric + MODEL_TAG
         ].mdl.hypothesis
 
-        self.tht.statsframe.dataframe.at[
+        tht.statsframe.dataframe.at[
             node, metric + "_RSS" + MODEL_TAG
         ] = hypothesis_fn.RSS
-        self.tht.statsframe.dataframe.at[
+        tht.statsframe.dataframe.at[
             node, metric + "_rRSS" + MODEL_TAG
         ] = hypothesis_fn.rRSS
-        self.tht.statsframe.dataframe.at[
+        tht.statsframe.dataframe.at[
             node, metric + "_SMAPE" + MODEL_TAG
         ] = hypothesis_fn.SMAPE
-        self.tht.statsframe.dataframe.at[
+        tht.statsframe.dataframe.at[
             node, metric + "_AR2" + MODEL_TAG
         ] = hypothesis_fn.AR2
-        self.tht.statsframe.dataframe.at[
+        tht.statsframe.dataframe.at[
             node, metric + "_RE" + MODEL_TAG
         ] = hypothesis_fn.RE
 
-    def produce_models(
-        self,
-        use_median: bool = True,
-        calc_total_metrics: bool = False,
-        scaling_parameter: str = "jobsize",
-        add_stats: bool = True,
-    ) -> None:
-        """Produces an Extra-P model. Models are generated by calling Extra-P's
-            ModelGenerator.
+    def create_models(self,
+                      tht: Thicket,
+                      parameters: list[str] = None,
+                      metrics: list[str] = None,
+                      use_median: bool = True,
+                      calc_total_metrics: bool = False,
+                      scaling_parameter: str = "jobsize",
+                      add_stats: bool = True,
+                      modeler: str = "default",
+                      model_name: str = "default_model",
+                      allow_log_terms: bool = True
+                      ) -> None:
+        """Converts the data in the given thicket into a format that
+        can be read by Extra-P. Then the Extra-P modeler is called
+        with the given options and creates a performance model for
+        each callpath/node considering the given metrics, and model
+        parameters. The resulting models will be appended to the given
+        thicket's graphframe.
 
         Arguments:
-            use_median (bool): Set how Extra-P aggregates repetitions of the same
-                measurement configuration. If set to True, Extra-P uses the median for
-                model creation, otherwise it uses the mean. (Default=True)
-            calc_total_metrics (bool): Set calc_total_metrics to True to let Extra-P
-                internally calculate the total metric values for metrics measured
-                per MPI rank, e.g., the average runtime/rank. (Default=False)
-            scaling_parameter (String): Set the scaling parameter for the total metric
-                calculation. This parameter is only used when calc_total_metrics=True.
-                One needs to provide either the name of the parameter that models the
-                resource allocation, e.g., the jobsize, or a fixed int value as a String,
-                when only scaling, e.g., the problem size, and the resource allocation
-                is fix. (Default="jobsize")
-            add_stats (bool): Option to add hypothesis function statistics to the
-                aggregated statistics table. (Default=True)
+            tht (Thicket): The thicket object to get the data
+                from for modeling.
+            parameters (list): A list of String values of the parameters
+                that will be considered for modeling by Extra-P. (Default=None)
+            metrics (list): A list of String value of the metrics
+                Extra-P will create models for. (Default=None)
+            use_median (bool): Set how Extra-P aggregates repetitions
+                of the same measurement configuration. If set to True,
+                Extra-P uses the median for model creation, otherwise
+                it uses the mean. (Default=True)
+            calc_total_metrics (bool): Set calc_total_metrics to True
+                to let Extra-P internally calculate the total metric
+                values for metrics measured per MPI rank, e.g., the
+                average runtime/rank. (Default=False)
+            scaling_parameter (String): Set the scaling parameter for the
+                total metric calculation. This parameter is only used when
+                calc_total_metrics=True. One needs to provide either the 
+                name of the parameter that models the resource allocation,
+                e.g., the jobsize, or a fixed int value as a String, when
+                only scaling, e.g., the problem size, and the resource
+                allocation is fix. (Default="jobsize")
+            add_stats (bool): Option to add hypothesis function statistics
+                to the aggregated statistics table. (Default=True)
         """
+
+        # create a copy of the thicket to concat them later on
+        tht2 = copy.deepcopy(tht)
+
+        # set the model parameters
+        if not parameters:
+            # if there are no parameters provided use the jobsize
+            parameters = ["jobsize"]
+        else:
+            parameters = parameters
+
+        # set metrics for modeling
+        if not metrics:
+            # if no metrics specified create models for all metrics
+            metrics = tht.exc_metrics + tht.inc_metrics
+        else:
+            metrics = metrics
+
+        self.experiment = None
 
         # create an extra-p experiment
         experiment = Experiment()
 
         # create the model parameters
-        for parameter in self.parameters:
+        for parameter in parameters:
             experiment.add_parameter(Parameter(parameter))
 
         # Ordering of profiles in the performance data table
         ensemble_profile_ordering = list(
-            self.tht.dataframe.index.unique(level=1))
+            tht.dataframe.index.unique(level=1))
 
         profile_parameter_value_mapping = {}
         for profile in ensemble_profile_ordering:
             profile_parameter_value_mapping[profile] = []
 
-        for parameter in self.parameters:
-            current_param_mapping = self.tht.metadata[parameter].to_dict()
+        for parameter in parameters:
+            current_param_mapping = tht.metadata[parameter].to_dict()
             for key, value in current_param_mapping.items():
                 profile_parameter_value_mapping[key].append(float(value))
 
@@ -804,12 +844,12 @@ class Modeling:
 
         # create the callpaths
         # NOTE: could add calltree later on, possibly from hatchet data if available
-        for thicket_node, _ in self.tht.dataframe.groupby(level=0):
+        for thicket_node, _ in tht.dataframe.groupby(level=0):
             if Callpath(thicket_node.frame["name"]) not in experiment.callpaths:
                 experiment.add_callpath(Callpath(thicket_node.frame["name"]))
 
         # create the metrics
-        for metric in self.metrics:
+        for metric in metrics:
             experiment.add_metric(Metric(metric))
 
         # iteratre over coordinates
@@ -823,7 +863,7 @@ class Modeling:
                         values = []
                         callpath_exists = False
                         # NOTE: potentially there is a better way to access the dataframes without looping
-                        for thicket_node, single_node_df in self.tht.dataframe.groupby(
+                        for thicket_node, single_node_df in tht.dataframe.groupby(
                             level=0
                         ):
                             if Callpath(thicket_node.frame["name"]) == callpath:
@@ -878,7 +918,7 @@ class Modeling:
                                                         # check if the parameter exists
                                                         if (
                                                             scaling_parameter
-                                                            in self.parameters
+                                                            in parameters
                                                         ):
                                                             parameter_id = [
                                                                 i
@@ -901,7 +941,7 @@ class Modeling:
                                                                 "The specified scaling parameter '"
                                                                 + str(scaling_parameter)
                                                                 + "' could not be found in the passed list of model parameters "
-                                                                + str(self.parameters)
+                                                                + str(parameters)
                                                                 + ".",
                                                                 profile,
                                                             )
@@ -963,31 +1003,119 @@ class Modeling:
         # check the created experiment for its validty
         io_helper.validate_experiment(experiment)
 
-        # generate models using Extra-P model generator
-        model_gen = ModelGenerator(
-            experiment, name="Default Model", use_median=use_median
-        )
-        model_gen.model_all()
-        experiment.add_modeler(model_gen)
+        # TODO: these need to be set by the arguments in the function call
+        modelers_list = list(set(k.lower() for k in
+                             chain(single_parameter.all_modelers.keys(), multi_parameter.all_modelers.keys())))
+        print("DEBUG: modelers_list", modelers_list)
+        if modeler.lower() not in modelers_list:
+            # TODO: throw an exception (maybe custom one) saying the given modeler does not exist
+            # then continue with the default modeler
+            modeler = "default"
+        modeler_options = {'allow_log_terms': allow_log_terms, 'use_crossvalidation': None, 'compare_with_RSS': None, 'poly_exponents': None,
+                           'log_exponents': None, 'retain_default_exponents': None, 'force_combination_exponents': None, 'allow_negative_exponents': None}
+        # TODO: I basically want to get this dict from extra-p based on the modeler that is currently selected
+        # then generate options class automatically from that???
 
-        # add the models, and statistics into the dataframe
-        for callpath in experiment.callpaths:
-            for metric in experiment.metrics:
-                mkey = (callpath, metric)
-                for thicket_node, _ in self.tht.dataframe.groupby(level=0):
-                    if Callpath(thicket_node.frame["name"]) == callpath:
-                        # catch key errors when queriying for models with a callpath, metric combination
-                        # that does not exist because there was no measurement object created for them
-                        try:
-                            self.tht.statsframe.dataframe.at[
-                                thicket_node, str(metric) + MODEL_TAG
-                            ] = ModelWrapper(model_gen.models[mkey], self.parameters)
-                            # Add statistics to aggregated statistics table
-                            if add_stats:
-                                self._add_extrap_statistics(
-                                    thicket_node, str(metric))
-                        except Exception:
-                            pass
+        # generate models using Extra-P model generator
+        model_generator = ModelGenerator(
+            experiment,
+            modeler=modeler.lower(),
+            name=model_name,
+            use_median=use_median
+        )
+
+        # apply modeler options
+        modeler = model_generator.modeler
+        if isinstance(modeler, MultiParameterModeler) and modeler_options:
+            # set single-parameter modeler of multi-parameter modeler
+            single_modeler = modeler_options[SINGLE_PARAMETER_MODELER_KEY]
+            if single_modeler is not None:
+                modeler.single_parameter_modeler = single_parameter.all_modelers[single_modeler](
+                )
+            # apply options of single-parameter modeler
+            if modeler.single_parameter_modeler is not None:
+                for name, value in modeler_options[SINGLE_PARAMETER_OPTIONS_KEY].items():
+                    if value is not None:
+                        setattr(modeler.single_parameter_modeler, name, value)
+
+        for name, value in modeler_options.items():
+            if value is not None:
+                setattr(modeler, name, value)
+
+        model_generator.model_all()
+
+        experiment.add_modeler(model_generator)
+
+        # check if dataframe has already a multi column index
+        if tht.statsframe.dataframe.columns.nlevels > 1:
+
+            # TODO: not sure if I actually need this code...
+            modeler_names = []
+            for x in tht.statsframe.dataframe.columns.get_level_values(0).unique():
+                modeler_names.append(x)
+
+            # TODO: here I need to create the real data in a numpy array instead of generating random numbers
+            # TODO: second I need to put the real column names instead of the fake ones...
+            # TODO: do not put name column again, that one is only needed once.
+            tht.statsframe.dataframe = tht.statsframe.dataframe.join(pd.DataFrame(np.random.rand(
+                53, 3), columns=pd.MultiIndex.from_product([[model_name], ['one', 'two', 'three']]), index=tht.statsframe.dataframe.index))
+
+            """# add the models, and statistics into the dataframe
+            for callpath in experiment.callpaths:
+                for metric in experiment.metrics:
+                    mkey = (callpath, metric)
+                    for thicket_node, _ in tht.dataframe.groupby(level=0):
+                        if Callpath(thicket_node.frame["name"]) == callpath:
+                            # catch key errors when queriying for models with a callpath, metric combination
+                            # that does not exist because there was no measurement object created for them
+                            try:
+                                tht.statsframe.dataframe.at[thicket_node, [model_name, str(
+                                    metric) + MODEL_TAG]
+                                ] = ModelWrapper(model_generator.models[mkey], parameters, model_name)
+                                # Add statistics to aggregated statistics table
+                                if add_stats:
+                                    self._add_extrap_statistics(
+                                        tht, thicket_node, str(metric))
+                            except Exception as e:
+                                print(e)
+                                pass"""
+
+        else:
+            # check if there is already a extra-p model in the dataframe
+            model_exists = True
+            modeler_name = None
+            try:
+                modeler_name = tht.statsframe.dataframe.at[thicket_node,
+                                                           str(metric) + MODEL_TAG].name
+                model_exists = True
+            except KeyError:
+                model_exists = False
+
+            # add the models, and statistics into the dataframe
+            # TODO: see how I can get the name column out of the multi index, that column is only needed once!!!
+            for callpath in experiment.callpaths:
+                for metric in experiment.metrics:
+                    mkey = (callpath, metric)
+                    for thicket_node, _ in tht.dataframe.groupby(level=0):
+                        if Callpath(thicket_node.frame["name"]) == callpath:
+                            # catch key errors when queriying for models with a callpath, metric combination
+                            # that does not exist because there was no measurement object created for them
+                            try:
+                                tht.statsframe.dataframe.at[
+                                    thicket_node, str(metric) + MODEL_TAG
+                                ] = ModelWrapper(model_generator.models[mkey], parameters, model_name)
+                                # Add statistics to aggregated statistics table
+                                if add_stats:
+                                    self._add_extrap_statistics(
+                                        tht, thicket_node, str(metric))
+                            except Exception as e:
+                                print(e)
+                                pass
+
+            # if there is already a model in the dataframe, concat them and add a multi column index
+            if model_exists is True:
+                tht.statsframe.dataframe = pd.concat(
+                    [tht2.statsframe.dataframe, tht.statsframe.dataframe], axis=1, keys=[str(modeler_name), str(model_name)])
 
         self.experiment = experiment
 
@@ -1047,17 +1175,17 @@ class Modeling:
         if columns is None:
             columns = [
                 col
-                for col in self.tht.statsframe.dataframe
-                if isinstance(self.tht.statsframe.dataframe[col].iloc[0], ModelWrapper)
+                for col in thicket.statsframe.dataframe
+                if isinstance(thicket.statsframe.dataframe[col].iloc[0], ModelWrapper)
             ]
 
         # Error checking
         for c in columns:
-            if c not in self.tht.statsframe.dataframe.columns:
+            if c not in thicket.statsframe.dataframe.columns:
                 raise ValueError(
                     "column " + c + " is not in the aggregated statistics table."
                 )
-            elif not isinstance(self.tht.statsframe.dataframe[c].iloc[0], ModelWrapper):
+            elif not isinstance(thicket.statsframe.dataframe[c].iloc[0], ModelWrapper):
                 raise TypeError(
                     "column "
                     + c
@@ -1069,13 +1197,14 @@ class Modeling:
         for col in columns:
             # Get list of components for this column
             components = [
-                Modeling._componentize_function(model_obj, self.parameters)
-                for model_obj in self.tht.statsframe.dataframe[col]
+                ExtrapInterface._componentize_function(
+                    model_obj, parameters)
+                for model_obj in thicket.statsframe.dataframe[col]
             ]
 
             # Component dataframe
             comp_df = pd.DataFrame(
-                data=components, index=self.tht.statsframe.dataframe.index
+                data=components, index=thicket.statsframe.dataframe.index
             )
 
             # Add column name as index level
@@ -1085,8 +1214,8 @@ class Modeling:
             all_dfs.append(comp_df)
 
         # Concatenate dataframes horizontally
-        all_dfs.insert(0, self.tht.statsframe.dataframe)
-        self.tht.statsframe.dataframe = pd.concat(all_dfs, axis=1)
+        all_dfs.insert(0, thicket.statsframe.dataframe)
+        thicket.statsframe.dataframe = pd.concat(all_dfs, axis=1)
 
     def _analyze_complexity(
         model_object: Model, eval_target: list[float], col: str, parameters: list[str]
@@ -1214,7 +1343,7 @@ class Modeling:
         elif len(eval_targets) > 0:
             # for each evaluation target check if the number of values matches the number of parameters
             for target in eval_targets:
-                if len(target) != len(self.parameters):
+                if len(target) != len(parameters):
                     print(
                         "The number of given parameter values for the evaluation target need to be the same as the number of model parameters."
                     )
@@ -1235,22 +1364,22 @@ class Modeling:
                 if columns is None:
                     columns = [
                         col
-                        for col in self.tht.statsframe.dataframe
+                        for col in thicket.statsframe.dataframe
                         if isinstance(
-                            self.tht.statsframe.dataframe[col].iloc[0], ModelWrapper
+                            thicket.statsframe.dataframe[col].iloc[0], ModelWrapper
                         )
                     ]
 
                 # Error checking
                 for c in columns:
-                    if c not in self.tht.statsframe.dataframe.columns:
+                    if c not in thicket.statsframe.dataframe.columns:
                         raise ValueError(
                             "column "
                             + c
                             + " is not in the aggregated statistics table."
                         )
                     elif not isinstance(
-                        self.tht.statsframe.dataframe[c].iloc[0], ModelWrapper
+                        thicket.statsframe.dataframe[c].iloc[0], ModelWrapper
                     ):
                         raise TypeError(
                             "column "
@@ -1264,15 +1393,15 @@ class Modeling:
                 for col in columns:
                     # Get list of components for this column
                     components = [
-                        Modeling._analyze_complexity(
-                            model_obj, target, col, self.parameters
+                        ExtrapInterface._analyze_complexity(
+                            model_obj, target, col, parameters
                         )
-                        for model_obj in self.tht.statsframe.dataframe[col]
+                        for model_obj in thicket.statsframe.dataframe[col]
                     ]
 
                     # Component dataframe
                     comp_df = pd.DataFrame(
-                        data=components, index=self.tht.statsframe.dataframe.index
+                        data=components, index=thicket.statsframe.dataframe.index
                     )
 
                     # Add column name as index level
@@ -1280,15 +1409,15 @@ class Modeling:
                     all_dfs.append(comp_df)
 
                 # Concatenate dataframes horizontally
-                all_dfs.insert(0, self.tht.statsframe.dataframe)
-                self.tht.statsframe.dataframe = pd.concat(all_dfs, axis=1)
+                all_dfs.insert(0, thicket.statsframe.dataframe)
+                thicket.statsframe.dataframe = pd.concat(all_dfs, axis=1)
 
                 # Add callpath ranking to the dataframe
                 all_dfs = []
                 for col in columns:
                     total_metric_value = 0
                     metric_values = []
-                    for model_obj in self.tht.statsframe.dataframe[col]:
+                    for model_obj in thicket.statsframe.dataframe[col]:
                         if not isinstance(model_obj, float):
                             metric_value = model_obj.mdl.hypothesis.function.evaluate(
                                 target
@@ -1319,14 +1448,14 @@ class Modeling:
 
                     # Component dataframe
                     comp_df = pd.DataFrame(
-                        data=ranking_list, index=self.tht.statsframe.dataframe.index
+                        data=ranking_list, index=thicket.statsframe.dataframe.index
                     )
 
                     all_dfs.append(comp_df)
 
                 # Concatenate dataframes horizontally
-                all_dfs.insert(0, self.tht.statsframe.dataframe)
-                self.tht.statsframe.dataframe = pd.concat(all_dfs, axis=1)
+                all_dfs.insert(0, thicket.statsframe.dataframe)
+                thicket.statsframe.dataframe = pd.concat(all_dfs, axis=1)
 
         # otherwise raise an Exception
         else:
@@ -1338,20 +1467,20 @@ class Modeling:
         """Analysis the thicket statsframe by grouping application phases such as computation and communication together to create performance models for these phases.
         """
 
-        callpaths = self.tht.statsframe.dataframe["name"].values.tolist()
+        callpaths = thicket.statsframe.dataframe["name"].values.tolist()
 
         # aggregate measurements inside the extra-p models from all communication functions
         agg_measurements_list = []
         parameters = None
-        for metric in self.metrics:
+        for metric in metrics:
             agg_measurements = {}
             for i in range(len(callpaths)):
                 if parameters is None:
-                    parameters = self.tht.statsframe.dataframe[
+                    parameters = thicket.statsframe.dataframe[
                         str(metric)+"_extrap-model"].iloc[i].parameters
-                if not isinstance(self.tht.statsframe.dataframe[
+                if not isinstance(thicket.statsframe.dataframe[
                         str(metric)+"_extrap-model"].iloc[i], float):
-                    measurement_list = self.tht.statsframe.dataframe[
+                    measurement_list = thicket.statsframe.dataframe[
                         str(metric)+"_extrap-model"].iloc[i].mdl.measurements
                     for i in range(len(measurement_list)):
                         measurement_list[i].coordinate
@@ -1375,7 +1504,7 @@ class Modeling:
         # create a new Extra-P experiment, one for each phase model
         experiment = Experiment()
 
-        for metric in self.metrics:
+        for metric in metrics:
             metric = Metric(str(metric))
             experiment.add_metric(metric)
 
@@ -1386,7 +1515,7 @@ class Modeling:
             experiment.add_parameter(
                 Parameter(str(DEFAULT_PARAM_NAMES[i])))
 
-        for metric in self.metrics:
+        for metric in metrics:
             for key, value in agg_measurements.items():
                 if key not in experiment.coordinates:
                     experiment.add_coordinate(key)
@@ -1403,7 +1532,7 @@ class Modeling:
 
         # create empty pandas dataframe with columns only
         aggregated_df = pd.DataFrame(columns=["name"])
-        for metric in self.metrics:
+        for metric in metrics:
             if add_stats is True:
                 aggregated_df.insert(len(aggregated_df.columns),
                                      str(metric)+"_extrap-model", None)
@@ -1424,7 +1553,7 @@ class Modeling:
                                      str(metric)+"_RSS_extrap-model", None)
 
         new_row = ["aggregated_nodes"]
-        for metric in self.metrics:
+        for metric in metrics:
             model = model_gen.models[(aggregated_callpath, metric)]
             RSS = model.hypothesis._RSS
             rRSS = model.hypothesis._rRSS
