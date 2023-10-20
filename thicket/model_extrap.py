@@ -1054,11 +1054,49 @@ class ExtrapInterface:
             for x in tht.statsframe.dataframe.columns.get_level_values(0).unique():
                 modeler_names.append(x)
 
-            # TODO: here I need to create the real data in a numpy array instead of generating random numbers
-            # TODO: second I need to put the real column names instead of the fake ones...
-            # TODO: do not put name column again, that one is only needed once.
-            tht.statsframe.dataframe = tht.statsframe.dataframe.join(pd.DataFrame(np.random.rand(
-                53, 3), columns=pd.MultiIndex.from_product([[model_name], ['one', 'two', 'three']]), index=tht.statsframe.dataframe.index))
+            # create a list with the column names
+            column_names = []
+            column_names.append(str(metric) + MODEL_TAG)
+            if add_stats:
+                column_names.append(str(metric) + "_RSS" + MODEL_TAG)
+                column_names.append(str(metric) + "_rRSS" + MODEL_TAG)
+                column_names.append(str(metric) + "_SMAPE" + MODEL_TAG)
+                column_names.append(str(metric) + "_AR2" + MODEL_TAG)
+                column_names.append(str(metric) + "_RE" + MODEL_TAG)
+
+            # create a numpy array containing the data
+            for callpath in experiment.callpaths:
+                for metric in experiment.metrics:
+                    mkey = (callpath, metric)
+                    rows = []
+                    for thicket_node, _ in tht.dataframe.groupby(level=0):
+                        if Callpath(thicket_node.frame["name"]) == callpath:
+                            # catch key errors when queriying for models with a callpath, metric combination
+                            # that does not exist because there was no measurement object created for them
+                            try:
+                                values = []
+                                model_wrapper = ModelWrapper(
+                                    model_generator.models[mkey], parameters, model_name)
+                                values.append(model_wrapper)
+                                if add_stats:
+                                    values.append(
+                                        model_wrapper.mdl.hypothesis.RSS)
+                                    values.append(
+                                        model_wrapper.mdl.hypothesis.rRSS)
+                                    values.append(
+                                        model_wrapper.mdl.hypothesis.SMAPE)
+                                    values.append(
+                                        model_wrapper.mdl.hypothesis.AR2)
+                                    values.append(
+                                        model_wrapper.mdl.hypothesis.RE)
+                            except Exception:
+                                pass
+                        rows.append(values)
+
+            data = np.array(rows)
+
+            tht.statsframe.dataframe = tht.statsframe.dataframe.join(pd.DataFrame(
+                data, columns=pd.MultiIndex.from_product([[model_name], column_names]), index=tht.statsframe.dataframe.index))
 
             """# add the models, and statistics into the dataframe
             for callpath in experiment.callpaths:
