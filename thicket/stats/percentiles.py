@@ -9,10 +9,13 @@ from ..utils import verify_thicket_structures
 
 
 def percentiles(thicket, columns=None, percentiles=[.25, .50, .75]):
-    """Calculate the q-th percentile for each node in the performance data table.
+    """
+    Calculate the q-th percentile for each node in the performance data table.
 
     Designed to take in a thicket, and append one or more columns to the aggregated
-    statistics table for the q-th percentile calculation for each node.
+    statistics table for the q-th percentile calculation for each node. Each percentile
+    calculation is a seperate column in the statistics table, where the column will
+    have the format: columnName_percentiles_percentile
 
     The 25th percentile is the lower quartile, and is the value at which 25% of the
     answers lie below that value.
@@ -28,11 +31,16 @@ def percentiles(thicket, columns=None, percentiles=[.25, .50, .75]):
         columns (list): List of hardware/timing metrics to perform percentile
             calculation on. Note if using a columnar joined thicket a list of tuples
             must be passed in with the format (column index, column name).
+        percentiles (list): List of percentile values that is desired to be calculated
+            for each column in columns. If no list is specified, the default values,
+            [.25, .50, .75] are used for calculations
     """
     if percentiles is None:
         raise ValueError(
-            "Percentiles is empty, please specify which percentiles to calculate"
+            "Percentiles can not be None, please specify which percentiles to calculate, or use the default values."
         )
+    
+    #Enforce that percentiles are in range of [0.0, 1.0]
     for percentile in percentiles:
         if percentile < 0.0 or percentile > 1.0:
             raise ValueError("Percentile {} is out of range of [0.0, 1.0]".format(percentile))
@@ -44,10 +52,11 @@ def percentiles(thicket, columns=None, percentiles=[.25, .50, .75]):
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
+    # select numeric columns within thicket (.quantiles) will not work without this step
+    numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
+
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
-        # select numeric columns within thicket (.quantiles) will not work without this step
-        numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
         df_num = thicket.dataframe.select_dtypes(include=numerics)[columns]
         df = df_num.reset_index().groupby("node").quantile(percentiles)
         for column in columns:
@@ -68,7 +77,6 @@ def percentiles(thicket, columns=None, percentiles=[.25, .50, .75]):
                 
     # columnar joined thicket object
     else:
-        numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
         df_num = thicket.dataframe.select_dtypes(include=numerics)[columns]
         df = df_num.reset_index(level=1).groupby("node").quantile(percentiles)
         for idx, column in columns:
