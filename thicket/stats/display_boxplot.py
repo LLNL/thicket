@@ -6,7 +6,6 @@
 import pandas as pd
 import seaborn as sns
 import hatchet as ht
-import plotly.express as px
 
 from ..utils import verify_thicket_structures
 
