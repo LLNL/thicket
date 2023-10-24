@@ -6,10 +6,11 @@
 import pandas as pd
 import seaborn as sns
 import hatchet as ht
+import thicket as th
 import matplotlib as mpl
-
 from .percentiles import percentiles
 from ..utils import verify_thicket_structures
+
 
 def _column_name_mapper(current_cols):
     """
@@ -39,8 +40,10 @@ def _add_percentile_lines(
     if isinstance(percentiles_vals, list):
         if isinstance(line_styles, list) is True:
             if len(percentiles_vals) != len(line_styles):
-                raise ValueError("Length of line styles does not match length of percentiles")
-        elif line_styles == None:
+                raise ValueError(
+                    "Length of line styles does not match length of percentiles"
+                )
+        elif line_styles is None:
             line_styles = ["--"] * len(percentiles_vals)
         elif isinstance(line_styles, str):
             line_styles = [line_styles] * len(percentiles_vals)
@@ -49,36 +52,41 @@ def _add_percentile_lines(
 
         if isinstance(line_colors, list) is True:
             if len(percentiles_vals) != len(line_colors):
-                raise ValueError("Length of line colors does not match length of percentiles")
+                raise ValueError(
+                    "Length of line colors does not match length of percentiles"
+                )
         # Default line color
-        elif line_colors == None:
+        elif line_colors is None:
             line_colors = ["black"] * len(percentiles_vals)
         elif isinstance(line_colors, str):
             line_colors = [line_colors] * len(percentiles_vals)
         else:
             raise ValueError("line_colors must be either None, list, or a str")
-    
     # A single value was passed into percentiles, line color/style must then be either a single
     #   str value, or None. Otherwise throw an error
     elif isinstance(percentiles_vals, float):
         if isinstance(line_styles, str) is True:
             line_styles = [line_styles]
-        elif line_styles == None:
+        elif line_styles is None:
             line_styles = ["--"]
         else:
-            raise ValueError("Percentiles was specified as a single value, line_style must be either a str, or None")
+            raise ValueError(
+                "Percentiles was specified as a single value, line_style must be either a str, or None"
+            )
 
         if isinstance(line_colors, str) is True:
             line_colors = [line_colors]
-        elif line_colors == None:
+        elif line_colors is None:
             line_colors = ["black"]
         else:
-            raise ValueError("Percentiles was specified as a single value, line_colors must be either a str, or None")
-        
+            raise ValueError(
+                "Percentiles was specified as a single value, line_colors must be either a str, or None"
+            )
         percentiles_vals = [percentiles_vals]
-    
     else:
-        raise ValueError("percentiles_vals must be either a list of floats, or a single float value!")
+        raise ValueError(
+            "percentiles_vals must be either a list of floats, or a single float value!"
+        )
 
     violin_idx = -1
 
@@ -88,7 +96,7 @@ def _add_percentile_lines(
     # of the inputs in order to work with the display_violinplot_thickets(...)
     # structure of this function
     if graphType == "NODE":
-        thickets = {"IGNORE" : thickets}
+        thickets = {"IGNORE": thickets}
         nodes = {"IGNORE": nodes}
         columns = {"IGNORE": columns}
         x_order = ["IGNORE"]
@@ -100,7 +108,7 @@ def _add_percentile_lines(
 
         # Make a list of a singular node since display_violinplot_thicket(...) takes
         # in a dictionary where the value is a singluar Node. display_violinplot(...)
-        # Takes in a list of thickets, so the conversion doesn't need to happen. 
+        # Takes in a list of thickets, so the conversion doesn't need to happen.
         if graphType == "THICKET":
             nodes_in = [nodes_in]
 
@@ -113,16 +121,20 @@ def _add_percentile_lines(
                     if isinstance(column, tuple):
                         stats_column = (
                             str(column[0]),
-                            "{}_percentiles_{}".format(column[1], int(percentile * 100)),
+                            "{}_percentiles_{}".format(
+                                column[1], int(percentile * 100)
+                            ),
                         )
                     # Non-columnar joined
                     else:
                         stats_column = "{}_percentiles_{}".format(
                             column, int(percentile * 100)
                         )
-                    
                     # Call percentile(...) if the percentile value for the column has not been calculated already
-                    if stats_column not in thicket.statsframe.dataframe.columns.tolist():
+                    if (
+                        stats_column
+                        not in thicket.statsframe.dataframe.columns.tolist()
+                    ):
                         percentiles(thicket, [column], [percentile])
 
                     percentile_value = thicket.statsframe.dataframe[stats_column][node]
@@ -149,8 +161,8 @@ def _add_percentile_lines(
 
 def display_violinplot(
     thicket,
-    nodes=[],
-    columns=[],
+    nodes=None,
+    columns=None,
     percentiles=None,
     percentile_linestyles=None,
     percentile_colors=None,
@@ -183,10 +195,26 @@ def display_violinplot(
         (matplotlib Axes): Object for managing violinplot.
     """
 
+    if columns is None or nodes is None:
+        raise ValueError(
+            "Both 'nodes' and 'columns' must be provided. To see a list of valid columns, run 'Thicket.performance_cols'.",
+        )
+
+    if not isinstance(thicket, th.Thicket):
+        raise ValueError(
+            "Value passed to 'thicket' argument must be of type thicket.Thicket."
+        )
+
+    if not isinstance(nodes, list):
+        raise ValueError("Value passed to 'nodes' argument must be of type list.")
+
+    if not isinstance(columns, list):
+        raise ValueError("Value passed to 'columns' argument must be of type list.")
+
     for node in nodes:
         if not isinstance(node, ht.node.Node):
             raise ValueError(
-                "Value(s) passed to node argument must be of type hatchet.node.Node."
+                "Value passed to 'node' argument must be of type hatchet.node.Node."
             )
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
@@ -228,7 +256,6 @@ def display_violinplot(
             value_name=" ",
         )
 
-
         position = []
         for node in nodes:
             idx = df.index[df["node"] == node]
@@ -244,12 +271,11 @@ def display_violinplot(
     graph = None
 
     if len(columns) > 1:
-        graph =  sns.violinplot(
+        graph = sns.violinplot(
             data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
         )
     else:
         graph = sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
-    
     # User specified percentile value lines to plot
     if percentiles is not None:
         return _add_percentile_lines(
@@ -265,7 +291,13 @@ def display_violinplot(
         )
     # User did not specify percentiles, just return violinplot
     else:
-        return graph
+        if len(columns) > 1:
+            return sns.violinplot(
+                data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
+            )
+        else:
+            return sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
+
 
 def display_violinplot_thicket(
     thickets,
@@ -308,58 +340,59 @@ def display_violinplot_thicket(
 
     # Ensure thickets, nodes, and columns are all dictionaries
     if not isinstance(thickets, dict):
-        raise ValueError("thickets must be a dictionary of thickets")
+        raise ValueError("'thickets' argument must be a dictionary of thickets.")
 
     if not isinstance(nodes, dict):
         raise ValueError(
-            "Nodes must be a dictionary, specifying a node for each Thicket passed in"
+            "'nodes' argument must be a dictionary, specifying a node for each Thicket passed in."
         )
 
     if isinstance(columns, dict) is False:
         raise ValueError(
-            "columns must be a dictionary, specifying columns for each Thicket passed in"
+            "'columns' argument must be a dictionary, specifying columns for each Thicket passed in."
         )
 
     if all(isinstance(c, list) for c in columns.values()) is False:
-        raise ValueError("Columns dictionary must have list of columns as values")
+        raise ValueError(
+            "'columns' argument dictionary must have list of columns as values."
+        )
 
     # Ensure that if x_order is not None, that it is a list!
     if x_order is not None and isinstance(x_order, list) is False:
-        raise ValueError("x_order must be a list of keys")
+        raise ValueError("'x_order' argument must be a list of keys.")
 
     # Ensure equal number of thickets and corresponding nodes and columns
     if len(thickets) != len(nodes):
-        raise ValueError("Length of nodes must match number of thickets")
+        raise ValueError(
+            "Length of 'nodes' argument must match length of 'thickets' argument."
+        )
 
     if len(thickets) != len(columns):
-        raise ValueError("Length of columns must match number of thickets")
+        raise ValueError(
+            "Length of 'columns' argument must match length of 'thickets' argument."
+        )
 
     # Verify that each node in the nodes lists are node types
     if all(isinstance(n, ht.node.Node) for n in list(nodes.values())) is False:
         raise ValueError(
-            "Value(s) passed to nodes argument must be of type hatchet.node.Node."
+            "Value(s) passed to 'nodes' argument must be of type hatchet.node.Node."
         )
 
-    # Verify each thicket has corresponding columns
-    for idx, key in enumerate(thickets.keys()):
-        verify_thicket_structures(
-            thickets[key].dataframe, index=["node"], columns=columns[key]
-        )
-
-    # Check to see if ALL the keys across dictionaries are the same, and if x_order is not None
     # the keys must match the thickets dictionary keys
     if set(thickets.keys()) != set(nodes.keys()):
         raise ValueError(
-            "Keys in nodes dictionary do not match keys in thickets dictionary"
+            "Keys in 'nodes' argument dictionary do not match keys in 'thickets' argument dictionary."
         )
     if set(thickets.keys()) != set(columns.keys()):
         raise ValueError(
-            "Keys in columns dictionary do not match keys in thickets dictionary"
+            "Keys in 'columns' argument dictionary do not match keys in 'thickets' argument dictionary."
         )
     if x_order is not None and set(thickets.keys()) != set(x_order):
         raise ValueError(
-            "Keys listed in x_order do not match keys in thickets dictionary"
+            "Keys listed in 'x_order' argument do not match keys in 'thickets' argument dictionary."
         )
+
+    # Check to see if ALL the keys across dictionaries are the same, and if x_order is not None
 
     # Now check that all the thickets are either all columnar joined thickets, OR, they are all non-columnar joined thickets
     # We should not be comparing thickets that are not of the same type.
@@ -374,8 +407,14 @@ def display_violinplot_thicket(
 
         if noncolumnar_joined_found and columnar_joined_found:
             raise ValueError(
-                "Thickets dictionary can not contain both columnar joined thickets and non-columnar joined thickets"
+                "'thickets' argument dictionary can not contain both columnar joined thickets and non-columnar joined thickets."
             )
+
+    # Verify each thicket has corresponding columns
+    for idx, key in enumerate(thickets.keys()):
+        verify_thicket_structures(
+            thickets[key].dataframe, index=["node"], columns=columns[key]
+        )
 
     # Get thicket key order
     x_order = list(thickets.keys()) if x_order is None else x_order
