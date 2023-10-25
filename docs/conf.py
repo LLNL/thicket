@@ -28,6 +28,7 @@ import subprocess
 from tempfile import TemporaryDirectory
 
 
+github_url = "https://github.com/TauferLab/thicket-tutorial.git"
 tutorial_target_branch = "docker_local"
 tutorial_notebooks = {
     "notebooks/01_thicket_tutorial.ipynb": "./thicket_tutorial.ipynb",
@@ -43,14 +44,14 @@ for key, value in tutorial_notebooks.items():
 if len(notebooks_to_build) > 0:
     with TemporaryDirectory() as tmpdir:
         subprocess.run(
-            "git clone -b {} https://github.com/TauferLab/thicket-tutorial.git".format(tutorial_target_branch),
+            "git clone -b {} {}".format(tutorial_target_branch, github_url),
             shell=True,
             cwd=os.path.abspath(tmpdir),
             check=True
         )
 
         th_tmpdir = os.path.join(os.path.abspath(tmpdir), "thicket-tutorial")
-        
+
         subprocess.run(
             "docker build --no-cache -t thicket-tutorial -f local_run/Dockerfile.spawn .",
             shell=True,
