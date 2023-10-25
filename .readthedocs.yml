@@ -10,10 +10,16 @@ build:
   tools:
     python: "3.11"
   apt_packages:
-    - docker.io
+    - docker-ce-rootless-extras
+    - uidmap
+    - dbus-user-session
   jobs:
+    post_system_dependencies:
+      - dockerd-rootless-setuptool.sh install
     pre_build:
-      - dockerd
+      - export XDG_RUNTIME_DIR="$HOME/.docker/run"
+      - dockerd-rootless.sh
+      - export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
