@@ -170,7 +170,7 @@ def display_violinplot_thicket(thicket_dictionary, nodes=None, columns=None, **k
     for curr_thicket_indx, thicket in enumerate(thicket_dictionary.items()):
         cols = [str(c) for c in columns[curr_thicket_indx]]
         sub_dataframes[curr_thicket_indx] = thicket[1].dataframe[[("name", ""), *columns[curr_thicket_indx]]].reset_index()
-        sub_dataframes[curr_thicket_indx].columns = sub_dataframes[idx].columns.to_flat_index().map(column_name_mapper)
+        sub_dataframes[curr_thicket_indx].columns = sub_dataframes[curr_thicket_indx].columns.to_flat_index().map(column_name_mapper)
         sub_dataframes[curr_thicket_indx]["name"] = thicket[1].dataframe["name"].tolist()
         
         melted_df = pd.melt(
@@ -191,16 +191,14 @@ def display_violinplot_thicket(thicket_dictionary, nodes=None, columns=None, **k
 
         # rename columns such that the x-axis label is "node" and not "name", tick marks
         # will be node names
-        #This is where we grab the actual data for a node that was passed in!
-        filtered_dfs[idx] = melted_df.loc[position].rename( columns={"node": "hatchet node", "name": "node"})
-        thicket_name = [str(thicket[0])] * len(filtered_dfs[idx]["node"])
-        filtered_dfs[idx]["node"] = thicket_name
-        display(filtered_dfs[idx])
+        # This is where we grab the actual data for a node that was passed in!
+        filtered_dfs[curr_thicket_indx] = melted_df.loc[position].rename( columns={"node": "hatchet node", "name": "node"})
+        thicket_name = [str(thicket[0]) + str()] * len(filtered_dfs[curr_thicket_indx]["node"])
+        filtered_dfs[curr_thicket_indx]["node"] = thicket_name
+        #display(filtered_dfs[curr_thicket_indx])
 
     master_df = pd.concat(filtered_dfs, ignore_index=True)
-    if set_y_axis_log == True:
-        master_df[" "] = np.log(master_df[" "])
-    # 
-    display(master_df)
+   
+    #display(master_df)
 
     return sns.violinplot( data=master_df, x="node", y=" ", hue="Performance counter", **kwargs)
