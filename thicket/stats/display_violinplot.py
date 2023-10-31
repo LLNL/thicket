@@ -29,6 +29,8 @@ def _add_percentile_lines_node(graph, thicket, nodes, columns, percentiles_vals,
                 stats_column = None
                 if type(column) == type(tuple()):
                     stats_column = (str(column[0]), "{}_percentiles_{}".format(column[1], int(percentile * 100)))
+                else:
+                    stats_column = "{}_percentiles_{}".format(column, int(percentile * 100))
                 #Call percentile(...) if the percentile value for the column has not been calculated already
                 if column in thicket.exc_metrics and stats_column not in thicket.statsframe.exc_metrics\
                     or\
@@ -45,7 +47,7 @@ def _add_percentile_lines_node(graph, thicket, nodes, columns, percentiles_vals,
 
     return graph
 
-def display_violinplot(thicket, nodes=[], columns=[], percentile_line_values = [], percentile_line_styles = [], percentile_line_colors = [], **kwargs):
+def display_violinplot(thicket, nodes=[], columns=[], percentiles = [], linestyles = [], linecolors = [], **kwargs):
     """Display a violinplot for each user passed node(s) and column(s). The passed nodes
     and columns must be from the performance data table.
 
@@ -71,6 +73,8 @@ def display_violinplot(thicket, nodes=[], columns=[], percentile_line_values = [
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
+    filtered_df = None
+
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         df = pd.melt(
@@ -92,13 +96,6 @@ def display_violinplot(thicket, nodes=[], columns=[], percentile_line_values = [
         filtered_df = df.loc[position].rename(
             columns={"node": "hatchet node", "name": "node"}
         )
-
-        if len(columns) > 1:
-            return sns.violinplot(
-                data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
-            )
-        else:
-            return sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
     # columnar joined thicket object
     else:
 
@@ -135,35 +132,35 @@ def display_violinplot(thicket, nodes=[], columns=[], percentile_line_values = [
         # will be node names
         filtered_df = df.loc[position].rename(
             columns={"node": "hatchet node", "name": "node"}
-        )
+        )        
 
-        #User specified percentile value lines to plot
-        if len(percentile_line_values) != 0:
-            if len(columns) > 1:
-                return _add_percentile_lines_node(
-                        sns.violinplot( data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs), 
-                        thicket, 
-                        nodes, 
-                        columns, 
-                        percentile_line_values,
-                        percentile_line_styles,
-                        percentile_line_colors), filtered_df
-            else: 
-                return _add_percentile_lines_node(
-                        sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs),
-                        thicket,
-                        nodes,
-                        columns,
-                        percentile_line_values,
-                        percentile_line_styles,
-                        percentile_line_colors)
-        else: #User did not specify percentiles, just return violinplot
-            if len(columns) > 1:
-                return sns.violinplot(
-                    data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
-                ), filtered_df
-            else:
-                return sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
+    #User specified percentile value lines to plot
+    if len(percentiles) != 0:
+        if len(columns) > 1:
+            return _add_percentile_lines_node(
+                    sns.violinplot( data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs), 
+                    thicket, 
+                    nodes, 
+                    columns, 
+                    percentiles,
+                    linestyles,
+                    linecolors), filtered_df
+        else:
+            return _add_percentile_lines_node(
+                    sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs),
+                    thicket,
+                    nodes,
+                    columns,
+                    percentiles,
+                    linestyles,
+                    linecolors)
+    else: #User did not specify percentiles, just return violinplot
+        if len(columns) > 1:
+            return sns.violinplot(
+                data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
+            ), filtered_df
+        else:
+            return sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
 
 def display_violinplot_thicket(thicket_dictionary, nodes=None, columns=None, **kwargs):
     """Display a boxplot for each user passed node(s) and column(s). The passed nodes
