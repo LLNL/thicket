@@ -8,7 +8,7 @@ import pandas as pd
 from ..utils import verify_thicket_structures
 
 
-def percentiles(thicket, columns=None, percentiles=[.25, .50, .75]):
+def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
     """
     Calculate the q-th percentile for each node in the performance data table.
 
@@ -33,17 +33,19 @@ def percentiles(thicket, columns=None, percentiles=[.25, .50, .75]):
             must be passed in with the format (column index, column name).
         percentiles (list): List of percentile values that is desired to be calculated
             for each column in columns. If no list is specified, the default values,
-            [.25, .50, .75] are used for calculations
+            [0.25, 0.50, 0.75] are used for calculations
     """
     if percentiles is None:
         raise ValueError(
             "Percentiles can not be None, please specify which percentiles to calculate, or use the default values."
         )
-    
-    #Enforce that percentiles are in range of [0.0, 1.0]
+
+    # Enforce that percentiles are in range of [0.0, 1.0]
     for percentile in percentiles:
         if percentile < 0.0 or percentile > 1.0:
-            raise ValueError("Percentile {} is out of range of [0.0, 1.0]".format(percentile))
+            raise ValueError(
+                "Percentile {} is out of range of [0.0, 1.0]".format(percentile)
+            )
 
     if columns is None:
         raise ValueError(
@@ -64,39 +66,58 @@ def percentiles(thicket, columns=None, percentiles=[.25, .50, .75]):
             for node in pd.unique(df.reset_index()["node"].tolist()):
                 calculated_percentiles.append(list(df.loc[node][column]))
             for index, percentile in enumerate(percentiles):
-                
+
                 column_to_append = column + "_percentiles_" + str(int(percentile * 100))
-                thicket.statsframe.dataframe[column_to_append] = [x[index] for x in calculated_percentiles]
-                
+                thicket.statsframe.dataframe[column_to_append] = [
+                    x[index] for x in calculated_percentiles
+                ]
+
                 # check to see if exclusive metric and that the metric is not already in the metrics list
-                if column in thicket.exc_metrics and column_to_append not in thicket.statsframe.exc_metrics:
+                if (
+                    column in thicket.exc_metrics
+                    and column_to_append not in thicket.statsframe.exc_metrics
+                ):
                     thicket.statsframe.exc_metrics.append(column_to_append)
-                # check to see if inclusive metric
-                elif column in thicket.inc_metrics and column_to_append not in thicket.statsframe.inc_metrics:
+                # check inclusive metrics
+                elif (
+                    column in thicket.inc_metrics
+                    and column_to_append not in thicket.statsframe.inc_metrics
+                ):
                     thicket.statsframe.inc_metrics.append(column_to_append)
-                
+
     # columnar joined thicket object
     else:
         df_num = thicket.dataframe.select_dtypes(include=numerics)[columns]
         df = df_num.reset_index(level=1).groupby("node").quantile(percentiles)
-        for idx, column in columns:
+        for idx_level, column in columns:
             calculated_percentiles = []
-            
-            #Get all the calculated values into a list for each node
+
+            # Get all the calculated values into a list for each node
             for node in pd.unique(df.reset_index()["node"].tolist()):
-                calculated_percentiles.append(list(df.loc[node][(idx, column)]))
-            
-            #Go through each of the percentiles, and make them it's own column
+                calculated_percentiles.append(list(df.loc[node][(idx_level, column)]))
+
+            # Go through each of the percentiles, and make them it's own column
             for index, percentile in enumerate(percentiles):
-                
-                column_to_append = (idx, column + "_percentiles_" + str(int(percentile * 100)))
-                thicket.statsframe.dataframe[column_to_append] = [x[index] for x in calculated_percentiles]
-                
+
+                column_to_append = (
+                    idx_level,
+                    "{}_percentiles_{}".format(column, str(int(percentile * 100))),
+                )
+                thicket.statsframe.dataframe[column_to_append] = [
+                    x[index] for x in calculated_percentiles
+                ]
+
                 # check to see if exclusive metric
-                if (idx, column) in thicket.exc_metrics and column_to_append not in thicket.statsframe.exc_metrics:
+                if (
+                    (idx_level, column) in thicket.exc_metrics
+                    and column_to_append not in thicket.statsframe.exc_metrics
+                ):
                     thicket.statsframe.exc_metrics.append(column_to_append)
                 # check to see if inclusive metric
-                elif (idx, column) in thicket.inc_metrics and column_to_append not in thicket.statsframe.inc_metrics:
+                elif (
+                    (idx_level, column) in thicket.inc_metrics
+                    and column_to_append not in thicket.statsframe.inc_metrics
+                ):
                     thicket.statsframe.inc_metrics.append(column_to_append)
 
         # sort columns in index
