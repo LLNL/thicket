@@ -29,10 +29,10 @@ def _add_percentile_lines_node(graph, thicket, nodes, columns, percentiles_vals,
     violin_idx = -1
 
     #Default line styles and line colors
-    if lines_styles == None or len(lines_styles) != len(nodes):
-        lines_styles = ["-"] * len(percentiles_vals)
-    if line_colors == None or len(line_colors) != len(nodes):
-        line_colors = ["black"] * len(percentiles_vals)
+    if lines_styles == None or len(lines_styles) < len(percentiles_vals):
+        lines_styles += ["-"] * (len(percentiles_vals - len(percentiles_vals)))
+    if line_colors == None or len(line_colors) < len(percentiles_vals):
+        line_colors += ["black"] * (len(percentiles_vals) - len(percentiles_vals))
 
     for node in nodes:
         for column in columns:
@@ -62,7 +62,9 @@ def _add_percentile_lines_node(graph, thicket, nodes, columns, percentiles_vals,
 
     return graph
 
-def display_violinplot(thicket, nodes=[], columns=[], percentiles = [], linestyles = [], linecolors = [], **kwargs):
+
+
+def display_violinplot(thicket, nodes=[], columns=[], percentiles = [], percentile_linestyles = [], percentile_colors = [], **kwargs):
     """Display a violinplot for each user passed node(s) and column(s). The passed nodes
     and columns must be from the performance data table.
 
@@ -164,7 +166,9 @@ def display_violinplot(thicket, nodes=[], columns=[], percentiles = [], linestyl
         else:
             return sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
 
-def display_violinplot_thicket(thicket_dictionary, nodes=None, columns=None, **kwargs):
+
+
+def display_violinplot_thicket(thickets, nodes=None, columns=None, x_order = [], percentiles = [], percentile_linestyles = [], percentile_colors = [], **kwargs):
     """Display a boxplot for each user passed node(s) and column(s). The passed nodes
     and columns must be from the performance data table.
 
@@ -172,9 +176,9 @@ def display_violinplot_thicket(thicket_dictionary, nodes=None, columns=None, **k
     depending on the number of nodes and columns passed.
 
     Arguments:
-        thicket (thicket): Thicket object
-        nodes (list): List of nodes to view on the x-axis
-        column (list): List of hardware/timing metrics to view on the y-axis. Note, if
+        thicket (dictionary): Thicket object
+        nodes (dictionaryu): List of nodes to view on the x-axis
+        column (dictionary): List of hardware/timing metrics to view on the y-axis. Note, if
             using a columnar joined thicket a list of tuples must be passed in with the
             format (column index, column name).
 
@@ -189,18 +193,19 @@ def display_violinplot_thicket(thicket_dictionary, nodes=None, columns=None, **k
         return str(current_cols)
 
     if nodes is None:
-        raise ValueError("Nodes must be a list of lists, specifying nodes for each Thicket passed in")
+        raise ValueError("Nodes must be a dictionary, specifying nodes for each Thicket passed in")
 
     if columns is None:
-        raise ValueError("Columns must be a list of lists, specifying columns for each Thicket passed in")
+        raise ValueError("Columns must be a dictionary, specifying columns for each Thicket passed in")
 
     #Ensures that both nodes and columns is a list of lists
-    if isinstance(nodes, list) == False or all(isinstance(n, list) for n in nodes) == False:
+    if isinstance(dictionary, dict) == False or all(isinstance(n, list) for n in nodes.items()) == False:
         raise ValueError("Nodes must be a list of lists, specifying nodes for each Thicket passed in")
     
-    if isinstance(columns, list) == False or all(isinstance(c, list) for c in columns) == False:
+    if isinstance(columns, dict) == False or all(isinstance(c, list) for c in columns.items()) == False:
         raise ValueError("Nodes must be a list of lists, specifying nodes for each Thicket passed in")
     
+    return
     #Ensures that each Thicket has corresponding nodes, and columns. Otherwise throw an error
     if len(thicket_dictionary) != len(columns):
         raise ValueError("Length of columns does not match number of thickets")
