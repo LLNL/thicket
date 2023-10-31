@@ -226,19 +226,16 @@ def test_percentiles(example_cali):
     assert "Min time/rank_percentiles_50" in th_ens.statsframe.show_metric_columns()
     assert "Min time/rank_percentiles_75" in th_ens.statsframe.show_metric_columns()
 
+    th.percentiles(th_ens, columns=["Min time/rank"], percentiles=[0.3])
 
-    th.percentiles(th_ens, columns=["Min time/rank"], percentiles=[.3])
-    
     assert "Min time/rank_percentiles_30" in th_ens.statsframe.dataframe.columns
-    
+
     assert (
         "Min time/rank_percentiles_30"
         in th_ens.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
     )
 
     assert "Min time/rank_percentiles_30" in th_ens.statsframe.show_metric_columns()
-
-
 
 
 def test_percentiles_columnar_join(thicket_axis_columns):
@@ -289,9 +286,9 @@ def test_percentiles_columnar_join(thicket_axis_columns):
         idx,
         "Min time/rank_percentiles_75",
     ) in combined_th.statsframe.show_metric_columns()
-    
-    th.percentiles(combined_th, columns=[(idx, "Min time/rank")], percentiles=[.4])
-        
+
+    th.percentiles(combined_th, columns=[(idx, "Min time/rank")], percentiles=[0.4])
+
     assert (
         idx,
         "Min time/rank_percentiles_40",
@@ -304,7 +301,6 @@ def test_percentiles_columnar_join(thicket_axis_columns):
         idx,
         "Min time/rank_percentiles_40",
     ) in combined_th.statsframe.show_metric_columns()
-
 
 
 def test_variance(example_cali):
