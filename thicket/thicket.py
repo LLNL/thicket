@@ -378,9 +378,7 @@ class Thicket(GraphFrame):
         # make and return thicket?
         return th
 
-    def add_column_from_metadata_to_ensemble(
-        self, metadata_key, overwrite=False, drop=False
-    ):
+    def metadata_column_to_perfdata(self, metadata_key, overwrite=False, drop=False):
         """Add a column from the metadata table to the performance data table.
 
         Arguments:
