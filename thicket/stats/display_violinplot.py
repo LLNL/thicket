@@ -205,7 +205,6 @@ def display_violinplot_thicket(thickets, nodes=None, columns=None, x_order = [],
     if isinstance(columns, dict) == False or all(isinstance(c, list) for c in columns.items()) == False:
         raise ValueError("Nodes must be a list of lists, specifying nodes for each Thicket passed in")
     
-    return
     #Ensures that each Thicket has corresponding nodes, and columns. Otherwise throw an error
     if len(thicket_dictionary) != len(columns):
         raise ValueError("Length of columns does not match number of thickets")
