@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 import thicket.helpers as helpers
-from .utils import verify_sorted_profile, verify_thicket_structures
+from .utils import validate_dataframe, verify_sorted_profile, verify_thicket_structures
 
 
 class Ensemble:
@@ -46,10 +46,10 @@ class Ensemble:
         for i in range(len(_thickets)):
             # Set all graphs to the union graph
             _thickets[i].graph = union_graph
-            # Necessary to change dataframe hatchet id's to match the nodes in the graph
-            helpers._sync_nodes_frame(union_graph, _thickets[i].dataframe)
             # For tree diff. dataframes need to be sorted.
             _thickets[i].dataframe.sort_index(inplace=True)
+            # Necessary to change dataframe hatchet id's to match the nodes in the graph
+            helpers._sync_nodes_frame(union_graph, _thickets[i].dataframe)
         return union_graph, _thickets
 
     @staticmethod
@@ -285,6 +285,9 @@ class Ensemble:
         # Step 2D: Handle other Thicket objects.
         _handle_misc()
 
+        # Validate dataframe
+        validate_dataframe(combined_th.dataframe)
+
         return combined_th
 
     @staticmethod
@@ -385,8 +388,8 @@ class Ensemble:
         unify_inc_metrics = list(set(unify_inc_metrics))
         unify_exc_metrics = list(set(unify_exc_metrics))
 
-        # Workaround for graph/df node id mismatch.
-        helpers._sync_nodes(unify_graph, unify_df)
+        # Validate unify_df
+        validate_dataframe(unify_df)
 
         unify_parts = (
             unify_graph,
