@@ -66,9 +66,6 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
     # columnar joined thicket object
     else:
 
-        """
-            New code that allows for columns to be selected from different indexes of a columnar joined thicket
-        """
         def column_name_mapper(current_cols):
             if current_cols[0] in ["node", "name"]:
                 return current_cols[0]
@@ -101,7 +98,7 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
         )
 
         if len(columns) > 1:
-            
+
             return sns.boxplot(
                 data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
             )
