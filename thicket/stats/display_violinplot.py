@@ -12,14 +12,26 @@ import matplotlib as mpl
 from .percentiles import percentiles
 from ..utils import verify_thicket_structures
 
+def _column_name_mapper(current_cols):
+    """
+        Internal function that returns string representation of current_cols
+
+        Parameters:
+            current_cols: 
+    """
+    if current_cols[0] in ["node", "name"]:
+        return current_cols[0]
+
+    return str(current_cols)
+
 def _add_percentile_lines_node(graph, thicket, nodes, columns, percentiles_vals, lines_styles=None, line_colors = None):
 
     violin_idx = -1
 
     #Default line styles and line colors
-    if lines_styles == None or len(lines_styles) == 0:
+    if lines_styles == None or len(lines_styles) != len(nodes):
         lines_styles = ["-"] * len(percentiles_vals)
-    if line_colors == None or len(line_colors) == 0:
+    if line_colors == None or len(line_colors) != len(nodes):
         line_colors = ["black"] * len(percentiles_vals)
 
     for node in nodes:
@@ -27,8 +39,10 @@ def _add_percentile_lines_node(graph, thicket, nodes, columns, percentiles_vals,
             violin_idx += 1
             for idx, percentile in enumerate(percentiles_vals):
                 stats_column = None
+                #Columnar joined thickets
                 if type(column) == type(tuple()):
                     stats_column = (str(column[0]), "{}_percentiles_{}".format(column[1], int(percentile * 100)))
+                #Non-columnar joined
                 else:
                     stats_column = "{}_percentiles_{}".format(column, int(percentile * 100))
                 #Call percentile(...) if the percentile value for the column has not been calculated already
@@ -36,6 +50,7 @@ def _add_percentile_lines_node(graph, thicket, nodes, columns, percentiles_vals,
                     or\
                     column in thicket.inc_metrics and stats_column not in thicket.statsframe.inc_metrics:
                         percentiles(thicket, [column], [percentile])
+
                 percentile_value = thicket.statsframe.dataframe[stats_column][node]
 
                 #Plot line
@@ -98,22 +113,10 @@ def display_violinplot(thicket, nodes=[], columns=[], percentiles = [], linestyl
         )
     # columnar joined thicket object
     else:
-
-        """
-            New code that allows for columns to be selected from different indexes of a columnar joined thicket
-        """
-        def column_name_mapper(current_cols):
-            if current_cols[0] in ["node", "name"]:
-                return current_cols[0]
-
-            return str(current_cols)
-
         cols = [str(c) for c in columns]
         df_subset = thicket.dataframe[[("name", ""), *columns]].reset_index()
-        df_subset.columns = df_subset.columns.to_flat_index().map(column_name_mapper)
+        df_subset.columns = df_subset.columns.to_flat_index().map(_column_name_mapper)
         df_subset["name"] = thicket.dataframe["name"].tolist()
-        # End new code
-        
         df = pd.melt(
             df_subset,
             id_vars=["node", "name"],
@@ -121,7 +124,6 @@ def display_violinplot(thicket, nodes=[], columns=[], percentiles = [], linestyl
             var_name="Performance counter",
             value_name=" ",
         )
-
         position = []
         for node in nodes:
             idx = df.index[df["node"] == node]
