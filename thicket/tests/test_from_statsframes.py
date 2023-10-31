@@ -33,9 +33,7 @@ def test_from_statsframes(mpi_scaling_cali):
     tk_named = th.from_statsframes(th_list, metadata_key="mpi.world.size")
 
     # Check level values
-    assert set(
-        tk_named.dataframe.index.get_level_values("mpi.world.size")
-    ) == {
+    assert set(tk_named.dataframe.index.get_level_values("mpi.world.size")) == {
         27,
         64,
         125,
