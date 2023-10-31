@@ -20,7 +20,7 @@ def test_from_statsframes(mpi_scaling_cali):
     tk = th.from_statsframes(th_list)
 
     # Check level values
-    assert set(tk.dataframe.index.get_level_values("thicket")) == {
+    assert set(tk.dataframe.index.get_level_values("profile")) == {
         0,
         1,
         2,
@@ -33,7 +33,7 @@ def test_from_statsframes(mpi_scaling_cali):
     tk_named = th.from_statsframes(th_list, metadata_key="mpi.world.size")
 
     # Check level values
-    assert set(tk_named.dataframe.index.get_level_values("thicket")) == {
+    assert set(tk_named.dataframe.index.get_level_values("mpi.world.size")) == {
         27,
         64,
         125,

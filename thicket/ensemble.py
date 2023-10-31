@@ -320,26 +320,6 @@ class Ensemble:
 
             return perfdata
 
-        def _from_statsframes_metadata(metadata):
-            """Aggregate data in Metadata"""
-
-            def _agg_to_set(obj):
-                """Aggregate values in 'obj' into a set to remove duplicates."""
-                if len(obj) <= 1:
-                    return obj
-                else:
-                    _set = set(obj)
-                    # If len == 1 just use the value, otherwise return the set
-                    if len(_set) == 1:
-                        return _set.pop()
-                    else:
-                        return _set
-
-            # Rename index to "thicket"
-            metadata.index.rename("thicket", inplace=True)
-            # Execute aggregation
-            metadata = metadata.groupby("thicket").agg(_agg_to_set)
-
         # Add missing indicies to thickets
         helpers._resolve_missing_indicies(thickets)
 
@@ -375,10 +355,6 @@ class Ensemble:
 
         # Insert missing rows in dataframe
         unify_df = _fill_perfdata(unify_df)
-
-        # Metadata-specific operations
-        if from_statsframes:
-            _from_statsframes_metadata(unify_metadata)
 
         # Sort PerfData
         unify_df.sort_index(inplace=True)
