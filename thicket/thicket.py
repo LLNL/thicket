@@ -224,23 +224,32 @@ class Thicket(GraphFrame):
         """
         ens_list = []
         obj = args[0]  # First arg should be readable object
+        extra_args = []
+        if len(args) > 1:
+            extra_args = args[1:]
 
         # Parse the input object
         # if a list of files
-        if type(obj) == list:
+        if isinstance(obj, (list, tuple)):
             for file in obj:
-                ens_list.append(Thicket.thicketize_graphframe(func(file), file))
+                ens_list.append(
+                    Thicket.thicketize_graphframe(
+                        func(file, *extra_args, **kwargs), file
+                    )
+                )
         # if directory of files
         elif os.path.isdir(obj):
             for file in os.listdir(obj):
                 f = os.path.join(obj, file)
-                ens_list.append(Thicket.thicketize_graphframe(func(f), f))
+                ens_list.append(
+                    Thicket.thicketize_graphframe(func(f, *extra_args, **kwargs), f)
+                )
         # if single file
         elif os.path.isfile(obj):
             return Thicket.thicketize_graphframe(func(*args, **kwargs), args[0])
         # Error checking
         else:
-            if type(obj) == str and not os.path.isfile(obj):
+            if isinstance(obj, str) and not os.path.isfile(obj):
                 raise FileNotFoundError("File '" + obj + "' not found.")
             else:
                 raise TypeError(
