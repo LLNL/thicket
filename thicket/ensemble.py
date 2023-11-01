@@ -83,16 +83,15 @@ class Ensemble:
             # Check for metadata_key in metadata
             if metadata_key:
                 for th in thickets:
-                    verify_thicket_structures(th.metadata, columns=[metadata_key])
+                    if metadata_key != th.metadata.index.name:
+                        verify_thicket_structures(th.metadata, columns=[metadata_key])
             # Check length of profiles match if metadata key is not provided
             if metadata_key is None:
                 for i in range(len(thickets) - 1):
                     if len(thickets[i].profile) != len(thickets[i + 1].profile):
                         raise ValueError(
                             f"Length of all thicket profiles must match if 'metadata_key' is not provided. {len(thickets[i].profile)} != {len(thickets[i + 1].profile)}"
-                            )
-                    if metadata_key != th.metadata.index.name:
-                        verify_thicket_structures(th.metadata, columns=[metadata_key])        
+                        )
             # Ensure all thickets profiles are sorted. Must be true when metadata_key=None to
             # guarantee performance data table and metadata table match up.
             if metadata_key is None:
@@ -202,9 +201,7 @@ class Ensemble:
             else:  # Change second-level index to be from metadata's "metadata_key" column
                 for i in range(len(thickets_cp)):
                     if metadata_key not in thickets_cp[i].dataframe.index.names:
-                        thickets_cp[i].add_column_from_metadata_to_ensemble(
-                            metadata_key
-                        )
+                        thickets_cp[i].metadata_column_to_perfdata(metadata_key)
                     thickets_cp[i].dataframe.reset_index(level=inner_idx, inplace=True)
                     new_mappings.update(
                         pd.Series(
