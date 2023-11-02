@@ -6,77 +6,124 @@
 import pandas as pd
 import seaborn as sns
 import hatchet as ht
-import numpy as np
 import matplotlib as mpl
 
 from .percentiles import percentiles
 from ..utils import verify_thicket_structures
 
+
 def _column_name_mapper(current_cols):
     """
-        Internal function that returns string representation of current_cols
+    Internal function that returns string representation of current_cols
 
-        Parameters:
-            current_cols: 
+    Parameters:
+        current_cols:
     """
     if current_cols[0] in ["node", "name"]:
         return current_cols[0]
 
     return str(current_cols)
 
-def _add_percentile_lines_node(graph, thicket, nodes, columns, percentiles_vals, lines_styles=None, line_colors = None):
+
+def _add_percentile_lines_node(
+    graph,
+    thicket,
+    nodes,
+    columns,
+    percentiles_vals,
+    lines_styles=None,
+    line_colors=None,
+):
 
     violin_idx = -1
 
-    #Default line styles and line colors
-    if lines_styles == None or len(lines_styles) < len(percentiles_vals):
-        lines_styles += ["-"] * (len(percentiles_vals - len(percentiles_vals)))
-    if line_colors == None or len(line_colors) < len(percentiles_vals):
-        line_colors += ["black"] * (len(percentiles_vals) - len(percentiles_vals))
+    # Default line styles and line colors
+    # If the user does not specify enough, default the missing values
+    if lines_styles is None:
+        lines_styles = ["--"] * len(percentiles_vals)
+    elif len(lines_styles) < len(percentiles_vals):
+        lines_styles += ["--"] * (len(percentiles_vals) - len(lines_styles))
+
+    if line_colors is None:
+        line_colors = ["black"] * len(percentiles_vals)
+    elif len(line_colors) < len(percentiles_vals):
+        line_colors += ["black"] * (len(percentiles_vals) - len(line_colors))
 
     for node in nodes:
         for column in columns:
             violin_idx += 1
             for idx, percentile in enumerate(percentiles_vals):
                 stats_column = None
-                #Columnar joined thickets
-                if type(column) == type(tuple()):
-                    stats_column = (str(column[0]), "{}_percentiles_{}".format(column[1], int(percentile * 100)))
-                #Non-columnar joined
+                # Columnar joined thickets
+                if isinstance(column, tuple):
+                    stats_column = (
+                        str(column[0]),
+                        "{}_percentiles_{}".format(column[1], int(percentile * 100)),
+                    )
+                # Non-columnar joined
                 else:
-                    stats_column = "{}_percentiles_{}".format(column, int(percentile * 100))
-                #Call percentile(...) if the percentile value for the column has not been calculated already
-                if column in thicket.exc_metrics and stats_column not in thicket.statsframe.exc_metrics\
-                    or\
-                    column in thicket.inc_metrics and stats_column not in thicket.statsframe.inc_metrics:
-                        percentiles(thicket, [column], [percentile])
+                    stats_column = "{}_percentiles_{}".format(
+                        column, int(percentile * 100)
+                    )
+                # Call percentile(...) if the percentile value for the column has not been calculated already
+                if (
+                    column in thicket.exc_metrics
+                    and stats_column not in thicket.statsframe.exc_metrics
+                    or column in thicket.inc_metrics
+                    and stats_column not in thicket.statsframe.inc_metrics
+                ):
+                    percentiles(thicket, [column], [percentile])
 
                 percentile_value = thicket.statsframe.dataframe[stats_column][node]
 
-                #Plot line
-                added_line = graph.axhline(y=percentile_value, color=line_colors[idx], linestyle = lines_styles[idx])
-                #Get the violin structure
-                patch =  mpl.patches.PathPatch(graph.collections[violin_idx].get_paths()[0], transform = graph.transData)
-                #Clip line to the violin structure
+                # Plot line
+                added_line = graph.axhline(
+                    y=percentile_value,
+                    color=line_colors[idx],
+                    linestyle=lines_styles[idx],
+                )
+                # Get the violin structure
+                patch = mpl.patches.PathPatch(
+                    graph.collections[violin_idx].get_paths()[0],
+                    transform=graph.transData,
+                )
+                # Clip line to the violin structure
                 added_line.set_clip_path(patch)
 
     return graph
 
 
-
-def display_violinplot(thicket, nodes=[], columns=[], percentiles = [], percentile_linestyles = [], percentile_colors = [], **kwargs):
-    """Display a violinplot for each user passed node(s) and column(s). The passed nodes
+def display_violinplot(
+    thicket,
+    nodes=[],
+    columns=[],
+    percentiles=[],
+    percentile_linestyles=[],
+    percentile_colors=[],
+    **kwargs,
+):
+    """
+    Display a violinplot for each user passed node(s) and column(s). The passed nodes
     and columns must be from the performance data table.
 
     Designed to take in a thicket, and display a plot with one or more violinplots
     depending on the number of nodes and columns passed.
 
     Arguments:
-        thicket (thicket): Thicket object
-        nodes (list): List of nodes to view on the x-axis
-        column (list): List of hardware/timing metrics to view on the y-axis. Note, if
+        thicket (thicket)   : Thicket object
+        nodes   (list)      : List of nodes to view on the x-axis
+        columns (list)      : List of hardware/timing metrics to view on the y-axis. Note, if
             using a columnar joined thicket a list of tuples must be passed in with the
             format (column index, column name).
+        percentiles (list)  : List of percentile values to plot for each violin plot.
+            Each value must be between [0.0, 1.0]. If the percentile value is not on the statistic table,
+            the percentile value will be calculated, and put on the statsframe
+        percentile_linestyles (list): List of line styles for the percentiles. If not provided, the default
+            line styles will be "--". If the list does not specify styles for each of the percentiles, the missing
+            styles will default to "--"
+        percentile_colors (list): List of colors to apply for percentile lines. The default value is "black",
+            If the list does not specify colors for each percentile, the missing colors will default to "black"
+        **kwargs: Arguments that can be passed to seaborns plotting function
 
     Returns:
         (matplotlib Axes): Object for managing violinplot.
@@ -136,126 +183,296 @@ def display_violinplot(thicket, nodes=[], columns=[], percentiles = [], percenti
         # will be node names
         filtered_df = df.loc[position].rename(
             columns={"node": "hatchet node", "name": "node"}
-        )        
+        )
 
-    #User specified percentile value lines to plot
+    # User specified percentile value lines to plot
     if len(percentiles) != 0:
+        graph = None
         if len(columns) > 1:
-            return _add_percentile_lines_node(
-                    sns.violinplot( data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs), 
-                    thicket, 
-                    nodes, 
-                    columns, 
-                    percentiles,
-                    linestyles,
-                    linecolors), filtered_df
+            graph = sns.violinplot(
+                data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
+            )
         else:
-            return _add_percentile_lines_node(
-                    sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs),
-                    thicket,
-                    nodes,
-                    columns,
-                    percentiles,
-                    linestyles,
-                    linecolors)
-    else: #User did not specify percentiles, just return violinplot
+            graph = sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
+
+        return _add_percentile_lines_node(
+            graph,
+            thicket,
+            nodes,
+            columns,
+            percentiles,
+            percentile_linestyles,
+            percentile_colors,
+        )
+    # User did not specify percentiles, just return violinplot
+    else:
         if len(columns) > 1:
             return sns.violinplot(
                 data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
-            ), filtered_df
+            )
         else:
             return sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
 
 
+def _add_percentile_lines_thicket(
+    graph,
+    thickets,
+    nodes,
+    columns,
+    x_order,
+    percentiles_vals,
+    lines_styles=None,
+    line_colors=None,
+):
 
-def display_violinplot_thicket(thickets, nodes=None, columns=None, x_order = [], percentiles = [], percentile_linestyles = [], percentile_colors = [], **kwargs):
-    """Display a boxplot for each user passed node(s) and column(s). The passed nodes
-    and columns must be from the performance data table.
+    # Default line styles and line colors
+    # If the user does not specify enough, default the missing values
+    if lines_styles is None:
+        lines_styles = ["--"] * len(percentiles_vals)
+    elif len(lines_styles) < len(percentiles_vals):
+        lines_styles += ["--"] * (len(percentiles_vals) - len(lines_styles))
 
-    Designed to take in a thicket, and display a plot with one or more boxplots
-    depending on the number of nodes and columns passed.
+    if line_colors is None:
+        line_colors = ["black"] * len(percentiles_vals)
+    elif len(line_colors) < len(percentiles_vals):
+        line_colors += ["black"] * (len(percentiles_vals) - len(line_colors))
+
+    violin_idx = -1
+
+    for thicket_key in x_order:
+        thicket = thickets[thicket_key]
+        node = nodes[thicket_key]
+        columns_in = columns[thicket_key]
+
+        for column in columns_in:
+            violin_idx += 1
+            for idx, percentile in enumerate(percentiles_vals):
+                stats_column = None
+                # Columnar joined thickets
+                if isinstance(column, tuple):
+                    stats_column = (
+                        str(column[0]),
+                        "{}_percentiles_{}".format(column[1], int(percentile * 100)),
+                    )
+                # Non-columnar joined
+                else:
+                    stats_column = "{}_percentiles_{}".format(
+                        column, int(percentile * 100)
+                    )
+                # Call percentile(...) if the percentile value for the column has not been calculated already
+                if (
+                    column in thicket.exc_metrics
+                    and stats_column not in thicket.statsframe.exc_metrics
+                    or column in thicket.inc_metrics
+                    and stats_column not in thicket.statsframe.inc_metrics
+                ):
+                    percentiles(thicket, [column], [percentile])
+
+                percentile_value = thicket.statsframe.dataframe[stats_column][node]
+
+                # Plot line
+                added_line = graph.axhline(
+                    y=percentile_value,
+                    color=line_colors[idx],
+                    linestyle=lines_styles[idx],
+                )
+                # Get the violin structure
+                patch = mpl.patches.PathPatch(
+                    graph.collections[violin_idx].get_paths()[0],
+                    transform=graph.transData,
+                )
+                # Clip line to the violin structure
+                added_line.set_clip_path(patch)
+
+    return graph
+
+
+def display_violinplot_thicket(
+    thickets,
+    nodes=None,
+    columns=None,
+    x_order=None,
+    percentiles=[],
+    percentile_linestyles=[],
+    percentile_colors=[],
+    **kwargs,
+):
+    """
+    Display violinplots for each thicket passed in, where each thicket will have
+    a corresponding node specified in nodes. For each node, a violin will be plotted for
+    each column specified in the columns dictionary.
 
     Arguments:
-        thicket (dictionary): Thicket object
-        nodes (dictionaryu): List of nodes to view on the x-axis
-        column (dictionary): List of hardware/timing metrics to view on the y-axis. Note, if
-            using a columnar joined thicket a list of tuples must be passed in with the
-            format (column index, column name).
+        thickets (dict)  : Dictionary of thickets. The thickets in the dictionary must either be
+            all columnar joined thickets, or all non-columnar joined thickets, but not a mix of both.
+        nodes    (dict)  : Dictionary of a node to plot for each thicket in the thickets
+            dictionary. The keys must match for both the thickets dictionary and the nodes dictionary
+        columns  (dict)  : Dictionary of columns to plot for each thicket in the thickets
+            dictionary. The keys must match for both the thickets dictionary and the columns dictionary
+        x_order (list) : List of keys to use for plotting order. If this is none, the thickets that get
+            plotted will be in whatever order thickets.keys() returns.
+        percentiles (list)  : List of percentile values to plot for each violin plot.
+            Each value must be between [0.0, 1.0]. If the percentile value is not on the statistic table,
+            the percentile value will be calculated, and put on the statsframe. An internal call to percentiles(...)
+            will be done for you.
+        percentile_linestyles (list): List of line styles for the percentiles. If not provided, the default
+            line styles will be "--". If the list does not specify styles for each of the percentiles, the missing
+            styles will default to "--"
+        percentile_colors (list): List of colors to apply for percentile line. The default value is "black",
+            If the list does not specify colors for each percentile, the missing colors will default to "black"
+        **kwargs: Arguments that can be passed to seaborns violinplot function
 
     Returns:
-        (matplotlib Axes): Object for managing boxplot.
+        (matplotlib Axes): Object for managing violinplot.
     """
 
-    def column_name_mapper(current_cols):
-        if current_cols[0] in ["node", "name"]:
-            return current_cols[0]
+    # Ensure thickets, nodes, and columns are all dictionaries
+    if not isinstance(thickets, dict):
+        raise ValueError("thickets must be a dictionary of thickets")
 
-        return str(current_cols)
-
-    if nodes is None:
-        raise ValueError("Nodes must be a dictionary, specifying nodes for each Thicket passed in")
-
-    if columns is None:
-        raise ValueError("Columns must be a dictionary, specifying columns for each Thicket passed in")
-
-    #Ensures that both nodes and columns is a list of lists
-    if isinstance(dictionary, dict) == False or all(isinstance(n, list) for n in nodes.items()) == False:
-        raise ValueError("Nodes must be a list of lists, specifying nodes for each Thicket passed in")
-    
-    if isinstance(columns, dict) == False or all(isinstance(c, list) for c in columns.items()) == False:
-        raise ValueError("Nodes must be a list of lists, specifying nodes for each Thicket passed in")
-    
-    #Ensures that each Thicket has corresponding nodes, and columns. Otherwise throw an error
-    if len(thicket_dictionary) != len(columns):
-        raise ValueError("Length of columns does not match number of thickets")
-    if len(thicket_dictionary) != len(nodes):
-        raise ValueError("Length of nodes does not match number of thickets")
-
-    #Verify that each node in the nodes lists are node types
-    for node_list in nodes:
-        if not all(isinstance(n, ht.node.Node) for n in node_list):
-            raise ValueError(
-                "Value(s) passed to node argument must be of type hatchet.node.Node."
-            )
-
-    for idx, thicket in enumerate(thicket_dictionary.items()):
-        verify_thicket_structures(thicket[1].dataframe, index=["node"], columns=columns[idx])
-    
-    filtered_dfs = [None] * len(thicket_dictionary) #Holds the final dataframe for each thicket that we will plot
-    sub_dataframes = [None] * len(thicket_dictionary) #Holds the intermediate dataframe for each thicket
-
-    for curr_thicket_indx, thicket in enumerate(thicket_dictionary.items()):
-        cols = [str(c) for c in columns[curr_thicket_indx]]
-        sub_dataframes[curr_thicket_indx] = thicket[1].dataframe[[("name", ""), *columns[curr_thicket_indx]]].reset_index()
-        sub_dataframes[curr_thicket_indx].columns = sub_dataframes[curr_thicket_indx].columns.to_flat_index().map(column_name_mapper)
-        sub_dataframes[curr_thicket_indx]["name"] = thicket[1].dataframe["name"].tolist()
-        
-        melted_df = pd.melt(
-            sub_dataframes[curr_thicket_indx],
-            id_vars=["node", "name"],
-            value_vars=cols,
-            var_name="Performance counter",
-            value_name=" ",
+    if not isinstance(nodes, dict):
+        raise ValueError(
+            "Nodes must be a dictionary, specifying a node for each Thicket passed in"
         )
 
-        position = []
+    if isinstance(columns, dict) is False:
+        raise ValueError(
+            "columns must be a dictionary, specifying columns for each Thicket passed in"
+        )
 
-        #Grab the indices of the nodes that we are interested in
-        for node in nodes[curr_thicket_indx]:
+    if all(isinstance(c, list) for c in columns.values()) is False:
+        raise ValueError("Columns dictionary must have list of columns as values")
+
+    # Ensure that if x_order is not None, that it is a list!
+    if x_order is not None and isinstance(x_order, list) is False:
+        raise ValueError("x_order must be a list of keys")
+
+    # Ensure equal number of thickets and corresponding nodes and columns
+    if len(thickets) != len(nodes):
+        raise ValueError("Length of nodes must match number of thickets")
+
+    if len(thickets) != len(columns):
+        raise ValueError("Length of columns must match number of thickets")
+
+    # Verify that each node in the nodes lists are node types
+    if all(isinstance(n, ht.node.Node) for n in list(nodes.values())) is False:
+        raise ValueError(
+            "Value(s) passed to nodes argument must be of type hatchet.node.Node."
+        )
+
+    # Verify each thicket has corresponding columns
+    for idx, key in enumerate(thickets.keys()):
+        verify_thicket_structures(
+            thickets[key].dataframe, index=["node"], columns=columns[key]
+        )
+
+    # Check to see if ALL the keys across dictionaries are the same, and if x_order is not None
+    # the keys must match the thickets dictionary keys
+    if set(thickets.keys()) != set(nodes.keys()):
+        raise ValueError(
+            "Keys in nodes dictionary do not match keys in thickets dictionary"
+        )
+    if set(thickets.keys()) != set(columns.keys()):
+        raise ValueError(
+            "Keys in columns dictionary do not match keys in thickets dictionary"
+        )
+    if x_order is not None and set(thickets.keys()) != set(x_order):
+        raise ValueError(
+            "Keys listed in x_order do not match keys in thickets dictionary"
+        )
+
+    # Now check that all the thickets are either all columnar joined thickets, OR, they are all non-columnar joined thickets
+    # We should not be comparing thickets that are not of the same type.
+    columnar_joined_found = False
+    noncolumnar_joined_found = False
+
+    for thicket in thickets.values():
+        if thicket.dataframe.columns.nlevels == 1:
+            noncolumnar_joined_found = True
+        elif thicket.dataframe.columns.nlevels == 2:
+            columnar_joined_found = True
+
+        if noncolumnar_joined_found and columnar_joined_found:
+            raise ValueError(
+                "Thickets dictionary can not contain both columnar joined thickets and non-columnar joined thickets"
+            )
+
+    # Get thicket key order
+    x_order = list(thickets.keys()) if x_order is None else x_order
+
+    # Holds the final dataframe for each thicket that we will plot
+    filtered_dfs = [None] * len(thickets)
+
+    # Holds the intermediate dataframe for each thicket
+    sub_dataframe = None
+
+    for thicket_idx, key in enumerate(x_order):
+
+        thicket = thickets[key]
+        node = nodes[key]
+        in_columns = columns[key]
+
+        # non-columnar joined thicket
+        if thicket.dataframe.columns.nlevels == 1:
+            melted_df = pd.melt(
+                thicket.dataframe.reset_index(),
+                id_vars=["node", "name"],
+                value_vars=in_columns,
+                var_name="Performance counter",
+                value_name=" ",
+            )
+
             idx_c = melted_df.index[melted_df["node"] == node]
-            for pos in idx_c:
-                position.append(pos)
+            position = [p for p in idx_c]
+            filtered_dfs[thicket_idx] = melted_df.loc[position].rename(
+                columns={"node": "hatchet node", "name": "node"}
+            )
+            thicket_name = [str(key)] * len(filtered_dfs[thicket_idx]["node"])
+            filtered_dfs[thicket_idx]["node"] = thicket_name
+        # Columnar joined thicket
+        else:
 
-        # rename columns such that the x-axis label is "node" and not "name", tick marks
-        # will be node names
-        # This is where we grab the actual data for a node that was passed in!
-        filtered_dfs[curr_thicket_indx] = melted_df.loc[position].rename( columns={"node": "hatchet node", "name": "node"})
-        thicket_name = [str(thicket[0]) + str()] * len(filtered_dfs[curr_thicket_indx]["node"])
-        filtered_dfs[curr_thicket_indx]["node"] = thicket_name
-        #display(filtered_dfs[curr_thicket_indx])
+            cols = [str(c) for c in in_columns]
+            sub_dataframe = thicket.dataframe[[("name", ""), *in_columns]].reset_index()
+            sub_dataframe.columns = sub_dataframe.columns.to_flat_index().map(
+                _column_name_mapper
+            )
+            sub_dataframe["name"] = thicket.dataframe["name"].tolist()
+
+            melted_df = pd.melt(
+                sub_dataframe,
+                id_vars=["node", "name"],
+                value_vars=cols,
+                var_name="Performance counter",
+                value_name=" ",
+            )
+
+            idx_c = melted_df.index[melted_df["node"] == node]
+            position = [p for p in idx_c]
+            filtered_dfs[thicket_idx] = melted_df.loc[position].rename(
+                columns={"node": "hatchet node", "name": "node"}
+            )
+            thicket_name = [str(key)] * len(filtered_dfs[thicket_idx]["node"])
+            filtered_dfs[thicket_idx]["node"] = thicket_name
 
     master_df = pd.concat(filtered_dfs, ignore_index=True)
-   
-    #display(master_df)
 
-    return sns.violinplot( data=master_df, x="node", y=" ", hue="Performance counter", **kwargs)
+    graph = sns.violinplot(
+        data=master_df, x="node", y=" ", hue="Performance counter", inner=None, **kwargs
+    )
+
+    # No percentiles to plot!
+    if len(percentiles) == 0:
+        return graph
+    # Percentiles need to be plotted
+    else:
+        return _add_percentile_lines_thicket(
+            graph,
+            thickets,
+            nodes,
+            columns,
+            x_order,
+            percentiles,
+            percentile_linestyles,
+            percentile_colors,
+        )
