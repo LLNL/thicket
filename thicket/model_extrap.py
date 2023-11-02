@@ -43,22 +43,27 @@ from extrap.entities.model import Model
 from extrap.entities.functions import Function
 from extrap.entities.terms import DEFAULT_PARAM_NAMES
 from extrap.entities.functions import ConstantFunction
+from extrap.util.options_parser import _create_parser, _add_single_parameter_options
 
 MODEL_TAG = "_extrap-model"
 
 
-class ModelerOptions():
-    """
+class ExtrapModelerException(Exception):
+    """Custom exception class for raising exceptions when the given modeler does not exist in 
+    Extra-P.
+
+    Args:
+        Exception (Exception): Python base Exception object.
     """
 
-    def __init__(self, allow_log_terms: bool = True,
-                 use_crossvalidation: bool = True,
-                 compare_with_RSS: bool = False):
+    def __init__(self, message: str) -> None:
+        """Initialization function for the custom Extra-P reader exception class.
+
+        Args:
+            message (str): The message the exception should pass on.
         """
-        """
-        self.allow_log_terms = allow_log_terms
-        self.use_crossvalidation = use_crossvalidation
-        self.compare_with_RSS = compare_with_RSS
+        super().__init__()
+        self.message = message
 
 
 class ExtrapReaderException(Exception):
@@ -645,8 +650,47 @@ class ExtrapInterface:
     append them to a thicket, and display the models."""
 
     def __init__(self) -> None:
-        """Create a new Extra-P Interface object."""
+        """
+        Create a new Extra-P Interface object.
+        """
         pass
+
+    def print_modelers(self) -> None:
+        """
+        Prints the available modelers in a list.
+        """
+        modelers_list = list(set(k.lower() for k in chain(
+            single_parameter.all_modelers.keys(), multi_parameter.all_modelers.keys())))
+        print("Available Extra-P Modeler:", modelers_list)
+
+    def print_modeler_options(self, modeler_name: str) -> None:
+        """
+        Prints all the modeler options available for the given modeler.
+        """
+        modelers_list = list(set(k.lower() for k in chain(
+            single_parameter.all_modelers.keys(), multi_parameter.all_modelers.keys())))
+        try:
+            if modeler_name.lower() in modelers_list:
+                if modeler_name in single_parameter.all_modelers:
+                    modeler = single_parameter.all_modelers[modeler_name]
+                    sub_parser = _create_parser(modeler, modeler_name)
+                    print('Single Parameter Options')
+                    print('------------------------')
+                    sub_parser.print_help()
+                if modeler_name in multi_parameter.all_modelers:
+                    modeler = multi_parameter.all_modelers[modeler_name]
+                    sub_parser = _create_parser(
+                        modeler, modeler_name, "", False)
+                    _add_single_parameter_options(sub_parser)
+                    print()
+                    print('Multi Parameter Options')
+                    print('-----------------------')
+                    sub_parser.print_help()
+            else:
+                raise ExtrapModelerException(
+                    "The given modeler does not exist. Valid options are: "+str(modelers_list))
+        except ExtrapModelerException as e:
+            print("Warning: "+e.message)
 
     def to_html(
         self,
@@ -750,6 +794,7 @@ class ExtrapInterface:
 
     def create_models(self,
                       tht: Thicket,
+                      model_name: str,
                       parameters: list[str] = None,
                       metrics: list[str] = None,
                       use_median: bool = True,
@@ -757,7 +802,6 @@ class ExtrapInterface:
                       scaling_parameter: str = "jobsize",
                       add_stats: bool = True,
                       modeler: str = "default",
-                      model_name: str = "default_model",
                       allow_log_terms: bool = True
                       ) -> None:
         """Converts the data in the given thicket into a format that
@@ -1003,14 +1047,15 @@ class ExtrapInterface:
         # check the created experiment for its validty
         io_helper.validate_experiment(experiment)
 
-        # TODO: these need to be set by the arguments in the function call
+        # check if the given modeler exists
         modelers_list = list(set(k.lower() for k in
                              chain(single_parameter.all_modelers.keys(), multi_parameter.all_modelers.keys())))
-        print("DEBUG: modelers_list", modelers_list)
         if modeler.lower() not in modelers_list:
-            # TODO: throw an exception (maybe custom one) saying the given modeler does not exist
-            # then continue with the default modeler
+            raise ExtrapModelerException("The given modeler does not exist in Extra-P. Valid options are: "+str(
+                modelers_list)+". Using default modeler instead.")
             modeler = "default"
+
+        # DEBUG
         modeler_options = {'allow_log_terms': allow_log_terms, 'use_crossvalidation': None, 'compare_with_RSS': None, 'poly_exponents': None,
                            'log_exponents': None, 'retain_default_exponents': None, 'force_combination_exponents': None, 'allow_negative_exponents': None}
         # TODO: I basically want to get this dict from extra-p based on the modeler that is currently selected
@@ -1019,13 +1064,16 @@ class ExtrapInterface:
         # generate models using Extra-P model generator
         model_generator = ModelGenerator(
             experiment,
-            modeler=modeler.lower(),
+            modeler=modeler,
             name=model_name,
             use_median=use_median
         )
 
         # apply modeler options
         modeler = model_generator.modeler
+
+        print("DEBUG:", modeler.OPTIONS)
+
         if isinstance(modeler, MultiParameterModeler) and modeler_options:
             # set single-parameter modeler of multi-parameter modeler
             single_modeler = modeler_options[SINGLE_PARAMETER_MODELER_KEY]
@@ -1039,6 +1087,7 @@ class ExtrapInterface:
                         setattr(modeler.single_parameter_modeler, name, value)
 
         for name, value in modeler_options.items():
+            print(name, value)
             if value is not None:
                 setattr(modeler, name, value)
 
@@ -1098,26 +1147,6 @@ class ExtrapInterface:
             tht.statsframe.dataframe = tht.statsframe.dataframe.join(pd.DataFrame(
                 data, columns=pd.MultiIndex.from_product([[model_name], column_names]), index=tht.statsframe.dataframe.index))
 
-            """# add the models, and statistics into the dataframe
-            for callpath in experiment.callpaths:
-                for metric in experiment.metrics:
-                    mkey = (callpath, metric)
-                    for thicket_node, _ in tht.dataframe.groupby(level=0):
-                        if Callpath(thicket_node.frame["name"]) == callpath:
-                            # catch key errors when queriying for models with a callpath, metric combination
-                            # that does not exist because there was no measurement object created for them
-                            try:
-                                tht.statsframe.dataframe.at[thicket_node, [model_name, str(
-                                    metric) + MODEL_TAG]
-                                ] = ModelWrapper(model_generator.models[mkey], parameters, model_name)
-                                # Add statistics to aggregated statistics table
-                                if add_stats:
-                                    self._add_extrap_statistics(
-                                        tht, thicket_node, str(metric))
-                            except Exception as e:
-                                print(e)
-                                pass"""
-
         else:
             # check if there is already a extra-p model in the dataframe
             model_exists = True
@@ -1152,6 +1181,9 @@ class ExtrapInterface:
 
             # if there is already a model in the dataframe, concat them and add a multi column index
             if model_exists is True:
+                tht.statsframe.dataframe = tht.statsframe.dataframe.drop(
+                    columns="name")
+                print("DEBUG tht:", tht.statsframe.dataframe)
                 tht.statsframe.dataframe = pd.concat(
                     [tht2.statsframe.dataframe, tht.statsframe.dataframe], axis=1, keys=[str(modeler_name), str(model_name)])
 
