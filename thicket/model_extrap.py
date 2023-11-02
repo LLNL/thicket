@@ -43,7 +43,8 @@ from extrap.entities.model import Model
 from extrap.entities.functions import Function
 from extrap.entities.terms import DEFAULT_PARAM_NAMES
 from extrap.entities.functions import ConstantFunction
-from extrap.util.options_parser import _create_parser, _add_single_parameter_options
+from extrap.util.options_parser import _create_parser, _add_single_parameter_options, _modeler_option_bool
+from extrap.modelers.modeler_options import ModelerOptionsGroup
 
 MODEL_TAG = "_extrap-model"
 
@@ -653,44 +654,66 @@ class ExtrapInterface:
         """
         Create a new Extra-P Interface object.
         """
-        pass
+        self.modelers_list = list(set(k.lower() for k in chain(
+            single_parameter.all_modelers.keys(),
+            multi_parameter.all_modelers.keys())))
 
     def print_modelers(self) -> None:
         """
         Prints the available modelers in a list.
         """
-        modelers_list = list(set(k.lower() for k in chain(
-            single_parameter.all_modelers.keys(), multi_parameter.all_modelers.keys())))
-        print("Available Extra-P Modeler:", modelers_list)
+        print("Available Extra-P Modeler:", self.modelers_list)
 
     def print_modeler_options(self, modeler_name: str) -> None:
         """
         Prints all the modeler options available for the given modeler.
         """
-        modelers_list = list(set(k.lower() for k in chain(
-            single_parameter.all_modelers.keys(), multi_parameter.all_modelers.keys())))
+        text = "Modeler Options\n"
+        text += "--------------\n"
+        modeler = self._check_modeler_name(modeler_name)
+        if modeler is not None:
+            if hasattr(modeler, 'OPTIONS'):
+                for name, option in modeler.OPTIONS.items():
+                    if isinstance(option, ModelerOptionsGroup):
+                        for o in option.options:
+                            metavar = o.range or o.type.__name__.upper()
+                            text += str(o.field) + "\t " + str(metavar) + \
+                                "\t " + \
+                                str(o.description) + "\n"
+                    else:
+                        metavar = option.range or option.type.__name__.upper()
+                        text += str(option.field) + "\t " + str(metavar) + \
+                            "\t " + \
+                            str(option.description) + "\n"
+                print(text)
+
+    def _check_modeler_name(self, modeler_name):
+        modeler = None
         try:
-            if modeler_name.lower() in modelers_list:
+            if modeler_name.lower() in self.modelers_list:
                 if modeler_name in single_parameter.all_modelers:
                     modeler = single_parameter.all_modelers[modeler_name]
-                    sub_parser = _create_parser(modeler, modeler_name)
-                    print('Single Parameter Options')
-                    print('------------------------')
-                    sub_parser.print_help()
-                if modeler_name in multi_parameter.all_modelers:
+                elif modeler_name in multi_parameter.all_modelers:
                     modeler = multi_parameter.all_modelers[modeler_name]
-                    sub_parser = _create_parser(
-                        modeler, modeler_name, "", False)
-                    _add_single_parameter_options(sub_parser)
-                    print()
-                    print('Multi Parameter Options')
-                    print('-----------------------')
-                    sub_parser.print_help()
-            else:
-                raise ExtrapModelerException(
-                    "The given modeler does not exist. Valid options are: "+str(modelers_list))
+                else:
+                    raise ExtrapModelerException(
+                        "The given modeler does not exist. Valid options are: "+str(self.modelers_list))
         except ExtrapModelerException as e:
-            print("Warning: "+e.message)
+            print("WARNING: "+e.message)
+        return modeler
+
+    def _check_modeler_options(self, modeler_name):
+        modeler = self._check_modeler_name(modeler_name)
+        options = {}
+        if modeler is not None:
+            if hasattr(modeler, 'OPTIONS'):
+                for name, option in modeler.OPTIONS.items():
+                    if isinstance(option, ModelerOptionsGroup):
+                        for o in option.options:
+                            options[str(o.field)] = None
+                    else:
+                        options[str(option.field)] = None
+        return options, modeler_name
 
     def to_html(
         self,
@@ -802,7 +825,7 @@ class ExtrapInterface:
                       scaling_parameter: str = "jobsize",
                       add_stats: bool = True,
                       modeler: str = "default",
-                      allow_log_terms: bool = True
+                      modeler_options: dict = None
                       ) -> None:
         """Converts the data in the given thicket into a format that
         can be read by Extra-P. Then the Extra-P modeler is called
@@ -814,6 +837,8 @@ class ExtrapInterface:
         Arguments:
             tht (Thicket): The thicket object to get the data
                 from for modeling.
+            model_name (str): Specify the name of the modeler internally used
+                by Extra-P.
             parameters (list): A list of String values of the parameters
                 that will be considered for modeling by Extra-P. (Default=None)
             metrics (list): A list of String value of the metrics
@@ -835,6 +860,10 @@ class ExtrapInterface:
                 allocation is fix. (Default="jobsize")
             add_stats (bool): Option to add hypothesis function statistics
                 to the aggregated statistics table. (Default=True)
+            modeler (str): Set the name of the modeler that should be used
+                for modeling by Extra-P. (Default="default")
+            modeler_options (dict): A dict containing the options that will
+                be set and used for modeling by the given modeler. (Default=None)
         """
 
         # create a copy of the thicket to concat them later on
@@ -854,7 +883,7 @@ class ExtrapInterface:
         else:
             metrics = metrics
 
-        self.experiment = None
+        # self.experiment = None
 
         # create an extra-p experiment
         experiment = Experiment()
@@ -1048,20 +1077,16 @@ class ExtrapInterface:
         io_helper.validate_experiment(experiment)
 
         # check if the given modeler exists
-        modelers_list = list(set(k.lower() for k in
-                             chain(single_parameter.all_modelers.keys(), multi_parameter.all_modelers.keys())))
-        if modeler.lower() not in modelers_list:
+        if modeler.lower() not in self.modelers_list:
             raise ExtrapModelerException("The given modeler does not exist in Extra-P. Valid options are: "+str(
-                modelers_list)+". Using default modeler instead.")
+                self.modelers_list)+". Using default modeler instead.")
             modeler = "default"
 
-        # DEBUG
-        modeler_options = {'allow_log_terms': allow_log_terms, 'use_crossvalidation': None, 'compare_with_RSS': None, 'poly_exponents': None,
-                           'log_exponents': None, 'retain_default_exponents': None, 'force_combination_exponents': None, 'allow_negative_exponents': None}
-        # TODO: I basically want to get this dict from extra-p based on the modeler that is currently selected
-        # then generate options class automatically from that???
+        # special dict to check if all given options for the modeler do exist for the given modeler
+        modeler_options_check, base_modeler_name = self._check_modeler_options(
+            modeler)
 
-        # generate models using Extra-P model generator
+        # create a model generator object for the experiment
         model_generator = ModelGenerator(
             experiment,
             modeler=modeler,
@@ -1071,28 +1096,44 @@ class ExtrapInterface:
 
         # apply modeler options
         modeler = model_generator.modeler
-
-        print("DEBUG:", modeler.OPTIONS)
-
         if isinstance(modeler, MultiParameterModeler) and modeler_options:
+
+            # if there are no single parameter options, modeler defined in the options go with the default values
+            if "#single_parameter_modeler" not in modeler_options:
+                modeler_options["#single_parameter_modeler"] = "default"
+            if "#single_parameter_options" not in modeler_options:
+                modeler_options["#single_parameter_options"] = {}
+
             # set single-parameter modeler of multi-parameter modeler
             single_modeler = modeler_options[SINGLE_PARAMETER_MODELER_KEY]
             if single_modeler is not None:
                 modeler.single_parameter_modeler = single_parameter.all_modelers[single_modeler](
                 )
+
+            # special dict to check if all given options for the modeler do exist for the given modeler
+            single_modeler_options_check, single_modeler_name = self._check_modeler_options(
+                single_modeler)
+
             # apply options of single-parameter modeler
             if modeler.single_parameter_modeler is not None:
                 for name, value in modeler_options[SINGLE_PARAMETER_OPTIONS_KEY].items():
+                    if name not in single_modeler_options_check:
+                        print("WARNING: The option "+str(name) +
+                              " does not exist for the modeler: "+str(single_modeler_name)+". Extra-P will ignore this parameter.")
                     if value is not None:
                         setattr(modeler.single_parameter_modeler, name, value)
 
         for name, value in modeler_options.items():
-            print(name, value)
+            if name not in modeler_options_check and name != "#single_parameter_modeler" and name != "#single_parameter_options":
+                print("WARNING: The option "+str(name) +
+                      " does not exist for the modeler: "+str(base_modeler_name)+". Extra-P will ignore this parameter.")
             if value is not None:
                 setattr(modeler, name, value)
 
+        # create the models
         model_generator.model_all()
 
+        # add the modeler generator to the experiment
         experiment.add_modeler(model_generator)
 
         # check if dataframe has already a multi column index
@@ -1187,7 +1228,7 @@ class ExtrapInterface:
                 tht.statsframe.dataframe = pd.concat(
                     [tht2.statsframe.dataframe, tht.statsframe.dataframe], axis=1, keys=[str(modeler_name), str(model_name)])
 
-        self.experiment = experiment
+        # self.experiment = experiment
 
     def _componentize_function(
         model_object: Model, parameters: list[str]
