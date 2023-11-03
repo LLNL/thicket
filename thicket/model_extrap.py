@@ -1096,7 +1096,7 @@ class ExtrapInterface:
 
         # apply modeler options
         modeler = model_generator.modeler
-        if isinstance(modeler, MultiParameterModeler) and modeler_options:
+        if isinstance(modeler, MultiParameterModeler) and modeler_options is not None:
 
             # if there are no single parameter options, modeler defined in the options go with the default values
             if "#single_parameter_modeler" not in modeler_options:
@@ -1123,12 +1123,13 @@ class ExtrapInterface:
                     if value is not None:
                         setattr(modeler.single_parameter_modeler, name, value)
 
-        for name, value in modeler_options.items():
-            if name not in modeler_options_check and name != "#single_parameter_modeler" and name != "#single_parameter_options":
-                print("WARNING: The option "+str(name) +
-                      " does not exist for the modeler: "+str(base_modeler_name)+". Extra-P will ignore this parameter.")
-            if value is not None:
-                setattr(modeler, name, value)
+        if modeler_options is not None:
+            for name, value in modeler_options.items():
+                if name not in modeler_options_check and name != "#single_parameter_modeler" and name != "#single_parameter_options":
+                    print("WARNING: The option "+str(name) +
+                          " does not exist for the modeler: "+str(base_modeler_name)+". Extra-P will ignore this parameter.")
+                if value is not None:
+                    setattr(modeler, name, value)
 
         # create the models
         model_generator.model_all()
@@ -1138,11 +1139,6 @@ class ExtrapInterface:
 
         # check if dataframe has already a multi column index
         if tht.statsframe.dataframe.columns.nlevels > 1:
-
-            # TODO: not sure if I actually need this code...
-            modeler_names = []
-            for x in tht.statsframe.dataframe.columns.get_level_values(0).unique():
-                modeler_names.append(x)
 
             # create a list with the column names
             column_names = []
@@ -1224,11 +1220,64 @@ class ExtrapInterface:
             if model_exists is True:
                 tht.statsframe.dataframe = tht.statsframe.dataframe.drop(
                     columns="name")
-                print("DEBUG tht:", tht.statsframe.dataframe)
+                # print("DEBUG tht:", tht.statsframe.dataframe)
+                tht3 = copy.deepcopy(tht2)
+                for column in tht3.statsframe.dataframe.columns:
+                    if "_extrap-model" in column:
+                        tht3.statsframe.dataframe = tht3.statsframe.dataframe.drop(
+                            columns=column)
+                tht2.statsframe.dataframe = tht2.statsframe.dataframe.drop(
+                    columns="name")
+
                 tht.statsframe.dataframe = pd.concat(
                     [tht2.statsframe.dataframe, tht.statsframe.dataframe], axis=1, keys=[str(modeler_name), str(model_name)])
+                tht.statsframe.dataframe = self._concat(
+                    [tht3.statsframe.dataframe, tht.statsframe.dataframe], axis=1)
 
-        # self.experiment = experiment
+    def _concat(self, dfs, axis=0, *args, **kwargs):
+        """
+        Wrapper for `pandas.concat'; concatenate pandas objects even if they have 
+        unequal number of levels on concatenation axis.
+
+        Levels containing empty strings are added from below (when concatenating along
+        columns) or right (when concateniting along rows) to match the maximum number 
+        found in the dataframes.
+
+        Parameters
+        ----------
+        dfs : Iterable
+            Dataframes that must be concatenated.
+        axis : int, optional
+            Axis along which concatenation must take place. The default is 0.
+
+        Returns
+        -------
+        pd.DataFrame
+            Concatenated Dataframe.
+
+        Notes
+        -----
+        Any arguments and kwarguments are passed onto the `pandas.concat` function.
+
+        See also
+        --------
+        pandas.concat
+        """
+        def index(df):
+            return df.columns if axis == 1 else df.index
+
+        def add_levels(df):
+            need = want - index(df).nlevels
+            if need > 0:
+                # prepend empty levels
+                df = pd.concat([df], keys=[('',)*need], axis=axis)
+                for i in range(want-need):  # move empty levels to bottom
+                    df = df.swaplevel(i, i+need, axis=axis)
+            return df
+
+        want = np.max([index(df).nlevels for df in dfs])
+        dfs = [add_levels(df) for df in dfs]
+        return pd.concat(dfs, axis=axis, *args, **kwargs)
 
     def _componentize_function(
         model_object: Model, parameters: list[str]
