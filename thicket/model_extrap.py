@@ -143,13 +143,14 @@ class ModelWrapper:
         """
         return self.mdl.hypothesis.function.evaluate(val)
 
-    def display_one_parameter_model(
+    def _display_one_parameter_model(
         self,
         show_mean: bool = False,
         show_median: bool = False,
         show_min_max: bool = False,
         RSS: bool = False,
         AR2: bool = False,
+        SMAPE: bool = False,
         show_opt_scaling: bool = False,
         opt_scaling_func: str = None,
     ) -> Tuple[Figure, Axes]:
@@ -252,7 +253,7 @@ class ModelWrapper:
                     )
             # otherwise try to figure out the optimal scaling curve automatically
             else:
-                if parameters[0] == "jobsize":
+                if self.parameters[0] == "jobsize":
                     y_vals_opt = []
                     for _ in range(len(y_vals)):
                         y_vals_opt.append(y_vals[0])
@@ -264,32 +265,37 @@ class ModelWrapper:
                     )
 
         # plot axes and titles
-        ax.set_xlabel(parameters[0] + " $" +
+        ax.set_xlabel(self.parameters[0] + " $" +
                       str(DEFAULT_PARAM_NAMES[0])+"$")
         ax.set_ylabel(self.mdl.metric)
         ax.set_title(str(self.mdl.callpath) + "()")
 
-        # plot rss and ar2 values
-        y_pos_text = max(maxes) - 0.1 * max(maxes)
+        # plot rss, ar2, and smape values
+        y_pos_text = ax.get_ylim()[1] - 0.2 * ax.get_ylim()[1]
         rss = "{:.3f}".format(self.mdl.hypothesis.RSS)
         ar2 = "{:.3f}".format(self.mdl.hypothesis.AR2)
-        if RSS and not AR2:
+        smape = "{:.3f}".format(self.mdl.hypothesis.SMAPE)
+
+        stats_text = ""
+
+        if RSS:
+            stats_text += "RSS = " + rss
+        if AR2:
+            if stats_text != "":
+                stats_text += "\nAR\u00b2 = " + ar2
+            else:
+                stats_text += "AR\u00b2 = " + ar2
+        if SMAPE:
+            if stats_text != "":
+                stats_text += "\nSMAPE = " + smape
+            else:
+                stats_text += "SMAPE = " + smape
+
+        if RSS or AR2 or SMAPE:
             ax.text(
                 x_vals[0],
                 y_pos_text,
-                "RSS = " + rss,
-            )
-        elif AR2 and not RSS:
-            ax.text(
-                x_vals[0],
-                y_pos_text,
-                "AR\u00b2 = " + ar2,
-            )
-        elif RSS and AR2:
-            ax.text(
-                x_vals[0],
-                y_pos_text,
-                "RSS = " + rss + "\nAR\u00b2 = " + ar2,
+                stats_text
             )
 
         # plot legend
@@ -297,7 +303,7 @@ class ModelWrapper:
 
         return fig, ax
 
-    def draw_legend(
+    def _draw_legend(
         self, axis: Axes, dict_callpath_color: dict[str, list[str]], function_char_len: int
     ) -> None:
         """This method draws a legend for 3D plots.
@@ -351,13 +357,14 @@ class ModelWrapper:
         axis.legend(handles=handles, loc="center right",
                     bbox_to_anchor=(1.75+(function_char_len)*0.01, 0.5))
 
-    def display_two_parameter_model(
+    def _display_two_parameter_model(
         self,
         show_mean: bool = False,
         show_median: bool = False,
         show_min_max: bool = False,
         RSS: bool = False,
         AR2: bool = False,
+        SMAPE: bool = False,
         show_opt_scaling: bool = False,
         opt_scaling_func: str = None,
     ) -> Tuple[Figure, Axes]:
@@ -369,6 +376,7 @@ class ModelWrapper:
             show_min_max (bool, optional): whether to display min/max values on the plot. Defaults to False.
             RSS (bool, optional): whether to display Extra-P model RSS on the plot. Defaults to False.
             AR2 (bool, optional): whether to display Extra-P model AR2 on the plot. Defaults to False.
+            SMAPE (bool, optional): whether to display Extra-P model SMAPE on the plot. Defaults to False.
             show_opt_scaling (bool, optional): whether to display the optimal scaling curve. Defaults to False.
             opt_scaling_func (str, optional): an optimal scaling function as a python interpretable string provided by the user. Defaults to None.
 
@@ -458,8 +466,8 @@ class ModelWrapper:
             # otherwise try to figure out the optimal scaling curve automatically
             else:
                 if (
-                    parameters[0] == "jobsize"
-                    and parameters[1] == "problem_size"
+                    self.parameters[0] == "jobsize"
+                    and self.parameters[1] == "problem_size"
                 ):
                     z_vals_opt = opt_scaling_func_auto(x_vals, y_vals)
                     ax.plot_surface(
@@ -527,9 +535,9 @@ class ModelWrapper:
             ax.plot(line_x, line_y, line_z, color="black")
 
         # axis labels and title
-        ax.set_xlabel(parameters[0] + " $" +
+        ax.set_xlabel(self.parameters[0] + " $" +
                       str(DEFAULT_PARAM_NAMES[0])+"$")
-        ax.set_ylabel(parameters[1] + " $" +
+        ax.set_ylabel(self.parameters[1] + " $" +
                       str(DEFAULT_PARAM_NAMES[1])+"$")
         ax.set_zlabel(self.mdl.metric)
         ax.set_title(str(self.mdl.callpath) + "()")
@@ -551,34 +559,37 @@ class ModelWrapper:
         if show_opt_scaling:
             dict_callpath_color["optimal scaling"] = ["surface", "red"]
 
-        # plot rss and ar2 values
+        # plot rss, ar2, and smape values
         rss = "{:.3f}".format(self.mdl.hypothesis.RSS)
         ar2 = "{:.3f}".format(self.mdl.hypothesis.AR2)
-        if RSS and not AR2:
+        smape = "{:.3f}".format(self.mdl.hypothesis.SMAPE)
+
+        stats_text = ""
+
+        if RSS:
+            stats_text += "RSS = " + rss
+        if AR2:
+            if stats_text != "":
+                stats_text += "\nAR\u00b2 = " + ar2
+            else:
+                stats_text += "AR\u00b2 = " + ar2
+        if SMAPE:
+            if stats_text != "":
+                stats_text += "\nSMAPE = " + smape
+            else:
+                stats_text += "SMAPE = " + smape
+
+        if RSS or AR2 or SMAPE:
             ax.text2D(
                 0,
                 0.75,
-                "RSS = " + rss,
-                transform=ax.transAxes,
-            )
-        elif AR2 and not RSS:
-            ax.text2D(
-                0,
-                0.75,
-                "AR\u00b2 = " + ar2,
-                transform=ax.transAxes,
-            )
-        elif RSS and AR2:
-            ax.text2D(
-                0,
-                0.75,
-                "RSS = " + rss + "\nAR\u00b2 = " + ar2,
+                stats_text,
                 transform=ax.transAxes,
             )
 
         # draw the legend
-        self.draw_legend(ax, dict_callpath_color,
-                         len(scientific_function))
+        self._draw_legend(ax, dict_callpath_color,
+                          len(scientific_function))
 
         return fig, ax
 
@@ -589,6 +600,7 @@ class ModelWrapper:
         show_min_max: bool = False,
         RSS: bool = False,
         AR2: bool = False,
+        SMAPE: bool = False,
         show_opt_scaling: bool = False,
         opt_scaling_func: str = None,
     ) -> Tuple[Figure, Axes]:
@@ -602,6 +614,7 @@ class ModelWrapper:
             show_min_max (bool, optional): whether to display min/max values on the plot. Defaults to False.
             RSS (bool, optional): whether to display Extra-P model RSS on the plot. Defaults to False.
             AR2 (bool, optional): whether to display Extra-P model AR2 on the plot. Defaults to False.
+            SMAPE (bool, optional): whether to display Extra-P model SMAPE on the plot. Defaults to False.
             show_opt_scaling (bool, optional): whether to display the optimal scaling curve. Defaults to False.
             opt_scaling_func (str, optional): an optimal scaling function as a python interpretable string provided by the user. Defaults to None.
 
@@ -613,24 +626,26 @@ class ModelWrapper:
         """
 
         # check number of model parameters
-        if len(parameters) == 1:
-            fig, ax = self.display_one_parameter_model(
+        if len(self.parameters) == 1:
+            fig, ax = self._display_one_parameter_model(
                 show_mean,
                 show_median,
                 show_min_max,
                 RSS,
                 AR2,
+                SMAPE,
                 show_opt_scaling,
                 opt_scaling_func,
             )
 
-        elif len(parameters) == 2:
-            fig, ax = self.display_two_parameter_model(
+        elif len(self.parameters) == 2:
+            fig, ax = self._display_two_parameter_model(
                 show_mean,
                 show_median,
                 show_min_max,
                 RSS,
                 AR2,
+                SMAPE,
                 show_opt_scaling,
                 opt_scaling_func,
             )
@@ -638,7 +653,7 @@ class ModelWrapper:
         else:
             raise Exception(
                 "Plotting performance models with "
-                + str(len(parameters))
+                + str(len(self.parameters))
                 + " parameters is currently not supported."
             )
 
@@ -766,6 +781,10 @@ class ExtrapInterface:
                 figdata_jpg)
             plt.close(fig)
             return imgstr
+
+        # TODO: figure out how to replace this code
+        # TODO: by adding something in model wrapper object
+        # that can be accessed here...
 
         # catch key errors when queriying for models with a callpath, metric combination
         # that does not exist because there was no measurement object created for them
