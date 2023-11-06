@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 import hatchet as ht
 
+import thicket as th
 from ..utils import verify_thicket_structures
 
 
@@ -24,15 +25,21 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
     Returns:
         (matplotlib Axes): Object for managing histogram plot.
     """
+
     if column is None or node is None:
         raise ValueError(
-            "To see a list of valid columns, run 'Thicket.performance_cols'."
+            "Both 'node' and 'column' must be provided. To see a list of valid columns, run 'Thicket.performance_cols'."
         )
-
+    if not isinstance(thicket, th.Thicket):
+        raise ValueError(
+            "Value passed to thicket argument must be of type thicket.Thicket."
+        )
     if not isinstance(node, ht.node.Node):
         raise ValueError(
             "Value passed to node argument must be of type hatchet.node.Node."
         )
+    if not isinstance(column, str):
+        raise ValueError("Value passed to column argument must be of type str.")
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=[column])
 
@@ -47,9 +54,9 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
 
         filtered_df = df[df["node"] == node]
 
-        ax = sns.displot(filtered_df, x=" ", kind="hist", **kwargs)
+        fig = sns.displot(filtered_df, x=" ", kind="hist", **kwargs)
 
-        return ax
+        return fig
     # columnar joined thicket object
     else:
         col_idx, column_value = column[0], column[1]
@@ -64,6 +71,6 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
 
         filtered_df = df[df["node"] == node]
 
-        ax = sns.displot(filtered_df, x=" ", kind="hist", **kwargs)
+        fig = sns.displot(filtered_df, x=" ", kind="hist", **kwargs)
 
-        return ax
+        return fig
