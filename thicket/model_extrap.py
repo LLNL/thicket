@@ -672,6 +672,8 @@ class ExtrapInterface:
         self.modelers_list = list(set(k.lower() for k in chain(
             single_parameter.all_modelers.keys(),
             multi_parameter.all_modelers.keys())))
+        self.configs = []
+        self.experiments = {}
 
     def print_modelers(self) -> None:
         """
@@ -786,13 +788,16 @@ class ExtrapInterface:
         # TODO: by adding something in model wrapper object
         # that can be accessed here...
 
+        config = self.configs[0]
+
         # catch key errors when queriying for models with a callpath, metric combination
         # that does not exist because there was no measurement object created for them
         existing_metrics = []
-        for callpath in self.experiment.callpaths:
-            for metric in self.experiment.metrics:
+        experiment = self.experiments[config]
+        for callpath in experiment.callpaths:
+            for metric in experiment.metrics:
                 try:
-                    self.experiment.modelers[0].models[(callpath, metric)]
+                    experiment.modelers[0].models[(callpath, metric)]
                     if str(metric) not in existing_metrics:
                         existing_metrics.append(str(metric))
                 except KeyError:
@@ -888,6 +893,17 @@ class ExtrapInterface:
         # create a copy of the thicket to concat them later on
         tht2 = copy.deepcopy(tht)
 
+        # add this configuration to the list of the interface
+        try:
+            if model_name in self.configs:
+                raise Exception("A configuration with the name '" +
+                                str(model_name)+"' already exists. Choose another name!")
+            else:
+                self.configs.append(model_name)
+        except Exception as e:
+            print("ERROR:", e)
+            return
+
         # set the model parameters
         if not parameters:
             # if there are no parameters provided use the jobsize
@@ -901,8 +917,6 @@ class ExtrapInterface:
             metrics = tht.exc_metrics + tht.inc_metrics
         else:
             metrics = metrics
-
-        # self.experiment = None
 
         # create an extra-p experiment
         experiment = Experiment()
@@ -1161,61 +1175,71 @@ class ExtrapInterface:
 
             # create a list with the column names
             column_names = []
-            column_names.append(str(metric) + MODEL_TAG)
-            if add_stats:
-                column_names.append(str(metric) + "_RSS" + MODEL_TAG)
-                column_names.append(str(metric) + "_rRSS" + MODEL_TAG)
-                column_names.append(str(metric) + "_SMAPE" + MODEL_TAG)
-                column_names.append(str(metric) + "_AR2" + MODEL_TAG)
-                column_names.append(str(metric) + "_RE" + MODEL_TAG)
+            column_names.append("name")
+            for metric in experiment.metrics:
+                column_names.append(str(metric) + MODEL_TAG)
+                if add_stats:
+                    column_names.append(str(metric) + "_RSS" + MODEL_TAG)
+                    column_names.append(str(metric) + "_rRSS" + MODEL_TAG)
+                    column_names.append(str(metric) + "_SMAPE" + MODEL_TAG)
+                    column_names.append(str(metric) + "_AR2" + MODEL_TAG)
+                    column_names.append(str(metric) + "_RE" + MODEL_TAG)
 
-            # create a numpy array containing the data
-            for callpath in experiment.callpaths:
+            # create the table with the data that will be joined together with the column name list with the existing thicket
+            table = []
+            for thicket_node, _ in tht.dataframe.groupby(level=0): 
+                row = []
+                row.append(str(thicket_node.frame["name"]))
                 for metric in experiment.metrics:
-                    mkey = (callpath, metric)
-                    rows = []
-                    for thicket_node, _ in tht.dataframe.groupby(level=0):
-                        if Callpath(thicket_node.frame["name"]) == callpath:
-                            # catch key errors when queriying for models with a callpath, metric combination
-                            # that does not exist because there was no measurement object created for them
-                            try:
-                                values = []
-                                model_wrapper = ModelWrapper(
-                                    model_generator.models[mkey], parameters, model_name)
-                                values.append(model_wrapper)
-                                if add_stats:
-                                    values.append(
-                                        model_wrapper.mdl.hypothesis.RSS)
-                                    values.append(
-                                        model_wrapper.mdl.hypothesis.rRSS)
-                                    values.append(
-                                        model_wrapper.mdl.hypothesis.SMAPE)
-                                    values.append(
-                                        model_wrapper.mdl.hypothesis.AR2)
-                                    values.append(
-                                        model_wrapper.mdl.hypothesis.RE)
-                            except Exception:
-                                pass
-                        rows.append(values)
-
-            data = np.array(rows)
-
+                    mkey = (Callpath(thicket_node.frame["name"]), metric)
+                    try:
+                        model_wrapper = ModelWrapper(
+                            model_generator.models[mkey], parameters, model_name)
+                        row.append(model_wrapper)
+                        if add_stats:
+                            row.append(
+                                model_wrapper.mdl.hypothesis.RSS)
+                            row.append(
+                                model_wrapper.mdl.hypothesis.rRSS)
+                            row.append(
+                                model_wrapper.mdl.hypothesis.SMAPE)
+                            row.append(
+                                model_wrapper.mdl.hypothesis.AR2)
+                            row.append(
+                                model_wrapper.mdl.hypothesis.RE)
+                    except KeyError:
+                        row.append(math.nan)
+                        if add_stats:
+                            row.append(math.nan)
+                            row.append(math.nan)
+                            row.append(math.nan)
+                            row.append(math.nan)
+                            row.append(math.nan)
+                table.append(row)
+            data = np.array(table)
+            
+            # join with existing thicket
             tht.statsframe.dataframe = tht.statsframe.dataframe.join(pd.DataFrame(
                 data, columns=pd.MultiIndex.from_product([[model_name], column_names]), index=tht.statsframe.dataframe.index))
 
         else:
             # check if there is already a extra-p model in the dataframe
-            model_exists = True
+            model_exists = False
             modeler_name = None
-            try:
-                modeler_name = tht.statsframe.dataframe.at[thicket_node,
-                                                           str(metric) + MODEL_TAG].name
-                model_exists = True
-            except KeyError:
-                model_exists = False
+            for metric in experiment.metrics:
+                try:
+                    modeler_name = tht.statsframe.dataframe.at[thicket_node,
+                                                            str(metric) + MODEL_TAG].name
+                    model_exists = True
+                except KeyError:
+                    pass
 
             # add the models, and statistics into the dataframe
-            # TODO: see how I can get the name column out of the multi index, that column is only needed once!!!
+            remove_columns = list(tht.statsframe.dataframe.columns)
+            remove_columns.remove("name")
+            for i in range(len(remove_columns)):
+                tht.statsframe.dataframe = tht.statsframe.dataframe.drop(
+                        columns=remove_columns[i])
             for callpath in experiment.callpaths:
                 for metric in experiment.metrics:
                     mkey = (callpath, metric)
@@ -1237,66 +1261,11 @@ class ExtrapInterface:
 
             # if there is already a model in the dataframe, concat them and add a multi column index
             if model_exists is True:
-                tht.statsframe.dataframe = tht.statsframe.dataframe.drop(
-                    columns="name")
-                # print("DEBUG tht:", tht.statsframe.dataframe)
-                tht3 = copy.deepcopy(tht2)
-                for column in tht3.statsframe.dataframe.columns:
-                    if "_extrap-model" in column:
-                        tht3.statsframe.dataframe = tht3.statsframe.dataframe.drop(
-                            columns=column)
-                tht2.statsframe.dataframe = tht2.statsframe.dataframe.drop(
-                    columns="name")
-
+            
                 tht.statsframe.dataframe = pd.concat(
                     [tht2.statsframe.dataframe, tht.statsframe.dataframe], axis=1, keys=[str(modeler_name), str(model_name)])
-                tht.statsframe.dataframe = self._concat(
-                    [tht3.statsframe.dataframe, tht.statsframe.dataframe], axis=1)
 
-    def _concat(self, dfs, axis=0, *args, **kwargs):
-        """
-        Wrapper for `pandas.concat'; concatenate pandas objects even if they have 
-        unequal number of levels on concatenation axis.
-
-        Levels containing empty strings are added from below (when concatenating along
-        columns) or right (when concateniting along rows) to match the maximum number 
-        found in the dataframes.
-
-        Parameters
-        ----------
-        dfs : Iterable
-            Dataframes that must be concatenated.
-        axis : int, optional
-            Axis along which concatenation must take place. The default is 0.
-
-        Returns
-        -------
-        pd.DataFrame
-            Concatenated Dataframe.
-
-        Notes
-        -----
-        Any arguments and kwarguments are passed onto the `pandas.concat` function.
-
-        See also
-        --------
-        pandas.concat
-        """
-        def index(df):
-            return df.columns if axis == 1 else df.index
-
-        def add_levels(df):
-            need = want - index(df).nlevels
-            if need > 0:
-                # prepend empty levels
-                df = pd.concat([df], keys=[('',)*need], axis=axis)
-                for i in range(want-need):  # move empty levels to bottom
-                    df = df.swaplevel(i, i+need, axis=axis)
-            return df
-
-        want = np.max([index(df).nlevels for df in dfs])
-        dfs = [add_levels(df) for df in dfs]
-        return pd.concat(dfs, axis=axis, *args, **kwargs)
+        self.experiments[model_name] = experiment
 
     def _componentize_function(
         model_object: Model, parameters: list[str]
