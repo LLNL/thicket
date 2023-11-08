@@ -10,7 +10,7 @@ def check_filter_stats(th, columns_values):
     for column in columns_values:
         for value in columns_values[column]:
             # for type str column
-            if type(value) == str:
+            if isinstance(value, str):
                 # expected nodes after applying filter
                 exp_nodes = sorted(
                     th.statsframe.dataframe.index[
@@ -19,7 +19,7 @@ def check_filter_stats(th, columns_values):
                 )
                 new_th = th.filter_stats(lambda x: x[column] == value)
             # for type int column
-            elif type(value) == int:
+            elif isinstance(value, int):
                 exp_nodes = sorted(
                     th.statsframe.dataframe.index[
                         th.statsframe.dataframe[column] < value
