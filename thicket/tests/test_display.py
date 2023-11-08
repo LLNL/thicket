@@ -6,7 +6,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
-import seaborn as sns
 
 import thicket as th
 
