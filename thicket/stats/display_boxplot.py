@@ -76,7 +76,7 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
         df_subset = thicket.dataframe[[("name", ""), *columns]].reset_index()
         df_subset.columns = df_subset.columns.to_flat_index().map(column_name_mapper)
         df_subset["name"] = thicket.dataframe["name"].tolist()
-        # End new code
+
         df = pd.melt(
             df_subset,
             id_vars=["node", "name"],
@@ -98,7 +98,6 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
         )
 
         if len(columns) > 1:
-
             return sns.boxplot(
                 data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
             )
