@@ -3,8 +3,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-import pandas as pd
-import seaborn as sns
 import hatchet as ht
 
 import thicket as th
@@ -18,12 +16,11 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
     Arguments:
         thicket (thicket): Thicket object
         node (node): Node object
-        column (str): Column from performance data table. Note, if using a
-            columnar joined thicket a tuple must be passed in with the format
-            (column index, column name).
+        column (str): Column from performance data table. Note: if using a
+            column thicket, the argument must be a tuple.
 
     Returns:
-        (matplotlib Axes): Object for managing histogram plot.
+        (matplotlib.AxesSubplot or numpy.ndarray of them)
     """
 
     if column is None or node is None:
@@ -32,45 +29,26 @@ def display_histogram(thicket, node=None, column=None, **kwargs):
         )
     if not isinstance(thicket, th.Thicket):
         raise ValueError(
-            "Value passed to thicket argument must be of type thicket.Thicket."
+            "Value passed to 'thicket' argument must be of type thicket.Thicket."
         )
     if not isinstance(node, ht.node.Node):
         raise ValueError(
-            "Value passed to node argument must be of type hatchet.node.Node."
+            "Value passed to 'node' argument must be of type hatchet.node.Node."
         )
-    if not isinstance(column, str):
-        raise ValueError("Value passed to column argument must be of type str.")
+    if not isinstance(column, (str, tuple)):
+        raise ValueError(
+            "Value passed to column argument must be of type str (or tuple(str) for column thickets)."
+        )
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=[column])
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
-        df = pd.melt(
-            thicket.dataframe.reset_index(),
-            id_vars="node",
-            value_vars=column,
-            value_name=" ",
-        )
+        ax = thicket.dataframe.loc[node].hist(column=column, **kwargs)
 
-        filtered_df = df[df["node"] == node]
-
-        fig = sns.displot(filtered_df, x=" ", kind="hist", **kwargs)
-
-        return fig
+        return ax
     # columnar joined thicket object
     else:
-        col_idx, column_value = column[0], column[1]
-        df_subset = thicket.dataframe[col_idx]
+        ax = thicket.dataframe.loc[node].hist(column=column, **kwargs)
 
-        df = pd.melt(
-            df_subset.reset_index(),
-            id_vars="node",
-            value_vars=column_value,
-            value_name=" ",
-        )
-
-        filtered_df = df[df["node"] == node]
-
-        fig = sns.displot(filtered_df, x=" ", kind="hist", **kwargs)
-
-        return fig
+        return ax

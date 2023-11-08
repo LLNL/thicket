@@ -5,6 +5,7 @@
 
 import seaborn as sns
 
+import thicket as th
 from ..utils import verify_thicket_structures
 
 
@@ -15,16 +16,21 @@ def display_heatmap(thicket, columns=None, **kwargs):
     Arguments:
         thicket (thicket): Thicket object
         columns (list): List of hardware/timing metrics from aggregated statistics table
-            to display. Note, if using a columnar joined thicket a list of tuples must
-            be passed in with the format (column index, column name).
+            to display. Note: if using a column thicket, the argument must be a tuple.
 
     Returns:
         (matplotlib Axes): Object for managing heatmap plot.
     """
     if columns is None:
         raise ValueError(
-            "To see a list of valid columns, run 'Thicket.performance_cols'."
+            "Chosen columns must be from the thicket.statsframe.dataframe."
         )
+    if not isinstance(thicket, th.Thicket):
+        raise ValueError(
+            "Value passed to 'thicket' argument must be of type thicket.Thicket."
+        )
+    if not isinstance(columns, list):
+        raise ValueError("Value passed to 'columns' argument must be of type list.")
 
     verify_thicket_structures(
         thicket.statsframe.dataframe, index=["node"], columns=columns

@@ -7,10 +7,11 @@ import pandas as pd
 import seaborn as sns
 import hatchet as ht
 
+import thicket as th
 from ..utils import verify_thicket_structures
 
 
-def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
+def display_boxplot(thicket, nodes=None, columns=None, **kwargs):
     """Display a boxplot for each user passed node(s) and column(s). The passed nodes
     and columns must be from the performance data table.
 
@@ -27,6 +28,18 @@ def display_boxplot(thicket, nodes=[], columns=[], **kwargs):
     Returns:
         (matplotlib Axes): Object for managing boxplot.
     """
+    if columns is None or nodes is None:
+        raise ValueError(
+            "Both 'nodes' and 'columns' must be provided. To see a list of valid columns, run 'Thicket.performance_cols'."
+        )
+    if not isinstance(thicket, th.Thicket):
+        raise ValueError(
+            "Value passed to 'thicket' argument must be of type thicket.Thicket."
+        )
+    if not isinstance(nodes, list):
+        raise ValueError("Value passed to 'nodes' argument must be of type list.")
+    if not isinstance(columns, list):
+        raise ValueError("Value passed to 'columns' argument must be of type list.")
     for node in nodes:
         if not isinstance(node, ht.node.Node):
             raise ValueError(
