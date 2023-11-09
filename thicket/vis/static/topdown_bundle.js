@@ -5807,13 +5807,13 @@ var StackedBars = /*#__PURE__*/function () {
     _classCallCheck(this, StackedBars);
 
     //data
-    this.topdown_vars = ['any#topdown.retiring', 'any#topdown.frontend_bound', 'any#topdown.backend_bound', 'any#topdown.bad_speculation'];
+    this.topdown_vars = ['Retiring', 'Frontend bound', 'Backend bound', 'Bad speculation'];
     this.nice_vars = ['Retiring', 'Frontend Bound', 'Backend Bound', 'Bad Speculation'];
     this.records = this.test_normalize(data);
     this.uniques = this.get_unique_nodes(this.records);
     this.profs = this.get_unique_profs(this.records, this.uniques[0].nid);
     this.num_profs = this.profs.length;
-    this.sortvar = 'any#topdown.backend_bound';
+    this.sortvar = 'Backend bound';
     this.magic_ordinal = 'any#ProblemSize';
     this.ordinal_groups = this.getOrdinalGroups();
     this.grouped_records = this.getGroupedRecords();
@@ -5826,6 +5826,7 @@ var StackedBars = /*#__PURE__*/function () {
     this.width = width;
     this.height = height;
     this.bar_chart_height = 60;
+    this.relatve_svg_offset = src_select('#plot-area').node().getBoundingClientRect();
     this.reset_scales(); //dom manip
 
     if (div.node().nodeName == 'div') {
@@ -5833,6 +5834,10 @@ var StackedBars = /*#__PURE__*/function () {
     } else if (div.node().nodeName == 'svg' || div.node().nodeName == 'g') {
       this.svg = div.append('g').attr('width', width).attr('height', this.height);
     }
+
+    this.tooltip = src_select('#plot-area').select('svg').append('g').attr('id', 'bars-tooltip').attr('visibility', 'hidden');
+    this.tooltip.append('rect').attr('fill', 'rgb(200,200,200)').attr('width', 140).attr('height', 15);
+    this.tooltip.append('text').attr('fill', 'black').attr('x', 3).attr('y', 13).attr('font-family', 'monospace').attr('font-size', 12);
   }
 
   _createClass(StackedBars, [{
@@ -6190,12 +6195,21 @@ var StackedBars = /*#__PURE__*/function () {
           return self.stacked_bar_scale(d.data);
         }).on('click', function (e, d) {
           console.log(d, d.varname, d.data);
+        }).on('mouseenter', function (e, d) {
+          _this2.relatve_svg_offset = src_select('#plot-area').node().getBoundingClientRect();
+          var coords = [e.x - _this2.relatve_svg_offset.x, e.y - _this2.relatve_svg_offset.y];
+          self.tooltip.attr('visibility', 'visible');
+          self.tooltip.attr('transform', "translate(".concat(coords[0], ", ").concat(coords[1], ")"));
+          self.tooltip.select('text').text("".concat(d.varname, ": ").concat(Number.parseFloat(d.data).toFixed(2)));
+        }).on('mouseout', function (e, d) {
+          self.tooltip.attr('visibility', 'hidden');
+          self.tooltip.attr('transform', "translate(".concat(0, ", ", 0, ")"));
         });
         sub_bars.each(function (_, i, a) {
           this.getBBox().height;
         });
       });
-      var legend = this.svg.append('g').attr('class', 'legend').attr('width', this.width).attr('height', 70).attr('transform', "translate(".concat(0, ", ", (this.uniques.length + 1) * this.bar_chart_height, ")"));
+      var legend = this.svg.append('g').attr('class', 'legend').attr('width', this.width).attr('height', 70).attr('transform', "translate(".concat(0, ", ", (this.uniques.length + 1) * (this.bar_chart_height + this.margin), ")"));
       legend.append('text').attr('');
       legend.selectAll('.label-grp').data(this.topdown_vars).join(function (enter) {
         var label = enter.append('g').attr('class', 'label-grp').attr('transform', function (d, i) {
@@ -6209,7 +6223,7 @@ var StackedBars = /*#__PURE__*/function () {
           return self.nice_vars[i];
         }).attr('x', 23).attr('y', 10).attr('dominant-baseline', 'middle');
       });
-      this.set_height(this.svg.node().getBBox().height + legend.node().getBBox().height);
+      this.set_height(this.svg.node().getBBox().height + legend.node().getBBox().height + 200);
       this.svg.selectAll('text').style('font-family', 'monospace');
     }
   }]);
