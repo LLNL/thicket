@@ -3,18 +3,19 @@ import * as d3 from 'd3';
 export default class StackedBars{
     constructor(div, width, height, data, external_scales){
         //data
-        this.topdown_vars = ['any#topdown.retiring', 'any#topdown.frontend_bound', 'any#topdown.backend_bound', 'any#topdown.bad_speculation'];
+        this.topdown_vars = ['Retiring', 'Frontend bound', 'Backend bound', 'Bad speculation'];
         this.nice_vars  = ['Retiring', 'Frontend Bound', 'Backend Bound', 'Bad Speculation'];
         this.records = this.test_normalize(data);
         this.uniques = this.get_unique_nodes(this.records);
         this.profs = this.get_unique_profs(this.records, this.uniques[0].nid);
         this.num_profs = this.profs.length;
-        this.sortvar = 'any#topdown.backend_bound';
+        this.sortvar = 'Backend bound';
         this.magic_ordinal = 'any#ProblemSize';
         this.ordinal_groups = this.getOrdinalGroups();
         this.grouped_records = this.getGroupedRecords();
         this.longest_string = this.getLongestStringWidth(this.uniques);
         this.external_scales = external_scales;
+
 
         //layout 
         this.margin = 15;
@@ -23,7 +24,9 @@ export default class StackedBars{
         this.width = width;
         this.height = height;
         this.bar_chart_height = 60;
-        
+        this.relatve_svg_offset = d3.select('#plot-area').node().getBoundingClientRect();
+
+
         this.reset_scales();
 
         //dom manip
@@ -36,8 +39,23 @@ export default class StackedBars{
             this.svg = div.append('g')
                 .attr('width', width)
                 .attr('height', this.height);
-
         }
+
+        this.tooltip = d3.select('#plot-area').select('svg').append('g')
+                .attr('id', 'bars-tooltip')
+                .attr('visibility', 'hidden');
+            
+        this.tooltip.append('rect')
+                .attr('fill', 'rgb(200,200,200)')
+                .attr('width', 140)
+                .attr('height', 15);
+
+        this.tooltip.append('text')
+                    .attr('fill', 'black')
+                    .attr('x', 3)
+                    .attr('y', 13)
+                    .attr('font-family', 'monospace')
+                    .attr('font-size', 12);
 
     }
 
@@ -176,6 +194,7 @@ export default class StackedBars{
         //update width scales
         this.reset_scales();
 
+
         this.svg.selectAll('.chart_rows')
                 .data(this.uniques)
                 .join(
@@ -276,6 +295,17 @@ export default class StackedBars{
                                 })
                                 .on('click', (e,d)=>{
                                     console.log(d, d.varname, d.data);
+                                })
+                                .on('mouseenter', (e, d)=>{
+                                    this.relatve_svg_offset = d3.select('#plot-area').node().getBoundingClientRect();
+                                    let coords = [e.x - this.relatve_svg_offset.x, e.y - this.relatve_svg_offset.y];        
+                                    self.tooltip.attr('visibility', 'visible');
+                                    self.tooltip.attr('transform', `translate(${coords[0]}, ${coords[1]})`);
+                                    self.tooltip.select('text').text(`${d.varname}: ${Number.parseFloat(d.data).toFixed(2)}`);
+                                })
+                                .on('mouseout', (e, d)=>{
+                                    self.tooltip.attr('visibility', 'hidden');
+                                    self.tooltip.attr('transform', `translate(${0}, ${0})`);
                                 });
                         
                             sub_bars.each(function(_, i, a){
@@ -288,7 +318,7 @@ export default class StackedBars{
             .attr('class', 'legend')
             .attr('width', this.width)
             .attr('height', 70)
-            .attr('transform', `translate(${0}, ${(this.uniques.length+1)*this.bar_chart_height})`);
+            .attr('transform', `translate(${0}, ${(this.uniques.length+1)*(this.bar_chart_height + this.margin)})`);
         
         legend.append('text')
             .attr('')
@@ -315,7 +345,7 @@ export default class StackedBars{
                 }
             )
 
-        this.set_height(this.svg.node().getBBox().height + legend.node().getBBox().height);
+        this.set_height(this.svg.node().getBBox().height + legend.node().getBBox().height + 200);
         
         this.svg.selectAll('text').style('font-family', 'monospace');
 
