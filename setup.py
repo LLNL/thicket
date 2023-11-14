@@ -38,6 +38,7 @@ setup(
         "thicket",
         "thicket.stats",
         "thicket.vis",
+        "thicket.external",
     ],
     include_package_data=True,
     install_requires=[
