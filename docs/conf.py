@@ -51,6 +51,7 @@ extensions = [
     "sphinx_thebe",
     "myst_parser",
     "nbsphinx",
+    "sphinx_rtd_theme",
 ]
 
 thebe_config = {
