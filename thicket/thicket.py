@@ -151,7 +151,8 @@ class Thicket(GraphFrame):
             # length of the hex string before being converted to an integer.
             hex_length = 8
 
-            hash_arg = int(md5(prf.encode("utf-8")).hexdigest()[:hex_length], 16)
+            hash_arg = int(md5(prf.encode("utf-8")).hexdigest()
+                           [:hex_length], 16)
             th.profile = [hash_arg]
             th.profile_mapping = OrderedDict({hash_arg: prf})
 
@@ -239,11 +240,12 @@ class Thicket(GraphFrame):
                 )
         # if directory of files
         elif os.path.isdir(obj):
-            for file in os.listdir(obj):
-                f = os.path.join(obj, file)
-                ens_list.append(
-                    Thicket.thicketize_graphframe(func(f, *extra_args, **kwargs), f)
-                )
+            for root, dirs, files in os.walk(obj):
+                for file in files:
+                    if file.endswith(".cali"):
+                        f = os.path.join(root, file)
+                        ens_list.append(
+                            Thicket.thicketize_graphframe(func(f), f))
         # if single file
         elif os.path.isfile(obj):
             return Thicket.thicketize_graphframe(func(*args, **kwargs), args[0])
@@ -442,7 +444,8 @@ class Thicket(GraphFrame):
         multiindex = False
         if isinstance(self.statsframe.dataframe.columns, pd.MultiIndex):
             multiindex = True
-        stats_df = helpers._new_statsframe_df(new_dataframe, multiindex=multiindex)
+        stats_df = helpers._new_statsframe_df(
+            new_dataframe, multiindex=multiindex)
         sframe = GraphFrame(
             graph=new_graph,
             dataframe=stats_df,
@@ -690,7 +693,8 @@ class Thicket(GraphFrame):
                         return _set
 
             # Execute aggregation
-            th_copy.metadata = th_copy.metadata.groupby(idx_name).agg(_agg_to_set)
+            th_copy.metadata = th_copy.metadata.groupby(
+                idx_name).agg(_agg_to_set)
 
             # Append copy to list
             th_copy_list.append(th_copy)
@@ -716,7 +720,8 @@ class Thicket(GraphFrame):
         jsonified_thicket["graph"] = [formatted_graph_dict]
 
         if ensemble:
-            jsonified_thicket["dataframe_indices"] = list(self.dataframe.index.names)
+            jsonified_thicket["dataframe_indices"] = list(
+                self.dataframe.index.names)
             ef = self.dataframe.reset_index()
             ef["node"] = ef["node"].apply(lambda n: n._hatchet_nid)
             jsonified_thicket["dataframe"] = ef.replace({np.nan: None}).to_dict(
@@ -724,7 +729,8 @@ class Thicket(GraphFrame):
             )
         if metadata:
             jsonified_thicket["metadata"] = (
-                self.metadata.reset_index().replace({np.nan: None}).to_dict("records")
+                self.metadata.reset_index().replace(
+                    {np.nan: None}).to_dict("records")
             )
         if stats:
             sf = self.statsframe.dataframe.copy(deep=True)
@@ -788,7 +794,8 @@ class Thicket(GraphFrame):
                 new_thicket = self.copy()
 
                 # filter metadata table
-                filtered_rows = new_thicket.metadata.apply(select_function, axis=1)
+                filtered_rows = new_thicket.metadata.apply(
+                    select_function, axis=1)
                 new_thicket.metadata = new_thicket.metadata[filtered_rows]
 
                 # note index keys to filter performance data table
@@ -810,7 +817,8 @@ class Thicket(GraphFrame):
                 )
 
         else:
-            raise InvalidFilter("The argument passed to filter must be a callable.")
+            raise InvalidFilter(
+                "The argument passed to filter must be a callable.")
 
         return new_thicket
 
@@ -853,7 +861,8 @@ class Thicket(GraphFrame):
         query_matches = query.apply(self)
         filtered_df = dframe_copy.loc[dframe_copy["node"].isin(query_matches)]
         if filtered_df.shape[0] == 0:
-            raise EmptyQuery("The provided query would have produced an empty Thicket.")
+            raise EmptyQuery(
+                "The provided query would have produced an empty Thicket.")
         filtered_df.set_index(index_names, inplace=True)
 
         filtered_th = self.deepcopy()
@@ -939,7 +948,8 @@ class Thicket(GraphFrame):
         new_thicket = self.copy()
 
         # filter aggregated statistics table based on greater than restriction
-        filtered_rows = new_thicket.statsframe.dataframe.apply(filter_function, axis=1)
+        filtered_rows = new_thicket.statsframe.dataframe.apply(
+            filter_function, axis=1)
         new_thicket.statsframe.dataframe = new_thicket.statsframe.dataframe[
             filtered_rows
         ]
@@ -947,7 +957,8 @@ class Thicket(GraphFrame):
         # filter performance data table based on filtered nodes
         filtered_nodes = new_thicket.statsframe.dataframe.index.values.tolist()
         new_thicket.dataframe = new_thicket.dataframe[
-            new_thicket.dataframe.index.get_level_values("node").isin(filtered_nodes)
+            new_thicket.dataframe.index.get_level_values(
+                "node").isin(filtered_nodes)
         ]
 
         # filter nodes in the graphframe based on the dataframe nodes
@@ -977,7 +988,8 @@ class Thicket(GraphFrame):
                     unique_entries = self.metadata[col].unique().tolist()
                     unique_meta[col] = unique_entries
 
-            sorted_meta = dict(sorted(unique_meta.items(), key=lambda x: x[0].lower()))
+            sorted_meta = dict(
+                sorted(unique_meta.items(), key=lambda x: x[0].lower()))
         # columnar joined thicket object
         else:
             sorted_meta = []
@@ -986,11 +998,13 @@ class Thicket(GraphFrame):
                     if isinstance(self.metadata[idx][col].iloc[0], list):
                         continue
                     else:
-                        unique_entries = self.metadata[idx][col].unique().tolist()
+                        unique_entries = self.metadata[idx][col].unique(
+                        ).tolist()
                         unique_meta[col] = unique_entries
 
                 sorted_meta.append(
-                    (idx, dict(sorted(unique_meta.items(), key=lambda x: x[0].lower())))
+                    (idx, dict(sorted(unique_meta.items(),
+                     key=lambda x: x[0].lower())))
                 )
 
         return sorted_meta
