@@ -734,6 +734,7 @@ class ExtrapInterface:
 
     def to_html(
         self,
+        tht: Thicket,
         show_mean: bool = False,
         show_median: bool = False,
         show_min_max: bool = False,
@@ -788,28 +789,32 @@ class ExtrapInterface:
         # TODO: by adding something in model wrapper object
         # that can be accessed here...
 
-        config = self.configs[0]
+        for config in self.configs:
 
-        # catch key errors when queriying for models with a callpath, metric combination
-        # that does not exist because there was no measurement object created for them
-        existing_metrics = []
-        experiment = self.experiments[config]
-        for callpath in experiment.callpaths:
-            for metric in experiment.metrics:
-                try:
-                    experiment.modelers[0].models[(callpath, metric)]
-                    if str(metric) not in existing_metrics:
-                        existing_metrics.append(str(metric))
-                except KeyError:
-                    pass
+            # catch key errors when queriying for models with a callpath, metric combination
+            # that does not exist because there was no measurement object created for them
+            existing_metrics = []
+            experiment = self.experiments[config]
+            for callpath in experiment.callpaths:
+                for metric in experiment.metrics:
+                    try:
+                        experiment.modelers[0].models[(callpath, metric)]
+                        if str(metric) not in existing_metrics:
+                            existing_metrics.append(str(metric))
+                    except KeyError:
+                        pass
 
-        frm_dict = {
-            met + MODEL_TAG: model_to_img_html for met in existing_metrics}
+            # TODO iterate through configs...
 
-        # Subset of the aggregated statistics table with only the Extra-P columns selected
-        return thicket.statsframe.dataframe[
-            [met + MODEL_TAG for met in existing_metrics]
-        ].to_html(escape=False, formatters=frm_dict)
+            frm_dict = {
+                met + MODEL_TAG: model_to_img_html for met in existing_metrics}
+
+            tht.statsframe.dataframe[config] = tht.statsframe.dataframe[config][
+                [met + MODEL_TAG for met in existing_metrics]
+            ].to_html(escape=False, formatters=frm_dict)
+
+            # Subset of the aggregated statistics table with only the Extra-P columns selected
+        return tht.statsframe.dataframe.to_html()
 
     def _add_extrap_statistics(self, tht: Thicket, node: node, metric: str) -> None:
         """Insert the Extra-P hypothesis function statistics into the aggregated
@@ -1187,7 +1192,7 @@ class ExtrapInterface:
 
             # create the table with the data that will be joined together with the column name list with the existing thicket
             table = []
-            for thicket_node, _ in tht.dataframe.groupby(level=0): 
+            for thicket_node, _ in tht.dataframe.groupby(level=0):
                 row = []
                 row.append(str(thicket_node.frame["name"]))
                 for metric in experiment.metrics:
@@ -1217,7 +1222,7 @@ class ExtrapInterface:
                             row.append(math.nan)
                 table.append(row)
             data = np.array(table)
-            
+
             # join with existing thicket
             tht.statsframe.dataframe = tht.statsframe.dataframe.join(pd.DataFrame(
                 data, columns=pd.MultiIndex.from_product([[model_name], column_names]), index=tht.statsframe.dataframe.index))
@@ -1229,7 +1234,7 @@ class ExtrapInterface:
             for metric in experiment.metrics:
                 try:
                     modeler_name = tht.statsframe.dataframe.at[thicket_node,
-                                                            str(metric) + MODEL_TAG].name
+                                                               str(metric) + MODEL_TAG].name
                     model_exists = True
                 except KeyError:
                     pass
@@ -1239,7 +1244,7 @@ class ExtrapInterface:
             remove_columns.remove("name")
             for i in range(len(remove_columns)):
                 tht.statsframe.dataframe = tht.statsframe.dataframe.drop(
-                        columns=remove_columns[i])
+                    columns=remove_columns[i])
             for callpath in experiment.callpaths:
                 for metric in experiment.metrics:
                     mkey = (callpath, metric)
@@ -1261,7 +1266,7 @@ class ExtrapInterface:
 
             # if there is already a model in the dataframe, concat them and add a multi column index
             if model_exists is True:
-            
+
                 tht.statsframe.dataframe = pd.concat(
                     [tht2.statsframe.dataframe, tht.statsframe.dataframe], axis=1, keys=[str(modeler_name), str(model_name)])
 
