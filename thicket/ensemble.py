@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 import thicket.helpers as helpers
-from .utils import verify_sorted_profile, verify_thicket_structures
+from .utils import validate_dataframe, verify_sorted_profile, verify_thicket_structures
 
 
 class Ensemble:
@@ -46,10 +46,10 @@ class Ensemble:
         for i in range(len(_thickets)):
             # Set all graphs to the union graph
             _thickets[i].graph = union_graph
-            # Necessary to change dataframe hatchet id's to match the nodes in the graph
-            helpers._sync_nodes_frame(union_graph, _thickets[i].dataframe)
             # For tree diff. dataframes need to be sorted.
             _thickets[i].dataframe.sort_index(inplace=True)
+            # Necessary to change dataframe hatchet id's to match the nodes in the graph
+            helpers._sync_nodes_frame(union_graph, _thickets[i].dataframe)
         return union_graph, _thickets
 
     @staticmethod
@@ -86,15 +86,16 @@ class Ensemble:
                 for th in thickets:
                     verify_thicket_structures(
                         th.metadata, columns=[metadata_key])
-            # Check length of profiles match
-            for i in range(len(thickets) - 1):
-                if len(thickets[i].profile) != len(thickets[i + 1].profile):
-                    raise ValueError(
-                        "Length of all thicket profiles must match. {} != {}".format(
-                            len(thickets[i].profile), len(
-                                thickets[i + 1].profile)
+            # Check length of profiles match if metadata key is not provided
+            if metadata_key is None:
+                for i in range(len(thickets) - 1):
+                    if len(thickets[i].profile) != len(thickets[i + 1].profile):
+                        raise ValueError(
+                            "Length of all thicket profiles must match if 'metadata_key' is not provided. {} != {}".format(
+                                len(thickets[i].profile), len(
+                                    thickets[i + 1].profile)
+                            )
                         )
-                    )
             # Ensure all thickets profiles are sorted. Must be true when metadata_key=None to
             # guarantee performance data table and metadata table match up.
             if metadata_key is None:
@@ -184,7 +185,7 @@ class Ensemble:
                 new_profiles = [i for i in range(len(thickets_cp[0].profile))]
                 for i in range(len(thickets_cp)):
                     thickets_cp[i].metadata["new_profiles"] = new_profiles
-                    thickets_cp[i].add_column_from_metadata_to_ensemble(
+                    thickets_cp[i].metadata_column_to_perfdata(
                         "new_profiles", drop=True
                     )
                     thickets_cp[i].dataframe.reset_index(
@@ -208,8 +209,7 @@ class Ensemble:
                     )
             else:  # Change second-level index to be from metadata's "metadata_key" column
                 for i in range(len(thickets_cp)):
-                    thickets_cp[i].add_column_from_metadata_to_ensemble(
-                        metadata_key)
+                    thickets_cp[i].metadata_column_to_perfdata(metadata_key)
                     thickets_cp[i].dataframe.reset_index(
                         level="profile", inplace=True)
                     new_mappings.update(
@@ -299,6 +299,9 @@ class Ensemble:
         # Step 2D: Handle other Thicket objects.
         _handle_misc()
 
+        # Validate dataframe
+        validate_dataframe(combined_th.dataframe)
+
         return combined_th
 
     @staticmethod
@@ -329,26 +332,6 @@ class Ensemble:
                     perfdata[col].replace({fill_value: None}, inplace=True)
 
             return perfdata
-
-        def _from_statsframes_metadata(metadata):
-            """Aggregate data in Metadata"""
-
-            def _agg_to_set(obj):
-                """Aggregate values in 'obj' into a set to remove duplicates."""
-                if len(obj) <= 1:
-                    return obj
-                else:
-                    _set = set(obj)
-                    # If len == 1 just use the value, otherwise return the set
-                    if len(_set) == 1:
-                        return _set.pop()
-                    else:
-                        return _set
-
-            # Rename index to "thicket"
-            metadata.index.rename("thicket", inplace=True)
-            # Execute aggregation
-            metadata = metadata.groupby("thicket").agg(_agg_to_set)
 
         # Add missing indicies to thickets
         helpers._resolve_missing_indicies(thickets)
@@ -387,10 +370,6 @@ class Ensemble:
         # Insert missing rows in dataframe
         # unify_df = _fill_perfdata(unify_df)
 
-        # Metadata-specific operations
-        if from_statsframes:
-            _from_statsframes_metadata(unify_metadata)
-
         # Sort PerfData
         unify_df.sort_index(inplace=True)
         # Sort Metadata
@@ -400,8 +379,8 @@ class Ensemble:
         unify_inc_metrics = list(set(unify_inc_metrics))
         unify_exc_metrics = list(set(unify_exc_metrics))
 
-        # Workaround for graph/df node id mismatch.
-        helpers._sync_nodes(unify_graph, unify_df)
+        # Validate unify_df
+        validate_dataframe(unify_df)
 
         unify_parts = (
             unify_graph,

@@ -29,9 +29,9 @@ copyright = "2022, Lawrence Livermore National Security, LLC"
 author = "LLNL Developerss"
 
 # The short X.Y version
-version = "2023.3.0"
+version = "2023.3.1"
 # The full version, including alpha/beta/rc tags
-release = "2023.3.0"
+release = "2023.3.1"
 
 
 # -- General configuration ---------------------------------------------------
@@ -51,6 +51,7 @@ extensions = [
     "sphinx_thebe",
     "myst_parser",
     "nbsphinx",
+    "sphinx_rtd_theme",
 ]
 
 thebe_config = {

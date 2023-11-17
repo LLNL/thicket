@@ -224,25 +224,32 @@ class Thicket(GraphFrame):
         """
         ens_list = []
         obj = args[0]  # First arg should be readable object
+        extra_args = []
+        if len(args) > 1:
+            extra_args = args[1:]
 
         # Parse the input object
         # if a list of files
-        if type(obj) == list:
+        if isinstance(obj, (list, tuple)):
             for file in obj:
-                ens_list.append(Thicket.thicketize_graphframe(func(file), file))
+                ens_list.append(
+                    Thicket.thicketize_graphframe(
+                        func(file, *extra_args, **kwargs), file
+                    )
+                )
         # if directory of files
         elif os.path.isdir(obj):
-            for root, dirs, files in os.walk(obj):
-                for file in files:
-                    if file.endswith(".cali"):
-                        f = os.path.join(root, file)
-                        ens_list.append(Thicket.thicketize_graphframe(func(f), f))
+            for file in os.listdir(obj):
+                f = os.path.join(obj, file)
+                ens_list.append(
+                    Thicket.thicketize_graphframe(func(f, *extra_args, **kwargs), f)
+                )
         # if single file
         elif os.path.isfile(obj):
             return Thicket.thicketize_graphframe(func(*args, **kwargs), args[0])
         # Error checking
         else:
-            if type(obj) == str and not os.path.isfile(obj):
+            if isinstance(obj, str) and not os.path.isfile(obj):
                 raise FileNotFoundError("File '" + obj + "' not found.")
             else:
                 raise TypeError(
@@ -380,9 +387,7 @@ class Thicket(GraphFrame):
         # make and return thicket?
         return th
 
-    def add_column_from_metadata_to_ensemble(
-        self, metadata_key, overwrite=False, drop=False
-    ):
+    def metadata_column_to_perfdata(self, metadata_key, overwrite=False, drop=False):
         """Add a column from the metadata table to the performance data table.
 
         Arguments:
@@ -646,14 +651,19 @@ class Thicket(GraphFrame):
 
             th_id = th_names[i]
 
+            if metadata_key is None:
+                idx_name = "profile"
+            else:
+                idx_name = metadata_key
+
             # Modify graph
             # Necessary so node ids match up
             th_copy.graph = th_copy.statsframe.graph
 
             # Modify the performance data table
             df = th_copy.statsframe.dataframe
-            df["thicket"] = th_id
-            df.set_index("thicket", inplace=True, append=True)
+            df[idx_name] = th_id
+            df.set_index(idx_name, inplace=True, append=True)
             th_copy.dataframe = df
 
             # Adjust profile and profile_mapping
@@ -662,9 +672,25 @@ class Thicket(GraphFrame):
             th_copy.profile_mapping = OrderedDict({th_id: profile_paths})
 
             # Modify metadata dataframe
-            idx_name = "new_idx"
             th_copy.metadata[idx_name] = th_id
             th_copy.metadata.set_index(idx_name, inplace=True)
+
+            def _agg_to_set(obj):
+                """Aggregate values in 'obj' into a set to remove duplicates."""
+                if len(obj) <= 1:
+                    return obj
+                else:
+                    if isinstance(obj.iloc[0], list) or isinstance(obj.iloc[0], set):
+                        _set = set(tuple(i) for i in obj)
+                    else:
+                        _set = set(obj)
+                    if len(_set) == 1:
+                        return _set.pop()
+                    else:
+                        return _set
+
+            # Execute aggregation
+            th_copy.metadata = th_copy.metadata.groupby(idx_name).agg(_agg_to_set)
 
             # Append copy to list
             th_copy_list.append(th_copy)

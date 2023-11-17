@@ -6,6 +6,48 @@
 from collections import OrderedDict
 
 
+def validate_dataframe(df):
+    """Check validity of a Thicket DataFrame."""
+
+    def _check_duplicate_inner_idx(df):
+        """Check for duplicate values in the innermost index."""
+        for node in set(df.index.get_level_values("node")):
+            inner_idx_values = sorted(
+                df.loc[node].index.get_level_values(df.index.nlevels - 2).tolist()
+            )
+            inner_idx_values_set = sorted(list(set(inner_idx_values)))
+            if inner_idx_values != inner_idx_values_set:
+                raise IndexError(
+                    f"The Thicket.dataframe's index has duplicate values. {inner_idx_values}"
+                )
+
+    def _check_missing_hnid(df):
+        """Check if there are missing hatchet nid's."""
+        i = 0
+        set_of_nodes = set(df.index.get_level_values("node"))
+        for node in set_of_nodes:
+            if hash(node) != i:
+                raise ValueError(
+                    f"The Thicket.dataframe's index is either not sorted or has a missing node. {hash(node)} ({node}) != {i}"
+                )
+            i += 1
+
+    def _validate_name_column(df):
+        """Check if all of the values in a node's name column are either its name or None."""
+        for node in set(df.index.get_level_values("node")):
+            names = set(df.loc[node]["name"].tolist())
+            node_name = node.frame["name"]
+            for name in names:
+                if name != node_name and name is not None:
+                    raise ValueError(
+                        f"Value in the Thicket.dataframe's 'name' column is not valid. {name} != {node_name}"
+                    )
+
+    _check_duplicate_inner_idx(df)
+    _check_missing_hnid(df)
+    _validate_name_column(df)
+
+
 def verify_sorted_profile(thicket_component):
     """Assertion to check if profiles are sorted in a thicket dataframe
 

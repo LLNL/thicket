@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+import copy
+
 import pandas as pd
 
 
@@ -152,17 +154,19 @@ def _sync_nodes_frame(gh, df):
     TODO: This function may be superior to _sync_nodes and may be able to replace it.
     Need to investigate.
     """
-    assert df.index.nlevels == 2  # For num_profiles assumption
 
     # TODO: Graph function to list conversion: move to Hatchet?
     gh_node_list = []
     for gh_node in gh.traverse():
         gh_node_list.append(gh_node)
+    # Sort the graph node list
+    gh_node_list.sort(key=lambda node: hash(node))
 
-    num_profiles = len(df.groupby(level=1))
     index_names = df.index.names
-    df.reset_index(inplace=True)
-    df_node_list = df["node"][::num_profiles].to_list()
+    df_node_list = list(set(df.index.get_level_values("node")))
+    df_node_list_cp = copy.deepcopy(df_node_list)
+    # Check list sorted
+    assert sorted(df_node_list, key=lambda node: hash(node))
 
     # Sequentially walk through graph and dataframe and modify dataframe hnid's based off graph equivalent
     i = 0
@@ -176,12 +180,11 @@ def _sync_nodes_frame(gh, df):
 
     # Extend list to match multi-index dataframe structure
     df_list_full = []
-    for node in df_node_list:
-        temp = []
-        for idx in range(num_profiles):
-            temp.append(node)
-        df_list_full.extend(temp)
+    for i, node in enumerate(df_node_list):
+        num_profiles = len(df.loc[df_node_list_cp[i]])
+        df_list_full.extend([node] * num_profiles)
     # Update nodes in the dataframe
+    df.reset_index(inplace=True)
     df["node"] = df_list_full
 
     df.set_index(index_names, inplace=True)

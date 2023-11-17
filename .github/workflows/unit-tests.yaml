@@ -13,10 +13,8 @@ jobs:
     strategy:
       matrix:
         # TODO: add macos-latest
-        # TODO: change ubuntu-20.04 back to ubuntu-latest when the following issue is resolved:
-        #       https://github.com/actions/setup-python/issues/162
-        os: [ubuntu-20.04]
-        python-version: [3.7, 3.8]
+        os: [ubuntu-latest]
+        python-version: [3.8, 3.9, "3.10", "3.11"]
         exclude:
           - os: macos-latest
             python-version: [3.5, 3.6]
@@ -30,7 +28,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Set up Node
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         # Obtain the latest cached version of npm (either local cache or action cache)
         node-version: node
@@ -43,14 +41,8 @@ jobs:
         python setup.py build_ext --inplace
         python -m pip list
 
-    - name: Pin pandas version
-      if: ${{ matrix.python-version == 3.7 }}
-      run: |
-        pip install pandas==1.2.5
-        python -m pip list | grep pandas
-
     - name: Update Black
-      if: ${{ matrix.python-version == 3.7 }}
+      if: ${{ matrix.python-version == 3.8 }}
       run: |
         pip install flake8-pytest-importorskip
         pip install --upgrade click==8.0.4
@@ -58,7 +50,7 @@ jobs:
         pip install flake8==4.0.1
 
     - name: Lint and Format Check with Flake8 and Black
-      if: ${{ matrix.python-version == 3.7 }}
+      if: ${{ matrix.python-version == 3.8 }}
       run: |
         black --diff --check .
         flake8
