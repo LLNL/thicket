@@ -9,7 +9,8 @@ from ..utils import verify_thicket_structures
 
 
 def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
-    """Calculate the q-th percentile for each node in the performance data table.
+    """
+    Calculate the q-th percentile for each node in the performance data table.
 
     Designed to take in a thicket, and append one or more columns to the aggregated
     statistics table for the q-th percentile calculation for each node. Each percentile
@@ -75,7 +76,7 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
                     and column_to_append not in thicket.statsframe.exc_metrics
                 ):
                     thicket.statsframe.exc_metrics.append(column_to_append)
-                # check inclusive metrics
+                # check to see if inclusive metric
                 elif (
                     column in thicket.inc_metrics
                     and column_to_append not in thicket.statsframe.inc_metrics
