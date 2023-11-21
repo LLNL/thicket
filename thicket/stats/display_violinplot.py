@@ -10,6 +10,7 @@ import matplotlib as mpl
 from .percentiles import percentiles
 from ..utils import verify_thicket_structures
 
+
 def _column_name_mapper(current_cols):
     """
     Internal function that returns string representation of current_cols
@@ -39,7 +40,7 @@ def _add_percentile_lines(
         if isinstance(line_styles, list) is True:
             if len(percentiles_vals) != len(line_styles):
                 raise ValueError("Length of line styles does not match length of percentiles")
-        elif line_styles == None:
+        elif line_styles is None:
             line_styles = ["--"] * len(percentiles_vals)
         elif isinstance(line_styles, str):
             line_styles = [line_styles] * len(percentiles_vals)
@@ -50,32 +51,29 @@ def _add_percentile_lines(
             if len(percentiles_vals) != len(line_colors):
                 raise ValueError("Length of line colors does not match length of percentiles")
         # Default line color
-        elif line_colors == None:
+        elif line_colors is None:
             line_colors = ["black"] * len(percentiles_vals)
         elif isinstance(line_colors, str):
             line_colors = [line_colors] * len(percentiles_vals)
         else:
             raise ValueError("line_colors must be either None, list, or a str")
-    
     # A single value was passed into percentiles, line color/style must then be either a single
     #   str value, or None. Otherwise throw an error
     elif isinstance(percentiles_vals, float):
         if isinstance(line_styles, str) is True:
             line_styles = [line_styles]
-        elif line_styles == None:
+        elif line_styles is None:
             line_styles = ["--"]
         else:
             raise ValueError("Percentiles was specified as a single value, line_style must be either a str, or None")
 
         if isinstance(line_colors, str) is True:
             line_colors = [line_colors]
-        elif line_colors == None:
+        elif line_colors is None:
             line_colors = ["black"]
         else:
             raise ValueError("Percentiles was specified as a single value, line_colors must be either a str, or None")
-        
         percentiles_vals = [percentiles_vals]
-    
     else:
         raise ValueError("percentiles_vals must be either a list of floats, or a single float value!")
 
@@ -99,7 +97,7 @@ def _add_percentile_lines(
 
         # Make a list of a singular node since display_violinplot_thicket(...) takes
         # in a dictionary where the value is a singluar Node. display_violinplot(...)
-        # Takes in a list of thickets, so the conversion doesn't need to happen. 
+        # Takes in a list of thickets, so the conversion doesn't need to happen.
         if graphType == "THICKET":
             nodes_in = [nodes_in]
 
@@ -119,7 +117,6 @@ def _add_percentile_lines(
                         stats_column = "{}_percentiles_{}".format(
                             column, int(percentile * 100)
                         )
-                    
                     # Call percentile(...) if the percentile value for the column has not been calculated already
                     if stats_column not in thicket.statsframe.dataframe.columns.tolist():
                         percentiles(thicket, [column], [percentile])
@@ -241,12 +238,11 @@ def display_violinplot(
     graph = None
 
     if len(columns) > 1:
-        graph =  sns.violinplot(
+        graph = sns.violinplot(
             data=filtered_df, x="node", y=" ", hue="Performance counter", **kwargs
         )
     else:
         graph = sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
-    
     # User specified percentile value lines to plot
     if percentiles is not None:
         return _add_percentile_lines(
@@ -268,7 +264,6 @@ def display_violinplot(
             )
         else:
             return sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
-
 
 
 def display_violinplot_thicket(
