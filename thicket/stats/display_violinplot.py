@@ -35,7 +35,9 @@ def _add_percentile_lines(
     line_styles=None,
     line_colors=None,
 ):
-
+    # Error checking for types passed in by user:
+    # If percentiles is a list, then lines styles must be either a single value, or
+    # a list of values that match the length of the percentiles list. Same with line colors
     if isinstance(percentiles_vals, list):
         if isinstance(line_styles, list) is True:
             if len(percentiles_vals) != len(line_styles):
@@ -136,6 +138,7 @@ def _add_percentile_lines(
                         color=line_colors[idx],
                         linestyle=line_styles[idx],
                     )
+                    
                     # Get the violin structure
                     patch = mpl.patches.PathPatch(
                         graph.collections[violin_idx].get_paths()[0],
