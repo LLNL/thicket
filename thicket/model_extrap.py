@@ -304,14 +304,13 @@ class ModelWrapper:
         return fig, ax
 
     def _draw_legend(
-        self, axis: Axes, dict_callpath_color: dict[str, list[str]], function_char_len: int
+        self, axis: Axes, dict_callpath_color: dict[str, list[str]],
     ) -> None:
         """This method draws a legend for 3D plots.
 
         Args:
             axis (_type_): The matplotlib axis of a figure object.
             dict_callpath_color (dict): The color/marker dict for the elements displayed in the plot.
-            function_char_len (int): The number of chars of the model string.
         """
 
         handles = list()
@@ -354,8 +353,8 @@ class ModelWrapper:
                 )
                 handles.append(mark)
 
-        axis.legend(handles=handles, loc="center right",
-                    bbox_to_anchor=(1.75+(function_char_len)*0.01, 0.5))
+        axis.legend(handles=handles, loc="lower center",
+                    bbox_to_anchor=(1.75, 0.5))
 
     def _display_two_parameter_model(
         self,
@@ -588,8 +587,9 @@ class ModelWrapper:
             )
 
         # draw the legend
-        self._draw_legend(ax, dict_callpath_color,
-                          len(scientific_function))
+        self._draw_legend(ax, dict_callpath_color)
+
+        # plt.tight_layout()
 
         return fig, ax
 
@@ -740,6 +740,7 @@ class ExtrapInterface:
         show_min_max: bool = False,
         RSS: bool = False,
         AR2: bool = False,
+        SMAPE: bool = False,
         show_opt_scaling: bool = False,
         opt_scaling_func: str = None,
     ) -> DataFrame:
@@ -751,6 +752,7 @@ class ExtrapInterface:
             show_min_max (bool, optional): whether to display min/max values on the plot. Defaults to False.
             RSS (bool, optional): whether to display Extra-P model RSS on the plot. Defaults to False.
             AR2 (bool, optional): whether to display Extra-P model AR2 on the plot. Defaults to False.
+            SMAPE (bool, optional): whether to display Extra-P model SMAPE on the plot. Defaults to False.
             show_opt_scaling (bool, optional): whether to display the optimal scaling curve. Defaults to False.
             opt_scaling_func (str, optional): an optimal scaling function as a python interpretable string provided by the user. Defaults to None.
 
@@ -773,6 +775,7 @@ class ExtrapInterface:
                 show_min_max,
                 RSS,
                 AR2,
+                SMAPE,
                 show_opt_scaling,
                 opt_scaling_func,
             )
@@ -785,16 +788,43 @@ class ExtrapInterface:
             plt.close(fig)
             return imgstr
 
-        # TODO: figure out how to replace this code
-        # TODO: by adding something in model wrapper object
-        # that can be accessed here...
+        # if the dataframe has a multi-column index
+        # TODO: FIX THIS CODE!!!
+        if tht.statsframe.dataframe.columns.nlevels > 1:
+            for config in self.configs:
 
-        for config in self.configs:
+                # catch key errors when queriying for models with a callpath, metric combination
+                # that does not exist because there was no measurement object created for them
+                existing_metrics = []
+                experiment = self.experiments[config]
+                for callpath in experiment.callpaths:
+                    for metric in experiment.metrics:
+                        try:
+                            experiment.modelers[0].models[(callpath, metric)]
+                            if str(metric) not in existing_metrics:
+                                existing_metrics.append(str(metric))
+                        except KeyError:
+                            pass
 
+                # TODO iterate through configs...
+
+                frm_dict = {
+                    met + MODEL_TAG: model_to_img_html for met in existing_metrics}
+
+                tht.statsframe.dataframe[config] = tht.statsframe.dataframe[config][
+                    [met + MODEL_TAG for met in existing_metrics]
+                ].to_html(escape=False, formatters=frm_dict)
+
+                # Subset of the aggregated statistics table with only the Extra-P columns selected
+
+            return tht.statsframe.dataframe.to_html()
+
+        # if the dataframe does not have a multi-column index
+        else:
             # catch key errors when queriying for models with a callpath, metric combination
             # that does not exist because there was no measurement object created for them
             existing_metrics = []
-            experiment = self.experiments[config]
+            experiment = self.experiments[self.configs[0]]
             for callpath in experiment.callpaths:
                 for metric in experiment.metrics:
                     try:
@@ -804,17 +834,13 @@ class ExtrapInterface:
                     except KeyError:
                         pass
 
-            # TODO iterate through configs...
-
             frm_dict = {
                 met + MODEL_TAG: model_to_img_html for met in existing_metrics}
 
-            tht.statsframe.dataframe[config] = tht.statsframe.dataframe[config][
+            # Subset of the aggregated statistics table with only the Extra-P columns selected
+            return tht.statsframe.dataframe[
                 [met + MODEL_TAG for met in existing_metrics]
             ].to_html(escape=False, formatters=frm_dict)
-
-            # Subset of the aggregated statistics table with only the Extra-P columns selected
-        return tht.statsframe.dataframe.to_html()
 
     def _add_extrap_statistics(self, tht: Thicket, node: node, metric: str) -> None:
         """Insert the Extra-P hypothesis function statistics into the aggregated
@@ -1475,7 +1501,7 @@ class ExtrapInterface:
     from typing import List
 
     def complexity_statsframe(
-        self, columns: list[str] = None, eval_targets: list[list[float]] = None
+        self, thicket: Thicket, columns: list[str] = None, eval_targets: list[list[float]] = None
     ) -> None:
         """Analyzes the complexity of the Extra-P models for the given thicket statsframe and the list of selected columns (metrics) for a given target evaluation scale. Then adds the results back into the statsframe.
 
@@ -1488,133 +1514,137 @@ class ExtrapInterface:
             ValueError: Raises a ValueError is not in the aggregates statistics table.
             TypeError: Raises a TypeError if the column is not of the right type.
         """
-        targets = []
-        if eval_targets is None:
-            raise Exception(
-                "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
-            )
-        elif len(eval_targets) > 0:
-            # for each evaluation target check if the number of values matches the number of parameters
-            for target in eval_targets:
-                if len(target) != len(parameters):
-                    print(
-                        "The number of given parameter values for the evaluation target need to be the same as the number of model parameters."
-                    )
-                else:
-                    targets.append(target)
-
-        # if there are targets to evaluate for
-        if len(targets) > 0:
-            for target in targets:
-                target_str = "("
-                for param_value in target:
-                    target_str += str(param_value)
-                    target_str += ","
-                target_str = target_str[:-1]
-                target_str += ")"
-
-                # Use all Extra-P columns
-                if columns is None:
-                    columns = [
-                        col
-                        for col in thicket.statsframe.dataframe
-                        if isinstance(
-                            thicket.statsframe.dataframe[col].iloc[0], ModelWrapper
+        if len(self.configs) == 1:
+            exp = self.experiments[self.configs[0]]
+            targets = []
+            if eval_targets is None:
+                raise Exception(
+                    "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
+                )
+            elif len(eval_targets) > 0:
+                # for each evaluation target check if the number of values matches the number of parameters
+                for target in eval_targets:
+                    if len(target) != len(exp.parameters):
+                        print(
+                            "The number of given parameter values for the evaluation target need to be the same as the number of model parameters."
                         )
-                    ]
+                    else:
+                        targets.append(target)
 
-                # Error checking
-                for c in columns:
-                    if c not in thicket.statsframe.dataframe.columns:
-                        raise ValueError(
-                            "column "
-                            + c
-                            + " is not in the aggregated statistics table."
-                        )
-                    elif not isinstance(
-                        thicket.statsframe.dataframe[c].iloc[0], ModelWrapper
-                    ):
-                        raise TypeError(
-                            "column "
-                            + c
-                            + " is not the right type (thicket.model_extrap.ModelWrapper)."
-                        )
+            # if there are targets to evaluate for
+            if len(targets) > 0:
+                for target in targets:
+                    target_str = "("
+                    for param_value in target:
+                        target_str += str(param_value)
+                        target_str += ","
+                    target_str = target_str[:-1]
+                    target_str += ")"
 
-                # Process each column
-                all_dfs = []
-                all_dfs_columns = []
-                for col in columns:
-                    # Get list of components for this column
-                    components = [
-                        ExtrapInterface._analyze_complexity(
-                            model_obj, target, col, parameters
-                        )
-                        for model_obj in thicket.statsframe.dataframe[col]
-                    ]
-
-                    # Component dataframe
-                    comp_df = pd.DataFrame(
-                        data=components, index=thicket.statsframe.dataframe.index
-                    )
-
-                    # Add column name as index level
-                    all_dfs_columns.append(comp_df.columns)
-                    all_dfs.append(comp_df)
-
-                # Concatenate dataframes horizontally
-                all_dfs.insert(0, thicket.statsframe.dataframe)
-                thicket.statsframe.dataframe = pd.concat(all_dfs, axis=1)
-
-                # Add callpath ranking to the dataframe
-                all_dfs = []
-                for col in columns:
-                    total_metric_value = 0
-                    metric_values = []
-                    for model_obj in thicket.statsframe.dataframe[col]:
-                        if not isinstance(model_obj, float):
-                            metric_value = model_obj.mdl.hypothesis.function.evaluate(
-                                target
+                    # Use all Extra-P columns
+                    if columns is None:
+                        columns = [
+                            col
+                            for col in thicket.statsframe.dataframe
+                            if isinstance(
+                                thicket.statsframe.dataframe[col].iloc[0], ModelWrapper
                             )
-                        else:
-                            metric_value = math.nan
-                        total_metric_value += metric_value
-                        metric_values.append(metric_value)
-                    percentages = []
-                    for value in metric_values:
-                        percentage = value / (total_metric_value / 100)
-                        if percentage < 0:
-                            percentages.append(0)
-                        else:
-                            percentages.append(percentage)
-                    reverse_ranking = len(percentages) - rankdata(
-                        percentages, method="ordinal"
-                    ).astype(int)
-                    for i in range(len(reverse_ranking)):
-                        reverse_ranking[i] += 1
-                    ranking_list = []
-                    for i in range(len(reverse_ranking)):
-                        ranking_dict = {}
-                        ranking_dict[
-                            col + "_growth_rank_" + target_str
-                        ] = reverse_ranking[i]
-                        ranking_list.append(ranking_dict)
+                        ]
 
-                    # Component dataframe
-                    comp_df = pd.DataFrame(
-                        data=ranking_list, index=thicket.statsframe.dataframe.index
-                    )
+                    # Error checking
+                    for c in columns:
+                        if c not in thicket.statsframe.dataframe.columns:
+                            raise ValueError(
+                                "column "
+                                + c
+                                + " is not in the aggregated statistics table."
+                            )
+                        elif not isinstance(
+                            thicket.statsframe.dataframe[c].iloc[0], ModelWrapper
+                        ):
+                            raise TypeError(
+                                "column "
+                                + c
+                                + " is not the right type (thicket.model_extrap.ModelWrapper)."
+                            )
 
-                    all_dfs.append(comp_df)
+                    # Process each column
+                    all_dfs = []
+                    all_dfs_columns = []
+                    for col in columns:
+                        # Get list of components for this column
+                        components = [
+                            ExtrapInterface._analyze_complexity(
+                                model_obj, target, col, exp.parameters
+                            )
+                            for model_obj in thicket.statsframe.dataframe[col]
+                        ]
 
-                # Concatenate dataframes horizontally
-                all_dfs.insert(0, thicket.statsframe.dataframe)
-                thicket.statsframe.dataframe = pd.concat(all_dfs, axis=1)
+                        # Component dataframe
+                        comp_df = pd.DataFrame(
+                            data=components, index=thicket.statsframe.dataframe.index
+                        )
 
-        # otherwise raise an Exception
+                        # Add column name as index level
+                        all_dfs_columns.append(comp_df.columns)
+                        all_dfs.append(comp_df)
+
+                    # Concatenate dataframes horizontally
+                    all_dfs.insert(0, thicket.statsframe.dataframe)
+                    thicket.statsframe.dataframe = pd.concat(all_dfs, axis=1)
+
+                    # Add callpath ranking to the dataframe
+                    all_dfs = []
+                    for col in columns:
+                        total_metric_value = 0
+                        metric_values = []
+                        for model_obj in thicket.statsframe.dataframe[col]:
+                            if not isinstance(model_obj, float):
+                                metric_value = model_obj.mdl.hypothesis.function.evaluate(
+                                    target
+                                )
+                            else:
+                                metric_value = math.nan
+                            total_metric_value += metric_value
+                            metric_values.append(metric_value)
+                        percentages = []
+                        for value in metric_values:
+                            percentage = value / (total_metric_value / 100)
+                            if percentage < 0:
+                                percentages.append(0)
+                            else:
+                                percentages.append(percentage)
+                        reverse_ranking = len(percentages) - rankdata(
+                            percentages, method="ordinal"
+                        ).astype(int)
+                        for i in range(len(reverse_ranking)):
+                            reverse_ranking[i] += 1
+                        ranking_list = []
+                        for i in range(len(reverse_ranking)):
+                            ranking_dict = {}
+                            ranking_dict[
+                                col + "_growth_rank_" + target_str
+                            ] = reverse_ranking[i]
+                            ranking_list.append(ranking_dict)
+
+                        # Component dataframe
+                        comp_df = pd.DataFrame(
+                            data=ranking_list, index=thicket.statsframe.dataframe.index
+                        )
+
+                        all_dfs.append(comp_df)
+
+                    # Concatenate dataframes horizontally
+                    all_dfs.insert(0, thicket.statsframe.dataframe)
+                    thicket.statsframe.dataframe = pd.concat(all_dfs, axis=1)
+
+            # otherwise raise an Exception
+            else:
+                raise Exception(
+                    "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
+                )
         else:
-            raise Exception(
-                "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
-            )
+            pass
 
     def produce_aggregated_model(self, use_median: bool = True, add_stats=True) -> DataFrame:
         """Analysis the thicket statsframe by grouping application phases such as computation and communication together to create performance models for these phases.
