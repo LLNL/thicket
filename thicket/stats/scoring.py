@@ -132,7 +132,6 @@ def score(thicket, columns, scoring_function):
 
     return
 
-
 def scoring_1(thicket, columns):
     score(thicket, columns, _scoring_1)
 
