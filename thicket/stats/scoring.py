@@ -32,10 +32,11 @@ def _scoring_3(means, stds, num_nodes):
 
     for i in range(num_nodes):
         result = None
-        try:        
+        try:
             result = 0.25 * np.log(0.25 * ( (stds[0][i] ** 2 /stds[1][i] ** 2 ) + (stds[1][i] ** 2 /stds[0][i] ** 2))) +\
                             0.25 * ( (means[0][i] - means[1][i]) **2 / (stds[0][i] ** 2 + stds[1][i] ** 2) )
         except ZeroDivisionError:
+            print("Score 3 std's: ", stds[0][i], stds[1][i], i)
             result = np.nan
         results.append(result)
     
@@ -51,6 +52,7 @@ def _scoring_4(means, stds, num_nodes):
             result = 1 - math.sqrt((2 * stds[0][i] * stds[1][i]) / (stds[0][i] ** 2 + stds[1][i] ** 2)) *\
                 math.exp(-0.25 * ( (means[0][i] - means[1][i])**2) / (stds[0][i] ** 2 + stds[1][i] ** 2))
         except ZeroDivisionError:
+            print("Score 4 std's: ", stds[0][i], stds[1][i], i)
             result = np.nan
         results.append(result)
     
@@ -61,7 +63,7 @@ def score(thicket, columns, scoring_function):
     if isinstance(columns, list) is False:
         raise ValueError(
                 "Columns must be a list!"
-            )
+        )
 
     # Columns must be a tuples since we are dealing with columnar joined thickets
     for column in columns:
@@ -86,6 +88,13 @@ def score(thicket, columns, scoring_function):
     if columns[0][1] != columns[1][1]:
         raise ValueError(
             "Columns to score must be the same column!"
+        )
+
+    num_nodes = len(thicket.dataframe.index.get_level_values(0).unique())
+
+    if num_nodes < 2:
+        raise ValueError(
+            "Must have more than one data point per node to score with!"
         )
 
     verify_thicket_structures(thicket.dataframe, columns)
@@ -118,8 +127,6 @@ def score(thicket, columns, scoring_function):
     means[1] = thicket.statsframe.dataframe[(columns[1][0], "{}_mean".format(columns[1][1]))].to_list()
     stds[0] = thicket.statsframe.dataframe[(columns[0][0], "{}_std".format(columns[0][1]))].to_list()
     stds[1] = thicket.statsframe.dataframe[(columns[1][0], "{}_std".format(columns[1][1]))].to_list()
-    
-    num_nodes = len(thicket.dataframe.index.get_level_values(0).unique())
 
     #This is where we call the scoring function that the user specified!
     resulting_scores = scoring_function(means, stds, num_nodes)
