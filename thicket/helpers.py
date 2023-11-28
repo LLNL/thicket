@@ -154,7 +154,6 @@ def _sync_nodes_frame(gh, df):
     TODO: This function may be superior to _sync_nodes and may be able to replace it.
     Need to investigate.
     """
-
     # TODO: Graph function to list conversion: move to Hatchet?
     gh_node_list = []
     for gh_node in gh.traverse():

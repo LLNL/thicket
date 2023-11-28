@@ -18,6 +18,7 @@ from hatchet.query import AbstractQuery, QueryMatcher
 
 from thicket.ensemble import Ensemble
 import thicket.helpers as helpers
+from .groupby import GroupBy
 from .utils import verify_thicket_structures
 from .external.console import ThicketRenderer
 
@@ -921,7 +922,7 @@ class Thicket(GraphFrame):
         print(len(sub_thickets), " thickets created...")
         print(sub_thickets)
 
-        return sub_thickets
+        return GroupBy(by, sub_thickets)
 
     def filter_stats(self, filter_function):
         """Filter thicket object based on a stats column.
