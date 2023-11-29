@@ -1514,6 +1514,7 @@ class ExtrapInterface:
             ValueError: Raises a ValueError is not in the aggregates statistics table.
             TypeError: Raises a TypeError if the column is not of the right type.
         """
+
         if len(self.configs) == 1:
             exp = self.experiments[self.configs[0]]
             targets = []
@@ -1644,7 +1645,122 @@ class ExtrapInterface:
                     "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
                 )
         else:
-            pass
+            for config in self.configs:
+                exp = self.experiments[config]
+                targets = []
+                if eval_targets is None:
+                    raise Exception(
+                        "To analyze model complexity you have to provide a target scale, a set of parameter values (one for each parameter) for which the model will be evaluated for."
+                    )
+                elif len(eval_targets) > 0:
+                    # for each evaluation target check if the number of values matches the number of parameters
+                    for target in eval_targets:
+                        if len(target) != len(exp.parameters):
+                            print(
+                                "The number of given parameter values for the evaluation target need to be the same as the number of model parameters."
+                            )
+                        else:
+                            targets.append(target)
+
+                if len(targets) > 0:
+                    for target in targets:
+                        target_str = "("
+                        for param_value in target:
+                            target_str += str(param_value)
+                            target_str += ","
+                        target_str = target_str[:-1]
+                        target_str += ")"
+
+                        # Use all Extra-P columns
+                        if columns is None:
+                            columns = [
+                                col
+                                for col in thicket.statsframe.dataframe[config]
+                                if isinstance(
+                                    thicket.statsframe.dataframe[config][col].iloc[0], ModelWrapper
+                                )
+                            ]
+
+                        # Error checking
+                        for c in columns:
+                            if c not in thicket.statsframe.dataframe[config].columns:
+                                raise ValueError(
+                                    "column "
+                                    + c
+                                    + " is not in the aggregated statistics table."
+                                )
+                            elif not isinstance(
+                                thicket.statsframe.dataframe[config][c].iloc[0], ModelWrapper
+                            ):
+                                raise TypeError(
+                                    "column "
+                                    + c
+                                    + " is not the right type (thicket.model_extrap.ModelWrapper)."
+                                )
+
+                        # Process each column
+                        for col in columns:
+                            # Get list of components for this column
+                            components = [
+                                ExtrapInterface._analyze_complexity(
+                                    model_obj, target, col, exp.parameters
+                                )
+                                for model_obj in thicket.statsframe.dataframe[config][col]
+                            ]
+
+                            x = []
+                            for key, value in components[0].items():
+                                x.append([])
+                            counter = 0
+                            for key, value in components[0].items():
+                                for comp in components:
+                                    x[counter].append(comp[key])
+                                counter += 1
+
+                            counter = 0
+                            for key, value in components[0].items():
+                                thicket.statsframe.dataframe[config,
+                                                             key] = x[counter]
+                                counter += 1
+
+                        # Add callpath ranking to the dataframe
+                        for col in columns:
+                            total_metric_value = 0
+                            metric_values = []
+                            for model_obj in thicket.statsframe.dataframe[config][col]:
+                                if not isinstance(model_obj, float):
+                                    metric_value = model_obj.mdl.hypothesis.function.evaluate(
+                                        target
+                                    )
+                                else:
+                                    metric_value = math.nan
+                                total_metric_value += metric_value
+                                metric_values.append(metric_value)
+                            percentages = []
+                            for value in metric_values:
+                                percentage = value / (total_metric_value / 100)
+                                if percentage < 0:
+                                    percentages.append(0)
+                                else:
+                                    percentages.append(percentage)
+                            reverse_ranking = len(percentages) - rankdata(
+                                percentages, method="ordinal"
+                            ).astype(int)
+                            for i in range(len(reverse_ranking)):
+                                reverse_ranking[i] += 1
+                            """ranking_list = []
+                            for i in range(len(reverse_ranking)):
+                                ranking_dict = {}
+                                ranking_dict[
+                                    col + "_growth_rank_" + target_str
+                                ] = reverse_ranking[i]
+                                ranking_list.append(ranking_dict)"""
+
+                            thicket.statsframe.dataframe[config,
+                                                         str(col + "_growth_rank_" + target_str)] = reverse_ranking
+
+                        thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(
+                            axis=1)
 
     def produce_aggregated_model(self, use_median: bool = True, add_stats=True) -> DataFrame:
         """Analysis the thicket statsframe by grouping application phases such as computation and communication together to create performance models for these phases.
