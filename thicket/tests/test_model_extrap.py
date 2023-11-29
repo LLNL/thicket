@@ -5,14 +5,15 @@
 
 import sys
 
+import extrap
 import pytest
 
 from thicket import Thicket
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 7),
-    reason="requires python3.7 or python3.8 to use extrap module",
+    sys.version_info < (3, 8),
+    reason="requires python3.8 or greater to use extrap module",
 )
 def test_model_extrap(mpi_scaling_cali):
     from thicket.model_extrap import Modeling
@@ -57,8 +58,12 @@ def test_model_extrap(mpi_scaling_cali):
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 7),
-    reason="requires python3.7 or python3.8 to use extrap module",
+    sys.version_info < (3, 8),
+    reason="requires python3.8 or greater to use extrap module",
+)
+@pytest.mark.skipif(
+    extrap.__version__ < "4.1.1",
+    reason="Modeling behavior for Extra-P<4.1.1 will fail this unit test",
 )
 def test_componentize_functions(mpi_scaling_cali):
     from thicket.model_extrap import Modeling
@@ -79,8 +84,8 @@ def test_componentize_functions(mpi_scaling_cali):
 
     xp_comp_df = t_ens.statsframe.dataframe
 
-    # Check shape
-    assert xp_comp_df.shape == (45, 22)
+    # Check shape. Compatible with ExtraP>=4.1.1
+    assert xp_comp_df.shape == (45, 29)
 
     # Check values
     epsilon = 1e-10  # Account for rounding/approximation
