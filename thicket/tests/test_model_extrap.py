@@ -5,7 +5,6 @@
 
 import sys
 
-import extrap
 import pytest
 
 from thicket import Thicket
@@ -86,4 +85,4 @@ def test_componentize_functions(mpi_scaling_cali):
 
     # Check that each component column produced at least one value.
     for column in xp_comp_df.columns:
-        assert xp_comp_df[column].isnull().all() == False
+        assert not xp_comp_df[column].isnull().all()
