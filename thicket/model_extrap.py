@@ -789,8 +789,8 @@ class ExtrapInterface:
             return imgstr
 
         # if the dataframe has a multi-column index
-        # TODO: FIX THIS CODE!!!
         if tht.statsframe.dataframe.columns.nlevels > 1:
+            x = []
             for config in self.configs:
 
                 # catch key errors when queriying for models with a callpath, metric combination
@@ -806,18 +806,17 @@ class ExtrapInterface:
                         except KeyError:
                             pass
 
-                # TODO iterate through configs...
-
                 frm_dict = {
                     met + MODEL_TAG: model_to_img_html for met in existing_metrics}
 
-                tht.statsframe.dataframe[config] = tht.statsframe.dataframe[config][
-                    [met + MODEL_TAG for met in existing_metrics]
-                ].to_html(escape=False, formatters=frm_dict)
-
                 # Subset of the aggregated statistics table with only the Extra-P columns selected
+                x.append(tht.statsframe.dataframe[config][
+                    [met + MODEL_TAG for met in existing_metrics]
+                ])
 
-            return tht.statsframe.dataframe.to_html()
+            df = pd.concat(x)
+
+            return df.to_html(escape=False, formatters=frm_dict)
 
         # if the dataframe does not have a multi-column index
         else:
@@ -1458,7 +1457,7 @@ class ExtrapInterface:
                     counter = 0
                     for column_key in column_keys:
                         thicket.statsframe.dataframe[config,
-                                                     column_key] = x[counter]
+                                                     col + "_" + column_key] = x[counter]
                         counter += 1
 
             thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(
@@ -1741,13 +1740,10 @@ class ExtrapInterface:
 
                         # Use all Extra-P columns
                         if columns is None:
-                            columns = [
-                                col
-                                for col in thicket.statsframe.dataframe[config]
-                                if isinstance(
-                                    thicket.statsframe.dataframe[config][col].iloc[0], ModelWrapper
-                                )
-                            ]
+                            columns = []
+                            for col in thicket.statsframe.dataframe[config]: 
+                                if isinstance(thicket.statsframe.dataframe[config][col].iloc[0], ModelWrapper):
+                                    columns.append(col)
 
                         # Error checking
                         for c in columns:
