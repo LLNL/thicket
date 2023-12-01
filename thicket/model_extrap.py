@@ -28,8 +28,13 @@ from thicket.thicket import Thicket
 
 from extrap.fileio import io_helper
 from extrap.modelers.model_generator import ModelGenerator
-from extrap.modelers.multi_parameter.multi_parameter_modeler import MultiParameterModeler
-from extrap.util.options_parser import SINGLE_PARAMETER_MODELER_KEY, SINGLE_PARAMETER_OPTIONS_KEY
+from extrap.modelers.multi_parameter.multi_parameter_modeler import (
+    MultiParameterModeler,
+)
+from extrap.util.options_parser import (
+    SINGLE_PARAMETER_MODELER_KEY,
+    SINGLE_PARAMETER_OPTIONS_KEY,
+)
 from extrap.modelers import single_parameter
 from extrap.modelers import multi_parameter
 from extrap.entities.experiment import Experiment
@@ -43,14 +48,18 @@ from extrap.entities.model import Model
 from extrap.entities.functions import Function
 from extrap.entities.terms import DEFAULT_PARAM_NAMES
 from extrap.entities.functions import ConstantFunction
-from extrap.util.options_parser import _create_parser, _add_single_parameter_options, _modeler_option_bool
+from extrap.util.options_parser import (
+    _create_parser,
+    _add_single_parameter_options,
+    _modeler_option_bool,
+)
 from extrap.modelers.modeler_options import ModelerOptionsGroup
 
 MODEL_TAG = "_extrap-model"
 
 
 class ExtrapModelerException(Exception):
-    """Custom exception class for raising exceptions when the given modeler does not exist in 
+    """Custom exception class for raising exceptions when the given modeler does not exist in
     Extra-P.
 
     Args:
@@ -119,14 +128,13 @@ class ModelWrapper:
             )
         elif len(self.parameters) == 2:
             return self.mdl.hypothesis.function.to_latex_string(
-                Parameter(DEFAULT_PARAM_NAMES[0]),
-                Parameter(DEFAULT_PARAM_NAMES[1])
+                Parameter(DEFAULT_PARAM_NAMES[0]), Parameter(DEFAULT_PARAM_NAMES[1])
             )
         elif len(self.parameters) == 3:
             return self.mdl.hypothesis.function.to_latex_string(
                 Parameter(DEFAULT_PARAM_NAMES[0]),
                 Parameter(DEFAULT_PARAM_NAMES[1]),
-                Parameter(DEFAULT_PARAM_NAMES[2])
+                Parameter(DEFAULT_PARAM_NAMES[2]),
             )
         else:
             return 1
@@ -173,8 +181,7 @@ class ModelWrapper:
         """
 
         # sort based on x values
-        measures_sorted = sorted(
-            self.mdl.measurements, key=lambda x: x.coordinate[0])
+        measures_sorted = sorted(self.mdl.measurements, key=lambda x: x.coordinate[0])
 
         # compute means, medians, mins, maxes
         params = [ms.coordinate[0] for ms in measures_sorted]  # X values
@@ -189,7 +196,8 @@ class ModelWrapper:
         )
 
         scientific_function = self.mdl.hypothesis.function.to_latex_string(
-            Parameter(DEFAULT_PARAM_NAMES[0]))
+            Parameter(DEFAULT_PARAM_NAMES[0])
+        )
 
         # compute y values for plotting
         y_vals = [self.mdl.hypothesis.function.evaluate(x) for x in x_vals]
@@ -244,8 +252,7 @@ class ModelWrapper:
                         from math import log2  # noqa: F401
 
                         y_vals_opt.append(eval(opt_scaling_func))
-                    ax.plot(x_vals, y_vals_opt,
-                            label="optimal scaling", color="red")
+                    ax.plot(x_vals, y_vals_opt, label="optimal scaling", color="red")
                 except Exception as e:
                     print(
                         "WARNING: optimal scaling curve could not be drawn. The function needs to be interpretable by the python eval() function and the parameters need to be the same as the ones shwon on the figures. See the following exception for more information: "
@@ -257,16 +264,14 @@ class ModelWrapper:
                     y_vals_opt = []
                     for _ in range(len(y_vals)):
                         y_vals_opt.append(y_vals[0])
-                    ax.plot(x_vals, y_vals_opt,
-                            label="optimal scaling", color="red")
+                    ax.plot(x_vals, y_vals_opt, label="optimal scaling", color="red")
                 else:
                     raise Exception(
                         "Plotting the optimal scaling automatically is currently not supported for the chosen parameter."
                     )
 
         # plot axes and titles
-        ax.set_xlabel(self.parameters[0] + " $" +
-                      str(DEFAULT_PARAM_NAMES[0])+"$")
+        ax.set_xlabel(self.parameters[0] + " $" + str(DEFAULT_PARAM_NAMES[0]) + "$")
         ax.set_ylabel(self.mdl.metric)
         ax.set_title(str(self.mdl.callpath) + "()")
 
@@ -292,11 +297,7 @@ class ModelWrapper:
                 stats_text += "SMAPE = " + smape
 
         if RSS or AR2 or SMAPE:
-            ax.text(
-                x_vals[0],
-                y_pos_text,
-                stats_text
-            )
+            ax.text(x_vals[0], y_pos_text, stats_text)
 
         # plot legend
         ax.legend(loc=1)
@@ -304,7 +305,9 @@ class ModelWrapper:
         return fig, ax
 
     def _draw_legend(
-        self, axis: Axes, dict_callpath_color: dict[str, list[str]],
+        self,
+        axis: Axes,
+        dict_callpath_color: dict[str, list[str]],
     ) -> None:
         """This method draws a legend for 3D plots.
 
@@ -353,8 +356,7 @@ class ModelWrapper:
                 )
                 handles.append(mark)
 
-        axis.legend(handles=handles, loc="lower center",
-                    bbox_to_anchor=(1.75, 0.5))
+        axis.legend(handles=handles, loc="lower center", bbox_to_anchor=(1.75, 0.5))
 
     def _display_two_parameter_model(
         self,
@@ -388,8 +390,7 @@ class ModelWrapper:
 
         # sort based on x and y values
         measures_sorted = sorted(
-            self.mdl.measurements, key=lambda x: (
-                x.coordinate[0], x.coordinate[1])
+            self.mdl.measurements, key=lambda x: (x.coordinate[0], x.coordinate[1])
         )
 
         # get x, y value from measurements
@@ -403,11 +404,9 @@ class ModelWrapper:
         maxes = [ms.maximum for ms in measures_sorted]
 
         # x value plotting range. Dynamic based off what the largest/smallest values are
-        x_vals = np.linspace(
-            start=X_params[0], stop=1.5 * X_params[-1], num=100)
+        x_vals = np.linspace(start=X_params[0], stop=1.5 * X_params[-1], num=100)
         # y value plotting range. Dynamic based off what the largest/smallest values are
-        y_vals = np.linspace(
-            start=Y_params[0], stop=1.5 * Y_params[-1], num=100)
+        y_vals = np.linspace(start=Y_params[0], stop=1.5 * Y_params[-1], num=100)
 
         x_vals, y_vals = np.meshgrid(x_vals, y_vals)
         if isinstance(self.mdl.hypothesis.function, ConstantFunction) is True:
@@ -415,8 +414,7 @@ class ModelWrapper:
             for i in range(len(x_vals)):
                 zx = []
                 for j in range(len(x_vals[0])):
-                    zx.append(self.mdl.hypothesis.function.evaluate(
-                        [x_vals, y_vals]))
+                    zx.append(self.mdl.hypothesis.function.evaluate([x_vals, y_vals]))
                 zy.append(zx)
             z_vals = np.reshape(zy, (len(x_vals), len(y_vals))).T
         else:
@@ -516,34 +514,29 @@ class ModelWrapper:
                 X_params, Y_params, medians, c="black", marker="x", label="median"
             )
         if show_mean:
-            ax.scatter(X_params, Y_params, means,
-                       c="black", marker="+", label="mean")
+            ax.scatter(X_params, Y_params, means, c="black", marker="+", label="mean")
         if show_min_max:
-            ax.scatter(X_params, Y_params, mins,
-                       c="black", marker="_", label="min")
-            ax.scatter(X_params, Y_params, maxes,
-                       c="black", marker="_", label="max")
+            ax.scatter(X_params, Y_params, mins, c="black", marker="_", label="min")
+            ax.scatter(X_params, Y_params, maxes, c="black", marker="_", label="max")
             # Draw connecting line for min, max -> error bars
             line_x, line_y, line_z = [], [], []
             for x, y, min_v, max_v in zip(X_params, Y_params, mins, maxes):
                 line_x.append(x), line_x.append(x)
                 line_y.append(y), line_y.append(y)
                 line_z.append(min_v), line_z.append(max_v)
-                line_x.append(np.nan), line_y.append(
-                    np.nan), line_z.append(np.nan)
+                line_x.append(np.nan), line_y.append(np.nan), line_z.append(np.nan)
             ax.plot(line_x, line_y, line_z, color="black")
 
         # axis labels and title
-        ax.set_xlabel(self.parameters[0] + " $" +
-                      str(DEFAULT_PARAM_NAMES[0])+"$")
-        ax.set_ylabel(self.parameters[1] + " $" +
-                      str(DEFAULT_PARAM_NAMES[1])+"$")
+        ax.set_xlabel(self.parameters[0] + " $" + str(DEFAULT_PARAM_NAMES[0]) + "$")
+        ax.set_ylabel(self.parameters[1] + " $" + str(DEFAULT_PARAM_NAMES[1]) + "$")
         ax.set_zlabel(self.mdl.metric)
         ax.set_title(str(self.mdl.callpath) + "()")
 
         # create scientific representation of create performance model
         scientific_function = self.mdl.hypothesis.function.to_latex_string(
-            Parameter(DEFAULT_PARAM_NAMES[0]), Parameter(DEFAULT_PARAM_NAMES[1]))
+            Parameter(DEFAULT_PARAM_NAMES[0]), Parameter(DEFAULT_PARAM_NAMES[1])
+        )
 
         # create dict for legend color and markers
         dict_callpath_color = {}
@@ -661,7 +654,7 @@ class ModelWrapper:
 
 
 class ExtrapInterface:
-    """A class that functions as an interface between Thicket and Extra-P 
+    """A class that functions as an interface between Thicket and Extra-P
     to load the data from a thicket into Extra-P, create performance models,
     append them to a thicket, and display the models."""
 
@@ -669,9 +662,15 @@ class ExtrapInterface:
         """
         Create a new Extra-P Interface object.
         """
-        self.modelers_list = list(set(k.lower() for k in chain(
-            single_parameter.all_modelers.keys(),
-            multi_parameter.all_modelers.keys())))
+        self.modelers_list = list(
+            set(
+                k.lower()
+                for k in chain(
+                    single_parameter.all_modelers.keys(),
+                    multi_parameter.all_modelers.keys(),
+                )
+            )
+        )
         self.configs = []
         self.experiments = {}
 
@@ -689,19 +688,29 @@ class ExtrapInterface:
         text += "--------------\n"
         modeler = self._check_modeler_name(modeler_name)
         if modeler is not None:
-            if hasattr(modeler, 'OPTIONS'):
+            if hasattr(modeler, "OPTIONS"):
                 for name, option in modeler.OPTIONS.items():
                     if isinstance(option, ModelerOptionsGroup):
                         for o in option.options:
                             metavar = o.range or o.type.__name__.upper()
-                            text += str(o.field) + "\t " + str(metavar) + \
-                                "\t " + \
-                                str(o.description) + "\n"
+                            text += (
+                                str(o.field)
+                                + "\t "
+                                + str(metavar)
+                                + "\t "
+                                + str(o.description)
+                                + "\n"
+                            )
                     else:
                         metavar = option.range or option.type.__name__.upper()
-                        text += str(option.field) + "\t " + str(metavar) + \
-                            "\t " + \
-                            str(option.description) + "\n"
+                        text += (
+                            str(option.field)
+                            + "\t "
+                            + str(metavar)
+                            + "\t "
+                            + str(option.description)
+                            + "\n"
+                        )
                 print(text)
 
     def _check_modeler_name(self, modeler_name):
@@ -714,16 +723,18 @@ class ExtrapInterface:
                     modeler = multi_parameter.all_modelers[modeler_name]
                 else:
                     raise ExtrapModelerException(
-                        "The given modeler does not exist. Valid options are: "+str(self.modelers_list))
+                        "The given modeler does not exist. Valid options are: "
+                        + str(self.modelers_list)
+                    )
         except ExtrapModelerException as e:
-            print("WARNING: "+e.message)
+            print("WARNING: " + e.message)
         return modeler
 
     def _check_modeler_options(self, modeler_name):
         modeler = self._check_modeler_name(modeler_name)
         options = {}
         if modeler is not None:
-            if hasattr(modeler, 'OPTIONS'):
+            if hasattr(modeler, "OPTIONS"):
                 for name, option in modeler.OPTIONS.items():
                     if isinstance(option, ModelerOptionsGroup):
                         for o in option.options:
@@ -783,8 +794,7 @@ class ExtrapInterface:
             fig.savefig(figfile, format="jpg", transparent=False)
             figfile.seek(0)
             figdata_jpg = base64.b64encode(figfile.getvalue()).decode()
-            imgstr = '<img src="data:image/jpg;base64,{}" />'.format(
-                figdata_jpg)
+            imgstr = '<img src="data:image/jpg;base64,{}" />'.format(figdata_jpg)
             plt.close(fig)
             return imgstr
 
@@ -792,7 +802,6 @@ class ExtrapInterface:
         if tht.statsframe.dataframe.columns.nlevels > 1:
             x = []
             for config in self.configs:
-
                 # catch key errors when queriying for models with a callpath, metric combination
                 # that does not exist because there was no measurement object created for them
                 existing_metrics = []
@@ -807,12 +816,15 @@ class ExtrapInterface:
                             pass
 
                 frm_dict = {
-                    met + MODEL_TAG: model_to_img_html for met in existing_metrics}
+                    met + MODEL_TAG: model_to_img_html for met in existing_metrics
+                }
 
                 # Subset of the aggregated statistics table with only the Extra-P columns selected
-                x.append(tht.statsframe.dataframe[config][
-                    [met + MODEL_TAG for met in existing_metrics]
-                ])
+                x.append(
+                    tht.statsframe.dataframe[config][
+                        [met + MODEL_TAG for met in existing_metrics]
+                    ]
+                )
 
             df = pd.concat(x)
 
@@ -833,8 +845,7 @@ class ExtrapInterface:
                     except KeyError:
                         pass
 
-            frm_dict = {
-                met + MODEL_TAG: model_to_img_html for met in existing_metrics}
+            frm_dict = {met + MODEL_TAG: model_to_img_html for met in existing_metrics}
 
             # Subset of the aggregated statistics table with only the Extra-P columns selected
             return tht.statsframe.dataframe[
@@ -865,22 +876,21 @@ class ExtrapInterface:
         tht.statsframe.dataframe.at[
             node, metric + "_AR2" + MODEL_TAG
         ] = hypothesis_fn.AR2
-        tht.statsframe.dataframe.at[
-            node, metric + "_RE" + MODEL_TAG
-        ] = hypothesis_fn.RE
+        tht.statsframe.dataframe.at[node, metric + "_RE" + MODEL_TAG] = hypothesis_fn.RE
 
-    def create_models(self,
-                      tht: Thicket,
-                      model_name: str,
-                      parameters: list[str] = None,
-                      metrics: list[str] = None,
-                      use_median: bool = True,
-                      calc_total_metrics: bool = False,
-                      scaling_parameter: str = "jobsize",
-                      add_stats: bool = True,
-                      modeler: str = "default",
-                      modeler_options: dict = None
-                      ) -> None:
+    def create_models(
+        self,
+        tht: Thicket,
+        model_name: str,
+        parameters: list[str] = None,
+        metrics: list[str] = None,
+        use_median: bool = True,
+        calc_total_metrics: bool = False,
+        scaling_parameter: str = "jobsize",
+        add_stats: bool = True,
+        modeler: str = "default",
+        modeler_options: dict = None,
+    ) -> None:
         """Converts the data in the given thicket into a format that
         can be read by Extra-P. Then the Extra-P modeler is called
         with the given options and creates a performance model for
@@ -907,7 +917,7 @@ class ExtrapInterface:
                 average runtime/rank. (Default=False)
             scaling_parameter (String): Set the scaling parameter for the
                 total metric calculation. This parameter is only used when
-                calc_total_metrics=True. One needs to provide either the 
+                calc_total_metrics=True. One needs to provide either the
                 name of the parameter that models the resource allocation,
                 e.g., the jobsize, or a fixed int value as a String, when
                 only scaling, e.g., the problem size, and the resource
@@ -926,8 +936,11 @@ class ExtrapInterface:
         # add this configuration to the list of the interface
         try:
             if model_name in self.configs:
-                raise Exception("A configuration with the name '" +
-                                str(model_name)+"' already exists. Choose another name!")
+                raise Exception(
+                    "A configuration with the name '"
+                    + str(model_name)
+                    + "' already exists. Choose another name!"
+                )
             else:
                 self.configs.append(model_name)
         except Exception as e:
@@ -956,8 +969,7 @@ class ExtrapInterface:
             experiment.add_parameter(Parameter(parameter))
 
         # Ordering of profiles in the performance data table
-        ensemble_profile_ordering = list(
-            tht.dataframe.index.unique(level=1))
+        ensemble_profile_ordering = list(tht.dataframe.index.unique(level=1))
 
         profile_parameter_value_mapping = {}
         for profile in ensemble_profile_ordering:
@@ -1028,8 +1040,7 @@ class ExtrapInterface:
                                     ):
                                         coordinate_exists = True
                                         try:
-                                            value = single_prof_df[str(
-                                                metric)].tolist()
+                                            value = single_prof_df[str(metric)].tolist()
                                         except Exception:
                                             raise ExtrapReaderException(
                                                 "The metric '"
@@ -1047,8 +1058,7 @@ class ExtrapInterface:
                                                     # read out scaling parameter for total metric value calculation
                                                     # if the resource allocation is static
                                                     if scaling_parameter.isnumeric():
-                                                        ranks = int(
-                                                            scaling_parameter)
+                                                        ranks = int(scaling_parameter)
                                                     # otherwise read number of ranks from the provided parameter
                                                     else:
                                                         # check if the parameter exists
@@ -1081,8 +1091,7 @@ class ExtrapInterface:
                                                                 + ".",
                                                                 profile,
                                                             )
-                                                    values.append(
-                                                        value[0] * ranks)
+                                                    values.append(value[0] * ranks)
                                                 # add values for all other metrics
                                                 else:
                                                     values.append(value[0])
@@ -1141,26 +1150,24 @@ class ExtrapInterface:
 
         # check if the given modeler exists
         if modeler.lower() not in self.modelers_list:
-            raise ExtrapModelerException("The given modeler does not exist in Extra-P. Valid options are: "+str(
-                self.modelers_list)+". Using default modeler instead.")
+            raise ExtrapModelerException(
+                "The given modeler does not exist in Extra-P. Valid options are: "
+                + str(self.modelers_list)
+                + ". Using default modeler instead."
+            )
             modeler = "default"
 
         # special dict to check if all given options for the modeler do exist for the given modeler
-        modeler_options_check, base_modeler_name = self._check_modeler_options(
-            modeler)
+        modeler_options_check, base_modeler_name = self._check_modeler_options(modeler)
 
         # create a model generator object for the experiment
         model_generator = ModelGenerator(
-            experiment,
-            modeler=modeler,
-            name=model_name,
-            use_median=use_median
+            experiment, modeler=modeler, name=model_name, use_median=use_median
         )
 
         # apply modeler options
         modeler = model_generator.modeler
         if isinstance(modeler, MultiParameterModeler) and modeler_options is not None:
-
             # if there are no single parameter options, modeler defined in the options go with the default values
             if "#single_parameter_modeler" not in modeler_options:
                 modeler_options["#single_parameter_modeler"] = "default"
@@ -1170,27 +1177,46 @@ class ExtrapInterface:
             # set single-parameter modeler of multi-parameter modeler
             single_modeler = modeler_options[SINGLE_PARAMETER_MODELER_KEY]
             if single_modeler is not None:
-                modeler.single_parameter_modeler = single_parameter.all_modelers[single_modeler](
-                )
+                modeler.single_parameter_modeler = single_parameter.all_modelers[
+                    single_modeler
+                ]()
 
             # special dict to check if all given options for the modeler do exist for the given modeler
-            single_modeler_options_check, single_modeler_name = self._check_modeler_options(
-                single_modeler)
+            (
+                single_modeler_options_check,
+                single_modeler_name,
+            ) = self._check_modeler_options(single_modeler)
 
             # apply options of single-parameter modeler
             if modeler.single_parameter_modeler is not None:
-                for name, value in modeler_options[SINGLE_PARAMETER_OPTIONS_KEY].items():
+                for name, value in modeler_options[
+                    SINGLE_PARAMETER_OPTIONS_KEY
+                ].items():
                     if name not in single_modeler_options_check:
-                        print("WARNING: The option "+str(name) +
-                              " does not exist for the modeler: "+str(single_modeler_name)+". Extra-P will ignore this parameter.")
+                        print(
+                            "WARNING: The option "
+                            + str(name)
+                            + " does not exist for the modeler: "
+                            + str(single_modeler_name)
+                            + ". Extra-P will ignore this parameter."
+                        )
                     if value is not None:
                         setattr(modeler.single_parameter_modeler, name, value)
 
         if modeler_options is not None:
             for name, value in modeler_options.items():
-                if name not in modeler_options_check and name != "#single_parameter_modeler" and name != "#single_parameter_options":
-                    print("WARNING: The option "+str(name) +
-                          " does not exist for the modeler: "+str(base_modeler_name)+". Extra-P will ignore this parameter.")
+                if (
+                    name not in modeler_options_check
+                    and name != "#single_parameter_modeler"
+                    and name != "#single_parameter_options"
+                ):
+                    print(
+                        "WARNING: The option "
+                        + str(name)
+                        + " does not exist for the modeler: "
+                        + str(base_modeler_name)
+                        + ". Extra-P will ignore this parameter."
+                    )
                 if value is not None:
                     setattr(modeler, name, value)
 
@@ -1202,7 +1228,6 @@ class ExtrapInterface:
 
         # check if dataframe has already a multi column index
         if tht.statsframe.dataframe.columns.nlevels > 1:
-
             # create a list with the column names
             column_names = []
             column_names.append("name")
@@ -1224,19 +1249,15 @@ class ExtrapInterface:
                     mkey = (Callpath(thicket_node.frame["name"]), metric)
                     try:
                         model_wrapper = ModelWrapper(
-                            model_generator.models[mkey], parameters, model_name)
+                            model_generator.models[mkey], parameters, model_name
+                        )
                         row.append(model_wrapper)
                         if add_stats:
-                            row.append(
-                                model_wrapper.mdl.hypothesis.RSS)
-                            row.append(
-                                model_wrapper.mdl.hypothesis.rRSS)
-                            row.append(
-                                model_wrapper.mdl.hypothesis.SMAPE)
-                            row.append(
-                                model_wrapper.mdl.hypothesis.AR2)
-                            row.append(
-                                model_wrapper.mdl.hypothesis.RE)
+                            row.append(model_wrapper.mdl.hypothesis.RSS)
+                            row.append(model_wrapper.mdl.hypothesis.rRSS)
+                            row.append(model_wrapper.mdl.hypothesis.SMAPE)
+                            row.append(model_wrapper.mdl.hypothesis.AR2)
+                            row.append(model_wrapper.mdl.hypothesis.RE)
                     except KeyError:
                         row.append(math.nan)
                         if add_stats:
@@ -1249,8 +1270,13 @@ class ExtrapInterface:
             data = np.array(table)
 
             # join with existing thicket
-            tht.statsframe.dataframe = tht.statsframe.dataframe.join(pd.DataFrame(
-                data, columns=pd.MultiIndex.from_product([[model_name], column_names]), index=tht.statsframe.dataframe.index))
+            tht.statsframe.dataframe = tht.statsframe.dataframe.join(
+                pd.DataFrame(
+                    data,
+                    columns=pd.MultiIndex.from_product([[model_name], column_names]),
+                    index=tht.statsframe.dataframe.index,
+                )
+            )
 
         else:
             # check if there is already a extra-p model in the dataframe
@@ -1258,8 +1284,9 @@ class ExtrapInterface:
             modeler_name = None
             for metric in experiment.metrics:
                 try:
-                    modeler_name = tht.statsframe.dataframe.at[thicket_node,
-                                                               str(metric) + MODEL_TAG].name
+                    modeler_name = tht.statsframe.dataframe.at[
+                        thicket_node, str(metric) + MODEL_TAG
+                    ].name
                     model_exists = True
                 except KeyError:
                     pass
@@ -1269,7 +1296,8 @@ class ExtrapInterface:
             remove_columns.remove("name")
             for i in range(len(remove_columns)):
                 tht.statsframe.dataframe = tht.statsframe.dataframe.drop(
-                    columns=remove_columns[i])
+                    columns=remove_columns[i]
+                )
             for callpath in experiment.callpaths:
                 for metric in experiment.metrics:
                     mkey = (callpath, metric)
@@ -1280,20 +1308,25 @@ class ExtrapInterface:
                             try:
                                 tht.statsframe.dataframe.at[
                                     thicket_node, str(metric) + MODEL_TAG
-                                ] = ModelWrapper(model_generator.models[mkey], parameters, model_name)
+                                ] = ModelWrapper(
+                                    model_generator.models[mkey], parameters, model_name
+                                )
                                 # Add statistics to aggregated statistics table
                                 if add_stats:
                                     self._add_extrap_statistics(
-                                        tht, thicket_node, str(metric))
+                                        tht, thicket_node, str(metric)
+                                    )
                             except Exception as e:
                                 print(e)
                                 pass
 
             # if there is already a model in the dataframe, concat them and add a multi column index
             if model_exists is True:
-
                 tht.statsframe.dataframe = pd.concat(
-                    [tht2.statsframe.dataframe, tht.statsframe.dataframe], axis=1, keys=[str(modeler_name), str(model_name)])
+                    [tht2.statsframe.dataframe, tht.statsframe.dataframe],
+                    axis=1,
+                    keys=[str(modeler_name), str(model_name)],
+                )
 
         self.experiments[model_name] = experiment
 
@@ -1320,8 +1353,9 @@ class ExtrapInterface:
             for term in fnc.compound_terms:
                 if len(parameters) == 1:
                     # Join variables of the same term together
-                    variable_column = " * ".join(t.to_string()
-                                                 for t in term.simple_terms)
+                    variable_column = " * ".join(
+                        t.to_string() for t in term.simple_terms
+                    )
 
                     term_dict[variable_column] = term.coefficient
                 else:
@@ -1341,7 +1375,9 @@ class ExtrapInterface:
 
         return term_dict
 
-    def componentize_statsframe(self, thicket: Thicket, columns: list[str] = None) -> None:
+    def componentize_statsframe(
+        self, thicket: Thicket, columns: list[str] = None
+    ) -> None:
         """Componentize multiple Extra-P modeling objects in the aggregated statistics
         table
 
@@ -1351,7 +1387,6 @@ class ExtrapInterface:
         """
 
         if len(self.configs) == 1:
-
             config = self.configs[0]
             exp = self.experiments[config]
 
@@ -1360,7 +1395,9 @@ class ExtrapInterface:
                 columns = [
                     col
                     for col in thicket.statsframe.dataframe
-                    if isinstance(thicket.statsframe.dataframe[col].iloc[0], ModelWrapper)
+                    if isinstance(
+                        thicket.statsframe.dataframe[col].iloc[0], ModelWrapper
+                    )
                 ]
 
             # Error checking
@@ -1369,7 +1406,9 @@ class ExtrapInterface:
                     raise ValueError(
                         "column " + c + " is not in the aggregated statistics table."
                     )
-                elif not isinstance(thicket.statsframe.dataframe[c].iloc[0], ModelWrapper):
+                elif not isinstance(
+                    thicket.statsframe.dataframe[c].iloc[0], ModelWrapper
+                ):
                     raise TypeError(
                         "column "
                         + c
@@ -1381,8 +1420,7 @@ class ExtrapInterface:
             for col in columns:
                 # Get list of components for this column
                 components = [
-                    ExtrapInterface._componentize_function(
-                        model_obj, exp.parameters)
+                    ExtrapInterface._componentize_function(model_obj, exp.parameters)
                     for model_obj in thicket.statsframe.dataframe[col]
                 ]
 
@@ -1410,16 +1448,23 @@ class ExtrapInterface:
                     columns = [
                         col
                         for col in thicket.statsframe.dataframe[config]
-                        if isinstance(thicket.statsframe.dataframe[config][col].iloc[0], ModelWrapper)
+                        if isinstance(
+                            thicket.statsframe.dataframe[config][col].iloc[0],
+                            ModelWrapper,
+                        )
                     ]
 
                 # Error checking
                 for c in columns:
                     if c not in thicket.statsframe.dataframe[config].columns:
                         raise ValueError(
-                            "column " + c + " is not in the aggregated statistics table."
+                            "column "
+                            + c
+                            + " is not in the aggregated statistics table."
                         )
-                    elif not isinstance(thicket.statsframe.dataframe[config][c].iloc[0], ModelWrapper):
+                    elif not isinstance(
+                        thicket.statsframe.dataframe[config][c].iloc[0], ModelWrapper
+                    ):
                         raise TypeError(
                             "column "
                             + c
@@ -1431,7 +1476,8 @@ class ExtrapInterface:
                     # Get list of components for this column
                     components = [
                         ExtrapInterface._componentize_function(
-                            model_obj, exp.parameters)
+                            model_obj, exp.parameters
+                        )
                         for model_obj in thicket.statsframe.dataframe[config][col]
                     ]
 
@@ -1456,12 +1502,14 @@ class ExtrapInterface:
 
                     counter = 0
                     for column_key in column_keys:
-                        thicket.statsframe.dataframe[config,
-                                                     col + "_" + column_key] = x[counter]
+                        thicket.statsframe.dataframe[
+                            config, col + "_" + column_key
+                        ] = x[counter]
                         counter += 1
 
             thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(
-                axis=1)
+                axis=1
+            )
 
     def _analyze_complexity(
         model_object: Model, eval_target: list[float], col: str, parameters: list[str]
@@ -1497,8 +1545,7 @@ class ExtrapInterface:
             if len(fnc.compound_terms) == 0:
                 complexity_class = "1"
                 coefficient = fnc.constant_coefficient
-                return_value[col + "_complexity_" +
-                             target_str] = complexity_class
+                return_value[col + "_complexity_" + target_str] = complexity_class
                 return_value[col + "_coefficient_" + target_str] = coefficient
 
             else:
@@ -1526,15 +1573,19 @@ class ExtrapInterface:
                         comp = comp.replace("^", "**")
                         complexity_class = "" + comp + ""
                         coefficient = terms[max_index].coefficient
-                        return_value[col + "_complexity_" +
-                                     target_str] = complexity_class
-                        return_value[col + "_coefficient_" +
-                                     target_str] = coefficient
+                        return_value[
+                            col + "_complexity_" + target_str
+                        ] = complexity_class
+                        return_value[col + "_coefficient_" + target_str] = coefficient
                     else:
                         comp = ""
-                        for parameter_term_pair in terms[max_index].parameter_term_pairs:
+                        for parameter_term_pair in terms[
+                            max_index
+                        ].parameter_term_pairs:
                             # [0] to get the index of the paramete
-                            term_parameter_str = DEFAULT_PARAM_NAMES[parameter_term_pair[0]]
+                            term_parameter_str = DEFAULT_PARAM_NAMES[
+                                parameter_term_pair[0]
+                            ]
                             # [1] to get the term
                             if comp == "":
                                 comp += parameter_term_pair[1].to_string(
@@ -1550,25 +1601,28 @@ class ExtrapInterface:
                                 )
                         comp = comp.replace("^", "**")
                         complexity_class = "" + comp + ""
-                        return_value[col + "_complexity_" +
-                                     target_str] = complexity_class
-                        return_value[col + "_coefficient_" +
-                                     target_str] = term.coefficient
+                        return_value[
+                            col + "_complexity_" + target_str
+                        ] = complexity_class
+                        return_value[
+                            col + "_coefficient_" + target_str
+                        ] = term.coefficient
 
                 else:
                     complexity_class = "1"
                     coefficient = fnc.constant_coefficient
-                    return_value[col + "_complexity_" +
-                                 target_str] = complexity_class
-                    return_value[col + "_coefficient_" +
-                                 target_str] = coefficient
+                    return_value[col + "_complexity_" + target_str] = complexity_class
+                    return_value[col + "_coefficient_" + target_str] = coefficient
 
         return return_value
 
     from typing import List
 
     def complexity_statsframe(
-        self, thicket: Thicket, columns: list[str] = None, eval_targets: list[list[float]] = None
+        self,
+        thicket: Thicket,
+        columns: list[str] = None,
+        eval_targets: list[list[float]] = None,
     ) -> None:
         """Analyzes the complexity of the Extra-P models for the given thicket statsframe and the list of selected columns (metrics) for a given target evaluation scale. Then adds the results back into the statsframe.
 
@@ -1668,8 +1722,8 @@ class ExtrapInterface:
                         metric_values = []
                         for model_obj in thicket.statsframe.dataframe[col]:
                             if not isinstance(model_obj, float):
-                                metric_value = model_obj.mdl.hypothesis.function.evaluate(
-                                    target
+                                metric_value = (
+                                    model_obj.mdl.hypothesis.function.evaluate(target)
                                 )
                             else:
                                 metric_value = math.nan
@@ -1741,8 +1795,11 @@ class ExtrapInterface:
                         # Use all Extra-P columns
                         if columns is None:
                             columns = []
-                            for col in thicket.statsframe.dataframe[config]: 
-                                if isinstance(thicket.statsframe.dataframe[config][col].iloc[0], ModelWrapper):
+                            for col in thicket.statsframe.dataframe[config]:
+                                if isinstance(
+                                    thicket.statsframe.dataframe[config][col].iloc[0],
+                                    ModelWrapper,
+                                ):
                                     columns.append(col)
 
                         # Error checking
@@ -1754,7 +1811,8 @@ class ExtrapInterface:
                                     + " is not in the aggregated statistics table."
                                 )
                             elif not isinstance(
-                                thicket.statsframe.dataframe[config][c].iloc[0], ModelWrapper
+                                thicket.statsframe.dataframe[config][c].iloc[0],
+                                ModelWrapper,
                             ):
                                 raise TypeError(
                                     "column "
@@ -1769,7 +1827,9 @@ class ExtrapInterface:
                                 ExtrapInterface._analyze_complexity(
                                     model_obj, target, col, exp.parameters
                                 )
-                                for model_obj in thicket.statsframe.dataframe[config][col]
+                                for model_obj in thicket.statsframe.dataframe[config][
+                                    col
+                                ]
                             ]
 
                             x = []
@@ -1783,8 +1843,7 @@ class ExtrapInterface:
 
                             counter = 0
                             for key, value in components[0].items():
-                                thicket.statsframe.dataframe[config,
-                                                             key] = x[counter]
+                                thicket.statsframe.dataframe[config, key] = x[counter]
                                 counter += 1
 
                         # Add callpath ranking to the dataframe
@@ -1793,8 +1852,10 @@ class ExtrapInterface:
                             metric_values = []
                             for model_obj in thicket.statsframe.dataframe[config][col]:
                                 if not isinstance(model_obj, float):
-                                    metric_value = model_obj.mdl.hypothesis.function.evaluate(
-                                        target
+                                    metric_value = (
+                                        model_obj.mdl.hypothesis.function.evaluate(
+                                            target
+                                        )
                                     )
                                 else:
                                     metric_value = math.nan
@@ -1820,18 +1881,20 @@ class ExtrapInterface:
                                 ] = reverse_ranking[i]
                                 ranking_list.append(ranking_dict)"""
 
-                            thicket.statsframe.dataframe[config,
-                                                         str(col + "_growth_rank_" + target_str)] = reverse_ranking
+                            thicket.statsframe.dataframe[
+                                config, str(col + "_growth_rank_" + target_str)
+                            ] = reverse_ranking
 
-                        thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(
-                            axis=1)
+                        thicket.statsframe.dataframe = (
+                            thicket.statsframe.dataframe.sort_index(axis=1)
+                        )
 
-    def produce_aggregated_model(self, thicket: Thicket, use_median: bool = True, add_stats=True) -> DataFrame:
-        """Analysis the thicket statsframe by grouping application phases such as computation and communication together to create performance models for these phases.
-        """
+    def produce_aggregated_model(
+        self, thicket: Thicket, use_median: bool = True, add_stats=True
+    ) -> DataFrame:
+        """Analysis the thicket statsframe by grouping application phases such as computation and communication together to create performance models for these phases."""
 
         if len(self.configs) == 1:
-
             config = self.configs[0]
             exp = self.experiments[config]
 
@@ -1844,29 +1907,43 @@ class ExtrapInterface:
                 agg_measurements = {}
                 for i in range(len(callpaths)):
                     if parameters is None:
-                        parameters = thicket.statsframe.dataframe[
-                            str(metric)+"_extrap-model"].iloc[i].parameters
-                    if not isinstance(thicket.statsframe.dataframe[
-                            str(metric)+"_extrap-model"].iloc[i], float):
-                        measurement_list = thicket.statsframe.dataframe[
-                            str(metric)+"_extrap-model"].iloc[i].mdl.measurements
+                        parameters = (
+                            thicket.statsframe.dataframe[str(metric) + "_extrap-model"]
+                            .iloc[i]
+                            .parameters
+                        )
+                    if not isinstance(
+                        thicket.statsframe.dataframe[
+                            str(metric) + "_extrap-model"
+                        ].iloc[i],
+                        float,
+                    ):
+                        measurement_list = (
+                            thicket.statsframe.dataframe[str(metric) + "_extrap-model"]
+                            .iloc[i]
+                            .mdl.measurements
+                        )
                         for i in range(len(measurement_list)):
                             measurement_list[i].coordinate
                             measurement_list[i].median
                             if measurement_list[i].coordinate not in agg_measurements:
                                 if use_median is True:
-                                    agg_measurements[measurement_list[i]
-                                                     .coordinate] = measurement_list[i].median
+                                    agg_measurements[
+                                        measurement_list[i].coordinate
+                                    ] = measurement_list[i].median
                                 else:
-                                    agg_measurements[measurement_list[i]
-                                                     .coordinate] = measurement_list[i].mean
+                                    agg_measurements[
+                                        measurement_list[i].coordinate
+                                    ] = measurement_list[i].mean
                             else:
                                 if use_median is True:
-                                    agg_measurements[measurement_list[i]
-                                                     .coordinate] += measurement_list[i].median
+                                    agg_measurements[
+                                        measurement_list[i].coordinate
+                                    ] += measurement_list[i].median
                                 else:
-                                    agg_measurements[measurement_list[i]
-                                                     .coordinate] += measurement_list[i].mean
+                                    agg_measurements[
+                                        measurement_list[i].coordinate
+                                    ] += measurement_list[i].mean
                 agg_measurements_list.append(agg_measurements)
 
             # create a new Extra-P experiment, one for each phase model
@@ -1880,15 +1957,13 @@ class ExtrapInterface:
             experiment.add_callpath(aggregated_callpath)
 
             for i in range(len(next(iter(agg_measurements)))):
-                experiment.add_parameter(
-                    Parameter(str(DEFAULT_PARAM_NAMES[i])))
+                experiment.add_parameter(Parameter(str(DEFAULT_PARAM_NAMES[i])))
 
             for metric in exp.metrics:
                 for key, value in agg_measurements.items():
                     if key not in experiment.coordinates:
                         experiment.add_coordinate(key)
-                    measurement = Measurement(
-                        key, aggregated_callpath, metric, value)
+                    measurement = Measurement(key, aggregated_callpath, metric, value)
                     experiment.add_measurement(measurement)
 
             # create models using the new experiment for aggregated functions
@@ -1902,23 +1977,43 @@ class ExtrapInterface:
             aggregated_df = pd.DataFrame(columns=["name"])
             for metric in exp.metrics:
                 if add_stats is True:
-                    aggregated_df.insert(len(aggregated_df.columns),
-                                         str(metric)+"_extrap-model", None)
-                    aggregated_df.insert(len(aggregated_df.columns),
-                                         str(metric)+"_RSS_extrap-model", None)
-                    aggregated_df.insert(len(aggregated_df.columns),
-                                         str(metric)+"_rRSS_extrap-model", None)
-                    aggregated_df.insert(len(aggregated_df.columns),
-                                         str(metric)+"_SMAPE_extrap-model", None)
-                    aggregated_df.insert(len(aggregated_df.columns),
-                                         str(metric)+"_AR2_extrap-model", None)
-                    aggregated_df.insert(len(aggregated_df.columns),
-                                         str(metric)+"_RE_extrap-model", None)
+                    aggregated_df.insert(
+                        len(aggregated_df.columns), str(metric) + "_extrap-model", None
+                    )
+                    aggregated_df.insert(
+                        len(aggregated_df.columns),
+                        str(metric) + "_RSS_extrap-model",
+                        None,
+                    )
+                    aggregated_df.insert(
+                        len(aggregated_df.columns),
+                        str(metric) + "_rRSS_extrap-model",
+                        None,
+                    )
+                    aggregated_df.insert(
+                        len(aggregated_df.columns),
+                        str(metric) + "_SMAPE_extrap-model",
+                        None,
+                    )
+                    aggregated_df.insert(
+                        len(aggregated_df.columns),
+                        str(metric) + "_AR2_extrap-model",
+                        None,
+                    )
+                    aggregated_df.insert(
+                        len(aggregated_df.columns),
+                        str(metric) + "_RE_extrap-model",
+                        None,
+                    )
                 else:
-                    aggregated_df.insert(len(aggregated_df.columns),
-                                         str(metric)+"_extrap-model", None)
-                    aggregated_df.insert(len(aggregated_df.columns),
-                                         str(metric)+"_RSS_extrap-model", None)
+                    aggregated_df.insert(
+                        len(aggregated_df.columns), str(metric) + "_extrap-model", None
+                    )
+                    aggregated_df.insert(
+                        len(aggregated_df.columns),
+                        str(metric) + "_RSS_extrap-model",
+                        None,
+                    )
 
             new_row = ["aggregated_nodes"]
             for metric in exp.metrics:
@@ -1929,7 +2024,10 @@ class ExtrapInterface:
                 AR2 = model.hypothesis._AR2
                 RE = model.hypothesis._RE
                 mdl = ModelWrapper(
-                    model_gen.models[(aggregated_callpath, metric)], parameters, "config1")
+                    model_gen.models[(aggregated_callpath, metric)],
+                    parameters,
+                    "config1",
+                )
                 if add_stats is True:
                     new_row.append(mdl)
                     new_row.append(RSS)
@@ -1945,38 +2043,37 @@ class ExtrapInterface:
 
 
 def multi_display_one_parameter_model(model_objects):
-
     functions = []
     scientific_functions = []
     for model_object in model_objects:
         functions.append(model_object.mdl.hypothesis.function)
         scientific_functions.append(
-            model_object.mdl.hypothesis.function.to_latex_string(Parameter(DEFAULT_PARAM_NAMES[0])))
+            model_object.mdl.hypothesis.function.to_latex_string(
+                Parameter(DEFAULT_PARAM_NAMES[0])
+            )
+        )
 
     # sort based on x values
     measures_sorted = sorted(
-        model_objects[0].mdl.measurements, key=lambda x: x.coordinate[0])
+        model_objects[0].mdl.measurements, key=lambda x: x.coordinate[0]
+    )
 
     # compute means, medians, mins, maxes
     params = [ms.coordinate[0] for ms in measures_sorted]  # X values
 
     # x value plotting range, dynamic based off what the largest/smallest values are
-    x_vals = np.arange(
-        params[0], 1.5 * params[-1], (params[-1] - params[0]) / 100.0
-    )
+    x_vals = np.arange(params[0], 1.5 * params[-1], (params[-1] - params[0]) / 100.0)
 
     y_vals_list = []
     for model_object in model_objects:
         # compute y values for plotting
-        y_vals = [model_object.mdl.hypothesis.function.evaluate(
-            x) for x in x_vals]
+        y_vals = [model_object.mdl.hypothesis.function.evaluate(x) for x in x_vals]
         y_vals_list.append(y_vals)
 
     plt.ioff()
     fig, ax = plt.subplots()
 
-    range_values = np.arange(
-        0, 1, 1 / len(model_objects))
+    range_values = np.arange(0, 1, 1 / len(model_objects))
     if len(model_objects) <= 20:
         colormap = "tab20"
     else:
@@ -1989,14 +2086,17 @@ def multi_display_one_parameter_model(model_objects):
 
     # plot the model
     for i in range(len(model_objects)):
-        ax.plot(x_vals, y_vals_list[i],
-                label=str(model_objects[i].mdl.callpath) +
-                ": "+scientific_functions[i],
-                color=rgbas[i])
+        ax.plot(
+            x_vals,
+            y_vals_list[i],
+            label=str(model_objects[i].mdl.callpath) + ": " + scientific_functions[i],
+            color=rgbas[i],
+        )
 
     # plot axes and titles
-    ax.set_xlabel(model_objects[0].parameters[0] + " $" +
-                  str(DEFAULT_PARAM_NAMES[0])+"$")
+    ax.set_xlabel(
+        model_objects[0].parameters[0] + " $" + str(DEFAULT_PARAM_NAMES[0]) + "$"
+    )
     ax.set_ylabel(model_objects[0].mdl.metric)
 
     # plot legend
@@ -2006,7 +2106,6 @@ def multi_display_one_parameter_model(model_objects):
 
 
 def multi_display_two_parameter_model(model_objects):
-
     parameters = model_objects[0].parameters
 
     functions = []
@@ -2014,11 +2113,13 @@ def multi_display_two_parameter_model(model_objects):
     for model_object in model_objects:
         functions.append(model_object.mdl.hypothesis.function)
         scientific_functions.append(
-            model_object.mdl.hypothesis.function.to_latex_string(Parameter(DEFAULT_PARAM_NAMES[0]), Parameter(DEFAULT_PARAM_NAMES[1])))
+            model_object.mdl.hypothesis.function.to_latex_string(
+                Parameter(DEFAULT_PARAM_NAMES[0]), Parameter(DEFAULT_PARAM_NAMES[1])
+            )
+        )
 
     # chose the color map to take the colors from dynamically
-    range_values = np.arange(
-        0, 1, 1 / len(model_objects))
+    range_values = np.arange(0, 1, 1 / len(model_objects))
     if len(model_objects) <= 20:
         colormap = "tab20"
     else:
@@ -2030,8 +2131,9 @@ def multi_display_two_parameter_model(model_objects):
         rgbas.append(rgba)
     sorted_colors = {}
     for rgba in rgbas:
-        luminance = sqrt(0.299*rgba[0]**2 + 0.587 *
-                         rgba[1]**2 + 0.114*rgba[2]**2)
+        luminance = sqrt(
+            0.299 * rgba[0] ** 2 + 0.587 * rgba[1] ** 2 + 0.114 * rgba[2] ** 2
+        )
         sorted_colors[luminance] = rgba
     sorted_colors_keys = list(sorted_colors.keys())
     sorted_colors_keys.sort()
@@ -2061,15 +2163,16 @@ def multi_display_two_parameter_model(model_objects):
     eval_results = {}
     for model_object in model_objects:
         function = model_object.mdl.hypothesis.function
-        result = function.evaluate((xmax*1.5, ymax*1.5))
+        result = function.evaluate((xmax * 1.5, ymax * 1.5))
         eval_results[result] = (function, model_object)
 
     # create dict for legend color and markers
     dict_callpath_color = {}
     function_char_len = 0
     for i in range(len(scientific_functions)):
-        dict_callpath_color[str(model_objects[i].mdl.callpath)+": "+str(scientific_functions[i])] = [
-            "surface", rgbas[i]]
+        dict_callpath_color[
+            str(model_objects[i].mdl.callpath) + ": " + str(scientific_functions[i])
+        ] = ["surface", rgbas[i]]
         if i == 0:
             function_char_len = len(str(scientific_functions[i]))
         else:
@@ -2078,12 +2181,11 @@ def multi_display_two_parameter_model(model_objects):
 
     plt.ioff()
     fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
+    ax = fig.add_subplot(projection="3d")
 
     sorted_eval_results_keys = list(eval_results.keys())
     sorted_eval_results_keys.sort()
-    eval_results = {
-        i: eval_results[i] for i in sorted_eval_results_keys}
+    eval_results = {i: eval_results[i] for i in sorted_eval_results_keys}
 
     model_objects = []
     for _, value in eval_results.items():
@@ -2091,29 +2193,34 @@ def multi_display_two_parameter_model(model_objects):
 
     # sort based on x and y values
     measures_sorted = sorted(
-        model_objects[0].mdl.measurements, key=lambda x: (
-            x.coordinate[0], x.coordinate[1])
+        model_objects[0].mdl.measurements,
+        key=lambda x: (x.coordinate[0], x.coordinate[1]),
     )
     X_params = [ms.coordinate[0] for ms in measures_sorted]
     Y_params = [ms.coordinate[1] for ms in measures_sorted]
     maxX = 1.5 * X_params[-1]
     maxY = 1.5 * Y_params[-1]
-    X, Y, Z_List, z_List = calculate_z_models(
-        maxX, maxY, model_objects, parameters)
+    X, Y, Z_List, z_List = calculate_z_models(maxX, maxY, model_objects, parameters)
 
     for i in range(len(Z_List)):
         ax.plot_surface(
-            X, Y, Z_List[i],
+            X,
+            Y,
+            Z_List[i],
             rstride=1,
             cstride=1,
             antialiased=False,
-            alpha=0.3, color=rgbas[i])
+            alpha=0.3,
+            color=rgbas[i],
+        )
 
     # axis labels and title
-    ax.set_xlabel(model_objects[0].parameters[0] +
-                  " $"+str(DEFAULT_PARAM_NAMES[0])+"$")
-    ax.set_ylabel(model_objects[0].parameters[1] +
-                  " $"+str(DEFAULT_PARAM_NAMES[1])+"$")
+    ax.set_xlabel(
+        model_objects[0].parameters[0] + " $" + str(DEFAULT_PARAM_NAMES[0]) + "$"
+    )
+    ax.set_ylabel(
+        model_objects[0].parameters[1] + " $" + str(DEFAULT_PARAM_NAMES[1]) + "$"
+    )
     ax.set_zlabel(model_objects[0].mdl.metric)
 
     # draw the legend
@@ -2124,8 +2231,11 @@ def multi_display_two_parameter_model(model_objects):
             patch = mpatches.Patch(color=value[1], label=labelName)
             handles.append(patch)
 
-    ax.legend(handles=handles, loc="center right",
-              bbox_to_anchor=(2+(function_char_len)*0.01, 0.5))
+    ax.legend(
+        handles=handles,
+        loc="center right",
+        bbox_to_anchor=(2 + (function_char_len) * 0.01, 0.5),
+    )
 
     return fig, ax
 
@@ -2158,7 +2268,7 @@ def calculate_z_models(maxX, maxY, model_list, parameters, max_z=0):
     # Get the z value for the x and y value
     z_List = list()
     Z_List = list()
-    previous = np.seterr(invalid='ignore', divide='ignore')
+    previous = np.seterr(invalid="ignore", divide="ignore")
     for model in model_list:
         function = model.mdl.hypothesis.function
         zs = calculate_z_optimized(X, Y, function, parameters, maxX, maxY)
@@ -2184,7 +2294,7 @@ def calculate_grid_parameters(maxX, maxY):
 
 def getPixelGap(lowerlimit, upperlimit, numberOfPixels):
     """
-        This function calculate the gap in pixels based on number of pixels and max value
+    This function calculate the gap in pixels based on number of pixels and max value
     """
     pixelGap = (upperlimit - lowerlimit) / numberOfPixels
     return pixelGap
@@ -2192,11 +2302,10 @@ def getPixelGap(lowerlimit, upperlimit, numberOfPixels):
 
 def calculate_z_optimized(X, Y, function, parameters, maxX, maxY):
     """
-       This function evaluates the function passed to it.
+    This function evaluates the function passed to it.
     """
     xs, ys = X.reshape(-1), Y.reshape(-1)
-    points = np.ndarray(
-        (len(parameters), len(xs)))
+    points = np.ndarray((len(parameters), len(xs)))
 
     points[0] = maxX
     points[1] = maxY
