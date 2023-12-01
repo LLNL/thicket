@@ -22,26 +22,18 @@ def test_model_extrap(mpi_scaling_cali):
     # Model created using metadata column
     mdl = Modeling(
         t_ens,
-        "jobsize",
-        chosen_metrics=[
+        parameters=["jobsize"],
+        metrics=[
             "Avg time/rank",
         ],
     )
     mdl.produce_models()
 
     # Model created using manually-input core counts for each file
-    core_list = {
-        mpi_scaling_cali[0]: 27,
-        mpi_scaling_cali[1]: 64,
-        mpi_scaling_cali[2]: 125,
-        mpi_scaling_cali[3]: 216,
-        mpi_scaling_cali[4]: 343,
-    }
     mdl2 = Modeling(
         t_ens,
-        "cores",
-        core_list,
-        chosen_metrics=[
+        parameters=["mpi.world.size"],
+        metrics=[
             "Avg time/rank",
         ],
     )
@@ -67,32 +59,29 @@ def test_componentize_functions(mpi_scaling_cali):
 
     mdl = Modeling(
         t_ens,
-        "jobsize",
-        chosen_metrics=[
+        parameters=["jobsize"],
+        metrics=[
             "Avg time/rank",
             "Max time/rank",
         ],
     )
-    mdl.produce_models(add_stats=False)
+    mdl.produce_models(add_stats=False, use_median=False)
 
     mdl.componentize_statsframe()
 
     xp_comp_df = t_ens.statsframe.dataframe
 
     # Check shape
-    assert xp_comp_df.shape == (45, 22)
+    assert xp_comp_df.shape == (45, 15)
 
     # Check values
     epsilon = 1e-10  # Account for rounding/approximation
 
-    val = xp_comp_df[("Avg time/rank_extrap-model", "c")].iloc[0]
-    assert abs(val - 1.91978782561084e-05) < epsilon
-
-    val = xp_comp_df[("Avg time/rank_extrap-model", "c")].iloc[10]
-    assert abs(val - -0.003861532835811386) < epsilon
-
-    val = xp_comp_df[("Avg time/rank_extrap-model", "p^(9/4)")].iloc[0]
-    assert abs(val - 9.088016797416257e-09) < epsilon
-
     val = xp_comp_df[("Avg time/rank_extrap-model", "p^(4/3) * log2(p)^(1)")].iloc[5]
-    assert abs(val - 7.635268055673417e-09) < epsilon
+    assert abs(val - 7.635268e-09) < epsilon
+
+    val = xp_comp_df[("Avg time/rank_extrap-model", "log2(p)^(1)")].iloc[10]
+    assert abs(val - 0.004877826563263911) < epsilon
+
+    val = xp_comp_df[("Max time/rank_extrap-model", "c")].iloc[0]
+    assert abs(val - 8.3074767) < epsilon
