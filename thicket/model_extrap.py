@@ -1342,7 +1342,7 @@ class ExtrapInterface:
 
         return term_dict
 
-    def componentize_statsframe(self, columns: list[str] = None) -> None:
+    def componentize_statsframe(self, thicket: Thicket, columns: list[str] = None) -> None:
         """Componentize multiple Extra-P modeling objects in the aggregated statistics
         table
 
@@ -1350,51 +1350,60 @@ class ExtrapInterface:
             column (list): list of column names in the aggregated statistics table to
                 componentize. Values must be of type 'thicket.model_extrap.ModelWrapper'.
         """
-        # Use all Extra-P columns
-        if columns is None:
-            columns = [
-                col
-                for col in thicket.statsframe.dataframe
-                if isinstance(thicket.statsframe.dataframe[col].iloc[0], ModelWrapper)
-            ]
 
-        # Error checking
-        for c in columns:
-            if c not in thicket.statsframe.dataframe.columns:
-                raise ValueError(
-                    "column " + c + " is not in the aggregated statistics table."
+        if len(self.configs) == 1:
+
+            config = self.configs[0]
+            exp = self.experiments[config]
+
+            # Use all Extra-P columns
+            if columns is None:
+                columns = [
+                    col
+                    for col in thicket.statsframe.dataframe
+                    if isinstance(thicket.statsframe.dataframe[col].iloc[0], ModelWrapper)
+                ]
+
+            # Error checking
+            for c in columns:
+                if c not in thicket.statsframe.dataframe.columns:
+                    raise ValueError(
+                        "column " + c + " is not in the aggregated statistics table."
+                    )
+                elif not isinstance(thicket.statsframe.dataframe[c].iloc[0], ModelWrapper):
+                    raise TypeError(
+                        "column "
+                        + c
+                        + " is not the right type (thicket.model_extrap.ModelWrapper)."
+                    )
+
+            # Process each column
+            all_dfs = []
+            for col in columns:
+                # Get list of components for this column
+                components = [
+                    ExtrapInterface._componentize_function(
+                        model_obj, exp.parameters)
+                    for model_obj in thicket.statsframe.dataframe[col]
+                ]
+
+                # Component dataframe
+                comp_df = pd.DataFrame(
+                    data=components, index=thicket.statsframe.dataframe.index
                 )
-            elif not isinstance(thicket.statsframe.dataframe[c].iloc[0], ModelWrapper):
-                raise TypeError(
-                    "column "
-                    + c
-                    + " is not the right type (thicket.model_extrap.ModelWrapper)."
+
+                # Add column name as index level
+                comp_df.columns = pd.MultiIndex.from_product(
+                    [[col], comp_df.columns.to_list()]
                 )
+                all_dfs.append(comp_df)
 
-        # Process each column
-        all_dfs = []
-        for col in columns:
-            # Get list of components for this column
-            components = [
-                ExtrapInterface._componentize_function(
-                    model_obj, parameters)
-                for model_obj in thicket.statsframe.dataframe[col]
-            ]
+            # Concatenate dataframes horizontally
+            all_dfs.insert(0, thicket.statsframe.dataframe)
+            thicket.statsframe.dataframe = pd.concat(all_dfs, axis=1)
 
-            # Component dataframe
-            comp_df = pd.DataFrame(
-                data=components, index=thicket.statsframe.dataframe.index
-            )
-
-            # Add column name as index level
-            comp_df.columns = pd.MultiIndex.from_product(
-                [[col], comp_df.columns.to_list()]
-            )
-            all_dfs.append(comp_df)
-
-        # Concatenate dataframes horizontally
-        all_dfs.insert(0, thicket.statsframe.dataframe)
-        thicket.statsframe.dataframe = pd.concat(all_dfs, axis=1)
+        else:
+            pass
 
     def _analyze_complexity(
         model_object: Model, eval_target: list[float], col: str, parameters: list[str]
@@ -1762,114 +1771,122 @@ class ExtrapInterface:
                         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(
                             axis=1)
 
-    def produce_aggregated_model(self, use_median: bool = True, add_stats=True) -> DataFrame:
+    def produce_aggregated_model(self, thicket: Thicket, use_median: bool = True, add_stats=True) -> DataFrame:
         """Analysis the thicket statsframe by grouping application phases such as computation and communication together to create performance models for these phases.
         """
 
-        callpaths = thicket.statsframe.dataframe["name"].values.tolist()
+        if len(self.configs) == 1:
 
-        # aggregate measurements inside the extra-p models from all communication functions
-        agg_measurements_list = []
-        parameters = None
-        for metric in metrics:
-            agg_measurements = {}
-            for i in range(len(callpaths)):
-                if parameters is None:
-                    parameters = thicket.statsframe.dataframe[
-                        str(metric)+"_extrap-model"].iloc[i].parameters
-                if not isinstance(thicket.statsframe.dataframe[
-                        str(metric)+"_extrap-model"].iloc[i], float):
-                    measurement_list = thicket.statsframe.dataframe[
-                        str(metric)+"_extrap-model"].iloc[i].mdl.measurements
-                    for i in range(len(measurement_list)):
-                        measurement_list[i].coordinate
-                        measurement_list[i].median
-                        if measurement_list[i].coordinate not in agg_measurements:
-                            if use_median is True:
-                                agg_measurements[measurement_list[i]
-                                                 .coordinate] = measurement_list[i].median
+            config = self.configs[0]
+            exp = self.experiments[config]
+
+            callpaths = thicket.statsframe.dataframe["name"].values.tolist()
+
+            # aggregate measurements inside the extra-p models from all communication functions
+            agg_measurements_list = []
+            parameters = None
+            for metric in exp.metrics:
+                agg_measurements = {}
+                for i in range(len(callpaths)):
+                    if parameters is None:
+                        parameters = thicket.statsframe.dataframe[
+                            str(metric)+"_extrap-model"].iloc[i].parameters
+                    if not isinstance(thicket.statsframe.dataframe[
+                            str(metric)+"_extrap-model"].iloc[i], float):
+                        measurement_list = thicket.statsframe.dataframe[
+                            str(metric)+"_extrap-model"].iloc[i].mdl.measurements
+                        for i in range(len(measurement_list)):
+                            measurement_list[i].coordinate
+                            measurement_list[i].median
+                            if measurement_list[i].coordinate not in agg_measurements:
+                                if use_median is True:
+                                    agg_measurements[measurement_list[i]
+                                                     .coordinate] = measurement_list[i].median
+                                else:
+                                    agg_measurements[measurement_list[i]
+                                                     .coordinate] = measurement_list[i].mean
                             else:
-                                agg_measurements[measurement_list[i]
-                                                 .coordinate] = measurement_list[i].mean
-                        else:
-                            if use_median is True:
-                                agg_measurements[measurement_list[i]
-                                                 .coordinate] += measurement_list[i].median
-                            else:
-                                agg_measurements[measurement_list[i]
-                                                 .coordinate] += measurement_list[i].mean
-            agg_measurements_list.append(agg_measurements)
+                                if use_median is True:
+                                    agg_measurements[measurement_list[i]
+                                                     .coordinate] += measurement_list[i].median
+                                else:
+                                    agg_measurements[measurement_list[i]
+                                                     .coordinate] += measurement_list[i].mean
+                agg_measurements_list.append(agg_measurements)
 
-        # create a new Extra-P experiment, one for each phase model
-        experiment = Experiment()
+            # create a new Extra-P experiment, one for each phase model
+            experiment = Experiment()
 
-        for metric in metrics:
-            metric = Metric(str(metric))
-            experiment.add_metric(metric)
+            for metric in exp.metrics:
+                metric = Metric(str(metric))
+                experiment.add_metric(metric)
 
-        aggregated_callpath = Callpath("aggregated_nodes")
-        experiment.add_callpath(aggregated_callpath)
+            aggregated_callpath = Callpath("aggregated_nodes")
+            experiment.add_callpath(aggregated_callpath)
 
-        for i in range(len(next(iter(agg_measurements)))):
-            experiment.add_parameter(
-                Parameter(str(DEFAULT_PARAM_NAMES[i])))
+            for i in range(len(next(iter(agg_measurements)))):
+                experiment.add_parameter(
+                    Parameter(str(DEFAULT_PARAM_NAMES[i])))
 
-        for metric in metrics:
-            for key, value in agg_measurements.items():
-                if key not in experiment.coordinates:
-                    experiment.add_coordinate(key)
-                measurement = Measurement(
-                    key, aggregated_callpath, metric, value)
-                experiment.add_measurement(measurement)
+            for metric in exp.metrics:
+                for key, value in agg_measurements.items():
+                    if key not in experiment.coordinates:
+                        experiment.add_coordinate(key)
+                    measurement = Measurement(
+                        key, aggregated_callpath, metric, value)
+                    experiment.add_measurement(measurement)
 
-        # create models using the new experiment for aggregated functions
-        model_gen = ModelGenerator(
-            experiment, name="Default Model", use_median=True
-        )
-        model_gen.model_all()
-        experiment.add_modeler(model_gen)
+            # create models using the new experiment for aggregated functions
+            model_gen = ModelGenerator(
+                experiment, name="Default Model", use_median=True
+            )
+            model_gen.model_all()
+            experiment.add_modeler(model_gen)
 
-        # create empty pandas dataframe with columns only
-        aggregated_df = pd.DataFrame(columns=["name"])
-        for metric in metrics:
-            if add_stats is True:
-                aggregated_df.insert(len(aggregated_df.columns),
-                                     str(metric)+"_extrap-model", None)
-                aggregated_df.insert(len(aggregated_df.columns),
-                                     str(metric)+"_RSS_extrap-model", None)
-                aggregated_df.insert(len(aggregated_df.columns),
-                                     str(metric)+"_rRSS_extrap-model", None)
-                aggregated_df.insert(len(aggregated_df.columns),
-                                     str(metric)+"_SMAPE_extrap-model", None)
-                aggregated_df.insert(len(aggregated_df.columns),
-                                     str(metric)+"_AR2_extrap-model", None)
-                aggregated_df.insert(len(aggregated_df.columns),
-                                     str(metric)+"_RE_extrap-model", None)
-            else:
-                aggregated_df.insert(len(aggregated_df.columns),
-                                     str(metric)+"_extrap-model", None)
-                aggregated_df.insert(len(aggregated_df.columns),
-                                     str(metric)+"_RSS_extrap-model", None)
+            # create empty pandas dataframe with columns only
+            aggregated_df = pd.DataFrame(columns=["name"])
+            for metric in exp.metrics:
+                if add_stats is True:
+                    aggregated_df.insert(len(aggregated_df.columns),
+                                         str(metric)+"_extrap-model", None)
+                    aggregated_df.insert(len(aggregated_df.columns),
+                                         str(metric)+"_RSS_extrap-model", None)
+                    aggregated_df.insert(len(aggregated_df.columns),
+                                         str(metric)+"_rRSS_extrap-model", None)
+                    aggregated_df.insert(len(aggregated_df.columns),
+                                         str(metric)+"_SMAPE_extrap-model", None)
+                    aggregated_df.insert(len(aggregated_df.columns),
+                                         str(metric)+"_AR2_extrap-model", None)
+                    aggregated_df.insert(len(aggregated_df.columns),
+                                         str(metric)+"_RE_extrap-model", None)
+                else:
+                    aggregated_df.insert(len(aggregated_df.columns),
+                                         str(metric)+"_extrap-model", None)
+                    aggregated_df.insert(len(aggregated_df.columns),
+                                         str(metric)+"_RSS_extrap-model", None)
 
-        new_row = ["aggregated_nodes"]
-        for metric in metrics:
-            model = model_gen.models[(aggregated_callpath, metric)]
-            RSS = model.hypothesis._RSS
-            rRSS = model.hypothesis._rRSS
-            SMAPE = model.hypothesis._SMAPE
-            AR2 = model.hypothesis._AR2
-            RE = model.hypothesis._RE
-            mdl = ModelWrapper(
-                model_gen.models[(aggregated_callpath, metric)], parameters)
-            if add_stats is True:
-                new_row.append(mdl)
-                new_row.append(RSS)
-                new_row.append(rRSS)
-                new_row.append(SMAPE)
-                new_row.append(AR2)
-                new_row.append(RE)
-        aggregated_df.loc[len(aggregated_df)] = new_row
-        return aggregated_df
+            new_row = ["aggregated_nodes"]
+            for metric in exp.metrics:
+                model = model_gen.models[(aggregated_callpath, metric)]
+                RSS = model.hypothesis._RSS
+                rRSS = model.hypothesis._rRSS
+                SMAPE = model.hypothesis._SMAPE
+                AR2 = model.hypothesis._AR2
+                RE = model.hypothesis._RE
+                mdl = ModelWrapper(
+                    model_gen.models[(aggregated_callpath, metric)], parameters, "config1")
+                if add_stats is True:
+                    new_row.append(mdl)
+                    new_row.append(RSS)
+                    new_row.append(rRSS)
+                    new_row.append(SMAPE)
+                    new_row.append(AR2)
+                    new_row.append(RE)
+            aggregated_df.loc[len(aggregated_df)] = new_row
+            return aggregated_df
+
+        else:
+            pass
 
 
 def multi_display_one_parameter_model(model_objects):
