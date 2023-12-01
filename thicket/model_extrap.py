@@ -1403,7 +1403,66 @@ class ExtrapInterface:
             thicket.statsframe.dataframe = pd.concat(all_dfs, axis=1)
 
         else:
-            pass
+            for config in self.configs:
+                exp = self.experiments[config]
+
+                # Use all Extra-P columns
+                if columns is None:
+                    columns = [
+                        col
+                        for col in thicket.statsframe.dataframe[config]
+                        if isinstance(thicket.statsframe.dataframe[config][col].iloc[0], ModelWrapper)
+                    ]
+
+                # Error checking
+                for c in columns:
+                    if c not in thicket.statsframe.dataframe[config].columns:
+                        raise ValueError(
+                            "column " + c + " is not in the aggregated statistics table."
+                        )
+                    elif not isinstance(thicket.statsframe.dataframe[config][c].iloc[0], ModelWrapper):
+                        raise TypeError(
+                            "column "
+                            + c
+                            + " is not the right type (thicket.model_extrap.ModelWrapper)."
+                        )
+
+                # Process each column
+                for col in columns:
+                    # Get list of components for this column
+                    components = [
+                        ExtrapInterface._componentize_function(
+                            model_obj, exp.parameters)
+                        for model_obj in thicket.statsframe.dataframe[config][col]
+                    ]
+
+                    column_keys = []
+                    for comp in components:
+                        for key, _ in comp.items():
+                            if key not in column_keys:
+                                column_keys.append(key)
+
+                    x = []
+                    for _ in range(len(column_keys)):
+                        x.append([])
+                    counter = 0
+                    for column_key in column_keys:
+                        for i in range(len(components)):
+                            comp = components[i]
+                            if column_key in comp.keys():
+                                x[counter].append(comp[column_key])
+                            else:
+                                x[counter].append(math.nan)
+                        counter += 1
+
+                    counter = 0
+                    for column_key in column_keys:
+                        thicket.statsframe.dataframe[config,
+                                                     column_key] = x[counter]
+                        counter += 1
+
+            thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(
+                axis=1)
 
     def _analyze_complexity(
         model_object: Model, eval_target: list[float], col: str, parameters: list[str]
