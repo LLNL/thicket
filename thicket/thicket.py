@@ -586,6 +586,7 @@ class Thicket(GraphFrame):
         render_header=True,
         min_value=None,
         max_value=None,
+        slice_tuple=None,
     ):
         """Visualize the Thicket as a tree
 
@@ -606,6 +607,7 @@ class Thicket(GraphFrame):
             render_header (bool, optional): Shows the Preamble. Defaults to True.
             min_value (int, optional): Overwrites the min value for the coloring legend. Defaults to None.
             max_value (int, optional): Overwrites the max value for the coloring legend. Defaults to None.
+            slice_tuplle(tuple, optional): Slice to use on the DataFrame to choose which row indicies to display. Defaults to None.
 
         Returns:
             (str): String representation of the tree, ready to print
@@ -631,9 +633,26 @@ class Thicket(GraphFrame):
         elif sys.version_info.major == 3:
             unicode = True
 
+        if slice_tuple is None:
+            # Create slice out of first values found starting after the first index.
+            slice_tuple = self.dataframe.index[0][1:]
+
+        # Slices the DataFrame to simulate a single-level index
+        slice_df = (
+            self.dataframe.loc[(slice(None),) + slice_tuple, :]
+            .reset_index()
+            .set_index("node")
+        )
+
+        # Check for compatibility
+        if len(slice_df) != len(self.graph):
+            raise KeyError(
+                f"Either dataframe cannot be represented as a single index or provided slice, '{slice_tuple}' results in a multi-index. See self.dataframe.loc[(slice(None),)+{slice_tuple},:]"
+            )
+
         return ThicketRenderer(unicode=unicode, color=color).render(
             self.graph.roots,
-            self.statsframe.dataframe,
+            slice_df,
             metric_column=metric_column,
             annotation_column=annotation_column,
             precision=precision,
@@ -650,6 +669,7 @@ class Thicket(GraphFrame):
             render_header=render_header,
             min_value=min_value,
             max_value=max_value,
+            slice_tuple=slice_tuple,
         )
 
     @staticmethod

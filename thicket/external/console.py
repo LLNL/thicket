@@ -50,6 +50,7 @@ class ThicketRenderer(ConsoleRenderer):
         self.colormap_annotations = kwargs["colormap_annotations"]
         self.min_value = kwargs["min_value"]
         self.max_value = kwargs["max_value"]
+        self.slice_tuple = kwargs["slice_tuple"]
 
         if self.color:
             self.colors = self.colors_enabled
@@ -134,6 +135,8 @@ class ThicketRenderer(ConsoleRenderer):
 
         if self.color is True:
             result += self.render_legend()
+
+        result += f"Slice: {self.slice_tuple}"
 
         if self.unicode:
             return result
