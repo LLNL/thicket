@@ -607,7 +607,7 @@ class Thicket(GraphFrame):
             render_header (bool, optional): Shows the Preamble. Defaults to True.
             min_value (int, optional): Overwrites the min value for the coloring legend. Defaults to None.
             max_value (int, optional): Overwrites the max value for the coloring legend. Defaults to None.
-            slice_tuplle(tuple, optional): Slice to use on the DataFrame to choose which row indicies to display. Defaults to None.
+            slice_tuple(tuple, optional): Slice to use on the DataFrame to choose which row indicies to display. Defaults to None.
 
         Returns:
             (str): String representation of the tree, ready to print
