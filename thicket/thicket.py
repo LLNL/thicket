@@ -586,7 +586,7 @@ class Thicket(GraphFrame):
         render_header=True,
         min_value=None,
         max_value=None,
-        slice_tuple=None,
+        index_list=None,
     ):
         """Visualize the Thicket as a tree
 
@@ -607,7 +607,7 @@ class Thicket(GraphFrame):
             render_header (bool, optional): Shows the Preamble. Defaults to True.
             min_value (int, optional): Overwrites the min value for the coloring legend. Defaults to None.
             max_value (int, optional): Overwrites the max value for the coloring legend. Defaults to None.
-            slice_tuple(tuple, optional): Slice to use on the DataFrame to choose which row indicies to display. Defaults to None.
+            index_list(list, optional): Indicies to display on the DataFrame. Defaults to None.
 
         Returns:
             (str): String representation of the tree, ready to print
@@ -633,13 +633,13 @@ class Thicket(GraphFrame):
         elif sys.version_info.major == 3:
             unicode = True
 
-        if slice_tuple is None:
+        if index_list is None:
             # Create slice out of first values found starting after the first index.
-            slice_tuple = self.dataframe.index[0][1:]
+            index_list = self.dataframe.index[0][1:]
 
         # Slices the DataFrame to simulate a single-level index
         slice_df = (
-            self.dataframe.loc[(slice(None),) + slice_tuple, :]
+            self.dataframe.loc[(slice(None),) + index_list, :]
             .reset_index()
             .set_index("node")
         )
@@ -647,7 +647,7 @@ class Thicket(GraphFrame):
         # Check for compatibility
         if len(slice_df) != len(self.graph):
             raise KeyError(
-                f"Either dataframe cannot be represented as a single index or provided slice, '{slice_tuple}' results in a multi-index. See self.dataframe.loc[(slice(None),)+{slice_tuple},:]"
+                f"Either dataframe cannot be represented as a single index or provided slice, '{index_list}' results in a multi-index. See self.dataframe.loc[(slice(None),)+{index_list},:]"
             )
 
         return ThicketRenderer(unicode=unicode, color=color).render(
@@ -669,7 +669,7 @@ class Thicket(GraphFrame):
             render_header=render_header,
             min_value=min_value,
             max_value=max_value,
-            slice_tuple=slice_tuple,
+            index_list=index_list,
         )
 
     @staticmethod
