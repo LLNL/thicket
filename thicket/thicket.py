@@ -649,7 +649,7 @@ class Thicket(GraphFrame):
                 )
         # For tree legend
         idx_dict = {
-            self.dataframe.index.names[k+1]: indicies[k] for k in range(len(indicies))
+            self.dataframe.index.names[k + 1]: indicies[k] for k in range(len(indicies))
         }
         # Slices the DataFrame to simulate a single-level index
         try:
