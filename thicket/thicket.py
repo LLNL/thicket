@@ -646,13 +646,19 @@ class Thicket(GraphFrame):
             except TypeError:
                 raise TypeError(
                     f"Value provided to 'indicies' = {indicies} is an unsupported type {type(indicies)}"
-                )
+                )            
         # Slices the DataFrame to simulate a single-level index
-        slice_df = (
-            self.dataframe.loc[(slice(None),) + indicies, :]
-            .reset_index()
-            .set_index("node")
-        )
+        try:
+            slice_df = (
+                self.dataframe.loc[(slice(None),) + indicies, :]
+                .reset_index()
+                .set_index("node")
+            )
+        except KeyError:
+            missing_indicies = [idx for idx in indicies if all(idx not in df_idx[1:] for df_idx in self.dataframe.index)]
+            raise KeyError(
+                f"The indicies, {missing_indicies}, do not exist in the index 'self.dataframe.index'"
+            )
         # Check for compatibility
         if len(slice_df) != len(self.graph):
             raise KeyError(
