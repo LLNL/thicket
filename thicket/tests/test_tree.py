@@ -13,7 +13,7 @@ def test_indicies(rajaperf_july_2023):
     tk = th.Thicket.from_caliperreader(files)
 
     # No error
-    tk.tree(metric_column="Avg time/rank", indicies=2054574010)
+    tk.tree(metric_column="Avg time/rank", indicies=tk.profile[0])
 
     tk.metadata_column_to_perfdata("variant")
     tk.metadata_column_to_perfdata("tuning")
