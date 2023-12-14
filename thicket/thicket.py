@@ -638,15 +638,15 @@ class Thicket(GraphFrame):
             indicies = self.dataframe.index[0][1:]
         elif isinstance(indicies, tuple):
             pass
-        elif isinstance(indicies, list): # Convert list to tuple
+        elif isinstance(indicies, list):  # Convert list to tuple
             indicies = tuple(indicies)
-        else: # Support for non-iterable types (int, str, ...)
+        else:  # Support for non-iterable types (int, str, ...)
             try:
                 indicies = tuple([indicies])
             except TypeError:
                 raise TypeError(
                     f"Value provided to 'indicies' = {indicies} is an unsupported type {type(indicies)}"
-                )            
+                )
         # Slices the DataFrame to simulate a single-level index
         try:
             slice_df = (
@@ -655,7 +655,11 @@ class Thicket(GraphFrame):
                 .set_index("node")
             )
         except KeyError:
-            missing_indicies = [idx for idx in indicies if all(idx not in df_idx[1:] for df_idx in self.dataframe.index)]
+            missing_indicies = [
+                idx
+                for idx in indicies
+                if all(idx not in df_idx[1:] for df_idx in self.dataframe.index)
+            ]
             raise KeyError(
                 f"The indicies, {missing_indicies}, do not exist in the index 'self.dataframe.index'"
             )
@@ -665,7 +669,9 @@ class Thicket(GraphFrame):
                 f"Either dataframe cannot be represented as a single index or provided slice, '{indicies}' results in a multi-index. See self.dataframe.loc[(slice(None),)+{indicies},:]"
             )
         # For tree legend
-        idx_dict = {self.dataframe.index.names[k]: indicies[k] for k in range(len(indicies))}
+        idx_dict = {
+            self.dataframe.index.names[k]: indicies[k] for k in range(len(indicies))
+        }
 
         return ThicketRenderer(unicode=unicode, color=color).render(
             self.graph.roots,
