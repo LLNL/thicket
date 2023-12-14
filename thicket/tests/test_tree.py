@@ -13,7 +13,7 @@ def test_indicies(rajaperf_july_2023):
     tk = th.Thicket.from_caliperreader(files)
 
     # No error
-    tk.tree(metric_column="Avg time/rank")
+    tk.tree(metric_column="Avg time/rank", indicies=2054574010)
 
     tk.metadata_column_to_perfdata("variant")
     tk.metadata_column_to_perfdata("tuning")
@@ -36,6 +36,6 @@ def test_indicies(rajaperf_july_2023):
 
     with pytest.raises(
         KeyError,
-        match=r"The indicies, \[\'hi\'\], do not exist in the index \'self.dataframe.index\'",
+        match=r"The indicies, \{\'tuning\': \'hi\'\}, do not exist in the index \'self.dataframe.index\'",
     ):
         tk.tree(metric_column="Avg time/rank", indicies=["Base_OpenMP", "hi"])
