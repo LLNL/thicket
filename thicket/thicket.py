@@ -666,10 +666,10 @@ class Thicket(GraphFrame):
         # Check for compatibility
         if len(slice_df) != len(self.graph):
             raise KeyError(
-                f"Either dataframe cannot be represented as a single index or provided slice, '{indicies}' results in a multi-index. See self.dataframe.loc[(slice(None),)+{indicies},:]"
+                f"Either dataframe cannot be represented as a single index or provided slice, '{indicies}' results in a multi-index. See self.dataframe.loc[(slice(None),)+{indicies},{metric_column}]"
             )
         # For tree legend
-        idx_dict = {slice_df.index.names[k]: indicies[k] for k in range(len(indicies))}
+        idx_dict = {self.dataframe.index.names[k]: indicies[k] for k in range(len(indicies))}
 
         # Prep DataFrame by filling None rows in the "name" column with the node's name.
         slice_df["name"] = [
