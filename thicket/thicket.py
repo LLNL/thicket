@@ -607,7 +607,7 @@ class Thicket(GraphFrame):
             render_header (bool, optional): Shows the Preamble. Defaults to True.
             min_value (int, optional): Overwrites the min value for the coloring legend. Defaults to None.
             max_value (int, optional): Overwrites the max value for the coloring legend. Defaults to None.
-            indicies(tuple, list, optional): Indicies to display on the DataFrame. Defaults to None.
+            indicies(tuple, list, optional): Index/Indicies to display on the DataFrame. Defaults to None.
 
         Returns:
             (str): String representation of the tree, ready to print
@@ -636,6 +636,17 @@ class Thicket(GraphFrame):
         if indicies is None:
             # Create slice out of first values found starting after the first index.
             indicies = self.dataframe.index[0][1:]
+        elif isinstance(indicies, tuple):
+            pass
+        elif isinstance(indicies, list): # Convert list to tuple
+            indicies = tuple(indicies)
+        else: # Support for non-iterable types (int, str, ...)
+            try:
+                indicies = tuple([indicies])
+            except TypeError:
+                raise TypeError(
+                    f"Value provided to 'indicies' = {indicies} is an unsupported type {type(indicies)}"
+                )
 
         # Slices the DataFrame to simulate a single-level index
         slice_df = (
