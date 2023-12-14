@@ -136,12 +136,85 @@ class ThicketRenderer(ConsoleRenderer):
         if self.color is True:
             result += self.render_legend()
 
-        result += f"Indicies: {self.indicies}"
-
         if self.unicode:
             return result
         else:
             return result.encode("utf-8")
+
+    def render_legend(self):
+        def render_label(index, low, high):
+            metric_range = self.max_metric - self.min_metric
+
+            return (
+                self.colors.colormap[index]
+                + "█ "
+                + self.colors.end
+                + "{:.2f}".format(low * metric_range + self.min_metric)
+                + " - "
+                + "{:.2f}".format(high * metric_range + self.min_metric)
+                + "\n"
+            )
+
+        legend = (
+            "\n"
+            + "\033[4m"
+            + "Legend"
+            + self.colors.end
+            + " (Metric: "
+            + str(self.primary_metric)
+            + " Min: {:.2f}".format(self.min_metric)
+            + " Max: {:.2f}".format(self.max_metric)
+            + " Indicies: "
+            + str(self.indicies)
+            + ")\n"
+        )
+
+        legend += render_label(0, 0.9, 1.0)
+        legend += render_label(1, 0.7, 0.9)
+        legend += render_label(2, 0.5, 0.7)
+        legend += render_label(3, 0.3, 0.5)
+        legend += render_label(4, 0.1, 0.3)
+        legend += render_label(5, 0.0, 0.1)
+
+        legend += "\n" + self._ansi_color_for_name("name") + "name" + self.colors.end
+        legend += " User code    "
+
+        legend += self.colors.left + self.lr_arrows["◀"] + self.colors.end
+        legend += " Only in left graph    "
+        legend += self.colors.right + self.lr_arrows["▶"] + self.colors.end
+        legend += " Only in right graph\n"
+
+        if self.annotation_column is not None:
+            # temporal pattern legend customization
+            if "_pattern" in self.annotation_column:
+                score_ranges = [0.0, 0.2, 0.4, 0.6, 1.0]
+                legend += "\nTemporal Pattern"
+                for k in self.temporal_symbols.keys():
+                    if "none" not in k:
+                        legend += "   " + self.temporal_symbols[k] + " " + k
+                legend += "\nTemporal Score  "
+                if self.colormap_annotations:
+                    legend_color_mapping = sorted(score_ranges)
+                    legend_colormap = ColorMaps().get_colors(
+                        self.colormap_annotations, False
+                    )
+                    for i in range(len(score_ranges) - 1):
+                        color = legend_colormap[
+                            legend_color_mapping.index(score_ranges[i + 1])
+                            % len(legend_colormap)
+                        ]
+                        legend += "{}".format(color)
+                        legend += "   {} - {}".format(
+                            score_ranges[i], score_ranges[i + 1]
+                        )
+                        legend += "{}".format(self.colors_annotations.end)
+                else:  # no color map passed in
+                    for i in range(len(score_ranges) - 1):
+                        legend += "   {} - {}".format(
+                            score_ranges[i], score_ranges[i + 1]
+                        )
+
+        return legend
 
     def render_frame(self, node, dataframe, indent="", child_indent=""):
         node_depth = node._depth
