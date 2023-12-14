@@ -633,6 +633,9 @@ class Thicket(GraphFrame):
         elif sys.version_info.major == 3:
             unicode = True
 
+        # Prep DataFrame by filling None rows in the "name" column with the node's name.
+        self.dataframe["name"] = [n.frame["name"] for n in self.dataframe.index.get_level_values("node")]
+
         if indicies is None:
             # Create slice out of first values found starting after the first index.
             indicies = self.dataframe.index[0][1:]
