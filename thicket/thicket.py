@@ -633,9 +633,6 @@ class Thicket(GraphFrame):
         elif sys.version_info.major == 3:
             unicode = True
 
-        # Prep DataFrame by filling None rows in the "name" column with the node's name.
-        self.dataframe["name"] = [n.frame["name"] for n in self.dataframe.index.get_level_values("node")]
-
         if indicies is None:
             # Create slice out of first values found starting after the first index.
             indicies = self.dataframe.index[0][1:]
@@ -673,8 +670,11 @@ class Thicket(GraphFrame):
             )
         # For tree legend
         idx_dict = {
-            self.dataframe.index.names[k]: indicies[k] for k in range(len(indicies))
+            slice_df.index.names[k]: indicies[k] for k in range(len(indicies))
         }
+
+        # Prep DataFrame by filling None rows in the "name" column with the node's name.
+        slice_df["name"] = [n.frame["name"] for n in slice_df.index.get_level_values("node")]
 
         return ThicketRenderer(unicode=unicode, color=color).render(
             self.graph.roots,
