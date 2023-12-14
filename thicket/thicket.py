@@ -647,19 +647,19 @@ class Thicket(GraphFrame):
                 raise TypeError(
                     f"Value provided to 'indicies' = {indicies} is an unsupported type {type(indicies)}"
                 )
-
         # Slices the DataFrame to simulate a single-level index
         slice_df = (
             self.dataframe.loc[(slice(None),) + indicies, :]
             .reset_index()
             .set_index("node")
         )
-
         # Check for compatibility
         if len(slice_df) != len(self.graph):
             raise KeyError(
                 f"Either dataframe cannot be represented as a single index or provided slice, '{indicies}' results in a multi-index. See self.dataframe.loc[(slice(None),)+{indicies},:]"
             )
+        # For tree legend
+        idx_dict = {self.dataframe.index.names[k]: indicies[k] for k in range(len(indicies))}
 
         return ThicketRenderer(unicode=unicode, color=color).render(
             self.graph.roots,
@@ -680,7 +680,7 @@ class Thicket(GraphFrame):
             render_header=render_header,
             min_value=min_value,
             max_value=max_value,
-            indicies=indicies,
+            indicies=idx_dict,
         )
 
     @staticmethod

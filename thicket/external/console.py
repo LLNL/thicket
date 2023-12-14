@@ -136,7 +136,7 @@ class ThicketRenderer(ConsoleRenderer):
         if self.color is True:
             result += self.render_legend()
 
-        result += f"Slice: {self.indicies}"
+        result += f"Indicies: {self.indicies}"
 
         if self.unicode:
             return result
