@@ -56,6 +56,7 @@ If you encounter bugs while using thicket, you can report them by opening an iss
    thicket_rajaperf_clustering.ipynb
    extrap-with-metadata-aggregated.ipynb
    stats-functions.ipynb
+   query_language.ipynb
    vis_docs
 
 .. toctree::
