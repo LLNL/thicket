@@ -50,7 +50,7 @@ class ThicketRenderer(ConsoleRenderer):
         self.colormap_annotations = kwargs["colormap_annotations"]
         self.min_value = kwargs["min_value"]
         self.max_value = kwargs["max_value"]
-        self.indicies = kwargs["indicies"]
+        self.indices = kwargs["indices"]
 
         if self.color:
             self.colors = self.colors_enabled
@@ -164,8 +164,8 @@ class ThicketRenderer(ConsoleRenderer):
             + str(self.primary_metric)
             + " Min: {:.2f}".format(self.min_metric)
             + " Max: {:.2f}".format(self.max_metric)
-            + " Indicies: "
-            + str(self.indicies)
+            + " indices: "
+            + str(self.indices)
             + ")\n"
         )
 

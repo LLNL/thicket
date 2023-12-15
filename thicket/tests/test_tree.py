@@ -8,12 +8,12 @@ import pytest
 import thicket as th
 
 
-def test_indicies(rajaperf_july_2023):
+def test_indices(rajaperf_july_2023):
     files = [f for f in rajaperf_july_2023 if "quartz/clang14.0.6_1048576/O0/1" in f]
     tk = th.Thicket.from_caliperreader(files)
 
     # No error
-    tk.tree(metric_column="Avg time/rank", indicies=tk.profile[0])
+    tk.tree(metric_column="Avg time/rank", indices=tk.profile[0])
 
     tk.metadata_column_to_perfdata("variant")
     tk.metadata_column_to_perfdata("tuning")
@@ -32,10 +32,10 @@ def test_indicies(rajaperf_july_2023):
     tk.tree(metric_column="Avg time/rank")
 
     # No error
-    tk.tree(metric_column="Avg time/rank", indicies=["Base_OpenMP", "default"])
+    tk.tree(metric_column="Avg time/rank", indices=["Base_OpenMP", "default"])
 
     with pytest.raises(
         KeyError,
-        match=r"The indicies, \{\'tuning\': \'hi\'\}, do not exist in the index \'self.dataframe.index\'",
+        match=r"The indices, \{\'tuning\': \'hi\'\}, do not exist in the index \'self.dataframe.index\'",
     ):
-        tk.tree(metric_column="Avg time/rank", indicies=["Base_OpenMP", "hi"])
+        tk.tree(metric_column="Avg time/rank", indices=["Base_OpenMP", "hi"])
