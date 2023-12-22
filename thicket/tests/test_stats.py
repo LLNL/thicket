@@ -206,14 +206,50 @@ def test_percentiles(example_cali):
 
     th.percentiles(th_ens, columns=["Min time/rank"])
 
-    assert "Min time/rank_percentiles" in th_ens.statsframe.dataframe.columns
-    assert len(th_ens.statsframe.dataframe["Min time/rank_percentiles"][0]) == 3
+    assert "Min time/rank_percentiles_25" in th_ens.statsframe.dataframe.columns
+    assert "Min time/rank_percentiles_50" in th_ens.statsframe.dataframe.columns
+    assert "Min time/rank_percentiles_75" in th_ens.statsframe.dataframe.columns
 
     assert (
-        "Min time/rank_percentiles"
+        "Min time/rank_percentiles_25"
         in th_ens.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
     )
-    assert "Min time/rank_percentiles" in th_ens.statsframe.show_metric_columns()
+    assert (
+        "Min time/rank_percentiles_50"
+        in th_ens.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
+    )
+    assert (
+        "Min time/rank_percentiles_75"
+        in th_ens.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
+    )
+    assert "Min time/rank_percentiles_25" in th_ens.statsframe.show_metric_columns()
+    assert "Min time/rank_percentiles_50" in th_ens.statsframe.show_metric_columns()
+    assert "Min time/rank_percentiles_75" in th_ens.statsframe.show_metric_columns()
+
+
+def test_percentiles_none(example_cali):
+    th_ens = th.Thicket.from_caliperreader(example_cali)
+
+    th.percentiles(th_ens, columns=["Min time/rank"], percentiles=None)
+
+    assert "Min time/rank_percentiles_25" in th_ens.statsframe.dataframe.columns
+    assert "Min time/rank_percentiles_50" in th_ens.statsframe.dataframe.columns
+    assert "Min time/rank_percentiles_75" in th_ens.statsframe.dataframe.columns
+
+
+def test_percentiles_single_value(example_cali):
+    th_ens = th.Thicket.from_caliperreader(example_cali)
+
+    th.percentiles(th_ens, columns=["Min time/rank"], percentiles=[0.3])
+
+    assert "Min time/rank_percentiles_30" in th_ens.statsframe.dataframe.columns
+
+    assert (
+        "Min time/rank_percentiles_30"
+        in th_ens.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
+    )
+
+    assert "Min time/rank_percentiles_30" in th_ens.statsframe.show_metric_columns()
 
 
 def test_percentiles_columnar_join(thicket_axis_columns):
@@ -229,15 +265,55 @@ def test_percentiles_columnar_join(thicket_axis_columns):
 
     assert (
         idx,
-        "Min time/rank_percentiles",
+        "Min time/rank_percentiles_25",
     ) in combined_th.statsframe.dataframe.columns
     assert (
         idx,
-        "Min time/rank_percentiles",
+        "Min time/rank_percentiles_50",
+    ) in combined_th.statsframe.dataframe.columns
+    assert (
+        idx,
+        "Min time/rank_percentiles_75",
+    ) in combined_th.statsframe.dataframe.columns
+    assert (
+        idx,
+        "Min time/rank_percentiles_25",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
     assert (
         idx,
-        "Min time/rank_percentiles",
+        "Min time/rank_percentiles_50",
+    ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
+    assert (
+        idx,
+        "Min time/rank_percentiles_75",
+    ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
+
+    assert (
+        idx,
+        "Min time/rank_percentiles_25",
+    ) in combined_th.statsframe.show_metric_columns()
+    assert (
+        idx,
+        "Min time/rank_percentiles_50",
+    ) in combined_th.statsframe.show_metric_columns()
+    assert (
+        idx,
+        "Min time/rank_percentiles_75",
+    ) in combined_th.statsframe.show_metric_columns()
+
+    th.percentiles(combined_th, columns=[(idx, "Min time/rank")], percentiles=[0.4])
+
+    assert (
+        idx,
+        "Min time/rank_percentiles_40",
+    ) in combined_th.statsframe.dataframe.columns
+    assert (
+        idx,
+        "Min time/rank_percentiles_40",
+    ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
+    assert (
+        idx,
+        "Min time/rank_percentiles_40",
     ) in combined_th.statsframe.show_metric_columns()
 
 
