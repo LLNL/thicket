@@ -24,13 +24,5 @@ August 14, 2023, alongside Caliper.
 We provide scripts that take you through some of the available features in
 Thicket. They correspond to sections in the slides above.
 
-To run through the scripts, we provide a docker image within the instance.
-After logging on to an instance, you can invoke the following:
-
-.. code:: console
-
-   $ docker run -p 8888:8888 myimage
-
-Then, find the URL in the docker output, copy the URL into browser, and replace
-``127.0.0.1`` (localhost) in the URL with InstanceIP. It will look similar to:
-``http://<InstanceIP>:8888/?token=9f60c09dcb63a0c6cb9d9e2a436ee541beabf83e67aadcde``.
+To run through the scripts, you can follow the instructions to build the docker
+image in `thicket-tutorial <https://github.com/llnl/thicket-tutorial>`_.
