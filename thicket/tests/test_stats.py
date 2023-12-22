@@ -226,6 +226,20 @@ def test_percentiles(example_cali):
     assert "Min time/rank_percentiles_50" in th_ens.statsframe.show_metric_columns()
     assert "Min time/rank_percentiles_75" in th_ens.statsframe.show_metric_columns()
 
+
+def test_percentiles_none(example_cali):
+    th_ens = th.Thicket.from_caliperreader(example_cali)
+
+    th.percentiles(th_ens, columns=["Min time/rank"], percentiles=None)
+
+    assert "Min time/rank_percentiles_25" in th_ens.statsframe.dataframe.columns
+    assert "Min time/rank_percentiles_50" in th_ens.statsframe.dataframe.columns
+    assert "Min time/rank_percentiles_75" in th_ens.statsframe.dataframe.columns
+
+
+def test_percentiles_single_value(example_cali):
+    th_ens = th.Thicket.from_caliperreader(example_cali)
+
     th.percentiles(th_ens, columns=["Min time/rank"], percentiles=[0.3])
 
     assert "Min time/rank_percentiles_30" in th_ens.statsframe.dataframe.columns

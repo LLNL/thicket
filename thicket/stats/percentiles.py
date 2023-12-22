@@ -14,7 +14,7 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
     Designed to take in a thicket, and append one or more columns to the aggregated
     statistics table for the q-th percentile calculation for each node. Each percentile
     calculation is a separate column in the statistics table, where the column will
-    have the format: columnName_percentiles_percentile
+    have the format: {columnName}_percentiles_{percentile}.
 
     The 25th percentile is the lower quartile, and is the value at which 25% of the
     answers lie below that value.
