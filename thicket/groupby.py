@@ -144,7 +144,7 @@ class GroupBy(dict):
                 )
             return agg_df
 
-        if type(func) == dict:
+        if isinstance(func, dict):
             cols = list(func.keys())
             # force list structure
             funcs = [[f] if type(f) is not list else f for f in func.values()]
@@ -159,7 +159,7 @@ class GroupBy(dict):
                     on=perf_indices,
                 )
         else:
-            if type(func) == list:
+            if isinstance(func, list):
                 snames = [f.__name__ for f in func]
                 sfuncs = func
             else:  # Assume single value function
