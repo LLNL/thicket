@@ -9,12 +9,11 @@ from ..utils import verify_thicket_structures
 
 
 def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
-    """
-    Calculate the q-th percentile for each node in the performance data table.
+    """Calculate the q-th percentile for each node in the performance data table.
 
     Designed to take in a thicket, and append one or more columns to the aggregated
     statistics table for the q-th percentile calculation for each node. Each percentile
-    calculation is a seperate column in the statistics table, where the column will
+    calculation is a separate column in the statistics table, where the column will
     have the format: columnName_percentiles_percentile
 
     The 25th percentile is the lower quartile, and is the value at which 25% of the
@@ -35,10 +34,8 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
             for each column in columns. If no list is specified, the default values,
             [0.25, 0.50, 0.75] are used for calculations
     """
-    if percentiles is None:
-        raise ValueError(
-            "Percentiles can not be None, please specify which percentiles to calculate, or use the default values."
-        )
+    if not percentiles:
+        percentiles = [0.25, 0.50, 0.75]
 
     # Enforce that percentiles are in range of [0.0, 1.0]
     for percentile in percentiles:
@@ -65,8 +62,8 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
             calculated_percentiles = []
             for node in pd.unique(df.reset_index()["node"].tolist()):
                 calculated_percentiles.append(list(df.loc[node][column]))
-            for index, percentile in enumerate(percentiles):
 
+            for index, percentile in enumerate(percentiles):
                 column_to_append = column + "_percentiles_" + str(int(percentile * 100))
                 thicket.statsframe.dataframe[column_to_append] = [
                     x[index] for x in calculated_percentiles
@@ -98,7 +95,6 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
 
             # Go through each of the percentiles, and make them it's own column
             for index, percentile in enumerate(percentiles):
-
                 column_to_append = (
                     idx_level,
                     "{}_percentiles_{}".format(column, str(int(percentile * 100))),
