@@ -307,6 +307,46 @@ def test_percentiles_columnar_join(thicket_axis_columns):
 
     assert (
         idx,
+        "Min time/rank_percentiles_25",
+    ) in combined_th.statsframe.dataframe.columns
+    assert (
+        idx,
+        "Min time/rank_percentiles_50",
+    ) in combined_th.statsframe.dataframe.columns
+    assert (
+        idx,
+        "Min time/rank_percentiles_75",
+    ) in combined_th.statsframe.dataframe.columns
+    assert (
+        idx,
+        "Min time/rank_percentiles_25",
+    ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
+    assert (
+        idx,
+        "Min time/rank_percentiles_50",
+    ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
+    assert (
+        idx,
+        "Min time/rank_percentiles_75",
+    ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
+
+    assert (
+        idx,
+        "Min time/rank_percentiles_25",
+    ) in combined_th.statsframe.show_metric_columns()
+    assert (
+        idx,
+        "Min time/rank_percentiles_50",
+    ) in combined_th.statsframe.show_metric_columns()
+    assert (
+        idx,
+        "Min time/rank_percentiles_75",
+    ) in combined_th.statsframe.show_metric_columns()
+
+    th.percentiles(combined_th, columns=[(idx, "Min time/rank")], percentiles=[0.4])
+
+    assert (
+        idx,
         "Min time/rank_percentiles_40",
     ) in combined_th.statsframe.dataframe.columns
     assert (
