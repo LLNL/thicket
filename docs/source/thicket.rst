@@ -22,6 +22,14 @@ thicket.ensemble module
    :undoc-members:
    :show-inheritance:
 
+thicket.groupby module
+----------------------
+
+.. automodule:: thicket.groupby
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 thicket.helpers module
 ----------------------
 

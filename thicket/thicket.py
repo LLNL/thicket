@@ -273,20 +273,21 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def concat_thickets(thickets, axis="index", calltree="union", **kwargs):
-        """Concatenate thickets together on index or columns. The calltree can either be unioned or
-        intersected which will affect the other structures.
+        """Concatenate thickets together on index or columns.
+
+        The calltree can either be unioned or intersected which will affect the other structures.
 
         Arguments:
             thickets (list): list of thicket objects
             axis (str): axis to concatenate on -> "index" or "column"
             calltree (str): calltree to use -> "union" or "intersection"
 
-            valid kwargs:
-                if axis="index":
-                    from_statsframes (bool): Whether this method was invoked from from_statsframes
-                if axis="columns":
-                    headers (list): List of headers to use for the new columnar multi-index.
-                    metadata_key (str): Name of the column from the metadata tables to replace the 'profile'
+        Kwargs (if axis="index"):
+            from_statsframes (bool): Whether this method was invoked from from_statsframes
+
+        Kwargs (if axis="columns"):
+            headers (list): List of headers to use for the new columnar multi-index.
+            metadata_key (str): Name of the column from the metadata tables to replace the 'profile'
                 index. If no argument is provided, it is assumed that there is no profile-wise
                 relationship between the thickets.
 
@@ -429,7 +430,7 @@ class Thicket(GraphFrame):
             update_inc_cols (boolean, optional): if True, update inclusive columns.
 
         Returns:
-            (Thicket): a newly squashed Thicket object
+            (thicket): a newly squashed Thicket object
         """
         squashed_gf = GraphFrame.squash(self, update_inc_cols=update_inc_cols)
         new_graph = squashed_gf.graph
@@ -469,7 +470,7 @@ class Thicket(GraphFrame):
             self (Thicket): object to make a copy of
 
         Returns:
-            other (Thicket): copy of self
+            other (thicket): copy of self
                 (graph ... default_metric): Same behavior as GraphFrame
                 metadata (DataFrame): pandas "non-deep" copy of dataframe
                 profile (list): copy of self's profile
@@ -499,7 +500,7 @@ class Thicket(GraphFrame):
             self (Thicket): object to make a copy of
 
         Returns:
-            other (Thicket): copy of self
+            other (thicket): copy of self
                 (graph ... default_metric): same behavior as GraphFrame
                 metadata (DataFrame): pandas "deep" copy of dataframe
                 profile (list): copy of self's profile
@@ -560,7 +561,7 @@ class Thicket(GraphFrame):
             max_value (int, optional): Overwrites the max value for the coloring legend. Defaults to None.
 
         Returns:
-            str: String representation of the tree, ready to print
+            (str): String representation of the tree, ready to print
         """
         color = sys.stdout.isatty()
         shell = None
@@ -836,7 +837,7 @@ class Thicket(GraphFrame):
                 performing squash.
 
         Returns:
-            (Thicket): a new Thicket object containing the data that matches the query
+            (thicket): a new Thicket object containing the data that matches the query
         """
         if isinstance(query_obj, (list, str)):
             raise UnsupportedQuery(
