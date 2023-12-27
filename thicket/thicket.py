@@ -282,12 +282,12 @@ class Thicket(GraphFrame):
             axis (str): axis to concatenate on -> "index" or "column"
             calltree (str): calltree to use -> "union" or "intersection"
 
-        Kwargs (if axis="index"):
-            from_statsframes (bool): Whether this method was invoked from from_statsframes
+        Keyword Arguments:
+            from_statsframes (bool): (if axis="index") Whether this method was invoked from from_statsframes
 
-        Kwargs (if axis="columns"):
-            headers (list): List of headers to use for the new columnar multi-index.
-            metadata_key (str): Name of the column from the metadata tables to replace the 'profile'
+        Keyword Arguments:
+            headers (list): (if axis="columns") List of headers to use for the new columnar multi-index
+            metadata_key (str): (if axis="columns") Name of the column from the metadata tables to replace the 'profile'
                 index. If no argument is provided, it is assumed that there is no profile-wise
                 relationship between the thickets.
 
