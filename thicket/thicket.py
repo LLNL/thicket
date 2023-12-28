@@ -386,7 +386,7 @@ class Thicket(GraphFrame):
             ens_list.append(Thicket.thicketize_timeseries_graphframe(gf, level))
 
         # Perform unify ensemble
-        thicket_object = Thicket.unify_ensemble(ens_list)
+        thicket_object = Thicket.concat_thickets(ens_list)
         return thicket_object
 
     @staticmethod
