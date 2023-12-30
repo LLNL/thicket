@@ -28,6 +28,7 @@ example of a performance data table stored in a thicket object.
 
   Figure 2: Example performance data table in thicket.
 
+|
 The performance data's call tree structure can be seen below with corresponding nodes. This structure extends to both the 
 performance data and aggregate statistics table.
 
@@ -37,6 +38,8 @@ performance data and aggregate statistics table.
 
   Figure 3: Example call tree in thicket.
 
+
+|
 Metadata
 =======================
 
@@ -63,6 +66,7 @@ dataset manipulation such as filtering on any of the metadata fields.
 
   Figure 4: Example metadata table in thicket with information about each run.
 
+|
 Aggregated Statistics
 =======================
 
@@ -85,3 +89,5 @@ of an aggregated statistics table with appended results from a statistical calcu
 
   Figure 6: Example aggregated statistics table in thicket with mean calculated on two
   columns in the performance data table.
+
+|
