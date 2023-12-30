@@ -127,4 +127,4 @@ def test_unique_metadata_base_cuda(rajaperf_basecuda_xl_cali):
     res = t_ens.get_unique_metadata()
     assert res["systype_build"] == ["blueos_3_ppc64le_ib_p9"]
     assert res["variant"] == ["Base_CUDA"]
-    assert res["gpu_targets_block_sizes"] == [128]
+    assert res["tuning"] == ["block_128"]

@@ -135,16 +135,16 @@ def mpi_scaling_cali(data_dir, tmpdir):
 @pytest.fixture
 def rajaperf_basecuda_xl_cali(data_dir, tmpdir):
     files = [
-        "XL_BaseCuda_01048576_01.cali",
-        "XL_BaseCuda_01048576_03.cali",
-        "XL_BaseCuda_01048576_05.cali",
-        "XL_BaseCuda_01048576_07.cali",
-        "XL_BaseCuda_01048576_09.cali",
-        "XL_BaseCuda_01048576_02.cali",
-        "XL_BaseCuda_01048576_04.cali",
-        "XL_BaseCuda_01048576_06.cali",
-        "XL_BaseCuda_01048576_08.cali",
-        "XL_BaseCuda_01048576_10.cali",
+        "Base_CUDA-block_128_01.cali",
+        "Base_CUDA-block_128_02.cali",
+        "Base_CUDA-block_128_03.cali",
+        "Base_CUDA-block_128_04.cali",
+        "Base_CUDA-block_128_05.cali",
+        "Base_CUDA-block_128_06.cali",
+        "Base_CUDA-block_128_07.cali",
+        "Base_CUDA-block_128_08.cali",
+        "Base_CUDA-block_128_09.cali",
+        "Base_CUDA-block_128_10.cali",
     ]
     basecuda_xl_dir = os.path.join(data_dir, "XL_BaseCuda_0128_01048576")
     cali_files = [os.path.join(basecuda_xl_dir, f) for f in files]
