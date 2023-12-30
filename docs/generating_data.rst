@@ -49,7 +49,7 @@ different runs. Some common metadata that can be used with thicket are `launchda
 `clustername`, where a user can use this metadata information to organize the
 performance data with the help of thicket's capabilities.
 
-.. code:: c
+.. code-block::
 
    adiak_user(); /* user name */
    adiak_uid(); /* user id */
@@ -67,7 +67,7 @@ performance data with the help of thicket's capabilities.
 
 ``adiak::value()`` records key:value pairs with overloads for many data types
 
-.. code:: c
+.. code-block::
 
    #include <adiak.hpp>
 
@@ -82,7 +82,7 @@ performance data with the help of thicket's capabilities.
 
 ``adiak_nameval()`` uses printf()-style descriptors to determine data types
 
-.. code:: c
+.. code-block::
 
    #include <adiak.h>
 

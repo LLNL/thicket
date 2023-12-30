@@ -15,18 +15,14 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
     Designed to take in a thicket and will append eight total columns to the
     aggregated statistics table. As a note, preferred will stand for the preferred
     choice between two options.
-        1. columns[0] mean
-        2. columns[0] std
-        3. columns[1] mean
-        4. columns[1] std
-        5. columns[0] + columns[1] tvalue
-        6. columns[0] + columns[1] tstatistic
-        7. columns[0] + columns[1] std preferred
-        8. columns[0] + columns[1] mean preferred
-
-    Column names will have the following two formats:
-        1. <column_name>_{std,mean}
-        2. <column_name> vs <column_name>_{tvalue,tstatistic,preferred}
+        - <columns[0]>_mean
+        - <columns[0]>_std
+        - <columns[1]>_mean
+        - <columns[1]>_std
+        - <columns[0]> vs <columns[1]>_tvalue
+        - <columns[0]> vs <columns[1]>_tstatistic
+        - <columns[0]> vs <columns[1]>_std_preferred
+        - <columns[0]> vs <columns[1]>_mean_preferred
 
     Arguments:
         thicket (thicket): Thicket object

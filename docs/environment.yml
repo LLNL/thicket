@@ -6,3 +6,7 @@ dependencies:
   - sphinx-thebe
   - nbsphinx
   - myst-parser
+  - llnl-hatchet
+  - thicket
+  - extrap
+  - scipy
