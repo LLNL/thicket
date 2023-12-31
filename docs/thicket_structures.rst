@@ -33,7 +33,7 @@ The performance data's call tree structure can be seen below with corresponding 
 performance data and aggregate statistics table.
 
 .. figure:: images/ql-original.png
-  :width: 600
+  :width: 400
   :align: center
 
   Figure 3: Example call tree in thicket.
