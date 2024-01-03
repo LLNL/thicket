@@ -23,7 +23,7 @@ represents a different execution of the associated call tree node. Below is an
 example of a performance data table stored in a thicket object. 
 
 .. figure:: images/ensembleframe.png
-  :width: 600
+  :width: 800
   :align: center
 
   Figure 2: Example performance data table in thicket.
