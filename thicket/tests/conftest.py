@@ -105,11 +105,11 @@ def example_json(data_dir, tmpdir):
 def mpi_scaling_cali(data_dir, tmpdir):
     """MPI Core scaling study files."""
     files = [
-        "cghRRN5HCwJacMr1l_1.cali",  # 27 cores
-        "ckFBIeNS6L3ozgKQP_1.cali",  # 64 cores
-        "cQnxGBoysVIdKitlS_1.cali",  # 125 cores
-        "c9T2G0rcqV5kquOk5_1.cali",  # 216 cores
-        "crPIBPRQJ_nQszMia_1.cali",  # 343 cores
+        "27_cores.cali",
+        "64_cores.cali",
+        "125_cores.cali",
+        "216_cores.cali",
+        "343_cores.cali",
     ]
     mpi_scaling_dir = os.path.join(data_dir, "mpi_scaling_cali")
     cali_files = [os.path.join(mpi_scaling_dir, f) for f in files]
