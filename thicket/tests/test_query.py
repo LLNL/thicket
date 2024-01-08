@@ -51,9 +51,9 @@ def check_query(th, hnids, query):
     check_identity(th, filt_th, "default_metric")
 
 
-def test_query(rajaperf_basecuda_xl_cali):
+def test_query(rajaperf_cuda_block128_1M_cali):
     # test thicket
-    th = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+    th = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
     # test arguments
     hnids = [0, 1, 2, 3, 5, 6, 8, 9]
     query = (

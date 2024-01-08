@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+from glob import glob
 import os
 import shutil
 
@@ -12,12 +13,12 @@ from thicket import Thicket
 
 
 @pytest.fixture
-def thicket_axis_columns(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
+def thicket_axis_columns(mpi_scaling_cali, rajaperf_cuda_block128_1M_cali):
     """Generator for 'concat_thickets(axis="columns")' thicket.
 
     Arguments:
         mpi_scaling_cali (list): List of Caliper files for MPI scaling study.
-        rajaperf_basecuda_xl_cali (list): List of Caliper files for base cuda variant.
+        rajaperf_cuda_block128_1M_cali (list): List of Caliper files for base cuda variant.
 
     Returns:
         list: List of original thickets, list of deepcopies of original thickets, and
@@ -25,7 +26,7 @@ def thicket_axis_columns(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
     """
     th_mpi_1 = Thicket.from_caliperreader(mpi_scaling_cali[0:2])
     th_mpi_2 = Thicket.from_caliperreader(mpi_scaling_cali[2:4])
-    th_cuda128 = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali[0:2])
+    th_cuda128 = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali[0:2])
 
     # Prep for testing
     selected_column = "ProblemSize"
@@ -53,18 +54,18 @@ def thicket_axis_columns(mpi_scaling_cali, rajaperf_basecuda_xl_cali):
 
 
 @pytest.fixture
-def stats_thicket_axis_columns(rajaperf_basecuda_xl_cali):
+def stats_thicket_axis_columns(rajaperf_cuda_block128_1M_cali):
     """Generator for 'concat_thickets(axis="columns")' thicket for test_stats.py.
 
     Arguments:
-        rajaperf_basecuda_xl_cali (list): List of Caliper files for base cuda variant.
+        rajaperf_cuda_block128_1M_cali (list): List of Caliper files for base cuda variant.
 
     Returns:
         list: List of original thickets, list of deepcopies of original thickets, and
             column-joined thicket.
     """
-    th_cuda128_1 = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali[0:4])
-    th_cuda128_2 = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali[5:9])
+    th_cuda128_1 = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali[0:4])
+    th_cuda128_2 = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali[5:9])
 
     # To check later if modifications were unexpectedly made
     th_cuda128_1_deep = th_cuda128_1.deepcopy()
@@ -133,24 +134,11 @@ def mpi_scaling_cali(data_dir, tmpdir):
 
 
 @pytest.fixture
-def rajaperf_basecuda_xl_cali(data_dir, tmpdir):
-    files = [
-        "Base_CUDA-block_128_01.cali",
-        "Base_CUDA-block_128_02.cali",
-        "Base_CUDA-block_128_03.cali",
-        "Base_CUDA-block_128_04.cali",
-        "Base_CUDA-block_128_05.cali",
-        "Base_CUDA-block_128_06.cali",
-        "Base_CUDA-block_128_07.cali",
-        "Base_CUDA-block_128_08.cali",
-        "Base_CUDA-block_128_09.cali",
-        "Base_CUDA-block_128_10.cali",
-    ]
-    basecuda_xl_dir = os.path.join(data_dir, "XL_BaseCuda_0128_01048576")
-    cali_files = [os.path.join(basecuda_xl_dir, f) for f in files]
+def rajaperf_cuda_block128_1M_cali(data_dir, tmpdir):
+    cali_files = glob(f"{data_dir}/rajaperf-july-2023/lassen/clang10.0.1_nvcc10.2.89_1048576/**/*block_128.cali", recursive=True)
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
-    return [os.path.join(str(tmpdir), f) for f in files]
+    return [os.path.join(str(tmpdir), f) for f in cali_files]
 
 
 @pytest.fixture

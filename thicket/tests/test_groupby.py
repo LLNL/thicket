@@ -81,8 +81,8 @@ def check_groupby(th, columns_values):
         th.groupby(["user"])
 
 
-def test_aggregate(rajaperf_basecuda_xl_cali):
-    tk = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+def test_aggregate(rajaperf_cuda_block128_1M_cali):
+    tk = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
     gb = tk.groupby("spot.format.version")
 
     epsilon = 0.0001

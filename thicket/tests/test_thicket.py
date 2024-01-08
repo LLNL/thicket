@@ -121,8 +121,8 @@ def test_thicketize_graphframe(example_cali):
     assert ht1.dataframe.equals(th1.dataframe)
 
 
-def test_unique_metadata_base_cuda(rajaperf_basecuda_xl_cali):
-    t_ens = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+def test_unique_metadata_base_cuda(rajaperf_cuda_block128_1M_cali):
+    t_ens = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
 
     res = t_ens.get_unique_metadata()
     assert res["systype_build"] == ["blueos_3_ppc64le_ib_p9"]

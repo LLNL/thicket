@@ -357,8 +357,8 @@ def test_variance_columnar_join(thicket_axis_columns):
     assert (idx, "Min time/rank_var") in combined_th.statsframe.show_metric_columns()
 
 
-def test_normality(rajaperf_basecuda_xl_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+def test_normality(rajaperf_cuda_block128_1M_cali):
+    th_ens = th.Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values
@@ -412,8 +412,8 @@ def test_normality_columnar_join(thicket_axis_columns, stats_thicket_axis_column
         ) in scombined_th.statsframe.show_metric_columns()
 
 
-def test_correlation(rajaperf_basecuda_xl_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+def test_correlation(rajaperf_cuda_block128_1M_cali):
+    th_ens = th.Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values
