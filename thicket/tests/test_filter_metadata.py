@@ -170,9 +170,9 @@ def filter_multiple_or(th, columns_values):
         th.filter_metadata(lambda x: x["cluster"] == "chekov")
 
 
-def test_filter_metadata(rajaperf_seq_O3_8M_cali):
+def test_filter_metadata(rajaperf_seq_O3_1M_cali):
     # example thicket
-    th = Thicket.from_caliperreader(rajaperf_seq_O3_8M_cali)
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
     # columns and corresponding values to filter by
     columns_values = {"problem_size": ["30"], "cluster": ["chekov", "quartz"]}
     filter_one_column(th, columns_values)

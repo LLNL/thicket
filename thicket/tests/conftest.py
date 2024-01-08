@@ -13,7 +13,7 @@ from thicket import Thicket
 
 
 @pytest.fixture
-def thicket_axis_columns(mpi_scaling_cali, rajaperf_cuda_block128_1M_cali):
+def thicket_axis_columns(rajaperf_cali_1trial):
     """Generator for 'concat_thickets(axis="columns")' thicket.
 
     Arguments:
@@ -24,30 +24,20 @@ def thicket_axis_columns(mpi_scaling_cali, rajaperf_cuda_block128_1M_cali):
         list: List of original thickets, list of deepcopies of original thickets, and
             column-joined thicket.
     """
-    th_mpi_1 = Thicket.from_caliperreader(mpi_scaling_cali[0:2])
-    th_mpi_2 = Thicket.from_caliperreader(mpi_scaling_cali[2:4])
-    th_cuda128 = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali[0:2])
+    tk = Thicket.from_caliperreader(rajaperf_cali_1trial)
 
-    # Prep for testing
-    selected_column = "ProblemSize"
-    problem_sizes = [1, 10]
-    th_mpi_1.metadata[selected_column] = problem_sizes
-    th_mpi_2.metadata[selected_column] = problem_sizes
-    th_cuda128.metadata[selected_column] = problem_sizes
+    gb = tk.groupby("tuning")
 
+    headers = list(gb.keys())
+    thickets = list(gb.values())
     # To check later if modifications were unexpectedly made
-    th_mpi_1_deep = th_mpi_1.deepcopy()
-    th_mpi_2_deep = th_mpi_2.deepcopy()
-    th_cuda128_deep = th_cuda128.deepcopy()
-
-    thickets = [th_mpi_1, th_mpi_2, th_cuda128]
-    thickets_cp = [th_mpi_1_deep, th_mpi_2_deep, th_cuda128_deep]
+    thickets_cp = [t.deepcopy() for t in thickets]
 
     combined_th = Thicket.concat_thickets(
         thickets=thickets,
         axis="columns",
-        headers=["MPI1", "MPI2", "Cuda128"],
-        metadata_key="ProblemSize",
+        headers=headers,
+        metadata_key="ProblemSizeRunParam",
     )
 
     return thickets, thickets_cp, combined_th
@@ -119,15 +109,34 @@ def mpi_scaling_cali(data_dir, tmpdir):
 
 
 @pytest.fixture
+def rajaperf_cali_1trial(data_dir, tmpdir):
+    """All tunings and variants for the first trial."""
+    cali_files = glob(f"{data_dir}/rajaperf-july-2023/**/1/*.cali", recursive=True)
+    for cf in cali_files:
+        shutil.copy(cf, str(tmpdir))
+    return [os.path.join(str(tmpdir), f) for f in cali_files]
+
+@pytest.fixture
+def rajaperf_cali_alltrials(data_dir, tmpdir):
+    """All tunings and variants."""
+    cali_files = glob(f"{data_dir}/rajaperf-july-2023/**/*.cali", recursive=True)
+    for cf in cali_files:
+        shutil.copy(cf, str(tmpdir))
+    return [os.path.join(str(tmpdir), f) for f in cali_files]
+
+@pytest.fixture
 def rajaperf_cuda_block128_1M_cali(data_dir, tmpdir):
+    """All trials of specified block size and problem size."""
     cali_files = glob(f"{data_dir}/rajaperf-july-2023/lassen/clang10.0.1_nvcc10.2.89_1048576/**/*block_128.cali", recursive=True)
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
     return [os.path.join(str(tmpdir), f) for f in cali_files]
 
 
-def rajaperf_seq_O3_8M_cali(data_dir, tmpdir):
-    cali_files = glob(f"{data_dir}/rajaperf-july-2023/quartz/gcc10.3.1_8388608/O3/**/Base_Seq-default.cali", recursive=True)
+@pytest.fixture
+def rajaperf_seq_O3_1M_cali(data_dir, tmpdir):
+    """All trials of specified optimization level and tuning."""
+    cali_files = glob(f"{data_dir}/rajaperf-july-2023/quartz/gcc10.3.1_1048576/O3/**/Base_Seq-default.cali", recursive=True)
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
     return [os.path.join(str(tmpdir), f) for f in cali_files]

@@ -7,12 +7,12 @@ import thicket.helpers as helpers
 from thicket import Thicket as th
 
 
-def test_intersection(rajaperf_seq_O3_8M_cali):
-    th_ens = th.from_caliperreader(rajaperf_seq_O3_8M_cali)
+def test_intersection(rajaperf_seq_O3_1M_cali):
+    th_ens = th.from_caliperreader(rajaperf_seq_O3_1M_cali)
 
     intersected_th = th_ens.intersection()
 
-    intersected_th_other = th.from_caliperreader(rajaperf_seq_O3_8M_cali, intersection=True)
+    intersected_th_other = th.from_caliperreader(rajaperf_seq_O3_1M_cali, intersection=True)
 
     # Check other methodology
     assert len(intersected_th.graph) == len(intersected_th_other.graph)

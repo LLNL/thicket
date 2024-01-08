@@ -50,8 +50,8 @@ def test_resolve_missing_indicies():
 def test_statsframe(example_cali):
     def _test_multiindex():
         """Test statsframe when headers are multiindexed."""
-        th1 = Thicket.from_caliperreader(rajaperf_seq_O3_8M_cali[0])
-        th2 = Thicket.from_caliperreader(rajaperf_seq_O3_8M_cali[1])
+        th1 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0])
+        th2 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[1])
         th_cj = Thicket.concat_thickets([th1, th2], axis="columns")
 
         # Check column format
@@ -59,7 +59,7 @@ def test_statsframe(example_cali):
 
     _test_multiindex()
 
-    th = Thicket.from_caliperreader(rajaperf_seq_O3_8M_cali[-1])
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[-1])
 
     # Arbitrary value insertion in aggregated statistics table.
     th.statsframe.dataframe["test"] = 1
@@ -104,9 +104,9 @@ def test_metadata_column_to_perfdata(mpi_scaling_cali):
         assert metric in values
 
 
-def test_thicketize_graphframe(rajaperf_seq_O3_8M_cali):
-    ht1 = ht.GraphFrame.from_caliperreader(rajaperf_seq_O3_8M_cali[-1])
-    th1 = Thicket.thicketize_graphframe(ht1, rajaperf_seq_O3_8M_cali[-1])
+def test_thicketize_graphframe(rajaperf_seq_O3_1M_cali):
+    ht1 = ht.GraphFrame.from_caliperreader(rajaperf_seq_O3_1M_cali[-1])
+    th1 = Thicket.thicketize_graphframe(ht1, rajaperf_seq_O3_1M_cali[-1])
 
     # Check object types
     assert isinstance(ht1, ht.GraphFrame)
