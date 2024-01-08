@@ -10,8 +10,8 @@ import pytest
 import thicket as th
 
 
-def test_display_histogram(example_cali):
-    tk = th.Thicket.from_caliperreader(example_cali)
+def test_display_histogram(rajaperf_seq_O3_8M_cali):
+    tk = th.Thicket.from_caliperreader(rajaperf_seq_O3_8M_cali)
 
     node = pd.unique(tk.dataframe.reset_index()["node"])[4]
 
@@ -78,8 +78,8 @@ def test_display_histogram_columnar_join(thicket_axis_columns):
     plt.close()
 
 
-def test_display_heatmap(example_cali):
-    tk = th.Thicket.from_caliperreader(example_cali)
+def test_display_heatmap(rajaperf_seq_O3_8M_cali):
+    tk = th.Thicket.from_caliperreader(rajaperf_seq_O3_8M_cali)
 
     th.stats.variance(tk, columns=["Min time/rank"])
 
@@ -152,8 +152,8 @@ def test_display_heatmap_columnar_join(thicket_axis_columns):
     plt.close()
 
 
-def test_display_boxplot(example_cali):
-    tk = th.Thicket.from_caliperreader(example_cali)
+def test_display_boxplot(rajaperf_seq_O3_8M_cali):
+    tk = th.Thicket.from_caliperreader(rajaperf_seq_O3_8M_cali)
 
     nodes = list(pd.unique(tk.dataframe.reset_index()["node"])[0:2])
 

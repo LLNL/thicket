@@ -6,9 +6,9 @@
 from thicket import Thicket
 
 
-def test_from_caliperreader(example_cali):
+def test_from_caliperreader(rajaperf_seq_O3_8M_cali):
     """Sanity test a thicket object with known data."""
-    th = Thicket.from_caliperreader(example_cali[-1])
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_8M_cali[-1])
 
     # Check the object type
     assert isinstance(th, Thicket)

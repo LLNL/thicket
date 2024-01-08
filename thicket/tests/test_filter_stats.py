@@ -50,9 +50,9 @@ def check_filter_stats(th, columns_values):
             assert ensemble_nodes == exp_nodes
 
 
-def test_filter_stats(example_cali):
+def test_filter_stats(rajaperf_seq_O3_8M_cali):
     # example thicket
-    th = Thicket.from_caliperreader(example_cali)
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_8M_cali)
     # columns and corresponding values to filter by
     columns_values = {
         "test_string_column": ["less than 20"],

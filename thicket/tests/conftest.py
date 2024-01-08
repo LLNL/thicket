@@ -102,21 +102,6 @@ def example_json(data_dir, tmpdir):
 
 
 @pytest.fixture
-def example_cali(data_dir, tmpdir):
-    files = [
-        "example_all_base_seq_1.cali",
-        "example_all_base_seq_2.cali",
-        "example_all_base_seq_3.cali",
-        "example-profile.cali",
-    ]
-    cali_json_dir = os.path.join(data_dir, "example-cali")
-    cali_files = [os.path.join(cali_json_dir, f) for f in files]
-    for f in cali_files:
-        shutil.copy(f, str(tmpdir))
-    return [os.path.join(str(tmpdir), f) for f in files]
-
-
-@pytest.fixture
 def mpi_scaling_cali(data_dir, tmpdir):
     """MPI Core scaling study files."""
     files = [
@@ -136,6 +121,13 @@ def mpi_scaling_cali(data_dir, tmpdir):
 @pytest.fixture
 def rajaperf_cuda_block128_1M_cali(data_dir, tmpdir):
     cali_files = glob(f"{data_dir}/rajaperf-july-2023/lassen/clang10.0.1_nvcc10.2.89_1048576/**/*block_128.cali", recursive=True)
+    for cf in cali_files:
+        shutil.copy(cf, str(tmpdir))
+    return [os.path.join(str(tmpdir), f) for f in cali_files]
+
+
+def rajaperf_seq_O3_8M_cali(data_dir, tmpdir):
+    cali_files = glob(f"{data_dir}/rajaperf-july-2023/quartz/gcc10.3.1_8388608/O3/**/Base_Seq-default.cali", recursive=True)
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
     return [os.path.join(str(tmpdir), f) for f in cali_files]
