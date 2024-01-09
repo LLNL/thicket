@@ -8,18 +8,18 @@ from thicket import Thicket
 
 def test_from_caliperreader(rajaperf_seq_O3_1M_cali):
     """Sanity test a thicket object with known data."""
-    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[-1])
+    tk = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0])
 
     # Check the object type
-    assert isinstance(th, Thicket)
+    assert isinstance(tk, Thicket)
 
     # Check the resulting dataframe shape
-    assert th.dataframe.shape == (24, 7)
+    assert tk.dataframe.shape == (74, 14)
 
     # Check a value in the dataframe
     assert (
-        th.dataframe.loc[
-            th.dataframe.index.get_level_values(0)[0], "Avg time/rank"
+        tk.dataframe.loc[
+            tk.dataframe.index.get_level_values(0)[0], "Avg time/rank"
         ].values[0]
-        == 0.000082
+        == 103.47638
     )
