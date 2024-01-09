@@ -107,7 +107,16 @@ def test_filter_stats_concat_thickets_columns(thicket_axis_columns):
 def test_query_concat_thickets_columns(thicket_axis_columns):
     thickets, thickets_cp, combined_th = thicket_axis_columns
     # test arguments
-    hnids = [0, 1, 2, 3, 4, 5, 6, 7] # "0" because top-level node "RAJAPerf" will be included in query result.
+    hnids = [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+    ]  # "0" because top-level node "RAJAPerf" will be included in query result.
     query = (
         ht.QueryMatcher()
         .match("*")

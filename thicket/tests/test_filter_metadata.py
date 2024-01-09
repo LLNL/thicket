@@ -174,7 +174,7 @@ def test_filter_metadata(rajaperf_seq_O3_1M_cali):
     # example thicket
     th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
     # columns and corresponding values to filter by
-    columns_values = {"problem_size": ["30"], "cluster": ["chekov", "quartz"]}
+    columns_values = {"ProblemSizeRunParam": ["30"], "cluster": ["chekov", "quartz"]}
     filter_one_column(th, columns_values)
     filter_multiple_and(th, columns_values)
     filter_multiple_or(th, columns_values)

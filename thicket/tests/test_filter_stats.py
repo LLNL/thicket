@@ -61,10 +61,10 @@ def test_filter_stats(rajaperf_seq_O3_1M_cali):
     # set string column values
     less_than_20 = ["less than 20"] * 21
     less_than_45 = ["less than 45"] * 25
-    less_than_87 = ["less than 87"] * 40
+    less_than_87 = ["less than 74"] * 28
     new_col = less_than_20 + less_than_45 + less_than_87
     th.statsframe.dataframe["test_string_column"] = new_col
     # set numeric column values
-    th.statsframe.dataframe["test_numeric_column"] = range(0, 86)
+    th.statsframe.dataframe["test_numeric_column"] = range(0, 74)
 
     check_filter_stats(th, columns_values)

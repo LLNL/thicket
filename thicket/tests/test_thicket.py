@@ -75,9 +75,9 @@ def test_statsframe(example_cali):
     tree_output = th.statsframe.tree(metric_column="test")
 
     # Check if tree output is correct.
-    assert bool(re.search("1.000.*MPI_Comm_dup", tree_output))
-    assert bool(re.search("1.000.*MPI_Initialized", tree_output))
-    assert bool(re.search("1.000.*CalcFBHourglassForceForElems", tree_output))
+    assert bool(re.search("1.000.*Algorithm_MEMCPY", tree_output))
+    assert bool(re.search("1.000.*Apps_CONVECTION3DPA", tree_output))
+    assert bool(re.search("1.000.*Basic_COPY8", tree_output))
 
 
 def test_metadata_column_to_perfdata(mpi_scaling_cali):

@@ -55,14 +55,14 @@ def test_query(rajaperf_cuda_block128_1M_cali):
     # test thicket
     th = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
     # test arguments
-    hnids = [0, 1, 2, 3, 5, 6, 8, 9]
+    hnids = [0, 1, 2, 3, 4]  # 5, 6, 7 have Nones
     query = (
         ht.QueryMatcher()
         .match("*")
         .rel(
             ".",
             lambda row: row["name"]
-            .apply(lambda x: re.match(r"Algorithm.*block_128", x) is not None)
+            .apply(lambda x: re.match(r"Algorithm*", x) is not None)
             .all(),
         )
     )
