@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 import thicket.helpers as helpers
-from .utils import validate_dataframe, verify_sorted_profile, verify_thicket_structures
+from .utils import check_same_frame, validate_dataframe, verify_sorted_profile, verify_thicket_structures
 
 
 class Ensemble:
@@ -29,14 +29,13 @@ class Ensemble:
                 (hatchet.Graph): unified graph
                 (list): list of Thicket objects
         """
-
         def _update_graph_and_df(thicket, old_to_new_dict, union_graph, _debug=False):
             if _debug:
-                print("Graph:")
+                print(f"Graph: {thicket.profile_mapping}")
             thicket.graph = union_graph
 
             if _debug:
-                print("DataFrame:")
+                print(f"DataFrame: {thicket.profile_mapping}")
             idx_names = thicket.dataframe.index.names
             thicket.dataframe = thicket.dataframe.reset_index()
             replace_dict = {}
@@ -47,6 +46,7 @@ class Ensemble:
                         print(
                             f"Updating node: {node_id} {node} {hash(node)}\n\t-> {id(old_to_new_dict[node_id])} {old_to_new_dict[node_id]} {hash(old_to_new_dict[node_id])}"
                         )
+                    check_same_frame(node, old_to_new_dict[node_id])
                     replace_dict[node] = old_to_new_dict[node_id]
             # Replace in one-op for optimization
             thicket.dataframe["node"] = thicket.dataframe["node"].replace(replace_dict)
@@ -60,19 +60,12 @@ class Ensemble:
         # Unify graphs if "self" and "other" do not have the same graph
         union_graph = _thickets[0].graph
         for i in range(len(_thickets) - 1):
-            # Check for same graph id (fast) if not -> check for equality (slow)
-            if (
-                _thickets[i].graph is _thickets[i + 1].graph
-                or _thickets[i].graph == _thickets[i + 1].graph
-            ):
-                continue
-            else:
-                temp_dict = {}
-                union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
-                for j in range(i + 2):
-                    _thickets[j] = _update_graph_and_df(
-                        _thickets[j], temp_dict, union_graph, _debug=False
-                    )
+            temp_dict = {}
+            union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
+            for j in range(i + 2):
+                _thickets[j] = _update_graph_and_df(
+                    _thickets[j], temp_dict, union_graph, _debug=False
+                )
         for i in range(len(_thickets)):
             # For tree diff. dataframes need to be sorted.
             _thickets[i].dataframe.sort_index(inplace=True)
