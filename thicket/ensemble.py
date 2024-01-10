@@ -29,6 +29,7 @@ class Ensemble:
                 (hatchet.Graph): unified graph
                 (list): list of Thicket objects
         """
+
         def _update_graph_and_df(thicket, old_to_new_dict, union_graph, _debug=False):
             if _debug:
                 print("Graph:")
@@ -43,7 +44,9 @@ class Ensemble:
                 node_id = id(node)
                 if node_id in old_to_new_dict:
                     if _debug:
-                        print(f"Updating node: {node_id} {node} {hash(node)}\n\t-> {id(old_to_new_dict[node_id])} {old_to_new_dict[node_id]} {hash(old_to_new_dict[node_id])}")
+                        print(
+                            f"Updating node: {node_id} {node} {hash(node)}\n\t-> {id(old_to_new_dict[node_id])} {old_to_new_dict[node_id]} {hash(old_to_new_dict[node_id])}"
+                        )
                     replace_dict[node] = old_to_new_dict[node_id]
             # Replace in one-op for optimization
             thicket.dataframe["node"] = thicket.dataframe["node"].replace(replace_dict)
@@ -67,7 +70,9 @@ class Ensemble:
                 temp_dict = {}
                 union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
                 for j in range(i + 2):
-                    _thickets[j] = _update_graph_and_df(_thickets[j], temp_dict, union_graph, _debug=False)
+                    _thickets[j] = _update_graph_and_df(
+                        _thickets[j], temp_dict, union_graph, _debug=False
+                    )
         for i in range(len(_thickets)):
             # For tree diff. dataframes need to be sorted.
             _thickets[i].dataframe.sort_index(inplace=True)
