@@ -3,8 +3,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-import copy
-
 import pandas as pd
 
 
