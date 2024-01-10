@@ -151,3 +151,82 @@ def rajaperf_basecuda_xl_cali(data_dir, tmpdir):
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
     return [os.path.join(str(tmpdir), f) for f in files]
+
+
+@pytest.fixture
+def literal_thickets():
+    """Returns a list of Thicket objects created from literals."""
+    dag_ldict = [
+        {
+            "frame": {"name": "Baz", "type": "function"},
+            "metrics": {"memory": 30.0, "time": 0.1},
+            "children": [
+                {
+                    "frame": {"name": "Qux", "type": "function"},
+                    "metrics": {"memory": 11.0, "time": 5.0},
+                    "children": [],
+                },
+            ],
+        },
+        {
+            "frame": {"name": "Qux", "type": "function"},
+            "metrics": {"memory": 6.0, "time": 5.0},
+            "children": [],
+        },
+        {
+            "frame": {"name": "Zoy", "type": "function"},
+            "metrics": {"memory": 7.0, "time": 33.0},
+            "children": [],
+        },
+    ]
+
+    dag_ldict2 = [
+        {
+            "frame": {"name": "Baz", "type": "function"},
+            "metrics": {"memory": 25.0, "time": 0.5},
+            "children": [
+                {
+                    "frame": {"name": "Qux", "type": "function"},
+                    "metrics": {"memory": 16.0, "time": 3.0},
+                    "children": [],
+                },
+            ],
+        },
+        {
+            "frame": {"name": "Qux", "type": "function"},
+            "metrics": {"memory": 8.0, "time": 12.0},
+            "children": [],
+        },
+        {
+            "frame": {"name": "Zoo", "type": "function"},
+            "metrics": {"memory": 14.0, "time": 3.0},
+            "children": [],
+        },
+    ]
+
+    dag_ldict3 = [
+        {
+            "frame": {"name": "Zoo", "type": "function"},
+            "metrics": {"memory": 2.2, "time": 1.5},
+            "children": [
+                {
+                    "frame": {"name": "Zoy", "type": "function"},
+                    "metrics": {"memory": 1.6, "time": 2.1},
+                    "children": [
+                        {
+                            "frame": {"name": "Zoz", "type": "function"},
+                            "metrics": {"memory": 1.9, "time": 3.0},
+                            "children": [],
+                        },
+                    ],
+                },
+            ],
+        },
+    ]
+
+    tk = Thicket.from_literal(dag_ldict)
+    tk2 = Thicket.from_literal(dag_ldict2)
+    tk3 = Thicket.from_literal(dag_ldict3)
+    thickets = [tk, tk2, tk3]
+
+    return thickets
