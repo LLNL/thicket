@@ -8,7 +8,9 @@ from collections import OrderedDict
 
 def check_same_frame(n1, n2):
     if n1.frame != n2.frame:
-        raise ValueError(f"Cannot replace the node. Frames do not match: {n1.frame} != {n2.frame}")
+        raise ValueError(
+            f"Cannot replace the node. Frames do not match: {n1.frame} != {n2.frame}"
+        )
 
 
 def validate_dataframe(df):

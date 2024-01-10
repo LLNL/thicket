@@ -10,7 +10,12 @@ import numpy as np
 import pandas as pd
 
 import thicket.helpers as helpers
-from .utils import check_same_frame, validate_dataframe, verify_sorted_profile, verify_thicket_structures
+from .utils import (
+    check_same_frame,
+    validate_dataframe,
+    verify_sorted_profile,
+    verify_thicket_structures,
+)
 
 
 class Ensemble:
@@ -29,6 +34,7 @@ class Ensemble:
                 (hatchet.Graph): unified graph
                 (list): list of Thicket objects
         """
+
         def _update_graph_and_df(thicket, old_to_new_dict, union_graph, _debug=False):
             if _debug:
                 print(f"Graph: {thicket.profile_mapping}")
