@@ -36,14 +36,14 @@ class Ensemble:
         """
 
         def _replace_graph_df_nodes(thicket, old_to_new, union_graph, _debug=False):
-            """Replace the node objects in the graph and DataFrame of a Thicket object from the result of graph.union(). 
-            
+            """Replace the node objects in the graph and DataFrame of a Thicket object from the result of graph.union().
+
             Arguments:
                 thicket (Thicket): Thicket object to modify
                 old_to_new (dict): dictionary mapping old node objects to new node objects
                 union_graph (hatchet.Graph): unified graph
                 _debug (bool): whether to print debug statements
-            
+
             Returns:
                 (Thicket): modified Thicket object
             """
