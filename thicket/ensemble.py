@@ -29,6 +29,28 @@ class Ensemble:
                 (hatchet.Graph): unified graph
                 (list): list of Thicket objects
         """
+        def _update_graph_and_df(thicket, old_to_new_dict, union_graph, _debug=False):
+            if _debug:
+                print("Graph:")
+            thicket.graph = union_graph
+
+            if _debug:
+                print("DataFrame:")
+            idx_names = thicket.dataframe.index.names
+            thicket.dataframe = thicket.dataframe.reset_index()
+            replace_dict = {}
+            for node in thicket.dataframe["node"]:
+                node_id = id(node)
+                if node_id in old_to_new_dict:
+                    if _debug:
+                        print(f"Updating node: {node_id} {node} {hash(node)}\n\t-> {id(old_to_new_dict[node_id])} {old_to_new_dict[node_id]} {hash(old_to_new_dict[node_id])}")
+                    replace_dict[node] = old_to_new_dict[node_id]
+            # Replace in one-op for optimization
+            thicket.dataframe["node"] = thicket.dataframe["node"].replace(replace_dict)
+            thicket.dataframe = thicket.dataframe.set_index(idx_names)
+
+            return thicket
+
         _thickets = thickets
         if not inplace:
             _thickets = [th.deepcopy() for th in thickets]
@@ -42,14 +64,13 @@ class Ensemble:
             ):
                 continue
             else:
-                union_graph = union_graph.union(_thickets[i + 1].graph)
+                temp_dict = {}
+                union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
+                for j in range(i + 2):
+                    _thickets[j] = _update_graph_and_df(_thickets[j], temp_dict, union_graph, _debug=False)
         for i in range(len(_thickets)):
-            # Set all graphs to the union graph
-            _thickets[i].graph = union_graph
             # For tree diff. dataframes need to be sorted.
             _thickets[i].dataframe.sort_index(inplace=True)
-            # Necessary to change dataframe hatchet id's to match the nodes in the graph
-            helpers._sync_nodes_frame(union_graph, _thickets[i].dataframe)
         return union_graph, _thickets
 
     @staticmethod

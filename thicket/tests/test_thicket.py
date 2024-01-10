@@ -48,29 +48,6 @@ def test_resolve_missing_indicies():
     assert set(names_1).issubset(th_1.dataframe.index.names)
 
 
-def test_sync_nodes(example_cali):
-    th = Thicket.from_caliperreader(example_cali[-1])
-
-    # Should be synced from the reader
-    assert helpers._are_synced(th.graph, th.dataframe)
-
-    # Change the id of the first node by making a deepcopy.
-    index_names = th.dataframe.index.names
-    th.dataframe.reset_index(inplace=True)
-    node_0_copy = copy.deepcopy(th.dataframe["node"][0])
-    th.dataframe.loc[0, "node"] = node_0_copy
-    th.dataframe.set_index(index_names, inplace=True)
-
-    # Should no longer be synced
-    assert not helpers._are_synced(th.graph, th.dataframe)
-
-    # Sync the nodes
-    helpers._sync_nodes(th.graph, th.dataframe)
-
-    # Check again
-    assert helpers._are_synced(th.graph, th.dataframe)
-
-
 def test_statsframe(example_cali):
     def _test_multiindex():
         """Test statsframe when headers are multiindexed."""
