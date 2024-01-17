@@ -12,9 +12,7 @@ def validate_dataframe(df):
     def _check_duplicate_inner_idx(df):
         """Check for duplicate values in the innermost indices."""
         for node in set(df.index.get_level_values("node")):
-            inner_idx_values = sorted(
-                df.loc[node].index.tolist()
-            )
+            inner_idx_values = sorted(df.loc[node].index.tolist())
             inner_idx_values_set = sorted(list(set(inner_idx_values)))
             if inner_idx_values != inner_idx_values_set:
                 raise IndexError(
