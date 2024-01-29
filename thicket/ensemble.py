@@ -8,6 +8,7 @@ from collections import OrderedDict
 from hatchet import GraphFrame
 import numpy as np
 import pandas as pd
+import tqdm
 
 import thicket.helpers as helpers
 from .utils import (
@@ -103,7 +104,10 @@ class Ensemble:
         for i in range(len(_thickets) - 1):
             temp_dict = {}
             union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
-            # Update both graphs to the union graph
+        pbar = tqdm.tqdm(range(len(_thickets)))
+        for i in pbar:
+            pbar.set_description("Creating Thicket: ")
+            # Set all graphs to the union graph
             _thickets[i].graph = union_graph
             _thickets[i + 1].graph = union_graph
             # Merge the current old_to_new dictionary with the new mappings
