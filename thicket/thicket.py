@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 from hatchet import GraphFrame
 from hatchet.query import AbstractQuery, QueryMatcher
+import tqdm
 
 from thicket.ensemble import Ensemble
 import thicket.helpers as helpers
@@ -279,7 +280,9 @@ class Thicket(GraphFrame):
         # Parse the input object
         # if a list of files
         if isinstance(obj, (list, tuple)):
-            for file in obj:
+            pbar = tqdm.tqdm(obj)
+            for file in pbar:
+                pbar.set_description("Reading Files: ")
                 ens_list.append(
                     Thicket.thicketize_graphframe(
                         func(file, *extra_args, **kwargs), file
@@ -287,7 +290,9 @@ class Thicket(GraphFrame):
                 )
         # if directory of files
         elif os.path.isdir(obj):
-            for file in os.listdir(obj):
+            pbar = tqdm.tqdm(os.listdir(obj))
+            for file in pbar:
+                pbar.set_description("Reading Files: ")
                 f = os.path.join(obj, file)
                 ens_list.append(
                     Thicket.thicketize_graphframe(func(f, *extra_args, **kwargs), f)
