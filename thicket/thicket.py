@@ -184,7 +184,9 @@ class Thicket(GraphFrame):
         return th
 
     @staticmethod
-    def from_caliper(filename_or_stream, query=None, intersection=False):
+    def from_caliper(
+        filename_or_stream, query=None, intersection=False, disable_tqdm=False
+    ):
         """Read in a Caliper .cali or .json file.
 
         Arguments:
@@ -192,38 +194,50 @@ class Thicket(GraphFrame):
                 `.cali` or JSON-split format, or an open file object to read one
             query (str): cali-query in CalQL format
             intersection (bool): whether to perform intersection or union (default)
+            disable_tqdm (bool): whether to display tqdm progress bar
         """
         return Thicket.reader_dispatch(
-            GraphFrame.from_caliper, intersection, filename_or_stream, query
+            GraphFrame.from_caliper,
+            intersection,
+            disable_tqdm,
+            filename_or_stream,
+            query,
         )
 
     @staticmethod
-    def from_hpctoolkit(dirname, intersection=False):
+    def from_hpctoolkit(dirname, intersection=False, disable_tqdm=False):
         """Create a GraphFrame using hatchet's HPCToolkit reader and use its attributes
         to make a new thicket.
 
         Arguments:
             dirname (str): parent directory of an HPCToolkit experiment.xml file
             intersection (bool): whether to perform intersection or union (default)
+            disable_tqdm (bool): whether to display tqdm progress bar
 
         Returns:
             (thicket): new thicket containing HPCToolkit profile data
         """
         return Thicket.reader_dispatch(
-            GraphFrame.from_hpctoolkit, intersection, dirname
+            GraphFrame.from_hpctoolkit, intersection, disable_tqdm, dirname
         )
 
     @staticmethod
-    def from_caliperreader(filename_or_caliperreader, intersection=False):
+    def from_caliperreader(
+        filename_or_caliperreader, intersection=False, disable_tqdm=False
+    ):
         """Helper function to read one caliper file.
 
         Arguments:
             filename_or_caliperreader (str or CaliperReader): name of a Caliper output
                 file in `.cali` format, or a CaliperReader object
             intersection (bool): whether to perform intersection or union (default)
+            disable_tqdm (bool): whether to display tqdm progress bar
         """
         return Thicket.reader_dispatch(
-            GraphFrame.from_caliperreader, intersection, filename_or_caliperreader
+            GraphFrame.from_caliperreader,
+            intersection,
+            disable_tqdm,
+            filename_or_caliperreader,
         )
 
     @staticmethod
@@ -263,12 +277,13 @@ class Thicket(GraphFrame):
         return tk
 
     @staticmethod
-    def reader_dispatch(func, intersection=False, *args, **kwargs):
+    def reader_dispatch(func, intersection, disable_tqdm, *args, **kwargs):
         """Create a thicket from a list, directory of files, or a single file.
 
         Arguments:
             func (function): reader function to be used
             intersection (bool): whether to perform intersection or union (default).
+            tdmq_output (bool): whether to display tqdm progress bar
             args (list): list of args; args[0] should be an object that can be read from
         """
         ens_list = []
@@ -280,7 +295,7 @@ class Thicket(GraphFrame):
         # Parse the input object
         # if a list of files
         if isinstance(obj, (list, tuple)):
-            pbar = tqdm.tqdm(obj)
+            pbar = tqdm.tqdm(obj, disable=disable_tqdm)
             for file in pbar:
                 pbar.set_description("Reading Files: ")
                 ens_list.append(
@@ -290,7 +305,7 @@ class Thicket(GraphFrame):
                 )
         # if directory of files
         elif os.path.isdir(obj):
-            pbar = tqdm.tqdm(os.listdir(obj))
+            pbar = tqdm.tqdm(os.listdir(obj), disable=disable_tqdm)
             for file in pbar:
                 pbar.set_description("Reading Files: ")
                 f = os.path.join(obj, file)
@@ -319,12 +334,15 @@ class Thicket(GraphFrame):
             thickets=ens_list,
             axis="index",
             calltree=calltree,
+            disable_tqdm=disable_tqdm,
         )
 
         return thicket_object
 
     @staticmethod
-    def concat_thickets(thickets, axis="index", calltree="union", **kwargs):
+    def concat_thickets(
+        thickets, axis="index", calltree="union", disable_tqdm=False, **kwargs
+    ):
         """Concatenate thickets together on index or columns.
 
         The calltree can either be unioned or intersected which will affect the other structures.
@@ -347,9 +365,11 @@ class Thicket(GraphFrame):
             (thicket): concatenated thicket
         """
 
-        def _index(thickets, from_statsframes=False):
+        def _index(thickets, from_statsframes=False, disable_tqdm=disable_tqdm):
             thicket_parts = Ensemble._index(
-                thickets=thickets, from_statsframes=from_statsframes
+                thickets=thickets,
+                from_statsframes=from_statsframes,
+                disable_tqdm=disable_tqdm,
             )
 
             return Thicket(
@@ -362,9 +382,14 @@ class Thicket(GraphFrame):
                 profile_mapping=thicket_parts[6],
             )
 
-        def _columns(thickets, headers=None, metadata_key=None):
+        def _columns(
+            thickets, headers=None, metadata_key=None, disable_tqdm=disable_tqdm
+        ):
             combined_thicket = Ensemble._columns(
-                thickets=thickets, headers=headers, metadata_key=metadata_key
+                thickets=thickets,
+                headers=headers,
+                metadata_key=metadata_key,
+                disable_tqdm=disable_tqdm,
             )
 
             return combined_thicket
