@@ -35,7 +35,9 @@ class Ensemble:
                 (list): list of Thicket objects
         """
 
-        def _replace_graph_df_nodes(thicket, old_to_new_list, union_graph, _debug=False):
+        def _replace_graph_df_nodes(
+            thicket, old_to_new_list, union_graph, _debug=False
+        ):
             """Replace the node objects in the graph and DataFrame of a Thicket object from the result of graph.union().
 
             Arguments:
@@ -67,7 +69,9 @@ class Ensemble:
                             )
                         check_same_frame(node, old_to_new[node_id])
                         replace_dict[node] = old_to_new[node_id]
-                thicket.dataframe["node"] = thicket.dataframe["node"].replace(replace_dict)
+                thicket.dataframe["node"] = thicket.dataframe["node"].replace(
+                    replace_dict
+                )
             thicket.dataframe = thicket.dataframe.set_index(idx_names)
 
             if _debug:
@@ -88,7 +92,7 @@ class Ensemble:
             union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
             old_to_new_list.append(temp_dict)
         for i in range(len(_thickets)):
-            #print(f"Updating Thicket {i}")
+            # print(f"Updating Thicket {i}")
             _thickets[i] = _replace_graph_df_nodes(
                 _thickets[i], old_to_new_list, union_graph, _debug=False
             )
@@ -199,9 +203,9 @@ class Ensemble:
             combined_th.profile = [new_mappings[prf] for prf in combined_th.profile]
             profile_mapping_cp = combined_th.profile_mapping.copy()
             for k, v in profile_mapping_cp.items():
-                combined_th.profile_mapping[
-                    new_mappings[k]
-                ] = combined_th.profile_mapping.pop(k)
+                combined_th.profile_mapping[new_mappings[k]] = (
+                    combined_th.profile_mapping.pop(k)
+                )
             combined_th.performance_cols = helpers._get_perf_columns(
                 combined_th.dataframe
             )
