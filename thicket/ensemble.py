@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 
 from hatchet import GraphFrame
 import numpy as np
