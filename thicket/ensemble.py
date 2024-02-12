@@ -35,8 +35,16 @@ class Ensemble:
                 (list): list of Thicket objects
         """
 
-        def _merge_dicts(cur_dict, update_dict, debug=False):
-            """Merge cur_dict and update_dict"""
+        def _merge_dicts(cur_dict, update_dict):
+            """Merge old_to_new dictionary from the result of thicket i and i + 1 with old_to_new from i + 1 and i + 2.
+
+            Arguments:
+                cur_dict (dict): dictionary mapping old node to new node
+                update_dict (dict): dictionary mapping old node to new node
+
+            Returns:
+                (dict): merged dictionary
+            """
             merged_dict = {}
 
             if len(cur_dict) == 0:
@@ -47,55 +55,28 @@ class Ensemble:
             for new_id, new_node in update_dict.items():
                 for cur_id, cur_node in cur_dict.items():
                     if id(cur_node) == new_id:
-                        if debug:
-                            print(
-                                f"Replacing {id(cur_node)} {cur_node} with {id(new_node)} {new_node} for key {cur_id}"
-                            )
                         merged_dict[cur_id] = new_node
                         seen_keys.append(new_id)
-
-            # for tid, node in cur_dict.items():
-            #     nid = id(node)
-            #     # Case 1: update_dict has an updated mapping for keys in cur_dict
-            #     if nid in update_dict:
-            #         # Case 1:
-            #         for k, v in cur_dict.items():
-            #             if id(v) == nid:
-            #                 if debug:
-            #                     print(f"\tReplacing {id(v)} {v} with {id(update_dict[nid])} {update_dict[nid]} for key {k}")
-            #                     print(f"\t{k, id(v)} -> {k, id(update_dict[nid])}")
-            #                 merged_dict[k] = update_dict[nid]
-            #         del update_dict[nid]
 
             # Pairs that are left in update_dict
             for tid, node in update_dict.items():
                 if tid not in seen_keys:
-                    if debug:
-                        print(f"Carrying over {id(node)} {node} for key {tid}")
                     merged_dict[tid] = node
 
             return merged_dict
 
-        def _replace_graph_df_nodes(thickets, old_to_new, union_graph, _debug=False):
+        def _replace_graph_df_nodes(thickets, old_to_new, union_graph):
             """Replace the node objects in the graph and DataFrame of a Thicket object from the result of graph.union().
 
             Arguments:
                 thickets (list): list of Thicket objects
-                old_to_new (list): list of dictionaries mapping old node to new node
+                old_to_new (dict): dictionary mapping old node to new node
                 union_graph (hatchet.Graph): unified graph
-                _debug (bool): whether to print debug statements
 
             Returns:
                 (Thicket): modified Thicket object
             """
-            if _debug:
-                print("old_to_new:", old_to_new)
-                print({k: id(v) for k, v in old_to_new.items()})
             for i in range(len(thickets)):
-                if _debug:
-                    print("Old DataFrame:")
-                    for node in thickets[i].dataframe.index.get_level_values("node"):
-                        print("\t", hash(node), node, id(node))
                 thickets[i].graph = union_graph
                 idx_names = thickets[i].dataframe.index.names
                 thickets[i].dataframe = thickets[i].dataframe.reset_index()
@@ -103,21 +84,12 @@ class Ensemble:
                 for node in thickets[i].dataframe["node"]:
                     node_id = id(node)
                     if node_id in old_to_new:
-                        if _debug:
-                            print(
-                                f"Updating node: {node_id} {node} {hash(node)}\n\t-> {id(old_to_new[node_id])} {old_to_new[node_id]} {hash(old_to_new[node_id])}"
-                            )
                         check_same_frame(node, old_to_new[node_id])
                         replace_dict[node] = old_to_new[node_id]
                 thickets[i].dataframe["node"] = (
                     thickets[i].dataframe["node"].replace(replace_dict)
                 )
                 thickets[i].dataframe = thickets[i].dataframe.set_index(idx_names)
-
-                if _debug:
-                    print("New DataFrame:")
-                    for node in thickets[i].dataframe.index.get_level_values("node"):
-                        print("\t", hash(node), node, id(node))
 
             return thickets
 
@@ -137,10 +109,6 @@ class Ensemble:
             old_to_new = _merge_dicts(old_to_new, temp_dict)
         # Update the nodes in the dataframe
         _thickets = _replace_graph_df_nodes(_thickets, old_to_new, union_graph)
-        if False:
-            print("Union Graph:")
-            for node in union_graph.traverse():
-                print("\t", hash(node), node, id(node))
         for i in range(len(_thickets)):
             # For tree diff. dataframes need to be sorted.
             _thickets[i].dataframe.sort_index(inplace=True)
