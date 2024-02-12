@@ -35,14 +35,53 @@ class Ensemble:
                 (list): list of Thicket objects
         """
 
-        def _replace_graph_df_nodes(
-            thicket, old_to_new_list, union_graph, _debug=False
-        ):
+        def _merge_dicts(cur_dict, update_dict, debug=False):
+            """Merge cur_dict and update_dict"""
+            merged_dict = {}
+
+            if len(cur_dict) == 0:
+                return update_dict
+
+            # Merge values from update_dict into keys from cur_dict
+            seen_keys = []
+            for new_id, new_node in update_dict.items():
+                for cur_id, cur_node in cur_dict.items():
+                    if id(cur_node) == new_id:
+                        if debug:
+                            print(
+                                f"Replacing {id(cur_node)} {cur_node} with {id(new_node)} {new_node} for key {cur_id}"
+                            )
+                        merged_dict[cur_id] = new_node
+                        seen_keys.append(new_id)
+
+            # for tid, node in cur_dict.items():
+            #     nid = id(node)
+            #     # Case 1: update_dict has an updated mapping for keys in cur_dict
+            #     if nid in update_dict:
+            #         # Case 1:
+            #         for k, v in cur_dict.items():
+            #             if id(v) == nid:
+            #                 if debug:
+            #                     print(f"\tReplacing {id(v)} {v} with {id(update_dict[nid])} {update_dict[nid]} for key {k}")
+            #                     print(f"\t{k, id(v)} -> {k, id(update_dict[nid])}")
+            #                 merged_dict[k] = update_dict[nid]
+            #         del update_dict[nid]
+
+            # Pairs that are left in update_dict
+            for tid, node in update_dict.items():
+                if tid not in seen_keys:
+                    if debug:
+                        print(f"Carrying over {id(node)} {node} for key {tid}")
+                    merged_dict[tid] = node
+
+            return merged_dict
+
+        def _replace_graph_df_nodes(thickets, old_to_new, union_graph, _debug=False):
             """Replace the node objects in the graph and DataFrame of a Thicket object from the result of graph.union().
 
             Arguments:
-                thicket (Thicket): Thicket object to modify
-                old_to_new_list (list): list of dictionaries mapping old node to new node
+                thickets (list): list of Thicket objects
+                old_to_new (list): list of dictionaries mapping old node to new node
                 union_graph (hatchet.Graph): unified graph
                 _debug (bool): whether to print debug statements
 
@@ -50,17 +89,18 @@ class Ensemble:
                 (Thicket): modified Thicket object
             """
             if _debug:
-                print("Old DataFrame:")
-                for node in thicket.dataframe.index.get_level_values("node"):
-                    print("\t", hash(node), node, id(node))
-            thicket.graph = union_graph
-            idx_names = thicket.dataframe.index.names
-            thicket.dataframe = thicket.dataframe.reset_index()
-            for i, old_to_new in enumerate(old_to_new_list):
-                replace_dict = {}
+                print("old_to_new:", old_to_new)
+                print({k: id(v) for k, v in old_to_new.items()})
+            for i in range(len(thickets)):
                 if _debug:
-                    print(f"old_to_new[{i}]: {old_to_new}")
-                for node in thicket.dataframe["node"]:
+                    print("Old DataFrame:")
+                    for node in thickets[i].dataframe.index.get_level_values("node"):
+                        print("\t", hash(node), node, id(node))
+                thickets[i].graph = union_graph
+                idx_names = thickets[i].dataframe.index.names
+                thickets[i].dataframe = thickets[i].dataframe.reset_index()
+                replace_dict = {}
+                for node in thickets[i].dataframe["node"]:
                     node_id = id(node)
                     if node_id in old_to_new:
                         if _debug:
@@ -69,33 +109,38 @@ class Ensemble:
                             )
                         check_same_frame(node, old_to_new[node_id])
                         replace_dict[node] = old_to_new[node_id]
-                thicket.dataframe["node"] = thicket.dataframe["node"].replace(
-                    replace_dict
+                thickets[i].dataframe["node"] = (
+                    thickets[i].dataframe["node"].replace(replace_dict)
                 )
-            thicket.dataframe = thicket.dataframe.set_index(idx_names)
+                thickets[i].dataframe = thickets[i].dataframe.set_index(idx_names)
 
-            if _debug:
-                print("New DataFrame:")
-                for node in thicket.dataframe.index.get_level_values("node"):
-                    print("\t", hash(node), node, id(node))
+                if _debug:
+                    print("New DataFrame:")
+                    for node in thickets[i].dataframe.index.get_level_values("node"):
+                        print("\t", hash(node), node, id(node))
 
-            return thicket
+            return thickets
 
         _thickets = thickets
         if not inplace:
             _thickets = [th.deepcopy() for th in thickets]
         # Unify graphs if "self" and "other" do not have the same graph
         union_graph = _thickets[0].graph
-        old_to_new_list = []
+        old_to_new = {}
         for i in range(len(_thickets) - 1):
             temp_dict = {}
             union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
-            old_to_new_list.append(temp_dict)
-        for i in range(len(_thickets)):
-            # print(f"Updating Thicket {i}")
-            _thickets[i] = _replace_graph_df_nodes(
-                _thickets[i], old_to_new_list, union_graph, _debug=False
-            )
+            # Update both graphs to the union graph
+            _thickets[i].graph = union_graph
+            _thickets[i + 1].graph = union_graph
+            # Merge the current old_to_new dictionary with the new mappings
+            old_to_new = _merge_dicts(old_to_new, temp_dict)
+        # Update the nodes in the dataframe
+        _thickets = _replace_graph_df_nodes(_thickets, old_to_new, union_graph)
+        if False:
+            print("Union Graph:")
+            for node in union_graph.traverse():
+                print("\t", hash(node), node, id(node))
         for i in range(len(_thickets)):
             # For tree diff. dataframes need to be sorted.
             _thickets[i].dataframe.sort_index(inplace=True)
