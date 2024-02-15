@@ -15,7 +15,7 @@ def test_mean(example_cali):
 
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.mean(th_ens, columns=["Min time/rank"])
+    th.stats.mean(th_ens, columns=["Min time/rank"])
 
     assert "Min time/rank_mean" in th_ens.statsframe.dataframe.columns
     assert (
@@ -34,7 +34,7 @@ def test_mean_columnar_join(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.mean(combined_th, columns=[(idx, "Min time/rank")])
+    th.stats.mean(combined_th, columns=[(idx, "Min time/rank")])
 
     assert (idx, "Min time/rank_mean") in combined_th.statsframe.dataframe.columns
     assert (
@@ -53,7 +53,7 @@ def test_median(example_cali):
 
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.median(th_ens, columns=["Min time/rank"])
+    th.stats.median(th_ens, columns=["Min time/rank"])
 
     assert "Min time/rank_median" in th_ens.statsframe.dataframe.columns
     assert (
@@ -72,7 +72,7 @@ def test_median_columnar_join(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.median(combined_th, columns=[(idx, "Min time/rank")])
+    th.stats.median(combined_th, columns=[(idx, "Min time/rank")])
 
     assert (idx, "Min time/rank_median") in combined_th.statsframe.dataframe.columns
     assert (
@@ -91,7 +91,7 @@ def test_minimum(example_cali):
 
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.minimum(th_ens, columns=["Min time/rank"])
+    th.stats.minimum(th_ens, columns=["Min time/rank"])
 
     assert "Min time/rank_min" in th_ens.statsframe.dataframe.columns
     assert (
@@ -110,7 +110,7 @@ def test_minimum_columnar_join(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.minimum(combined_th, columns=[(idx, "Min time/rank")])
+    th.stats.minimum(combined_th, columns=[(idx, "Min time/rank")])
 
     assert (idx, "Min time/rank_min") in combined_th.statsframe.dataframe.columns
     assert (
@@ -129,7 +129,7 @@ def test_maximum(example_cali):
 
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.maximum(th_ens, columns=["Min time/rank"])
+    th.stats.maximum(th_ens, columns=["Min time/rank"])
 
     assert "Min time/rank_max" in th_ens.statsframe.dataframe.columns
     assert (
@@ -148,7 +148,7 @@ def test_maximum_columnar_join(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.maximum(combined_th, columns=[(idx, "Min time/rank")])
+    th.stats.maximum(combined_th, columns=[(idx, "Min time/rank")])
 
     assert (idx, "Min time/rank_max") in combined_th.statsframe.dataframe.columns
     assert (
@@ -167,7 +167,7 @@ def test_std(example_cali):
 
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.std(th_ens, columns=["Min time/rank"])
+    th.stats.std(th_ens, columns=["Min time/rank"])
 
     assert "Min time/rank_std" in th_ens.statsframe.dataframe.columns
     assert (
@@ -186,7 +186,7 @@ def test_std_columnar_join(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.std(combined_th, columns=[(idx, "Min time/rank")])
+    th.stats.std(combined_th, columns=[(idx, "Min time/rank")])
 
     assert (idx, "Min time/rank_std") in combined_th.statsframe.dataframe.columns
     assert (
@@ -204,7 +204,7 @@ def test_percentiles(example_cali):
     )
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.percentiles(th_ens, columns=["Min time/rank"])
+    th.stats.percentiles(th_ens, columns=["Min time/rank"])
 
     assert "Min time/rank_percentiles_25" in th_ens.statsframe.dataframe.columns
     assert "Min time/rank_percentiles_50" in th_ens.statsframe.dataframe.columns
@@ -230,7 +230,7 @@ def test_percentiles(example_cali):
 def test_percentiles_none(example_cali):
     th_ens = th.Thicket.from_caliperreader(example_cali)
 
-    th.percentiles(th_ens, columns=["Min time/rank"], percentiles=None)
+    th.stats.percentiles(th_ens, columns=["Min time/rank"], percentiles=None)
 
     assert "Min time/rank_percentiles_25" in th_ens.statsframe.dataframe.columns
     assert "Min time/rank_percentiles_50" in th_ens.statsframe.dataframe.columns
@@ -240,7 +240,7 @@ def test_percentiles_none(example_cali):
 def test_percentiles_single_value(example_cali):
     th_ens = th.Thicket.from_caliperreader(example_cali)
 
-    th.percentiles(th_ens, columns=["Min time/rank"], percentiles=[0.3])
+    th.stats.percentiles(th_ens, columns=["Min time/rank"], percentiles=[0.3])
 
     assert "Min time/rank_percentiles_30" in th_ens.statsframe.dataframe.columns
 
@@ -261,7 +261,7 @@ def test_percentiles_columnar_join(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.percentiles(combined_th, columns=[(idx, "Min time/rank")])
+    th.stats.percentiles(combined_th, columns=[(idx, "Min time/rank")])
 
     assert (
         idx,
@@ -301,7 +301,9 @@ def test_percentiles_columnar_join(thicket_axis_columns):
         "Min time/rank_percentiles_75",
     ) in combined_th.statsframe.show_metric_columns()
 
-    th.percentiles(combined_th, columns=[(idx, "Min time/rank")], percentiles=[0.4])
+    th.stats.percentiles(
+        combined_th, columns=[(idx, "Min time/rank")], percentiles=[0.4]
+    )
 
     assert (
         idx,
@@ -326,7 +328,7 @@ def test_variance(example_cali):
 
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.variance(th_ens, columns=["Min time/rank"])
+    th.stats.variance(th_ens, columns=["Min time/rank"])
 
     assert "Min time/rank_var" in th_ens.statsframe.dataframe.columns
     assert (
@@ -345,7 +347,7 @@ def test_variance_columnar_join(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.variance(combined_th, columns=[(idx, "Min time/rank")])
+    th.stats.variance(combined_th, columns=[(idx, "Min time/rank")])
 
     assert (idx, "Min time/rank_var") in combined_th.statsframe.dataframe.columns
     assert (
@@ -364,7 +366,7 @@ def test_normality(rajaperf_basecuda_xl_cali):
 
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.check_normality(th_ens, columns=["Min time/rank"])
+    th.stats.check_normality(th_ens, columns=["Min time/rank"])
 
     assert th_ens.statsframe.dataframe["Min time/rank_normality"][0] in {
         "True",
@@ -391,7 +393,7 @@ def test_normality_columnar_join(thicket_axis_columns, stats_thicket_axis_column
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
     for idx in ["Cuda 1", "Cuda 2"]:
-        th.check_normality(scombined_th, columns=[(idx, "Min time/rank")])
+        th.stats.check_normality(scombined_th, columns=[(idx, "Min time/rank")])
 
         assert (
             idx,
@@ -419,7 +421,7 @@ def test_correlation(rajaperf_basecuda_xl_cali):
 
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.correlation_nodewise(
+    th.stats.correlation_nodewise(
         th_ens, column1="Min time/rank", column2="Max time/rank", correlation="pearson"
     )
 
@@ -437,7 +439,7 @@ def test_correlation_columnar_join(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.correlation_nodewise(
+    th.stats.correlation_nodewise(
         combined_th,
         column1=(idx[0], "Min time/rank"),
         column2=(idx[1], "Max time/rank"),
@@ -459,7 +461,7 @@ def test_boxplot(example_cali):
 
     assert list(th_ens.statsframe.dataframe.columns) == ["name"]
 
-    th.calc_boxplot_statistics(
+    th.stats.calc_boxplot_statistics(
         th_ens, columns=["Min time/rank"], quartiles=[0.25, 0.50, 0.75]
     )
 
@@ -543,7 +545,7 @@ def test_boxplot_columnar_join(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.calc_boxplot_statistics(
+    th.stats.calc_boxplot_statistics(
         combined_th, columns=[(idx, "Min time/rank")], quartiles=[0.25, 0.50, 0.75]
     )
 
