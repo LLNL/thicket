@@ -126,6 +126,20 @@ class Thicket(GraphFrame):
         return s
 
     @staticmethod
+    def profile_hasher(obj, hex_len=8):
+        """Convert an object to a profile hash for Thicket.
+
+        Arguments:
+            obj (object): hashable object
+            hex_len (int): length of the hex string before being converted to an integer.
+
+        Returns:
+            (int): hash of the object
+        """
+
+        return int(md5(obj.encode("utf-8")).hexdigest()[:hex_len], 16)
+
+    @staticmethod
     def thicketize_graphframe(gf, prf):
         """Necessary function to handle output from using GraphFrame readers.
 
@@ -149,10 +163,7 @@ class Thicket(GraphFrame):
             # Resulting int hash will be at least hex_length digits and theoretically up to
             # ceil(log_10(16^n - 1)) digits after conversion.
 
-            # length of the hex string before being converted to an integer.
-            hex_length = 8
-
-            hash_arg = int(md5(prf.encode("utf-8")).hexdigest()[:hex_length], 16)
+            hash_arg = Thicket.profile_hasher(prf)
             th.profile = [hash_arg]
             th.profile_mapping = OrderedDict({hash_arg: prf})
 
@@ -213,6 +224,42 @@ class Thicket(GraphFrame):
         return Thicket.reader_dispatch(
             GraphFrame.from_caliperreader, intersection, filename_or_caliperreader
         )
+
+    @staticmethod
+    def from_literal(graph_dict):
+        """Create a Thicket from a list of dictionarires.
+
+        Arguments:
+            graph_dict (list): list of dictionaries representing a graph
+
+        Returns:
+            (Thicket): new Thicket
+
+        Example:
+            graph_dict = [
+                {
+                    "frame": {"name": "Foo", "type": "function"},
+                    "metrics": {"memory": 30.0, "time": 0.1},
+                    "children": [
+                        {
+                            "frame": {"name": "Bar", "type": "function"},
+                            "metrics": {"memory": 11.0, "time": 5.0},
+                            "children": [],
+                        },
+                    ],
+                },
+                {
+                    "frame": {"name": "Baz", "type": "function"},
+                    "metrics": {"memory": 6.0, "time": 5.0},
+                    "children": [],
+                },
+            ]
+        """
+        profile = str(graph_dict)
+
+        tk = Thicket.thicketize_graphframe(GraphFrame.from_literal(graph_dict), profile)
+
+        return tk
 
     @staticmethod
     def reader_dispatch(func, intersection=False, *args, **kwargs):
