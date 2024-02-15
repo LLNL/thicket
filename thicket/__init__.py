@@ -8,6 +8,13 @@
 
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
+# Imports of subdirectories to prevent namespace package issues
+# Don't re-export vis so that we don't trigger NPM building on every Thicket import
+from . import (
+    external as external,
+    stats as stats,
+)
+
 from .ensemble import Ensemble
 from .thicket import Thicket
 from .thicket import InvalidFilter

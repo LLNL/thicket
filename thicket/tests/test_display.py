@@ -81,7 +81,7 @@ def test_display_histogram_columnar_join(thicket_axis_columns):
 def test_display_heatmap(example_cali):
     tk = th.Thicket.from_caliperreader(example_cali)
 
-    th.variance(tk, columns=["Min time/rank"])
+    th.stats.variance(tk, columns=["Min time/rank"])
 
     ax = th.stats.display_heatmap(tk, columns=["Min time/rank_var"])
 
@@ -125,7 +125,7 @@ def test_display_heatmap(example_cali):
 def test_display_heatmap_columnar_join(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
 
-    th.variance(combined_th, columns=[("Cuda128", "Min time/rank")])
+    th.stats.variance(combined_th, columns=[("Cuda128", "Min time/rank")])
 
     ax = th.stats.display_heatmap(
         combined_th, columns=[("Cuda128", "Min time/rank_var")]
