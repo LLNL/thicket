@@ -6,6 +6,8 @@
 # make flake8 unused names in this file.
 # flake8: noqa: F401
 
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)
+
 from .ensemble import Ensemble
 from .thicket import Thicket
 from .thicket import InvalidFilter
