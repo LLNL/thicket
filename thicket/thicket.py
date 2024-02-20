@@ -291,13 +291,14 @@ class Thicket(GraphFrame):
         extra_args = []
         if len(args) > 1:
             extra_args = args[1:]
+        pbar_desc = "(1/2) Reading Files"
 
         # Parse the input object
         # if a list of files
         if isinstance(obj, (list, tuple)):
             pbar = tqdm.tqdm(obj, disable=disable_tqdm)
             for file in pbar:
-                pbar.set_description("Reading Files: ")
+                pbar.set_description(pbar_desc)
                 ens_list.append(
                     Thicket.thicketize_graphframe(
                         func(file, *extra_args, **kwargs), file
@@ -307,7 +308,7 @@ class Thicket(GraphFrame):
         elif os.path.isdir(obj):
             pbar = tqdm.tqdm(os.listdir(obj), disable=disable_tqdm)
             for file in pbar:
-                pbar.set_description("Reading Files: ")
+                pbar.set_description(pbar_desc)
                 f = os.path.join(obj, file)
                 ens_list.append(
                     Thicket.thicketize_graphframe(func(f, *extra_args, **kwargs), f)

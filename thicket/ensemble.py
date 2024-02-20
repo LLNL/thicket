@@ -102,12 +102,11 @@ class Ensemble:
         # Unify graphs if "self" and "other" do not have the same graph
         union_graph = _thickets[0].graph
         old_to_new = {}
-        for i in range(len(_thickets) - 1):
+        pbar = tqdm.tqdm(range(len(_thickets) - 1), disable=disable_tqdm)
+        for i in pbar:
+            pbar.set_description("(2/2) Creating Thicket")
             temp_dict = {}
             union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
-        pbar = tqdm.tqdm(range(len(_thickets)), disable=disable_tqdm)
-        for i in pbar:
-            pbar.set_description("Creating Thicket: ")
             # Set all graphs to the union graph
             _thickets[i].graph = union_graph
             _thickets[i + 1].graph = union_graph
@@ -224,9 +223,9 @@ class Ensemble:
             combined_th.profile = [new_mappings[prf] for prf in combined_th.profile]
             profile_mapping_cp = combined_th.profile_mapping.copy()
             for k, v in profile_mapping_cp.items():
-                combined_th.profile_mapping[
-                    new_mappings[k]
-                ] = combined_th.profile_mapping.pop(k)
+                combined_th.profile_mapping[new_mappings[k]] = (
+                    combined_th.profile_mapping.pop(k)
+                )
             combined_th.performance_cols = helpers._get_perf_columns(
                 combined_th.dataframe
             )
