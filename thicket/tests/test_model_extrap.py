@@ -9,11 +9,24 @@ import pytest
 
 from thicket import Thicket
 
+extrap_avail = True
+try:
+    import extrap.entities as xent
+    from extrap.entities.experiment import (
+        Experiment,
+    )  # For some reason it errors if "Experiment" is not explicitly imported
+    from extrap.fileio import io_helper
+    from extrap.modelers.model_generator import ModelGenerator
+except ImportError:
+    extrap_avail = False
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 8),
-    reason="requires python3.8 or greater to use extrap module",
-)
+if not sys.version_info < (3, 8):
+    pytest.skip("requires python3.8 or greater to use extrap module", allow_module_level=True)
+
+if not extrap_avail:
+    pytest.skip("Extra-P package not available", allow_module_level=True)
+
+
 def test_model_extrap(mpi_scaling_cali):
     from thicket.model_extrap import Modeling
 
@@ -55,10 +68,6 @@ def test_model_extrap(mpi_scaling_cali):
     )
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 8),
-    reason="requires python3.8 or greater to use extrap module",
-)
 def test_componentize_functions(mpi_scaling_cali):
     from thicket.model_extrap import Modeling
 
