@@ -125,17 +125,11 @@ def test_display_heatmap(rajaperf_seq_O3_1M_cali):
 def test_display_heatmap_columnar_join(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
 
-<<<<<<< HEAD
-    th.stats.variance(combined_th, columns=[("Cuda128", "Min time/rank")])
+    th.stats.variance(combined_th, columns=[("block_128", "Min time/rank")])
 
     ax = th.stats.display_heatmap(
-        combined_th, columns=[("Cuda128", "Min time/rank_var")]
+        combined_th, columns=[("block_128", "Min time/rank_var")]
     )
-=======
-    th.variance(combined_th, columns=[("block_128", "Min time/rank")])
-
-    ax = th.display_heatmap(combined_th, columns=[("block_128", "Min time/rank_var")])
->>>>>>> ea7c4fe (Update unit tests)
 
     # check to make sure that a figure is generated
     assert plt.get_fignums()[0] == 1
@@ -218,13 +212,8 @@ def test_display_boxplot_columnar_join(thicket_axis_columns):
 
     nodes = pd.unique(combined_th.dataframe.reset_index()["node"])[0:1].tolist()
 
-<<<<<<< HEAD
     ax = th.stats.display_boxplot(
-        combined_th, nodes=nodes, columns=[("Cuda128", "Min time/rank")]
-=======
-    ax = th.display_boxplot(
         combined_th, nodes=nodes, columns=[("block_128", "Min time/rank")]
->>>>>>> ea7c4fe (Update unit tests)
     )
 
     # check to make sure that a figure is generated
