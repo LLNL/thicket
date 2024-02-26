@@ -47,7 +47,7 @@ def test_resolve_missing_indicies():
     assert set(names_1).issubset(th_1.dataframe.index.names)
 
 
-def test_statsframe(example_cali):
+def test_statsframe(rajaperf_seq_O3_1M_cali):
     def _test_multiindex():
         """Test statsframe when headers are multiindexed."""
         th1 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0])
