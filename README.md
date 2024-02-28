@@ -34,8 +34,27 @@ or Olga Pearce (pearce8@llnl.gov).
 
 ### Contributing
 
-Thicket is an open-source project. We welcome contributions via pull requests,
-and questions, feature requests, or bug reports via issues.
+To contribute to Thicket, please open a `pull request
+<https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests>`_
+to the `develop` branch.  Your PR must pass Thicket's unit tests, and must be `PEP 8 <https://peps.python.org/pep-0008/>`_ compliant.
+Open issues for questions, feature requests, or bug reports.
+
+Authors and citations
+---------------------
+Many thanks to Thicket's `contributors <https://github.com/llnl/thicket/graphs/contributors>`_.
+
+Thicket was created by Olga Pearce and Stephanie Brink.
+
+To cite Thicket, please use the following citation:
+
+Stephanie Brink, Michael McKinsey, David Boehme, Connor Scully-Allison, 
+Ian Lumsden, Daryl Hawkins, Treece Burgess, Vanessa Lama, Jakob Lüttgau, 
+Katherine E. Isaacs, Michela Taufer, and Olga Pearce. 2023. 
+Thicket: Seeing the Performance Experiment Forest for the Individual Run Trees.
+In the 32nd International Symposium on High-Performance Parallel and Distributed Computing (HPDC'23),
+August 2023, Pages 281–293.  
+`doi.org/10.1145/3588195.3592989 <https://doi.org/10.1145/3588195.3592989>`_.
+
 
 ### License
 
