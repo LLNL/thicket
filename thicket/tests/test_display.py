@@ -233,3 +233,89 @@ def test_display_boxplot_columnar_join(thicket_axis_columns):
         )
 
     plt.close()
+
+
+def test_display_violinplot(example_cali):
+    tk = th.Thicket.from_caliperreader(example_cali)
+    nodes = list(pd.unique(tk.dataframe.reset_index()["node"]))[0:2]
+    columns = ["Min time/rank"]
+    ax = th.stats.display_violinplot(tk, nodes=nodes, columns=columns)
+
+    # check to make sure that a figure is generated
+    assert plt.get_fignums()[0] == 1
+
+    # check to make sure xlabel and xticklabels are correct
+    assert "node" in ax.get_xlabel()
+    assert "Base_Seq" in ax.get_xticklabels()[0].get_text()
+
+    # check when arguments are not provided
+    with pytest.raises(
+        ValueError,
+        match="Both 'nodes' and 'columns' must be provided. To see a list of valid columns, run 'Thicket.performance_cols'."
+    ):
+        ax = th.stats.display_violinplot(thicket=tk)
+
+    # check thicket argument must be thicket.Thicket
+    with pytest.raises(
+        ValueError,
+        match="Value passed to 'thicket' argument must be of type thicket.Thicket."
+    ):
+        ax = th.stats.display_violinplot(thicket=1, nodes=nodes, columns=columns)
+
+    # check nodes argument must be list
+    with pytest.raises(
+        ValueError,
+        match="Value passed to 'nodes' argument must be of type list."
+    ):
+        ax = th.stats.display_violinplot(thicket=tk, nodes=1, columns=columns)
+
+    # check columns argument  must be list
+    with pytest.raises(
+        ValueError,
+        match="Value passed to 'columns' argument must be of type list."
+    ):
+        ax = th.stats.display_violinplot(thicket=tk, nodes=nodes, columns=1)
+
+    # check columns argument must exist
+    with pytest.raises(
+        RuntimeError,
+        match=r"Specified column\(s\) not found: \['non-existant-column'\]",
+    ):
+        ax = th.stats.display_violinplot(thicket=tk, nodes=nodes, columns=["non-existant-column"])
+
+    # check nodes argument contains hatchet nodes
+    with pytest.raises(
+        ValueError,
+        match="Value passed to 'node' argument must be of type hatchet.node.Node.",
+    ):
+        ax = th.stats.display_violinplot(thicket=tk, nodes=[1], columns=columns)
+
+    plt.close()
+
+
+def test_display_violinplot_columnar_join(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+
+    columns = [("Cuda128", "Min time/rank")]
+
+    nodes = pd.unique(combined_th.dataframe.reset_index()["node"])[0:1].tolist()
+
+    ax = th.stats.display_violinplot(combined_th, nodes=nodes, columns=columns)
+
+    # check to make sure that a figure is generated
+    assert plt.get_fignums()[0] == 1
+
+    # check to make sure xlabel and xticklabels are correct
+    assert "Base_CUDA" in ax.get_xticklabels()[0].get_text()
+    assert "node" == ax.get_xlabel()
+
+    # Check column argument must exist
+    with pytest.raises(
+        RuntimeError,
+        match=r"Specified column\(s\) not found: \[\('fake_1', 'fake_2'\)\]",
+    ):
+        th.stats.display_boxplot(
+            thicket=combined_th, nodes=nodes, columns=[("fake_1", "fake_2")]
+        )
+
+    plt.close()

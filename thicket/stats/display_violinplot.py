@@ -6,6 +6,7 @@
 import pandas as pd
 import seaborn as sns
 import hatchet as ht
+import thicket as th
 import matplotlib as mpl
 from .percentiles import percentiles
 from ..utils import verify_thicket_structures
@@ -145,8 +146,8 @@ def _add_percentile_lines(
 
 def display_violinplot(
     thicket,
-    nodes=[],
-    columns=[],
+    nodes=None,
+    columns=None,
     percentiles=None,
     percentile_linestyles=None,
     percentile_colors=None,
@@ -179,10 +180,30 @@ def display_violinplot(
         (matplotlib Axes): Object for managing violinplot.
     """
 
+    if columns is None or nodes is None:
+        raise ValueError(
+            "Both 'nodes' and 'columns' must be provided. To see a list of valid columns, run 'Thicket.performance_cols'."
+        )
+
+    if not isinstance(thicket, th.Thicket):
+        raise ValueError(
+            "Value passed to 'thicket' argument must be of type thicket.Thicket."
+        )
+
+    if not isinstance(nodes, list):
+        raise ValueError(
+            "Value passed to 'nodes' argument must be of type list."
+        )
+
+    if not isinstance(columns, list):
+        raise ValueError(
+            "Value passed to 'columns' argument must be of type list."
+        )
+
     for node in nodes:
         if not isinstance(node, ht.node.Node):
             raise ValueError(
-                "Value(s) passed to node argument must be of type hatchet.node.Node."
+                "Value passed to 'node' argument must be of type hatchet.node.Node."
             )
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
