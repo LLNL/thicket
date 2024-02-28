@@ -74,9 +74,10 @@ jobs:
         PYTHONPATH=. $(which pytest) --cov=./ --cov-report=xml
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v3
       with:
         directory: ./coverage/reports
         env_vars: OS,PYTHON
         files: /home/runner/work/thicket/thicket/coverage.xml
         flags: unittests
+        verbose: true
