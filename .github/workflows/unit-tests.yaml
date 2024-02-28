@@ -74,7 +74,6 @@ jobs:
         PYTHONPATH=. $(which pytest) --cov=./ --cov-report=xml
 
     - name: Upload coverage to Codecov
-      if: false
       uses: codecov/codecov-action@v4
       with:
         directory: ./coverage/reports
