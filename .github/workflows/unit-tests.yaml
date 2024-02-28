@@ -72,19 +72,11 @@ jobs:
     - name: Basic Test with pytest
       run: |
         PYTHONPATH=. $(which pytest) --cov=./ --cov-report=xml
-        codecov
-
-    - name: Test if coverage.xml exists
-      run: |
-        ls -lah /home/runner/work/thicket
-        ls -lah /home/runner/work/thicket/thicket
-        test -f /home/runner/work/thicket/thicket/coverage.xml && "coverage.xml exists!" || "coverage.xml does not exist!"
 
     - name: Upload coverage to Codecov
       if: false
       uses: codecov/codecov-action@v4
       with:
-        token: "BAD"
         directory: ./coverage/reports
         env_vars: OS,PYTHON
         files: /home/runner/work/thicket/thicket/coverage.xml
