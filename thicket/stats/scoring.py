@@ -1,9 +1,10 @@
 import numpy as np
 
 from ..utils import verify_thicket_structures
-from .mean import mean
-from .std import std
+#from .mean import mean
+#from .std import std
 import math
+import thicket as th
 
 
 def _scoring_1(means_1, means_2, stds_1, stds_2, num_nodes):
@@ -13,7 +14,7 @@ def _scoring_1(means_1, means_2, stds_1, stds_2, num_nodes):
     for i in range(num_nodes):
         result = None
         try:
-            result = (means_1[i] - means_2[i]) * ((stds_1[i] - stds_2[i]) / (np.abs(means_1[i] - means_2[i])))
+            result = (means_1[i] - means_2[i]) + ((stds_1[i] - stds_2[i]) / (np.abs(means_1[i] - means_2[i])))
         except RuntimeWarning:
             print("Score 1 means's: ", means_1[i], means_2[i], i)
             result = np.nan
@@ -66,21 +67,26 @@ def _scoring_4(means_1, means_2, stds_1, stds_2, num_nodes):
 # Implement warning for user that NAN's were put in stats frame, and why
 def score(thicket, columns, output_column_name, scoring_function):
     if isinstance(columns, list) is False:
-        raise ValueError("Columns must be a list!")
+        raise ValueError("Value passed to 'columns' must be of type list.")
 
     # Columns must be a tuples since we are dealing with columnar joined thickets
     for column in columns:
         if isinstance(column, tuple) is False:
             raise ValueError(
-                "Columns listed in columns must be a tuple!"
+                "Columns listed in 'columns' argument must be of type tuple."
             )
 
+    if not isinstance(thicket, th.Thicket):
+        raise ValueError(
+            "Value passed to 'thicket' argument must be of type thicket.Thicket."
+        )
+
     if thicket.dataframe.columns.nlevels == 1:
-        raise ValueError("Thicket passed in must be a columnar joined thicket")
+        raise ValueError("Value passed to 'thicket' argument must be a columnar joined thicket.")
 
     if len(columns) != 2:
         raise ValueError(
-            "Must specify two columns"
+            "Value passed to 'columns' argument must be of length 2."
         )
 
     num_nodes = len(thicket.dataframe.index.get_level_values(0).unique())
@@ -93,8 +99,8 @@ def score(thicket, columns, output_column_name, scoring_function):
     verify_thicket_structures(thicket.dataframe, columns)
 
     # Calculate means and stds, adds both onto statsframe
-    mean(thicket, columns)
-    std(thicket, columns)
+    th.stats.mean(thicket, columns)
+    th.stats.std(thicket, columns)
 
     # Grab means and stds calculated from above
     means_target1 = thicket.statsframe.dataframe[(columns[0][0], "{}_mean".format(columns[0][1]))].to_list()
@@ -119,16 +125,72 @@ def score(thicket, columns, output_column_name, scoring_function):
 
 
 def scoring_1(thicket, columns, output_column_name=None):
+    """
+    Apply the scoring_1 algorithm on two passed columns. The passed columns 
+    must be from the performance data table.
+
+    Designed to take in a thicket object, specified columns, an output column name, and
+    append the scoring to the thicket statsframe. 
+
+    Arguments:
+        thicket (thicket)   : Thicket object
+        columns (list)      : List of hardware/timing metrics to perform scoring on. A
+            columnar joined thicket is required and as such  a list of tuples must be 
+            passed in with the format (column index, column name).
+        output_column_name  : A string that assigns a name to the scoring column.
+    """
     score(thicket, columns, output_column_name, _scoring_1)
 
 
 def scoring_2(thicket, columns, output_column_name=None):
+    """
+    Apply the scoring_2 algorithm on two passed columns. The passed columns 
+    must be from the performance data table.
+
+    Designed to take in a thicket object, specified columns, an output column name, and
+    append the scoring to the thicket statsframe. 
+
+    Arguments:
+        thicket (thicket)   : Thicket object
+        columns (list)      : List of hardware/timing metrics to perform scoring on. A
+            columnar joined thicket is required and as such  a list of tuples must be 
+            passed in with the format (column index, column name).
+        output_column_name  : A string that assigns a name to the scoring column.
+    """
     score(thicket, columns, output_column_name, _scoring_2)
 
 
-def scoring_3(thicket, columns, output_column_name=None):
+def bhattacharyya_distance_scoring(thicket, columns, output_column_name=None):
+    """
+    Apply the Bhattacharrya distance algorithm on two passed columns. The passed columns 
+    must be from the performance data table.
+
+    Designed to take in a thicket object, specified columns, an output column name, and
+    append the scoring to the thicket statsframe. 
+
+    Arguments:
+        thicket (thicket)   : Thicket object
+        columns (list)      : List of hardware/timing metrics to perform scoring on. A
+            columnar joined thicket is required and as such  a list of tuples must be 
+            passed in with the format (column index, column name).
+        output_column_name  : A string that assigns a name to the scoring column.
+    """
     score(thicket, columns, output_column_name, _scoring_3)
 
 
-def scoring_4(thicket, columns, output_column_name=None):
+def hellinger_distance_scoring(thicket, columns, output_column_name=None):
+    """
+    Apply the Hellinger's distance algorithm on two passed columns. The passed columns 
+    must be from the performance data table.
+
+    Designed to take in a thicket object, specified columns, an output column name, and
+    append the scoring to the thicket statsframe. 
+
+    Arguments:
+        thicket (thicket)   : Thicket object.
+        columns (list)      : List of hardware/timing metrics to perform scoring on. A
+            columnar joined thicket is required and as such  a list of tuples must be 
+            passed in with the format (column index, column name).
+        output_column_name  : A string that assigns a name to the scoring column.
+    """
     score(thicket, columns, output_column_name, _scoring_4)
