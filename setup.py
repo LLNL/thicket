@@ -46,6 +46,7 @@ setup(
         "numpy",
         "pandas >= 1.1",
         "llnl-hatchet",
+        "tqdm",
     ],
     extras_require={
         "extrap": ["extrap", "matplotlib"],
