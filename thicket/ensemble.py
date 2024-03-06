@@ -16,7 +16,6 @@ from .utils import (
     validate_dataframe,
     verify_sorted_profile,
     verify_thicket_structures,
-    DuplicateIndexError,
 )
 
 
@@ -402,7 +401,7 @@ class Ensemble:
                 estr = str(e)
                 if estr == "cannot handle a non-unique multi-index!":
                     warnings.warn(
-                        f"Non-unique multi-index for DataFrame in _fill_perfdata. Cannot Fill missing rows.",
+                        "Non-unique multi-index for DataFrame in _fill_perfdata. Cannot Fill missing rows.",
                         RuntimeWarning,
                     )
                 else:
