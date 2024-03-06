@@ -692,7 +692,7 @@ class Thicket(GraphFrame):
 
                 if len(set(name_list)) > 1:
                     warnings.warn(
-                        f"Multiple values for name {name_list} at thicket.metadata[{metadata_key}]. Only the first will be used."
+                        f"Multiple values for name {name_list} at thicket.metadata['{metadata_key}']. Only the first value will be used for the new DataFrame index."
                     )
                 tk_names.append(name_list[0])
 
