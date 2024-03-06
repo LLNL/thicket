@@ -657,7 +657,7 @@ class Thicket(GraphFrame):
         """Compose a list of Thickets with data in their statsframes.
 
         The Thicket's individual aggregated statistics tables are ensembled and become the
-        new Thickets performance data table.
+        new Thickets performance data table. This also results in aggregation of the metadata.
 
         Arguments:
             tk_list (list): list of thickets
@@ -702,8 +702,7 @@ class Thicket(GraphFrame):
 
             tk_id = tk_names[i]
 
-            # Modify graph
-            # Necessary so node ids match up
+            # Modify graph. Necessary so node ids match up
             tk_copy.graph = tk_copy.statsframe.graph
 
             # Modify the performance data table
