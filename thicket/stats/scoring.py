@@ -1,8 +1,5 @@
 import numpy as np
-
 from ..utils import verify_thicket_structures
-#from .mean import mean
-#from .std import std
 import math
 import thicket as th
 
@@ -126,16 +123,16 @@ def score(thicket, columns, output_column_name, scoring_function):
 
 def scoring_1(thicket, columns, output_column_name=None):
     """
-    Apply the scoring_1 algorithm on two passed columns. The passed columns 
+    Apply the scoring_1 algorithm on two passed columns. The passed columns
     must be from the performance data table.
 
     Designed to take in a thicket object, specified columns, an output column name, and
-    append the scoring to the thicket statsframe. 
+    append the scoring to the thicket statsframe.
 
     Arguments:
         thicket (thicket)   : Thicket object
         columns (list)      : List of hardware/timing metrics to perform scoring on. A
-            columnar joined thicket is required and as such  a list of tuples must be 
+            columnar joined thicket is required and as such  a list of tuples must be
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
     """
@@ -144,16 +141,16 @@ def scoring_1(thicket, columns, output_column_name=None):
 
 def scoring_2(thicket, columns, output_column_name=None):
     """
-    Apply the scoring_2 algorithm on two passed columns. The passed columns 
+    Apply the scoring_2 algorithm on two passed columns. The passed columns
     must be from the performance data table.
 
     Designed to take in a thicket object, specified columns, an output column name, and
-    append the scoring to the thicket statsframe. 
+    append the scoring to the thicket statsframe.
 
     Arguments:
         thicket (thicket)   : Thicket object
         columns (list)      : List of hardware/timing metrics to perform scoring on. A
-            columnar joined thicket is required and as such  a list of tuples must be 
+            columnar joined thicket is required and as such  a list of tuples must be
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
     """
@@ -162,16 +159,16 @@ def scoring_2(thicket, columns, output_column_name=None):
 
 def bhattacharyya_distance_scoring(thicket, columns, output_column_name=None):
     """
-    Apply the Bhattacharrya distance algorithm on two passed columns. The passed columns 
+    Apply the Bhattacharrya distance algorithm on two passed columns. The passed columns
     must be from the performance data table.
 
     Designed to take in a thicket object, specified columns, an output column name, and
-    append the scoring to the thicket statsframe. 
+    append the scoring to the thicket statsframe.
 
     Arguments:
         thicket (thicket)   : Thicket object
         columns (list)      : List of hardware/timing metrics to perform scoring on. A
-            columnar joined thicket is required and as such  a list of tuples must be 
+            columnar joined thicket is required and as such  a list of tuples must be
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
     """
@@ -180,16 +177,16 @@ def bhattacharyya_distance_scoring(thicket, columns, output_column_name=None):
 
 def hellinger_distance_scoring(thicket, columns, output_column_name=None):
     """
-    Apply the Hellinger's distance algorithm on two passed columns. The passed columns 
+    Apply the Hellinger's distance algorithm on two passed columns. The passed columns
     must be from the performance data table.
 
     Designed to take in a thicket object, specified columns, an output column name, and
-    append the scoring to the thicket statsframe. 
+    append the scoring to the thicket statsframe.
 
     Arguments:
         thicket (thicket)   : Thicket object.
         columns (list)      : List of hardware/timing metrics to perform scoring on. A
-            columnar joined thicket is required and as such  a list of tuples must be 
+            columnar joined thicket is required and as such  a list of tuples must be
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
     """

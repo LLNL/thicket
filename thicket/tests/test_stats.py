@@ -636,6 +636,7 @@ def test_boxplot_columnar_join(thicket_axis_columns):
         "Min time/rank_outliers(0.25, 0.5, 0.75)",
     ) in combined_th.statsframe.show_metric_columns()
 
+
 def test_scoring_1(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
 
@@ -648,8 +649,10 @@ def test_scoring_1(thicket_axis_columns):
     )
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
-    
-    th.stats.scoring_1(combined_th, columns=columns, output_column_name=output_column_name)
+
+    th.stats.scoring_1(
+        combined_th, columns=columns, output_column_name=output_column_name
+    )
 
     assert "score_1" in combined_th.statsframe.dataframe.columns
 
@@ -657,24 +660,34 @@ def test_scoring_1(thicket_axis_columns):
         idx[0],
         "Min time/rank_mean",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[0], "Min time/rank_mean") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[0],
+        "Min time/rank_mean",
+    ) in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[1],
         "Min time/rank_mean",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[1], "Min time/rank_mean") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[1],
+        "Min time/rank_mean",
+    ) in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[0],
         "Min time/rank_std",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
+
     assert (idx[0], "Min time/rank_std") in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[1],
         "Min time/rank_std",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
+
     assert (idx[1], "Min time/rank_std") in combined_th.statsframe.show_metric_columns()
 
 
@@ -690,8 +703,10 @@ def test_scoring_2(thicket_axis_columns):
     )
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
-    
-    th.stats.scoring_1(combined_th, columns=columns, output_column_name=output_column_name)
+
+    th.stats.scoring_1(
+        combined_th, columns=columns, output_column_name=output_column_name
+    )
 
     assert "score_2" in combined_th.statsframe.dataframe.columns
 
@@ -699,24 +714,37 @@ def test_scoring_2(thicket_axis_columns):
         idx[0],
         "Min time/rank_mean",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[0], "Min time/rank_mean") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[0],
+        "Min time/rank_mean",
+    ) in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[1],
         "Min time/rank_mean",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[1], "Min time/rank_mean") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[1],
+        "Min time/rank_mean",
+    ) in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[0],
         "Min time/rank_std",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[0], "Min time/rank_std") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[0],
+        "Min time/rank_std",
+    ) in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[1],
         "Min time/rank_std",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
+
     assert (idx[1], "Min time/rank_std") in combined_th.statsframe.show_metric_columns()
 
 
@@ -732,8 +760,10 @@ def test_bhattacharyya_distance_scoring(thicket_axis_columns):
     )
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
-    
-    th.stats.scoring_1(combined_th, columns=columns, output_column_name=output_column_name)
+
+    th.stats.scoring_1(
+        combined_th, columns=columns, output_column_name=output_column_name
+    )
 
     assert "bhattacharyya_score" in combined_th.statsframe.dataframe.columns
 
@@ -741,25 +771,41 @@ def test_bhattacharyya_distance_scoring(thicket_axis_columns):
         idx[0],
         "Min time/rank_mean",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[0], "Min time/rank_mean") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[0],
+        "Min time/rank_mean",
+    ) in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[1],
         "Min time/rank_mean",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[1], "Min time/rank_mean") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[1],
+        "Min time/rank_mean",
+    ) in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[0],
         "Min time/rank_std",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[0], "Min time/rank_std") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[0],
+        "Min time/rank_std",
+    ) in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[1],
         "Min time/rank_std",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[1], "Min time/rank_std") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[1],
+        "Min time/rank_std",
+    ) in combined_th.statsframe.show_metric_columns()
 
 
 def test_hellinger_distance_scoring(thicket_axis_columns):
@@ -774,8 +820,10 @@ def test_hellinger_distance_scoring(thicket_axis_columns):
     )
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
-    
-    th.stats.scoring_1(combined_th, columns=columns, output_column_name=output_column_name)
+
+    th.stats.scoring_1(
+        combined_th, columns=columns, output_column_name=output_column_name
+    )
 
     assert "hellinger_score" in combined_th.statsframe.dataframe.columns
 
@@ -783,22 +831,35 @@ def test_hellinger_distance_scoring(thicket_axis_columns):
         idx[0],
         "Min time/rank_mean",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[0], "Min time/rank_mean") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[0],
+        "Min time/rank_mean",
+    ) in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[1],
         "Min time/rank_mean",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[1], "Min time/rank_mean") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[1],
+        "Min time/rank_mean",
+    ) in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[0],
         "Min time/rank_std",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
-    assert (idx[0], "Min time/rank_std") in combined_th.statsframe.show_metric_columns()
+
+    assert (
+        idx[0],
+        "Min time/rank_std",
+    ) in combined_th.statsframe.show_metric_columns()
 
     assert (
         idx[1],
         "Min time/rank_std",
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
+
     assert (idx[1], "Min time/rank_std") in combined_th.statsframe.show_metric_columns()

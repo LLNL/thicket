@@ -31,7 +31,7 @@ def std(thicket, columns=None):
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
-        df = thicket.dataframe[columns].reset_index().groupby("node").agg(lambda x: np.std(x))
+        df = thicket.dataframe[columns].reset_index().groupby("node").agg(np.std)
         for column in columns:
             thicket.statsframe.dataframe[column + "_std"] = df[column]
             # check to see if exclusive metric
@@ -42,7 +42,7 @@ def std(thicket, columns=None):
                 thicket.statsframe.inc_metrics.append(column + "_std")
     # columnar joined thicket object
     else:
-        df = thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(lambda x: np.std(x))
+        df = thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(np.std)
         for idx, column in columns:
             thicket.statsframe.dataframe[(idx, column + "_std")] = df[(idx, column)]
             # check to see if exclusive metric
