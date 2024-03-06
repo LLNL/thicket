@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 from collections import OrderedDict
+import warnings
 
 from hatchet import GraphFrame
 import numpy as np
@@ -15,6 +16,7 @@ from .utils import (
     validate_dataframe,
     verify_sorted_profile,
     verify_thicket_structures,
+    DuplicateIndexError,
 )
 
 
@@ -217,9 +219,9 @@ class Ensemble:
             combined_th.profile = [new_mappings[prf] for prf in combined_th.profile]
             profile_mapping_cp = combined_th.profile_mapping.copy()
             for k, v in profile_mapping_cp.items():
-                combined_th.profile_mapping[
-                    new_mappings[k]
-                ] = combined_th.profile_mapping.pop(k)
+                combined_th.profile_mapping[new_mappings[k]] = (
+                    combined_th.profile_mapping.pop(k)
+                )
             combined_th.performance_cols = helpers._get_perf_columns(
                 combined_th.dataframe
             )
@@ -376,17 +378,37 @@ class Ensemble:
             unify_profile_mapping (dict): profile mapping
         """
 
-        def _fill_perfdata(perfdata, fill_value=np.nan):
-            # Fill missing rows in dataframe with NaN's
-            perfdata = perfdata.reindex(
-                pd.MultiIndex.from_product(perfdata.index.levels), fill_value=fill_value
-            )
-            # Replace "NaN" with "None" in columns of string type
-            for col in perfdata.columns:
-                if pd.api.types.is_string_dtype(perfdata[col].dtype):
-                    perfdata[col].replace({fill_value: None}, inplace=True)
+        def _fill_perfdata(df, numerical_fill_value=np.nan):
+            """Create full index for DataFrame and fill created rows with NaN's or None's where applicable.
 
-            return perfdata
+            Arguments:
+                df (DataFrame): DataFrame to fill missing rows in
+                numerical_fill_value (any): value to fill numerical rows with
+
+            Returns:
+                (DataFrame): filled DataFrame
+            """
+            try:
+                # Fill missing rows in dataframe with NaN's
+                df = df.reindex(
+                    pd.MultiIndex.from_product(df.index.levels),
+                    fill_value=numerical_fill_value,
+                )
+                # Replace "NaN" with "None" in columns of string type
+                for col in df.columns:
+                    if pd.api.types.is_string_dtype(df[col].dtype):
+                        df[col].replace({numerical_fill_value: None}, inplace=True)
+            except ValueError as e:
+                estr = str(e)
+                if estr == "cannot handle a non-unique multi-index!":
+                    warnings.warn(
+                        f"Non-unique multi-index for DataFrame in _fill_perfdata. Cannot Fill missing rows.",
+                        RuntimeWarning,
+                    )
+                else:
+                    raise
+
+            return df
 
         # Add missing indicies to thickets
         helpers._resolve_missing_indicies(thickets)
@@ -421,6 +443,9 @@ class Ensemble:
         # Sort by keys
         unify_profile_mapping = OrderedDict(sorted(unify_profile_mapping.items()))
 
+        # Validate unify_df before next operation
+        validate_dataframe(unify_df)
+
         # Insert missing rows in dataframe
         unify_df = _fill_perfdata(unify_df)
 
@@ -432,9 +457,6 @@ class Ensemble:
         # Remove duplicates in metrics
         unify_inc_metrics = list(set(unify_inc_metrics))
         unify_exc_metrics = list(set(unify_exc_metrics))
-
-        # Validate unify_df
-        validate_dataframe(unify_df)
 
         unify_parts = (
             unify_graph,

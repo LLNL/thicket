@@ -6,6 +6,19 @@
 from collections import OrderedDict
 
 
+# Define custom errors for external checks
+class DuplicateIndexError(IndexError):
+    pass
+
+
+class MissingHNIDError(ValueError):
+    pass
+
+
+class InvalidNameError(ValueError):
+    pass
+
+
 def check_same_frame(n1, n2):
     if n1.frame != n2.frame:
         raise ValueError(
@@ -22,8 +35,8 @@ def validate_dataframe(df):
             inner_idx_values = sorted(df.loc[node].index.tolist())
             inner_idx_values_set = sorted(list(set(inner_idx_values)))
             if inner_idx_values != inner_idx_values_set:
-                raise IndexError(
-                    f"The Thicket.dataframe's index has duplicate values. {inner_idx_values}"
+                raise DuplicateIndexError(
+                    f"Duplicate index {set(inner_idx_values)} found in DataFrame index.\nCheck that each Thicket.dataframe.index is unique. If metadata_key provided, check that each key is unique. Multiple-trial data must be aggregated before using this function (see Thicket.groupby.agg())."
                 )
 
     def _check_missing_hnid(df):
@@ -32,7 +45,7 @@ def validate_dataframe(df):
         set_of_nodes = set(df.index.get_level_values("node"))
         for node in set_of_nodes:
             if hash(node) != i:
-                raise ValueError(
+                raise MissingHNIDError(
                     f"The Thicket.dataframe's index is either not sorted or has a missing node. {hash(node)} ({node}) != {i}"
                 )
             i += 1
@@ -44,7 +57,7 @@ def validate_dataframe(df):
             node_name = node.frame["name"]
             for name in names:
                 if name != node_name and name is not None:
-                    raise ValueError(
+                    raise InvalidNameError(
                         f"Value in the Thicket.dataframe's 'name' column is not valid. {name} != {node_name}"
                     )
 

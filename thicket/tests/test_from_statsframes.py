@@ -6,6 +6,7 @@
 import pytest
 
 import thicket as th
+from thicket.utils import DuplicateIndexError
 
 
 def test_single_trial(mpi_scaling_cali):
@@ -46,11 +47,6 @@ def test_single_trial(mpi_scaling_cali):
     assert set(tk_named.dataframe["test"]) == {0, 2, 4, 6, 8}
 
 
-def check_multi_value_warning(gb):
-    with pytest.warns(UserWarning, match=r"Multiple values for name.*"):
-        th.Thicket.from_statsframes(list(gb.values()), metadata_key="launchdate")
-
-
 def test_multi_trial(rajaperf_cali_alltrials):
     tk = th.Thicket.from_caliperreader(rajaperf_cali_alltrials)
 
@@ -64,6 +60,15 @@ def test_multi_trial(rajaperf_cali_alltrials):
     stk = th.Thicket.from_statsframes(list(gb.values()), metadata_key="tuning")
 
     # Check if warning is thrown.
-    check_multi_value_warning(gb)
+    with pytest.warns(UserWarning, match=r"Multiple values for name.*"):
+        th.Thicket.from_statsframes(list(gb.values()), metadata_key="launchdate")
+
+    # Check error thrown for simulated multi-trial
+    with pytest.raises(
+        DuplicateIndexError,
+    ):
+        th.Thicket.from_statsframes(
+            [list(gb.values())[0], list(gb.values())[0]], metadata_key="tuning"
+        )
 
     assert stk.dataframe.shape == (222, 2)
