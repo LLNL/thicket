@@ -653,14 +653,14 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
-    def from_statsframes(th_list, metadata_key=None):
+    def from_statsframes(tk_list, metadata_key=None):
         """Compose a list of Thickets with data in their statsframes.
 
         The Thicket's individual aggregated statistics tables are ensembled and become the
         new Thickets performance data table.
 
         Arguments:
-            th_list (list): list of thickets
+            tk_list (list): list of thickets
             metadata_key (str, optional): name of the metadata column to use as
                 the new second-level index. Uses the first value so this only makes
                 sense if provided column is all equal values and each thicket's columns
@@ -670,59 +670,56 @@ class Thicket(GraphFrame):
             (thicket): New Thicket object.
         """
         # Pre-check of data structures
-        for th in th_list:
+        for tk in tk_list:
             verify_thicket_structures(
-                th.dataframe, index=["node", "profile"]
+                tk.dataframe, index=["node", "profile"]
             )  # Required for deepcopy operation
             verify_thicket_structures(
-                th.statsframe.dataframe, index=["node"]
+                tk.statsframe.dataframe, index=["node"]
             )  # Required for deepcopy operation
 
         # Setup names list
-        th_names = []
+        tk_names = []
         if metadata_key is None:
-            for i in range(len(th_list)):
-                th_names.append(i)
+            idx_name = "profile"  # Set index name to general "profile"
+            for i in range(len(tk_list)):
+                tk_names.append(i)
         else:  # metadata_key was provided.
-            for th in th_list:
+            idx_name = metadata_key  # Set index name to metadata_key
+            for tk in tk_list:
                 # Get name from metadata table
-                name_list = th.metadata[metadata_key].tolist()
+                name_list = tk.metadata[metadata_key].tolist()
 
-                if len(name_list) > 1:
+                if len(set(name_list)) > 1:
                     warnings.warn(
                         f"Multiple values for name {name_list} at thicket.metadata[{metadata_key}]. Only the first will be used."
                     )
-                th_names.append(name_list[0])
+                tk_names.append(name_list[0])
 
-        th_copy_list = []
-        for i in range(len(th_list)):
-            th_copy = th_list[i].deepcopy()
+        tk_copy_list = []
+        for i in range(len(tk_list)):
+            tk_copy = tk_list[i].deepcopy()
 
-            th_id = th_names[i]
-
-            if metadata_key is None:
-                idx_name = "profile"
-            else:
-                idx_name = metadata_key
+            tk_id = tk_names[i]
 
             # Modify graph
             # Necessary so node ids match up
-            th_copy.graph = th_copy.statsframe.graph
+            tk_copy.graph = tk_copy.statsframe.graph
 
             # Modify the performance data table
-            df = th_copy.statsframe.dataframe
-            df[idx_name] = th_id
+            df = tk_copy.statsframe.dataframe
+            df[idx_name] = tk_id
             df.set_index(idx_name, inplace=True, append=True)
-            th_copy.dataframe = df
+            tk_copy.dataframe = df
 
             # Adjust profile and profile_mapping
-            th_copy.profile = [th_id]
-            profile_paths = list(th_copy.profile_mapping.values())
-            th_copy.profile_mapping = OrderedDict({th_id: profile_paths})
+            tk_copy.profile = [tk_id]
+            profile_paths = list(tk_copy.profile_mapping.values())
+            tk_copy.profile_mapping = OrderedDict({tk_id: profile_paths})
 
             # Modify metadata dataframe
-            th_copy.metadata[idx_name] = th_id
-            th_copy.metadata.set_index(idx_name, inplace=True)
+            tk_copy.metadata[idx_name] = tk_id
+            tk_copy.metadata.set_index(idx_name, inplace=True)
 
             def _agg_to_set(obj):
                 """Aggregate values in 'obj' into a set to remove duplicates."""
@@ -739,12 +736,12 @@ class Thicket(GraphFrame):
                         return _set
 
             # Execute aggregation
-            th_copy.metadata = th_copy.metadata.groupby(idx_name).agg(_agg_to_set)
+            tk_copy.metadata = tk_copy.metadata.groupby(idx_name).agg(_agg_to_set)
 
             # Append copy to list
-            th_copy_list.append(th_copy)
+            tk_copy_list.append(tk_copy)
 
-        return Thicket.concat_thickets(th_copy_list, from_statsframes=True)
+        return Thicket.concat_thickets(tk_copy_list, from_statsframes=True)
 
     def to_json(self, ensemble=True, metadata=True, stats=True):
         jsonified_thicket = {}
