@@ -3,13 +3,15 @@
 #
 # SPDX-License-Identifier: MIT
 
-from thicket import Thicket as th
+import pytest
+
+import thicket as th
 
 
 def test_single_trial(mpi_scaling_cali):
     th_list = []
     for file in mpi_scaling_cali:
-        th_list.append(th.from_caliperreader(file))
+        th_list.append(th.Thicket.from_caliperreader(file))
 
     # Add arbitrary value to aggregated statistics table
     t_val = 0
@@ -17,7 +19,7 @@ def test_single_trial(mpi_scaling_cali):
         t.statsframe.dataframe["test"] = t_val
         t_val += 2
 
-    tk = th.from_statsframes(th_list)
+    tk = th.Thicket.from_statsframes(th_list)
 
     # Check level values
     assert set(tk.dataframe.index.get_level_values("profile")) == {
@@ -30,7 +32,7 @@ def test_single_trial(mpi_scaling_cali):
     # Check performance data table values
     assert set(tk.dataframe["test"]) == {0, 2, 4, 6, 8}
 
-    tk_named = th.from_statsframes(th_list, metadata_key="mpi.world.size")
+    tk_named = th.Thicket.from_statsframes(th_list, metadata_key="mpi.world.size")
 
     # Check level values
     assert set(tk_named.dataframe.index.get_level_values("mpi.world.size")) == {
@@ -44,8 +46,13 @@ def test_single_trial(mpi_scaling_cali):
     assert set(tk_named.dataframe["test"]) == {0, 2, 4, 6, 8}
 
 
+def check_multi_value_warning(gb):
+    with pytest.warns(UserWarning, match=r"Multiple values for name.*"):
+        th.Thicket.from_statsframes(list(gb.values()), metadata_key="launchdate")
+
+
 def test_multi_trial(rajaperf_cali_alltrials):
-    tk = th.from_caliperreader(rajaperf_cali_alltrials)
+    tk = th.Thicket.from_caliperreader(rajaperf_cali_alltrials)
 
     # Simulate multiple trial from grouping by tuning.
     gb = tk.groupby("tuning")
@@ -54,6 +61,9 @@ def test_multi_trial(rajaperf_cali_alltrials):
     for _, ttk in gb.items():
         ttk.statsframe.dataframe["mean"] = 1
 
-    stk = th.from_statsframes(list(gb.values()), metadata_key="tuning")
+    stk = th.Thicket.from_statsframes(list(gb.values()), metadata_key="tuning")
+
+    # Check if warning is thrown.
+    check_multi_value_warning(gb)
 
     assert stk.dataframe.shape == (222, 2)
