@@ -6,7 +6,7 @@
 from thicket import Thicket as th
 
 
-def test_from_statsframes(mpi_scaling_cali):
+def test_single_trial(mpi_scaling_cali):
     th_list = []
     for file in mpi_scaling_cali:
         th_list.append(th.from_caliperreader(file))
@@ -42,3 +42,18 @@ def test_from_statsframes(mpi_scaling_cali):
     }
     # Check performance data table values
     assert set(tk_named.dataframe["test"]) == {0, 2, 4, 6, 8}
+
+
+def test_multi_trial(rajaperf_cali_alltrials):
+    tk = th.from_caliperreader(rajaperf_cali_alltrials)
+
+    # Simulate multiple trial from grouping by tuning.
+    gb = tk.groupby("tuning")
+
+    # Arbitrary data in statsframe.
+    for _, ttk in gb.items():
+        ttk.statsframe.dataframe["mean"] = 1
+
+    stk = th.from_statsframes(list(gb.values()), metadata_key="tuning")
+
+    assert stk.dataframe.shape == (222, 2)
