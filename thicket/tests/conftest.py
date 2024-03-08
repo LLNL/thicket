@@ -112,7 +112,7 @@ def mpi_scaling_cali(data_dir, tmpdir):
 def rajaperf_cali_1trial(data_dir, tmpdir):
     """All tunings and variants for the first trial."""
     cali_files = sorted(
-        glob(f"{data_dir}/rajaperf-july-2023/**/1/*.cali", recursive=True)
+        glob(f"{data_dir}/rajaperf/**/1/*.cali", recursive=True)
     )
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
@@ -123,7 +123,7 @@ def rajaperf_cali_1trial(data_dir, tmpdir):
 def rajaperf_cali_alltrials(data_dir, tmpdir):
     """All tunings and variants."""
     cali_files = sorted(
-        glob(f"{data_dir}/rajaperf-july-2023/**/*.cali", recursive=True)
+        glob(f"{data_dir}/rajaperf/**/*.cali", recursive=True)
     )
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
@@ -135,7 +135,7 @@ def rajaperf_cuda_block128_1M_cali(data_dir, tmpdir):
     """All trials for CUDA block size 128 and problem size 1048576."""
     cali_files = sorted(
         glob(
-            f"{data_dir}/rajaperf-july-2023/lassen/clang10.0.1_nvcc10.2.89_1048576/**/*block_128.cali",
+            f"{data_dir}/rajaperf/lassen/clang10.0.1_nvcc10.2.89_1048576/**/*block_128.cali",
             recursive=True,
         )
     )
@@ -149,7 +149,7 @@ def rajaperf_seq_O3_1M_cali(data_dir, tmpdir):
     """All trials of for Base Sequential optimization level O3 and problem size 1048576."""
     cali_files = sorted(
         glob(
-            f"{data_dir}/rajaperf-july-2023/quartz/gcc10.3.1_1048576/O3/**/Base_Seq-default.cali",
+            f"{data_dir}/rajaperf/quartz/gcc10.3.1_1048576/O3/**/Base_Seq-default.cali",
             recursive=True,
         )
     )
