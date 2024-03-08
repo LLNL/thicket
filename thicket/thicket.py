@@ -330,9 +330,6 @@ class Thicket(GraphFrame):
             calltree (str): calltree to use -> "union" or "intersection"
 
         Keyword Arguments:
-            from_statsframes (bool): (if axis="index") Whether this method was invoked from from_statsframes
-
-        Keyword Arguments:
             headers (list): (if axis="columns") List of headers to use for the new columnar multi-index
             metadata_key (str): (if axis="columns") Name of the column from the metadata tables to replace the 'profile'
                 index. If no argument is provided, it is assumed that there is no profile-wise
@@ -342,9 +339,9 @@ class Thicket(GraphFrame):
             (thicket): concatenated thicket
         """
 
-        def _index(thickets, from_statsframes=False):
+        def _index(thickets):
             thicket_parts = Ensemble._index(
-                thickets=thickets, from_statsframes=from_statsframes
+                thickets=thickets
             )
 
             return Thicket(
@@ -740,7 +737,7 @@ class Thicket(GraphFrame):
             # Append copy to list
             tk_copy_list.append(tk_copy)
 
-        return Thicket.concat_thickets(tk_copy_list, from_statsframes=True)
+        return Thicket.concat_thickets(tk_copy_list)
 
     def to_json(self, ensemble=True, metadata=True, stats=True):
         jsonified_thicket = {}
