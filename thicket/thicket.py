@@ -19,7 +19,7 @@ from hatchet.query import AbstractQuery, QueryMatcher
 from thicket.ensemble import Ensemble
 import thicket.helpers as helpers
 from .groupby import GroupBy
-from .utils import verify_thicket_structures
+from .utils import verify_thicket_structures, check_duplicate_metadata_key
 from .external.console import ThicketRenderer
 
 
@@ -340,9 +340,7 @@ class Thicket(GraphFrame):
         """
 
         def _index(thickets):
-            thicket_parts = Ensemble._index(
-                thickets=thickets
-            )
+            thicket_parts = Ensemble._index(thickets=thickets)
 
             return Thicket(
                 graph=thicket_parts[0],
@@ -682,6 +680,7 @@ class Thicket(GraphFrame):
             for i in range(len(tk_list)):
                 tk_names.append(i)
         else:  # metadata_key was provided.
+            check_duplicate_metadata_key(tk_list, metadata_key)
             idx_name = metadata_key  # Set index name to metadata_key
             for tk in tk_list:
                 # Get name from metadata table

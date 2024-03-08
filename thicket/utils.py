@@ -3,11 +3,15 @@
 #
 # SPDX-License-Identifier: MIT
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 
 # Define custom errors for external checks
 class DuplicateIndexError(IndexError):
+    pass
+
+
+class DuplicateValueError(ValueError):
     pass
 
 
@@ -26,6 +30,26 @@ def check_same_frame(n1, n2):
         )
 
 
+def check_duplicate_metadata_key(thickets, metadata_key):
+    duplicates_dict = defaultdict(list)
+    for i in range(len(thickets)):
+        for j in range(i, len(thickets)):
+            if i != j:
+                m1 = set(thickets[i].metadata[metadata_key])
+                m2 = set(thickets[j].metadata[metadata_key])
+                duplicates = m1.intersection(m2)
+                if len(duplicates) > 0:
+                    duplicates_dict[(i, j)].append(duplicates)
+
+    if len(duplicates_dict) > 0:
+        err_str = ""
+        for (i, j), v in duplicates_dict.items():
+            err_str += f"thickets[{i}].metadata['{metadata_key}'] and thickets[{j}].metadata['{metadata_key}'] have the same values: {v}\n"
+        raise DuplicateValueError(
+            f"Different Thicket.metadata[metadata_key] may not contain duplicate values.\n{err_str}"
+        )
+
+
 def validate_dataframe(df):
     """Check validity of a Thicket DataFrame."""
 
@@ -36,7 +60,7 @@ def validate_dataframe(df):
             inner_idx_values_set = sorted(list(set(inner_idx_values)))
             if inner_idx_values != inner_idx_values_set:
                 raise DuplicateIndexError(
-                    f"Duplicate index {set(inner_idx_values)} found in DataFrame index.\nCheck that each Thicket.dataframe.index is unique. If metadata_key provided, check that each key is unique. Multiple-trial data must be aggregated before using this function (see Thicket.groupby.agg())."
+                    f"Duplicate index {set(inner_idx_values)} found in DataFrame index."
                 )
 
     def _check_missing_hnid(df):
