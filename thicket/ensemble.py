@@ -361,11 +361,11 @@ class Ensemble:
         return combined_th
 
     @staticmethod
-    def _index(thickets, from_statsframes=False):
+    def _index(thickets):
         """Unify a list of thickets into a single thicket
 
         Arguments:
-            from_statsframes (bool): Whether this method was invoked from from_statsframes
+            thickets (list): list of Thicket objects
 
         Returns:
             unify_graph (hatchet.Graph): unified graph,
