@@ -32,7 +32,7 @@ def check_same_frame(n1, n2):
 
 def check_duplicate_metadata_key(thickets, metadata_key):
     """Check for duplicate values in the metadata of a list of Thickets for column 'metadata_key'.
-    
+
     Arguments:
         thickets (list): list of Thickets to check
         metadata_key (str): metadata key to check for duplicates
