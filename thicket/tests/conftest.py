@@ -111,9 +111,7 @@ def mpi_scaling_cali(data_dir, tmpdir):
 @pytest.fixture
 def rajaperf_cali_1trial(data_dir, tmpdir):
     """All tunings and variants for the first trial."""
-    cali_files = sorted(
-        glob(f"{data_dir}/rajaperf/**/1/*.cali", recursive=True)
-    )
+    cali_files = sorted(glob(f"{data_dir}/rajaperf/**/1/*.cali", recursive=True))
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
     return [os.path.join(str(tmpdir), f) for f in cali_files]
@@ -122,9 +120,7 @@ def rajaperf_cali_1trial(data_dir, tmpdir):
 @pytest.fixture
 def rajaperf_cali_alltrials(data_dir, tmpdir):
     """All tunings and variants."""
-    cali_files = sorted(
-        glob(f"{data_dir}/rajaperf/**/*.cali", recursive=True)
-    )
+    cali_files = sorted(glob(f"{data_dir}/rajaperf/**/*.cali", recursive=True))
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
     return [os.path.join(str(tmpdir), f) for f in cali_files]
