@@ -96,6 +96,7 @@ class Ensemble:
         _thickets = thickets
         if not inplace:
             _thickets = [th.deepcopy() for th in thickets]
+        helpers._set_node_ordering(_thickets)
         # Unify graphs if "self" and "other" do not have the same graph
         union_graph = _thickets[0].graph
         old_to_new = {}
@@ -339,8 +340,8 @@ class Ensemble:
         # Step 0B: Pre-check of data structures
         _check_structures()
 
-        # Step 1: Unify the thickets
-        union_graph, _thickets = Ensemble._unify(thickets_cp)
+        # Step 1: Unify the thickets. Can be inplace since we are using copies already
+        union_graph, _thickets = Ensemble._unify(thickets_cp, inplace=True)
         combined_th.graph = union_graph
         thickets_cp = _thickets
 

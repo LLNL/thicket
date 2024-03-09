@@ -123,6 +123,21 @@ def _resolve_missing_indicies(th_list):
                 th.dataframe.set_index(idx, append=True, inplace=True)
 
 
+def _set_node_ordering(thickets):
+    """Set node ordering for each thicket in a list. All thickets must have node ordering on, otherwise it will be set to False.
+
+    Arguments:
+        thickets (list): list of Thicket objects
+    """
+    node_order = all([tk.graph.node_ordering for tk in thickets])
+
+    for tk in thickets:
+        if tk.graph.node_ordering:
+            tk.graph.node_ordering = node_order
+            # Have to re-enumerate the traverse
+            tk.graph.enumerate_traverse()
+
+
 def _get_perf_columns(df):
     """Get list of performance dataframe columns that are numeric.
 
