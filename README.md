@@ -44,13 +44,7 @@ Thicket was created by Olga Pearce and Stephanie Brink.
 
 To cite Thicket, please use the following citation:
 
-* Stephanie Brink, Michael McKinsey, David Boehme, Connor Scully-Allison, 
-Ian Lumsden, Daryl Hawkins, Treece Burgess, Vanessa Lama, Jakob Lüttgau, 
-Katherine E. Isaacs, Michela Taufer, and Olga Pearce. 2023. 
-Thicket: Seeing the Performance Experiment Forest for the Individual Run Trees.
-In the 32nd International Symposium on High-Performance Parallel and Distributed Computing (HPDC'23),
-August 2023, Pages 281–293.  
-[doi.org/10.1145/3588195.3592989](https://doi.org/10.1145/3588195.3592989).
+* Stephanie Brink, Michael McKinsey, David Boehme, Connor Scully-Allison, Ian Lumsden, Daryl Hawkins, Treece Burgess, Vanessa Lama, Jakob Lüttgau, Katherine E. Isaacs, Michela Taufer, and Olga Pearce. 2023. Thicket: Seeing the Performance Experiment Forest for the Individual Run Trees. In the 32nd International Symposium on High-Performance Parallel and Distributed Computing (HPDC'23), August 2023, Pages 281–293. [doi.org/10.1145/3588195.3592989](https://doi.org/10.1145/3588195.3592989).
 
 On GitHub, you can copy this citation in APA or BibTeX format via the "Cite this
 repository" button. Or, see the comments in CITATION.cff for the raw BibTeX.
