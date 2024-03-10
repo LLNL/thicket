@@ -5,6 +5,7 @@
 
 import copy
 import os
+import pickle
 import sys
 import json
 import warnings
@@ -200,6 +201,15 @@ class Thicket(GraphFrame):
             th.dataframe.set_index(index_names, inplace=True)
 
         return th
+
+    @staticmethod
+    def from_pickle(filename, **kwargs):
+        """Read in a Thicket from a pickle file."""
+        return pickle.load(open(filename, "rb"), **kwargs)
+
+    def to_pickle(self, filename, **kwargs):
+        """Write a Thicket to a pickle file."""
+        pickle.dump(self, open(filename, "wb"), **kwargs)
 
     @staticmethod
     def from_caliper(
