@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: MIT
 
 import thicket as th
+import numpy as np
+import math
 
 
 def test_mean(rajaperf_seq_O3_1M_cali):
@@ -639,6 +641,7 @@ def test_boxplot_columnar_join(thicket_axis_columns):
 
 def test_scoring_1(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+    combined_th_cpy = th.Thicket.copy(combined_th)
 
     idx = list(combined_th.dataframe.columns.levels[0][0:2])
     columns = [(idx[0], "Min time/rank"), (idx[1], "Min time/rank")]
@@ -690,9 +693,46 @@ def test_scoring_1(thicket_axis_columns):
 
     assert (idx[1], "Min time/rank_std") in combined_th.statsframe.show_metric_columns()
 
+    # Compare scoring values
+    num_nodes = len(combined_th_cpy.dataframe.index.get_level_values(0).unique())
+
+    th.stats.mean(combined_th_cpy, columns)
+    th.stats.std(combined_th_cpy, columns)
+
+    means_target1 = combined_th_cpy.statsframe.dataframe[
+        (columns[0][0], "{}_mean".format(columns[0][1]))
+    ].to_list()
+    means_target2 = combined_th_cpy.statsframe.dataframe[
+        (columns[1][0], "{}_mean".format(columns[1][1]))
+    ].to_list()
+
+    stds_target1 = combined_th_cpy.statsframe.dataframe[
+        (columns[0][0], "{}_std".format(columns[0][1]))
+    ].to_list()
+    stds_target2 = combined_th_cpy.statsframe.dataframe[
+        (columns[1][0], "{}_std".format(columns[1][1]))
+    ].to_list()
+
+    results = []
+
+    for i in range(num_nodes):
+        result = (means_target1[i] - means_target2[i]) + (
+            (stds_target1[i] - stds_target2[i])
+            / (np.abs(means_target1[i] - means_target2[i]))
+        )
+        results.append(result)
+
+    results = [-1 if math.isnan(x) else x for x in results]
+
+    th_score = combined_th.statsframe.dataframe[output_column_name].to_list()
+    th_score = [-1 if math.isnan(x) else x for x in th_score]
+
+    assert set(results) == set(th_score)
+
 
 def test_scoring_2(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+    combined_th_cpy = th.Thicket.copy(combined_th)
 
     idx = list(combined_th.dataframe.columns.levels[0][0:2])
     columns = [(idx[0], "Min time/rank"), (idx[1], "Min time/rank")]
@@ -704,7 +744,7 @@ def test_scoring_2(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.stats.scoring_1(
+    th.stats.scoring_2(
         combined_th, columns=columns, output_column_name=output_column_name
     )
 
@@ -747,9 +787,48 @@ def test_scoring_2(thicket_axis_columns):
 
     assert (idx[1], "Min time/rank_std") in combined_th.statsframe.show_metric_columns()
 
+    # Compare scoring values
+    num_nodes = len(combined_th_cpy.dataframe.index.get_level_values(0).unique())
 
-def test_bhattacharyya_distance_scoring(thicket_axis_columns):
+    th.stats.mean(combined_th_cpy, columns)
+    th.stats.std(combined_th_cpy, columns)
+
+    means_target1 = combined_th_cpy.statsframe.dataframe[
+        (columns[0][0], "{}_mean".format(columns[0][1]))
+    ].to_list()
+    means_target2 = combined_th_cpy.statsframe.dataframe[
+        (columns[1][0], "{}_mean".format(columns[1][1]))
+    ].to_list()
+
+    stds_target1 = combined_th_cpy.statsframe.dataframe[
+        (columns[0][0], "{}_std".format(columns[0][1]))
+    ].to_list()
+    stds_target2 = combined_th_cpy.statsframe.dataframe[
+        (columns[1][0], "{}_std".format(columns[1][1]))
+    ].to_list()
+
+    results = []
+
+    for i in range(num_nodes):
+        result = (
+            (means_target1[i] - means_target2[i])
+            + (stds_target1[i] / means_target1[i])
+            + (stds_target2[i] / means_target2[i])
+        )
+
+        results.append(result)
+
+    results = [-1 if math.isnan(x) else x for x in results]
+
+    th_score = combined_th.statsframe.dataframe[output_column_name].to_list()
+    th_score = [-1 if math.isnan(x) else x for x in th_score]
+
+    assert set(results) == set(th_score)
+
+
+def test_bhattacharyya_score(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+    combined_th_cpy = th.Thicket.copy(combined_th)
 
     idx = list(combined_th.dataframe.columns.levels[0][0:2])
     columns = [(idx[0], "Min time/rank"), (idx[1], "Min time/rank")]
@@ -761,7 +840,7 @@ def test_bhattacharyya_distance_scoring(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.stats.scoring_1(
+    th.stats.bhattacharyya_score(
         combined_th, columns=columns, output_column_name=output_column_name
     )
 
@@ -807,9 +886,57 @@ def test_bhattacharyya_distance_scoring(thicket_axis_columns):
         "Min time/rank_std",
     ) in combined_th.statsframe.show_metric_columns()
 
+    # Compare scoring values
+    num_nodes = len(combined_th_cpy.dataframe.index.get_level_values(0).unique())
 
-def test_hellinger_distance_scoring(thicket_axis_columns):
+    th.stats.mean(combined_th_cpy, columns)
+    th.stats.std(combined_th_cpy, columns)
+
+    means_target1 = combined_th_cpy.statsframe.dataframe[
+        (columns[0][0], "{}_mean".format(columns[0][1]))
+    ].to_list()
+    means_target2 = combined_th_cpy.statsframe.dataframe[
+        (columns[1][0], "{}_mean".format(columns[1][1]))
+    ].to_list()
+
+    stds_target1 = combined_th_cpy.statsframe.dataframe[
+        (columns[0][0], "{}_std".format(columns[0][1]))
+    ].to_list()
+    stds_target2 = combined_th_cpy.statsframe.dataframe[
+        (columns[1][0], "{}_std".format(columns[1][1]))
+    ].to_list()
+
+    results = []
+
+    for i in range(num_nodes):
+        try:
+            result = 0.25 * np.log(
+                0.25
+                * (
+                    (stds_target1[i] ** 2 / stds_target2[i] ** 2)
+                    + (stds_target2[i] ** 2 / stds_target1[i] ** 2)
+                    + 2
+                )
+            ) + 0.25 * (
+                (means_target1[i] - means_target2[i]) ** 2
+                / (stds_target1[i] ** 2 + stds_target2[i] ** 2)
+            )
+        except ZeroDivisionError:
+            result = np.nan
+
+        results.append(result)
+
+    results = [-1 if math.isnan(x) else x for x in results]
+
+    th_score = combined_th.statsframe.dataframe[output_column_name].to_list()
+    th_score = [-1 if math.isnan(x) else x for x in th_score]
+
+    assert set(results) == set(th_score)
+
+
+def test_hellinger_score(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+    combined_th_cpy = th.Thicket.copy(combined_th)
 
     idx = list(combined_th.dataframe.columns.levels[0][0:2])
     columns = [(idx[0], "Min time/rank"), (idx[1], "Min time/rank")]
@@ -821,7 +948,7 @@ def test_hellinger_distance_scoring(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.stats.scoring_1(
+    th.stats.hellinger_score(
         combined_th, columns=columns, output_column_name=output_column_name
     )
 
@@ -863,3 +990,47 @@ def test_hellinger_distance_scoring(thicket_axis_columns):
     ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
 
     assert (idx[1], "Min time/rank_std") in combined_th.statsframe.show_metric_columns()
+
+    # Compare scoring values
+    num_nodes = len(combined_th_cpy.dataframe.index.get_level_values(0).unique())
+
+    th.stats.mean(combined_th_cpy, columns)
+    th.stats.std(combined_th_cpy, columns)
+
+    means_target1 = combined_th_cpy.statsframe.dataframe[
+        (columns[0][0], "{}_mean".format(columns[0][1]))
+    ].to_list()
+    means_target2 = combined_th_cpy.statsframe.dataframe[
+        (columns[1][0], "{}_mean".format(columns[1][1]))
+    ].to_list()
+
+    stds_target1 = combined_th_cpy.statsframe.dataframe[
+        (columns[0][0], "{}_std".format(columns[0][1]))
+    ].to_list()
+    stds_target2 = combined_th_cpy.statsframe.dataframe[
+        (columns[1][0], "{}_std".format(columns[1][1]))
+    ].to_list()
+
+    results = []
+
+    for i in range(num_nodes):
+        try:
+            result = 1 - math.sqrt(
+                (2 * stds_target1[i] * stds_target2[i])
+                / (stds_target1[i] ** 2 + stds_target2[i] ** 2)
+            ) * math.exp(
+                -0.25
+                * ((means_target1[i] - means_target2[i]) ** 2)
+                / (stds_target1[i] ** 2 + stds_target2[i] ** 2)
+            )
+        except ZeroDivisionError:
+            result = np.nan
+
+        results.append(result)
+
+    results = [-1 if math.isnan(x) else x for x in results]
+
+    th_score = combined_th.statsframe.dataframe[output_column_name].to_list()
+    th_score = [-1 if math.isnan(x) else x for x in th_score]
+
+    assert set(results) == set(th_score)

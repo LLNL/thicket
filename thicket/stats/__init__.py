@@ -18,8 +18,8 @@ from .correlation_nodewise import correlation_nodewise
 from .check_normality import check_normality
 from .scoring import scoring_1
 from .scoring import scoring_2
-from .scoring import bhattacharyya_distance_scoring
-from .scoring import hellinger_distance_scoring
+from .scoring import bhattacharyya_score
+from .scoring import hellinger_score
 
 try:
     import seaborn as sns
