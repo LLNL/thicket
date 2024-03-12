@@ -5,6 +5,7 @@
 
 import thicket as th
 
+
 def test_pickle(rajaperf_cali_1trial, tmpdir):
     """Test pickling and unpickling of Thicket object."""
 
