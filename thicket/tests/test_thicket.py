@@ -47,11 +47,11 @@ def test_resolve_missing_indicies():
     assert set(names_1).issubset(th_1.dataframe.index.names)
 
 
-def test_statsframe(example_cali):
+def test_statsframe(rajaperf_seq_O3_1M_cali):
     def _test_multiindex():
         """Test statsframe when headers are multiindexed."""
-        th1 = Thicket.from_caliperreader(example_cali[0])
-        th2 = Thicket.from_caliperreader(example_cali[1])
+        th1 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0])
+        th2 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[1])
         th_cj = Thicket.concat_thickets([th1, th2], axis="columns")
 
         # Check column format
@@ -59,7 +59,7 @@ def test_statsframe(example_cali):
 
     _test_multiindex()
 
-    th = Thicket.from_caliperreader(example_cali[-1])
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[-1])
 
     # Arbitrary value insertion in aggregated statistics table.
     th.statsframe.dataframe["test"] = 1
@@ -75,9 +75,9 @@ def test_statsframe(example_cali):
     tree_output = th.statsframe.tree(metric_column="test")
 
     # Check if tree output is correct.
-    assert bool(re.search("1.000.*MPI_Comm_dup", tree_output))
-    assert bool(re.search("1.000.*MPI_Initialized", tree_output))
-    assert bool(re.search("1.000.*CalcFBHourglassForceForElems", tree_output))
+    assert bool(re.search("1.000.*Algorithm_MEMCPY", tree_output))
+    assert bool(re.search("1.000.*Apps_CONVECTION3DPA", tree_output))
+    assert bool(re.search("1.000.*Basic_COPY8", tree_output))
 
 
 def test_metadata_column_to_perfdata(mpi_scaling_cali):
@@ -104,9 +104,9 @@ def test_metadata_column_to_perfdata(mpi_scaling_cali):
         assert metric in values
 
 
-def test_thicketize_graphframe(example_cali):
-    ht1 = ht.GraphFrame.from_caliperreader(example_cali[-1])
-    th1 = Thicket.thicketize_graphframe(ht1, example_cali[-1])
+def test_thicketize_graphframe(rajaperf_seq_O3_1M_cali):
+    ht1 = ht.GraphFrame.from_caliperreader(rajaperf_seq_O3_1M_cali[-1])
+    th1 = Thicket.thicketize_graphframe(ht1, rajaperf_seq_O3_1M_cali[-1])
 
     # Check object types
     assert isinstance(ht1, ht.GraphFrame)
@@ -121,10 +121,10 @@ def test_thicketize_graphframe(example_cali):
     assert ht1.dataframe.equals(th1.dataframe)
 
 
-def test_unique_metadata_base_cuda(rajaperf_basecuda_xl_cali):
-    t_ens = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+def test_unique_metadata_base_cuda(rajaperf_cuda_block128_1M_cali):
+    t_ens = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
 
     res = t_ens.get_unique_metadata()
     assert res["systype_build"] == ["blueos_3_ppc64le_ib_p9"]
     assert res["variant"] == ["Base_CUDA"]
-    assert res["gpu_targets_block_sizes"] == [128]
+    assert res["tuning"] == ["block_128"]

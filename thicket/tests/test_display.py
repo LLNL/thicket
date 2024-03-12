@@ -10,8 +10,8 @@ import pytest
 import thicket as th
 
 
-def test_display_histogram(example_cali):
-    tk = th.Thicket.from_caliperreader(example_cali)
+def test_display_histogram(rajaperf_seq_O3_1M_cali):
+    tk = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
 
     node = pd.unique(tk.dataframe.reset_index()["node"])[4]
 
@@ -60,11 +60,11 @@ def test_display_histogram_columnar_join(thicket_axis_columns):
     node = pd.unique(combined_th.dataframe.reset_index()["node"])[0]
 
     ax = th.stats.display_histogram(
-        combined_th, node=node, column=("Cuda128", "Min time/rank")
+        combined_th, node=node, column=("block_128", "Min time/rank")
     )
 
     # check title
-    assert ax[0][0].get_title() == "('Cuda128', 'Min time/rank')"
+    assert ax[0][0].get_title() == "('block_128', 'Min time/rank')"
 
     # Check column argument must exist
     with pytest.raises(
@@ -78,8 +78,8 @@ def test_display_histogram_columnar_join(thicket_axis_columns):
     plt.close()
 
 
-def test_display_heatmap(example_cali):
-    tk = th.Thicket.from_caliperreader(example_cali)
+def test_display_heatmap(rajaperf_seq_O3_1M_cali):
+    tk = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
 
     th.stats.variance(tk, columns=["Min time/rank"])
 
@@ -91,7 +91,7 @@ def test_display_heatmap(example_cali):
     # check to make sure x and y axes have proper x and y tick labels
     assert "Min time/rank_var" in ax.get_xticklabels()[0].get_text()
     assert (
-        "{'name': 'Base_Seq', 'type': 'function'}" in ax.get_yticklabels()[0].get_text()
+        "{'name': 'RAJAPerf', 'type': 'function'}" in ax.get_yticklabels()[0].get_text()
     )
 
     # Check when arguments not provided
@@ -125,10 +125,10 @@ def test_display_heatmap(example_cali):
 def test_display_heatmap_columnar_join(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
 
-    th.stats.variance(combined_th, columns=[("Cuda128", "Min time/rank")])
+    th.stats.variance(combined_th, columns=[("block_128", "Min time/rank")])
 
     ax = th.stats.display_heatmap(
-        combined_th, columns=[("Cuda128", "Min time/rank_var")]
+        combined_th, columns=[("block_128", "Min time/rank_var")]
     )
 
     # check to make sure that a figure is generated
@@ -137,10 +137,9 @@ def test_display_heatmap_columnar_join(thicket_axis_columns):
     # check to make sure x, y and title have proper labels
     assert "Min time/rank_var" == ax.get_xticklabels()[0].get_text()
     assert (
-        "{'name': 'Base_CUDA', 'type': 'function'}"
-        in ax.get_yticklabels()[0].get_text()
+        "{'name': 'RAJAPerf', 'type': 'function'}" in ax.get_yticklabels()[0].get_text()
     )
-    assert ax.get_title() == "Cuda128"
+    assert ax.get_title() == "block_128"
 
     # Check column argument must exist
     with pytest.raises(
@@ -152,8 +151,8 @@ def test_display_heatmap_columnar_join(thicket_axis_columns):
     plt.close()
 
 
-def test_display_boxplot(example_cali):
-    tk = th.Thicket.from_caliperreader(example_cali)
+def test_display_boxplot(rajaperf_seq_O3_1M_cali):
+    tk = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
 
     nodes = list(pd.unique(tk.dataframe.reset_index()["node"])[0:2])
 
@@ -163,7 +162,7 @@ def test_display_boxplot(example_cali):
     assert plt.get_fignums()[0] == 1
 
     # check to make sure xlabel and xticklabels are correct
-    assert "Base_Seq" in ax.get_xticklabels()[0].get_text()
+    assert "RAJAPerf" in ax.get_xticklabels()[0].get_text()
     assert "node" in ax.get_xlabel()
 
     # Check when arguments not provided
@@ -214,14 +213,14 @@ def test_display_boxplot_columnar_join(thicket_axis_columns):
     nodes = pd.unique(combined_th.dataframe.reset_index()["node"])[0:1].tolist()
 
     ax = th.stats.display_boxplot(
-        combined_th, nodes=nodes, columns=[("Cuda128", "Min time/rank")]
+        combined_th, nodes=nodes, columns=[("block_128", "Min time/rank")]
     )
 
     # check to make sure that a figure is generated
     assert plt.get_fignums()[0] == 1
 
     # check to make sure xlabel and xticklabels are correct
-    assert "Base_CUDA" in ax.get_xticklabels()[0].get_text()
+    assert "RAJAPerf" in ax.get_xticklabels()[0].get_text()
     assert "node" == ax.get_xlabel()
 
     # Check column argument must exist

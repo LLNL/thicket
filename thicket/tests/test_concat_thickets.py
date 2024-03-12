@@ -77,8 +77,8 @@ def test_filter_concat_thickets_columns(thicket_axis_columns):
     thickets, thickets_cp, combined_th = thicket_axis_columns
     # columns and corresponding values to filter by
     columns_values = {
-        ("MPI1", "mpi.world.size"): [27],
-        ("Cuda128", "cali.caliper.version"): ["2.9.0-dev"],
+        ("default", "variant"): ["Base_Seq"],
+        ("block_128", "cali.caliper.version"): ["2.9.0-dev"],
     }
 
     filter_one_column(combined_th, columns_values)
@@ -95,11 +95,11 @@ def test_filter_stats_concat_thickets_columns(thicket_axis_columns):
     # set string column values
     less_than_20 = ["less than 20"] * 21
     less_than_45 = ["less than 45"] * 25
-    less_than_178 = ["less than 178"] * 131
+    less_than_178 = ["less than 75"] * 28
     new_col = less_than_20 + less_than_45 + less_than_178
     combined_th.statsframe.dataframe[("test", "test_string_column")] = new_col
     # set numeric column values
-    combined_th.statsframe.dataframe[("test", "test_numeric_column")] = range(0, 177)
+    combined_th.statsframe.dataframe[("test", "test_numeric_column")] = range(0, 74)
 
     check_filter_stats(combined_th, columns_values)
 
@@ -107,14 +107,23 @@ def test_filter_stats_concat_thickets_columns(thicket_axis_columns):
 def test_query_concat_thickets_columns(thicket_axis_columns):
     thickets, thickets_cp, combined_th = thicket_axis_columns
     # test arguments
-    hnids = [0, 1, 2, 3, 5, 6, 8, 9]
+    hnids = [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+    ]  # "0" because top-level node "RAJAPerf" will be included in query result.
     query = (
         ht.QueryMatcher()
         .match("*")
         .rel(
             ".",
             lambda row: row["name"]
-            .apply(lambda x: re.match(r"Algorithm.*block_128", x) is not None)
+            .apply(lambda x: re.match(r"Algorithm*", x) is not None)
             .all(),
         )
     )

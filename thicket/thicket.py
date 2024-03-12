@@ -799,10 +799,8 @@ class Thicket(GraphFrame):
         """
 
         # Row that didn't exist will contain "None" in the name column.
-        query = (
-            QueryMatcher()
-            .match(".", lambda row: row["name"].apply(lambda n: n is not None).all())
-            .rel("*")
+        query = QueryMatcher().match(
+            ".", lambda row: row["name"].apply(lambda n: n is not None).all()
         )
         intersected_th = self.query(query)
 

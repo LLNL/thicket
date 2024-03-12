@@ -6,8 +6,8 @@
 from thicket import Thicket
 
 
-def test_copy(example_cali):
-    self = Thicket.from_caliperreader(example_cali[-1])
+def test_copy(rajaperf_seq_O3_1M_cali):
+    self = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0])
     self.exc_metrics.append("value")
     other = self.copy()
 
@@ -67,8 +67,8 @@ def test_copy(example_cali):
     )
 
 
-def test_deepcopy(example_cali):
-    self = Thicket.from_caliperreader(example_cali[-1])
+def test_deepcopy(rajaperf_seq_O3_1M_cali):
+    self = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0])
     self.exc_metrics.append("value")
     other = self.deepcopy()
 

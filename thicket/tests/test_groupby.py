@@ -81,21 +81,20 @@ def check_groupby(th, columns_values):
         th.groupby(["user"])
 
 
-def test_aggregate(rajaperf_basecuda_xl_cali):
-    tk = Thicket.from_caliperreader(rajaperf_basecuda_xl_cali)
+def test_aggregate(rajaperf_cuda_block128_1M_cali):
+    tk = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
     gb = tk.groupby("spot.format.version")
 
-    epsilon = 0.0001
+    epsilon = 0.000001
 
     def _check_values(_tk_agg):
-        base_cuda_node = [
+        node = [
             node
             for node in _tk_agg.dataframe.index.get_level_values("node")
-            if node.frame["name"] == "Base_CUDA"
+            if node.frame["name"] == "RAJAPerf"
         ][0]
         assert (
-            _tk_agg.dataframe.loc[base_cuda_node, 2]["Min time/rank_mean"]
-            - 1.8716947000000002
+            abs(_tk_agg.dataframe.loc[node, 2]["Min time/rank_mean"] - 1.7765899)
             < epsilon
         )
 
@@ -105,8 +104,10 @@ def test_aggregate(rajaperf_basecuda_xl_cali):
             if node.frame["name"] == "Algorithm"
         ][0]
         assert (
-            _tk_agg.dataframe.loc[algorithm_node, 2]["Min time/rank_var"]
-            - 1.1537333333333264e-09
+            abs(
+                _tk_agg.dataframe.loc[algorithm_node, 2]["Min time/rank_var"]
+                - 2.0285377777777793e-08
+            )
             < epsilon
         )
 
@@ -116,31 +117,24 @@ def test_aggregate(rajaperf_basecuda_xl_cali):
     _check_values(tk_agg)
 
 
-def test_groupby(example_cali):
+def test_groupby(rajaperf_seq_O3_1M_cali):
     # example thicket
-    th = Thicket.from_caliperreader(example_cali)
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
     # use cases for string, numeric, and single value columns
     columns_values = ["user", "launchdate", "cali.channel"]
 
     check_groupby(th, columns_values)
 
 
-def test_groupby_concat_thickets_columns(example_cali):
+def test_groupby_concat_thickets_columns(rajaperf_seq_O3_1M_cali):
     """Tests case where the Sub-Thickets of a groupby are used in a columnar join"""
     # example thicket
-    th = Thicket.from_caliperreader(example_cali)
-    columns = ["launchdate"]
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
 
     # Creates four Sub-Thickets
-    th_list = list(th.groupby(columns).values())
-
-    # Prep for testing
-    selected_column = "ProblemSize"
-    problem_size = 10
-    th_list[0].metadata[selected_column] = problem_size
-    th_list[1].metadata[selected_column] = problem_size
-    th_list[2].metadata[selected_column] = problem_size
-    th_list[3].metadata[selected_column] = problem_size
+    column = "unique_col"
+    th.metadata[column] = [1, 2, 3, 4]
+    th_list = list(th.groupby(column).values())
 
     thickets = [th_list[0], th_list[1], th_list[2], th_list[3]]
     thickets_cp = [
@@ -150,6 +144,7 @@ def test_groupby_concat_thickets_columns(example_cali):
         th_list[3].deepcopy(),
     ]
 
+    selected_column = "ProblemSizeRunParam"
     combined_th = Thicket.concat_thickets(
         thickets=thickets,
         axis="columns",
@@ -159,17 +154,18 @@ def test_groupby_concat_thickets_columns(example_cali):
     test_concat_thickets_columns((thickets, thickets_cp, combined_th))
 
 
-def test_groupby_concat_thickets_columns_subthickets(example_cali):
+def test_groupby_concat_thickets_columns_subthickets(rajaperf_seq_O3_1M_cali):
     """Tests case where some specific Sub-Thickets of a groupby are used in a columnar join"""
     # example thicket
-    th = Thicket.from_caliperreader(example_cali)
-    columns = ["launchdate"]
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
 
     # Creates four Sub-Thickets
-    th_list = list(th.groupby(columns).values())
+    column = "unique_col"
+    th.metadata[column] = [1, 2, 3, 4]
+    th_list = list(th.groupby(column).values())
 
     # Pick two Sub-Thickets to test if metadata and profile information is setup correctly
-    selected_column = "ProblemSize"
+    selected_column = "ProblemSizeRunParam"
     problem_size = 10
     th_list[0].metadata[selected_column] = problem_size
     th_list[1].metadata[selected_column] = problem_size
