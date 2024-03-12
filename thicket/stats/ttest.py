@@ -48,8 +48,8 @@ def __ttest(thicket, columns, alpha=0.05, *args, **kwargs):
     # alpha/2 is done for a two tail t-test
     tvalue = t.ppf(q=1 - alpha / 2, df=nobs_column1 + nobs_column2 - len(columns))
 
-    th.mean(thicket, columns)
-    th.std(thicket, columns)
+    th.stats.mean(thicket, columns)
+    th.stats.std(thicket, columns)
 
     # thicket object with columnar index
     if thicket.dataframe.columns.nlevels > 1:
