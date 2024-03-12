@@ -639,7 +639,7 @@ def test_boxplot_columnar_join(thicket_axis_columns):
     ) in combined_th.statsframe.show_metric_columns()
 
 
-def test_scoring_1(thicket_axis_columns):
+def test_score_delta_mean_delta_stdnorm(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     combined_th_cpy = th.Thicket.copy(combined_th)
 
@@ -653,11 +653,11 @@ def test_scoring_1(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.stats.scoring_1(
+    th.stats.score_delta_mean_delta_stdnorm(
         combined_th, columns=columns, output_column_name=output_column_name
     )
 
-    assert "score_1" in combined_th.statsframe.dataframe.columns
+    assert ("Scoring", "score_1") in combined_th.statsframe.dataframe.columns
 
     assert (
         idx[0],
@@ -724,13 +724,15 @@ def test_scoring_1(thicket_axis_columns):
 
     results = [-1 if math.isnan(x) else x for x in results]
 
-    th_score = combined_th.statsframe.dataframe[output_column_name].to_list()
+    th_score = combined_th.statsframe.dataframe[
+        ("Scoring", output_column_name)
+    ].to_list()
     th_score = [-1 if math.isnan(x) else x for x in th_score]
 
-    assert set(results) == set(th_score)
+    assert results == th_score
 
 
-def test_scoring_2(thicket_axis_columns):
+def test_score_delta_mean_delta_coefficient_of_variation(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     combined_th_cpy = th.Thicket.copy(combined_th)
 
@@ -744,11 +746,11 @@ def test_scoring_2(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.stats.scoring_2(
+    th.stats.score_delta_mean_delta_coefficient_of_variation(
         combined_th, columns=columns, output_column_name=output_column_name
     )
 
-    assert "score_2" in combined_th.statsframe.dataframe.columns
+    assert ("Scoring", output_column_name) in combined_th.statsframe.dataframe.columns
 
     assert (
         idx[0],
@@ -813,20 +815,22 @@ def test_scoring_2(thicket_axis_columns):
         result = (
             (means_target1[i] - means_target2[i])
             + (stds_target1[i] / means_target1[i])
-            + (stds_target2[i] / means_target2[i])
+            - (stds_target2[i] / means_target2[i])
         )
 
         results.append(result)
 
     results = [-1 if math.isnan(x) else x for x in results]
 
-    th_score = combined_th.statsframe.dataframe[output_column_name].to_list()
+    th_score = combined_th.statsframe.dataframe[
+        ("Scoring", output_column_name)
+    ].to_list()
     th_score = [-1 if math.isnan(x) else x for x in th_score]
 
-    assert set(results) == set(th_score)
+    assert results == th_score
 
 
-def test_bhattacharyya_score(thicket_axis_columns):
+def test_score_bhattacharyya(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     combined_th_cpy = th.Thicket.copy(combined_th)
 
@@ -840,11 +844,14 @@ def test_bhattacharyya_score(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.stats.bhattacharyya_score(
+    th.stats.score_bhattacharyya(
         combined_th, columns=columns, output_column_name=output_column_name
     )
 
-    assert "bhattacharyya_score" in combined_th.statsframe.dataframe.columns
+    assert (
+        "Scoring",
+        "bhattacharyya_score",
+    ) in combined_th.statsframe.dataframe.columns
 
     assert (
         idx[0],
@@ -928,13 +935,15 @@ def test_bhattacharyya_score(thicket_axis_columns):
 
     results = [-1 if math.isnan(x) else x for x in results]
 
-    th_score = combined_th.statsframe.dataframe[output_column_name].to_list()
+    th_score = combined_th.statsframe.dataframe[
+        ("Scoring", output_column_name)
+    ].to_list()
     th_score = [-1 if math.isnan(x) else x for x in th_score]
 
-    assert set(results) == set(th_score)
+    assert results == th_score
 
 
-def test_hellinger_score(thicket_axis_columns):
+def test_score_hellinger(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
     combined_th_cpy = th.Thicket.copy(combined_th)
 
@@ -948,11 +957,11 @@ def test_hellinger_score(thicket_axis_columns):
 
     assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
 
-    th.stats.hellinger_score(
+    th.stats.score_hellinger(
         combined_th, columns=columns, output_column_name=output_column_name
     )
 
-    assert "hellinger_score" in combined_th.statsframe.dataframe.columns
+    assert ("Scoring", "hellinger_score") in combined_th.statsframe.dataframe.columns
 
     assert (
         idx[0],
@@ -1030,7 +1039,9 @@ def test_hellinger_score(thicket_axis_columns):
 
     results = [-1 if math.isnan(x) else x for x in results]
 
-    th_score = combined_th.statsframe.dataframe[output_column_name].to_list()
+    th_score = combined_th.statsframe.dataframe[
+        ("Scoring", output_column_name)
+    ].to_list()
     th_score = [-1 if math.isnan(x) else x for x in th_score]
 
-    assert set(results) == set(th_score)
+    assert results == th_score

@@ -140,25 +140,23 @@ def score(thicket, columns, output_column_name, scoring_function):
     stats_frame_column_name = None
 
     if output_column_name is None:
-        stats_frame_column_name = (
-            "Scoring",
-            "{}_{}_{}_{}_{}".format(
-                columns[0][0],
-                columns[0][1],
-                columns[1][0],
-                columns[1][1],
-                scoring_function.__name__,
-            ),
+        stats_frame_column_name = "{}_{}_{}_{}_{}".format(
+            columns[0][0],
+            columns[0][1],
+            columns[1][0],
+            columns[1][1],
+            scoring_function.__name__,
         )
     else:
         stats_frame_column_name = output_column_name
 
-    thicket.statsframe.dataframe[stats_frame_column_name] = resulting_scores
+    thicket.statsframe.dataframe["Scoring", stats_frame_column_name] = resulting_scores
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
     return
 
 
-def scoring_1(thicket, columns, output_column_name=None):
+def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
     """
     Apply the scoring_1 algorithm on two passed columns. The passed columns
     must be from the performance data table.
@@ -176,7 +174,9 @@ def scoring_1(thicket, columns, output_column_name=None):
     score(thicket, columns, output_column_name, _scoring_1)
 
 
-def scoring_2(thicket, columns, output_column_name=None):
+def score_delta_mean_delta_coefficient_of_variation(
+    thicket, columns, output_column_name=None
+):
     """
     Apply the scoring_2 algorithm on two passed columns. The passed columns
     must be from the performance data table.
@@ -194,7 +194,7 @@ def scoring_2(thicket, columns, output_column_name=None):
     score(thicket, columns, output_column_name, _scoring_2)
 
 
-def bhattacharyya_score(thicket, columns, output_column_name=None):
+def score_bhattacharyya(thicket, columns, output_column_name=None):
     """
     Apply the Bhattacharrya distance algorithm on two passed columns. The passed columns
     must be from the performance data table.
@@ -212,7 +212,7 @@ def bhattacharyya_score(thicket, columns, output_column_name=None):
     score(thicket, columns, output_column_name, _scoring_3)
 
 
-def hellinger_score(thicket, columns, output_column_name=None):
+def score_hellinger(thicket, columns, output_column_name=None):
     """
     Apply the Hellinger's distance algorithm on two passed columns. The passed columns
     must be from the performance data table.
