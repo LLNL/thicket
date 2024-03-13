@@ -54,7 +54,7 @@ def _scoring_3(means_1, means_2, stds_1, stds_2, num_nodes):
                 (means_1[i] - means_2[i]) ** 2 / (stds_1[i] ** 2 + stds_2[i] ** 2)
             )
         except ZeroDivisionError:
-            print("Score 3 std's: ", stds_1[i], stds_2[i], i)
+            # print("Score 3 std's: ", stds_1[i], stds_2[i], i)
             result = np.nan
         results.append(result)
     return results
@@ -75,7 +75,7 @@ def _scoring_4(means_1, means_2, stds_1, stds_2, num_nodes):
                 / (stds_1[i] ** 2 + stds_2[i] ** 2)
             )
         except ZeroDivisionError:
-            print("Score 4 std's: ", stds_1[i], stds_2[i], i)
+            # print("Score 4 std's: ", stds_1[i], stds_2[i], i)
             result = np.nan
         results.append(result)
     return results
@@ -157,12 +157,16 @@ def score(thicket, columns, output_column_name, scoring_function):
 
 
 def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
-    """
-    Apply the scoring_1 algorithm on two passed columns. The passed columns
-    must be from the performance data table.
+    r"""
+    Apply a mean difference with standard deviation difference algorithm on two
+    passed columns. The passed columns must be from the performance data table.
 
     Designed to take in a thicket object, specified columns, an output column name, and
     append the scoring to the thicket statsframe.
+
+    This provides a quantitative way to compare two columns in terms of both their means
+    and standard deviations. Yields a single value that represents the overall difference,
+    considering both their central tendency and spread.
 
     Arguments:
         thicket (thicket)   : Thicket object
@@ -170,6 +174,12 @@ def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
             columnar joined thicket is required and as such  a list of tuples must be
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
+
+    Equation:
+        .. math::
+
+            \text{result} = (\mu_1[i] - \mu_2[i]) + \frac{{\left(\sigma_1[i] - \sigma_2[i]\right)}}{{\left|\mu_1[i] - \mu_2[i]\right|}}
+    \]
     """
     score(thicket, columns, output_column_name, _scoring_1)
 
@@ -177,12 +187,16 @@ def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
 def score_delta_mean_delta_coefficient_of_variation(
     thicket, columns, output_column_name=None
 ):
-    """
-    Apply the scoring_2 algorithm on two passed columns. The passed columns
-    must be from the performance data table.
+    r"""
+    Apply a mean difference with difference spread of data algorithm on two passed columns.
+    The passed columns must be from the performance data table.
 
     Designed to take in a thicket object, specified columns, an output column name, and
     append the scoring to the thicket statsframe.
+
+    This provides a quantitative way to compare two columns through a measure that considers
+    both the difference in means and the difference in spread of data (represented by the
+    coefficient of variation).
 
     Arguments:
         thicket (thicket)   : Thicket object
@@ -190,35 +204,57 @@ def score_delta_mean_delta_coefficient_of_variation(
             columnar joined thicket is required and as such  a list of tuples must be
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
+
+    Equation:
+        .. math::
+
+            \text{result} = (\mu_1[i] - \mu_2[i]) + \frac{{\sigma_1[i]}}{{\mu_1[i]}} - \frac{{\sigma_2[i]}}{{\mu_2[i]}}
     """
     score(thicket, columns, output_column_name, _scoring_2)
 
 
 def score_bhattacharyya(thicket, columns, output_column_name=None):
-    """
+    r"""
     Apply the Bhattacharrya distance algorithm on two passed columns. The passed columns
     must be from the performance data table.
 
     Designed to take in a thicket object, specified columns, an output column name, and
     append the scoring to the thicket statsframe.
 
+    This provides a quantitative way to compare two columns through the Bhattacharyya distance,
+    which is a measure of the amount of overlap between two statistical samples or populations.
+    It calculates the distance as a function of means and variances. It ranges from 0 to positive
+    infinity, with 0 indicating complete overlap and vice versa. The larger the magnitude of the
+    value, the larger the difference between the two comparisons.
+
     Arguments:
         thicket (thicket)   : Thicket object
         columns (list)      : List of hardware/timing metrics to perform scoring on. A
             columnar joined thicket is required and as such  a list of tuples must be
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
+
+    Equation:
+        .. math::
+
+            \text{result} = \frac{1}{4} \cdot \log \left( \frac{1}{4} \cdot \left( \frac{{\sigma_1[i]^2}}{{\sigma_2[i]^2}} + \frac{{\sigma_2[i]^2}}{{\sigma_1[i]^2}} + 2 \right) \right) + \frac{1}{4} \cdot \left( \frac{{(\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}} \right)
     """
     score(thicket, columns, output_column_name, _scoring_3)
 
 
 def score_hellinger(thicket, columns, output_column_name=None):
-    """
+    r"""
     Apply the Hellinger's distance algorithm on two passed columns. The passed columns
     must be from the performance data table.
 
     Designed to take in a thicket object, specified columns, an output column name, and
     append the scoring to the thicket statsframe.
+
+    This provides a quantitative way to compare two columns through the Hellinger distance,
+    which is used to quantify the similarity between two probability distributions. It is based
+    on comparing the square roots of the probability densities rather than the probabilites
+    themselves. Helliger distance ranges from 0 to 1, with 0 indicating identical distributions
+    and 1 indicating completely different distribution.
 
     Arguments:
         thicket (thicket)   : Thicket object.
@@ -226,5 +262,11 @@ def score_hellinger(thicket, columns, output_column_name=None):
             columnar joined thicket is required and as such  a list of tuples must be
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
+
+    Equation:
+
+        .. math::
+
+            \text{result} = 1 - \sqrt{\frac{{2 \sigma_1[i]\sigma_2[i]}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}} \cdot \mathrm{e}^{-\frac{1}{4}\frac{{ (\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}}
     """
     score(thicket, columns, output_column_name, _scoring_4)
