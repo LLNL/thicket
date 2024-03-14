@@ -235,8 +235,8 @@ def test_display_boxplot_columnar_join(thicket_axis_columns):
     plt.close()
 
 
-def test_display_violinplot(example_cali):
-    tk = th.Thicket.from_caliperreader(example_cali)
+def test_display_violinplot(rajaperf_seq_O3_1M_cali):
+    tk = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
     nodes = list(pd.unique(tk.dataframe.reset_index()["node"]))[0:2]
     columns = ["Min time/rank"]
     ax = th.stats.display_violinplot(tk, nodes=nodes, columns=columns)
@@ -246,7 +246,7 @@ def test_display_violinplot(example_cali):
 
     # check to make sure xlabel and xticklabels are correct
     assert "node" in ax.get_xlabel()
-    assert "Base_Seq" in ax.get_xticklabels()[0].get_text()
+    assert "RAJAPerf" in ax.get_xticklabels()[0].get_text()
 
     # check when 'nodes' and 'columns' arguments are not provided
     with pytest.raises(
@@ -298,7 +298,7 @@ def test_display_violinplot(example_cali):
 def test_display_violinplot_columnar_join(thicket_axis_columns):
     thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
 
-    columns = [("Cuda128", "Min time/rank")]
+    columns = [("block_128", "Min time/rank")]
 
     nodes = pd.unique(combined_th.dataframe.reset_index()["node"])[0:1].tolist()
 
@@ -308,7 +308,7 @@ def test_display_violinplot_columnar_join(thicket_axis_columns):
     assert plt.get_fignums()[0] == 1
 
     # check to make sure xlabel and xticklabels are correct
-    assert "Base_CUDA" in ax.get_xticklabels()[0].get_text()
+    assert "RAJAPerf" in ax.get_xticklabels()[0].get_text()
     assert "node" == ax.get_xlabel()
 
     # Check column argument must exist
@@ -460,9 +460,9 @@ def test_display_violinplot_thicket_columnar_join(thicket_axis_columns):
         "th_3": combined_th,
     }
     columns = {
-        "th_1": [("MPI1", "Min time/rank")],
-        "th_2": [("MPI2", "Min time/rank")],
-        "th_3": [("Cuda128", "Min time/rank")],
+        "th_1": [("block_128", "Min time/rank")],
+        "th_2": [("block_256", "Min time/rank")],
+        "th_3": [("block_128", "Min time/rank")],
     }
     node = pd.unique(combined_th.dataframe.reset_index()["node"][0:1]).tolist()[0]
     nodes = {
