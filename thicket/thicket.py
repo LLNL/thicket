@@ -851,6 +851,15 @@ class Thicket(GraphFrame):
                 new_thicket.statsframe.dataframe = helpers._new_statsframe_df(
                     new_thicket.dataframe
                 )
+
+                # Update profile
+                new_thicket.profile = list(new_thicket.metadata.index)
+                # Update profile_mapping
+                new_profile_mapping = OrderedDict()
+                for prof, file in new_thicket.profile_mapping.items():
+                    if prof in new_thicket.profile:
+                        new_profile_mapping[prof] = file
+                new_thicket.profile_mapping = new_profile_mapping
             else:
                 raise EmptyMetadataTable(
                     "The provided Thicket object has an empty MetadataTable."
