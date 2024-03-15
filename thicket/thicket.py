@@ -858,8 +858,8 @@ class Thicket(GraphFrame):
                     new_thicket.dataframe
                 )
 
-                self._sync_profile_components(self.metadata)
-                validate_profile(self)
+                new_thicket._sync_profile_components(new_thicket.metadata)
+                validate_profile(new_thicket)
             else:
                 raise EmptyMetadataTable(
                     "The provided Thicket object has an empty MetadataTable."
