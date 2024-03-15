@@ -102,8 +102,19 @@ def validate_profile(tk):
                 f"Profiles in the Thicket.dataframe, Thicket.metadata, Thicket.profile, and Thicket.profile_mapping are not the same. {df_profs} != {meta_profs} != {profs} != {pm_profs}."
             )
 
+    def _validate_no_duplicates(tk):
+        if len(tk.profile) != len(set(tk.profile)):
+            raise ValueError("Profiles in the Thicket.profile must be unique.")
+        elif len(tk.profile_mapping) != len(set(tk.profile_mapping)):
+            raise ValueError("Profiles in the Thicket.profile_mapping must be unique.")
+        elif len(tk.metadata.index) != len(set(tk.metadata.index)):
+            raise ValueError("Profiles in the Thicket.metadata must be unique.")
+
+        return True
+
     _validate_multiindex_column(tk)
     _validate_all_same(tk)
+    _validate_no_duplicates(tk)
 
 
 def verify_sorted_profile(thicket_component):
