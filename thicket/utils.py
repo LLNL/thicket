@@ -5,6 +5,10 @@
 
 from collections import OrderedDict
 
+import pandas as pd
+
+from thicket import helpers
+
 
 def check_same_frame(n1, n2):
     if n1.frame != n2.frame:
@@ -53,6 +57,53 @@ def validate_dataframe(df):
     _check_duplicate_inner_idx(df)
     _check_missing_hnid(df)
     _validate_name_column(df)
+
+
+def validate_profile(tk):
+    """Check validity of Thicket objects that rely on profiles. Thicket.dataframe, Thicket.metadata, Thicket.profile, Thicket.profile_mapping."""
+
+    def _validate_multiindex_column(tk):
+        """Check if the Thicket.dataframe and Thicket.metadata have the same column structure if MultiIndex present in either. Returns True if valid, raises ValueError if not valid."""
+        if isinstance(tk.dataframe.columns, pd.MultiIndex) or isinstance(
+            tk.metadata.columns, pd.MultiIndex
+        ):
+            if not isinstance(tk.dataframe.columns, pd.MultiIndex) or not isinstance(
+                tk.metadata.columns, pd.MultiIndex
+            ):
+                raise ValueError(
+                    "The Thicket.dataframe and Thicket.metadata must both have a MultiIndex column structure if MultiIndex present in either."
+                )
+        return True
+
+    def _validate_all_same(tk):
+        df_profs = set(tk.dataframe.index.droplevel(level="node"))
+        meta_profs = set(tk.metadata.index)
+        profs = set(tk.profile)
+        pm_profs = set(tk.profile_mapping.keys())
+
+        if isinstance(tk.dataframe.columns, pd.MultiIndex) and isinstance(
+            tk.metadata.columns, pd.MultiIndex
+        ):
+            # Set of profiles that exist in the dataframe index
+            df_profs = set(
+                p
+                for p in profs
+                if any(dfp in helpers._powerset_from_tuple(p) for dfp in df_profs)
+            )
+            # Set of profiles that exist in the metadata index
+            meta_profs = set(
+                p
+                for p in profs
+                if any(mp in helpers._powerset_from_tuple(p) for mp in meta_profs)
+            )
+
+        if not df_profs == meta_profs == profs == pm_profs:
+            raise ValueError(
+                f"Profiles in the Thicket.dataframe, Thicket.metadata, Thicket.profile, and Thicket.profile_mapping are not the same. {df_profs} != {meta_profs} != {profs} != {pm_profs}."
+            )
+
+    _validate_multiindex_column(tk)
+    _validate_all_same(tk)
 
 
 def verify_sorted_profile(thicket_component):

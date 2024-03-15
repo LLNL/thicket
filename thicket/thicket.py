@@ -19,7 +19,7 @@ from hatchet.query import AbstractQuery, QueryMatcher
 from thicket.ensemble import Ensemble
 import thicket.helpers as helpers
 from .groupby import GroupBy
-from .utils import verify_thicket_structures
+from .utils import verify_thicket_structures, validate_profile
 from .external.console import ThicketRenderer
 
 
@@ -496,7 +496,8 @@ class Thicket(GraphFrame):
             graph=new_graph,
             dataframe=stats_df,
         )
-        return Thicket(
+
+        new_tk = Thicket(
             new_graph,
             new_dataframe,
             exc_metrics=self.exc_metrics,
@@ -507,6 +508,11 @@ class Thicket(GraphFrame):
             profile_mapping=self.profile_mapping,
             statsframe=sframe,
         )
+
+        new_tk._sync_profile_components(new_tk.dataframe)
+        validate_profile(new_tk)
+
+        return new_tk
 
     def copy(self):
         """Return a partially shallow copy of the Thicket.
@@ -852,14 +858,8 @@ class Thicket(GraphFrame):
                     new_thicket.dataframe
                 )
 
-                # Update profile
-                new_thicket.profile = list(new_thicket.metadata.index)
-                # Update profile_mapping
-                new_profile_mapping = OrderedDict()
-                for prof, file in new_thicket.profile_mapping.items():
-                    if prof in new_thicket.profile:
-                        new_profile_mapping[prof] = file
-                new_thicket.profile_mapping = new_profile_mapping
+                self._sync_profile_components(self.metadata)
+                validate_profile(self)
             else:
                 raise EmptyMetadataTable(
                     "The provided Thicket object has an empty MetadataTable."
@@ -952,16 +952,6 @@ class Thicket(GraphFrame):
                     )
                 ]
 
-                # Updates the profiles to only contain the remaining ones
-                profile_mapping_tmp = sub_thicket.profile_mapping.copy()
-                for profile_mapping_key in profile_mapping_tmp:
-                    if profile_mapping_key not in profile_id:
-                        sub_thicket.profile_mapping.pop(profile_mapping_key)
-
-                sub_thicket.profile = [
-                    profile for profile in sub_thicket.profile if profile in profile_id
-                ]
-
                 # clear the aggregated statistics table for current unique group
                 sub_thicket.statsframe.dataframe = helpers._new_statsframe_df(
                     sub_thicket.dataframe
@@ -969,6 +959,9 @@ class Thicket(GraphFrame):
 
                 # add thicket to dictionary
                 sub_thickets[key] = sub_thicket
+
+                sub_thicket._sync_profile_components(sub_thicket.metadata)
+                validate_profile(sub_thicket)
         else:
             raise EmptyMetadataTable(
                 "The provided Thicket object has an empty metadata table."
@@ -1050,6 +1043,81 @@ class Thicket(GraphFrame):
                 )
 
         return sorted_meta
+
+    def _sync_profile_components(self, component):
+        """Synchronize the Performance DataFrame, Metadata Dataframe, profile and
+        profile mapping objects based on the component's index. This is useful when a
+        non-Thicket function modifies the profiles in an object and those changes need
+        to be reflected in the other objects.
+
+        Arguments:
+            component (DataFrame) -> (Thicket.dataframe or Thicket.metadata): The index
+            of this component is used to synchronize the other objects.
+
+        Returns:
+            (thicket): self
+        """
+
+        def _profile_truth_from_component(component):
+            """Derive the profiles from the component index."""
+            # Option A: Columnar-indexed Thicket
+            if isinstance(component.columns, pd.MultiIndex):
+                # Performance DataFrame
+                if isinstance(component.index, pd.MultiIndex):
+                    row_idx = component.index.droplevel(level="node")
+                # Metadata DataFrame
+                else:
+                    row_idx = component.index
+                profile_truth = [
+                    prof
+                    for prof in self.profile
+                    if any([row_prof in prof for row_prof in row_idx])
+                ]
+            # Option B: Non-columnar-indexed Thicket
+            else:
+                # Performance DataFrame
+                if isinstance(component.index, pd.MultiIndex):
+                    profile_truth = component.index.droplevel(level="node")
+                # Metadata DataFrame
+                else:
+                    profile_truth = component.index
+            return list(set(profile_truth))
+
+        def _sync_indices(component, profile_truth):
+            """Sync the Thicket attributes"""
+            self.profile = profile_truth
+            self.profile_mapping = OrderedDict(
+                {
+                    prof: file
+                    for prof, file in self.profile_mapping.items()
+                    if prof in profile_truth
+                }
+            )
+
+            # For Columnar-indexed Thicket
+            if isinstance(component.columns, pd.MultiIndex):
+                # Create powerset from all profiles
+                pset = set()
+                for p in profile_truth:
+                    pset.update(helpers._powerset_from_tuple(p))
+                profile_truth = pset
+
+            self.dataframe = self.dataframe[
+                self.dataframe.index.droplevel(level="node").isin(profile_truth)
+            ]
+            self.metadata = self.metadata[self.metadata.index.isin(profile_truth)]
+
+            return self
+
+        if not isinstance(component, pd.DataFrame):
+            raise ValueError(
+                "Component must be either Thicket.dataframe or Thicket.metadata"
+            )
+
+        profile_truth = _profile_truth_from_component(component)
+        self = _sync_indices(component, profile_truth)
+
+        return self
 
 
 class InvalidFilter(Exception):
