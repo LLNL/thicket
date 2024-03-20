@@ -231,3 +231,11 @@ def literal_thickets():
     thickets = [tk, tk2, tk3]
 
     return thickets
+
+
+@pytest.fixture
+def rajaperf_july_2023(data_dir, tmpdir):
+    cali_files = glob(f"{data_dir}/rajaperf-july-2023/**/*.cali", recursive=True)
+    for cf in cali_files:
+        shutil.copy(cf, str(tmpdir))
+    return [os.path.join(str(tmpdir), f) for f in cali_files]
