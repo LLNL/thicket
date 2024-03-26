@@ -10,7 +10,7 @@
 
 This is an introduction to Thicket with a presentation and live demos. It was
 presented as a virtual event at the `2023 RADIUSS Tutorial Series
-<https://aws.amazon.com/blogs/hpc/call-for-participation-radiuss-tutorial-series-2023/>`_,
+<https://software.llnl.gov/radiuss/event/2023/07/11/radiuss-on-aws/>`_,
 August 14, 2023, alongside Caliper.
 
 .. image:: images/thicket-tutorial-slide-preview.png
