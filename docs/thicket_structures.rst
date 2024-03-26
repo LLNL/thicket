@@ -30,7 +30,7 @@ example of a performance data table stored in a thicket object.
 
 |
 The performance data's call tree structure can be seen below with corresponding nodes. This structure extends to both the 
-performance data and aggregate statistics table.
+performance data and aggregated statistics table.
 
 .. figure:: images/ql-original.png
   :width: 400
@@ -78,7 +78,7 @@ Below is an example of an empty aggregated statistics table just containing the 
   :width: 600
   :align: center
 
-  Figure 5: Example of an aggregated statistics table in thicket.
+  Figure 5: Example of an empty aggregated statistics table in thicket.
 
 Thicket provides users with capabilities for computing common aggregated statistics on their performance data, such as mean and standard deviation. Below is an example 
 of an aggregated statistics table with appended results from a statistical calculation.
@@ -88,6 +88,6 @@ of an aggregated statistics table with appended results from a statistical calcu
   :align: center
 
   Figure 6: Example aggregated statistics table in thicket with mean calculated on two
-  columns in the performance data table.
+  columns (e.g., Flops/Rep, Bytes/Rep) from the performance data table.
 
 |
