@@ -87,7 +87,7 @@ of an aggregated statistics table with appended results from a statistical calcu
   :width: 600
   :align: center
 
-  Figure 6: Example aggregated statistics table in thicket with mean calculated on two
-  columns (e.g., Flops/Rep, Bytes/Rep) from the performance data table.
+  Figure 6: Example aggregated statistics table in thicket with mean and median
+  calculated on a single column (e.g., Total_time) from the performance data table.
 
 |
