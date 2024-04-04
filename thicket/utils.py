@@ -225,3 +225,34 @@ def verify_thicket_structures(thicket_component, columns=[], index=[]):
             + str(missing_index)
             + " required for the function"
         )
+
+
+def validate_nodes(tk):
+    """Check if node objects match between Thicket.graph, Thicket.dataframe, and Thicket.statsframe.dataframe."""
+
+    components_dict = {
+        "Thicket.graph": {id(n): n for n in tk.graph.traverse()},
+        "Thicket.dataframe": {
+            id(n): n for n in tk.dataframe.index.get_level_values("node")
+        },
+        "Thicket.statsframe.dataframe": {
+            id(n): n for n in tk.statsframe.dataframe.index
+        },
+    }
+
+    set_list = [set(component.keys()) for component in components_dict.values()]
+    difference = set.union(*set_list) - set.intersection(*set_list)
+
+    debug_str = ""
+    for name, node_dict in components_dict.items():
+        debug_str += name + ":\n"
+        for node_id in node_dict:
+            if node_id in difference:
+                debug_str += (
+                    f"\t{hash(node_dict[node_id])} {node_dict[node_id]} {node_id}\n"
+                )
+
+    if len(difference) > 0:
+        raise ValueError(
+            f"Node objects do not match between Thicket.graph, Thicket.dataframe, and Thicket.statsframe.dataframe.\n{debug_str}"
+        )

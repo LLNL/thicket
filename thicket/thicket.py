@@ -24,6 +24,7 @@ from .utils import (
     verify_thicket_structures,
     check_duplicate_metadata_key,
     validate_profile,
+    validate_nodes
 )
 from .external.console import ThicketRenderer
 
@@ -498,7 +499,7 @@ class Thicket(GraphFrame):
         if drop:
             self.metadata.drop(metadata_key, axis=1, inplace=True)
 
-    def squash(self, update_inc_cols=True):
+    def squash(self, update_inc_cols=True, new_statsframe=True):
         """Rewrite the Graph to include only nodes present in the performance
         data table's rows.
 
@@ -507,6 +508,7 @@ class Thicket(GraphFrame):
 
         Arguments:
             update_inc_cols (boolean, optional): if True, update inclusive columns.
+            new_statsframe (boolean, optional): if True, create a new statsframe from the new dataframe.
 
         Returns:
             (thicket): a newly squashed Thicket object
@@ -516,18 +518,27 @@ class Thicket(GraphFrame):
         # The following code updates the performance data and the aggregated statistics
         # table with the remaining (re-indexed) nodes. The dataframe is internally
         # updated in squash(), so we can easily just save it to our thicket performance
-        # data. For the aggregated statistics table, we'll have to come up with a better
-        # way eventually, but for now, we'll just create a new aggregated statistics
-        # table the same way we do when we create a new thicket.
+        # data.
         new_dataframe = squashed_gf.dataframe
         multiindex = False
         if isinstance(self.statsframe.dataframe.columns, pd.MultiIndex):
             multiindex = True
-        stats_df = helpers._new_statsframe_df(new_dataframe, multiindex=multiindex)
-        sframe = GraphFrame(
-            graph=new_graph,
-            dataframe=stats_df,
-        )
+        if new_statsframe:
+            stats_df = helpers._new_statsframe_df(new_dataframe, multiindex=multiindex)
+            sframe = GraphFrame(
+                graph=new_graph,
+                dataframe=stats_df,
+            )
+        else:
+            old_to_new = squashed_gf.old_to_new
+            sframe = self.statsframe
+            sframe.dataframe = sframe.dataframe.reset_index()
+            replace_dict = {}
+            for node in sframe.dataframe["node"]:
+                if node in old_to_new:
+                    replace_dict[node] = old_to_new[node]
+            sframe.dataframe["node"] = sframe.dataframe["node"].replace(replace_dict)
+            sframe.dataframe = sframe.dataframe.set_index("node")
 
         new_tk = Thicket(
             new_graph,
@@ -543,6 +554,7 @@ class Thicket(GraphFrame):
 
         new_tk._sync_profile_components(new_tk.dataframe)
         validate_profile(new_tk)
+        validate_nodes(new_tk)
 
         return new_tk
 
@@ -1066,7 +1078,7 @@ class Thicket(GraphFrame):
         # copy thicket
         new_thicket = self.copy()
 
-        # filter aggregated statistics table based on greater than restriction
+        # filter aggregated statistics table
         filtered_rows = new_thicket.statsframe.dataframe.apply(filter_function, axis=1)
         new_thicket.statsframe.dataframe = new_thicket.statsframe.dataframe[
             filtered_rows
@@ -1079,10 +1091,7 @@ class Thicket(GraphFrame):
         ]
 
         # filter nodes in the graphframe based on the dataframe nodes
-        # TODO see if the new Thicket.squash function will work here
-        filtered_graphframe = GraphFrame.squash(new_thicket)
-        new_thicket.graph = filtered_graphframe.graph
-        new_thicket.statsframe.graph = filtered_graphframe.graph
+        new_thicket = new_thicket.squash(new_statsframe=False)
 
         return new_thicket
 
