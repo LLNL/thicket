@@ -347,7 +347,9 @@ class Ensemble:
         _check_structures()
 
         # Step 1: Unify the thickets. Can be inplace since we are using copies already
-        union_graph, _thickets = Ensemble._unify(thickets_cp, inplace=True, disable_tqdm=disable_tqdm)
+        union_graph, _thickets = Ensemble._unify(
+            thickets_cp, inplace=True, disable_tqdm=disable_tqdm
+        )
         combined_th.graph = union_graph
         thickets_cp = _thickets
 
