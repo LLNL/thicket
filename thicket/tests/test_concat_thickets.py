@@ -3,11 +3,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-import pytest
 import re
 
 import hatchet as ht
 import pandas as pd
+import pytest
 
 from test_filter_metadata import filter_one_column
 from test_filter_metadata import filter_multiple_and
