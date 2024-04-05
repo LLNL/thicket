@@ -5,20 +5,27 @@
 
 import pandas as pd
 import seaborn as sns
-import hatchet as ht
-import thicket as th
 import matplotlib as mpl
+import hatchet as ht
+
+import thicket as th
 from .percentiles import percentiles
 from ..utils import verify_thicket_structures
 
 
 def _column_name_mapper(current_cols):
     """
-    Internal function that returns string representation of current_cols
+    Internal function that returns a string representation of 'current_cols'.
 
-    Parameters:
-        current_cols:
+    Arguments:
+        current_cols (list)   : List of of current column names.
+
+    Returns:
+        (string object)   : String representing:
+            (current_cols) : 'current_cols' in string format
+            (current_cols[0]): 'current_cols[0]' in string format
     """
+
     if current_cols[0] in ["node", "name"]:
         return current_cols[0]
 
@@ -36,7 +43,6 @@ def _add_percentile_lines(
     line_styles=None,
     line_colors=None,
 ):
-
     if isinstance(percentiles_vals, list):
         if isinstance(line_styles, list) is True:
             if len(percentiles_vals) != len(line_styles):
@@ -194,7 +200,6 @@ def display_violinplot(
     Returns:
         (matplotlib Axes): Object for managing violinplot.
     """
-
     if columns is None or nodes is None:
         raise ValueError(
             "Both 'nodes' and 'columns' must be provided. To see a list of valid columns, run 'Thicket.performance_cols'.",
