@@ -9,6 +9,7 @@ from ..version import __version__
 
 
 class ThicketRenderer(ConsoleRenderer):
+    """Extends the Hatchet ConsoleRenderer to support multi-dimensional Thicket data."""
     # pylint: disable=W1401
     def render_preamble(self):
         lines = [
