@@ -8,9 +8,8 @@ import pytest
 import thicket as th
 
 
-def test_indices(rajaperf_july_2023):
-    files = [f for f in rajaperf_july_2023 if "quartz/clang14.0.6_1048576/O0/1" in f]
-    tk = th.Thicket.from_caliperreader(files)
+def test_indices(rajaperf_unique_tunings):
+    tk = th.Thicket.from_caliperreader(rajaperf_unique_tunings)
 
     # No error
     tk.tree(metric_column="Avg time/rank", indices=tk.profile[0])
@@ -18,13 +17,17 @@ def test_indices(rajaperf_july_2023):
     tk.metadata_column_to_perfdata("variant")
     tk.metadata_column_to_perfdata("tuning")
 
-    tk.dataframe = tk.dataframe.reset_index().set_index(["node", "tuning"]).sort_index()
+    # Error because there are duplicate variants. We need to add the tuning to the index as well.
+    tk.dataframe = (
+        tk.dataframe.reset_index().set_index(["node", "variant"]).sort_index()
+    )
     with pytest.raises(
         KeyError,
         match=r"Either dataframe cannot be represented as a single index or provided slice,*",
     ):
         tk.tree(metric_column="Avg time/rank")
 
+    # Add tuning to the index to avoid the error.
     tk.dataframe = (
         tk.dataframe.reset_index().set_index(["node", "variant", "tuning"]).sort_index()
     )
@@ -32,10 +35,10 @@ def test_indices(rajaperf_july_2023):
     tk.tree(metric_column="Avg time/rank")
 
     # No error
-    tk.tree(metric_column="Avg time/rank", indices=["Base_OpenMP", "default"])
+    tk.tree(metric_column="Avg time/rank", indices=["Base_Seq", "default"])
 
     with pytest.raises(
         KeyError,
         match=r"The indices, \{\'tuning\': \'hi\'\}, do not exist in the index \'self.dataframe.index\'",
     ):
-        tk.tree(metric_column="Avg time/rank", indices=["Base_OpenMP", "hi"])
+        tk.tree(metric_column="Avg time/rank", indices=["Base_Seq", "hi"])

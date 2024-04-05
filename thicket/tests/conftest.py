@@ -155,6 +155,19 @@ def rajaperf_seq_O3_1M_cali(data_dir, tmpdir):
 
 
 @pytest.fixture
+def rajaperf_unique_tunings(data_dir, tmpdir):
+    """1 trial of each unique tuning in the dataset"""
+    cali_files = [
+        f"{data_dir}/rajaperf/lassen/clang10.0.1_nvcc10.2.89_1048576/1/Base_CUDA-block_128.cali",
+        f"{data_dir}/rajaperf/lassen/clang10.0.1_nvcc10.2.89_1048576/1/Base_CUDA-block_256.cali",
+        f"{data_dir}/rajaperf/quartz/gcc10.3.1_1048576/O3/1/Base_Seq-default.cali",
+    ]
+    for cf in cali_files:
+        shutil.copy(cf, str(tmpdir))
+    return [os.path.join(str(tmpdir), f) for f in cali_files]
+
+
+@pytest.fixture
 def literal_thickets():
     """Returns a list of Thicket objects created from literals."""
     dag_ldict = [
@@ -231,11 +244,3 @@ def literal_thickets():
     thickets = [tk, tk2, tk3]
 
     return thickets
-
-
-@pytest.fixture
-def rajaperf_july_2023(data_dir, tmpdir):
-    cali_files = glob(f"{data_dir}/rajaperf-july-2023/**/*.cali", recursive=True)
-    for cf in cali_files:
-        shutil.copy(cf, str(tmpdir))
-    return [os.path.join(str(tmpdir), f) for f in cali_files]
