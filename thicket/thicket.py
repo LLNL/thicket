@@ -684,7 +684,7 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
-    def from_statsframes(th_list, metadata_key=None):
+    def from_statsframes(th_list, metadata_key=None, disable_tqdm=False):
         """Compose a list of Thickets with data in their statsframes.
 
         The Thicket's individual aggregated statistics tables are ensembled and become the
@@ -775,7 +775,9 @@ class Thicket(GraphFrame):
             # Append copy to list
             th_copy_list.append(th_copy)
 
-        return Thicket.concat_thickets(th_copy_list, from_statsframes=True)
+        return Thicket.concat_thickets(
+            th_copy_list, from_statsframes=True, disable_tqdm=disable_tqdm
+        )
 
     def to_json(self, ensemble=True, metadata=True, stats=True):
         jsonified_thicket = {}
