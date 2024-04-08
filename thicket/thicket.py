@@ -818,7 +818,7 @@ class Thicket(GraphFrame):
             tk_copy_list.append(tk_copy)
 
         return Thicket.concat_thickets(
-            th_copy_list, from_statsframes=True, disable_tqdm=disable_tqdm
+            tk_copy_list, from_statsframes=True, disable_tqdm=disable_tqdm
         )
 
     def to_json(self, ensemble=True, metadata=True, stats=True):
