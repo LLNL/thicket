@@ -11,7 +11,7 @@ import thicket as th
 
 
 def test_mean(rajaperf_seq_O3_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values
@@ -49,7 +49,7 @@ def test_mean_columnar_join(thicket_axis_columns):
 
 
 def test_median(rajaperf_seq_O3_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values
@@ -87,7 +87,7 @@ def test_median_columnar_join(thicket_axis_columns):
 
 
 def test_minimum(rajaperf_seq_O3_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values
@@ -125,7 +125,7 @@ def test_minimum_columnar_join(thicket_axis_columns):
 
 
 def test_maximum(rajaperf_seq_O3_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values
@@ -163,7 +163,7 @@ def test_maximum_columnar_join(thicket_axis_columns):
 
 
 def test_std(rajaperf_seq_O3_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values
@@ -201,7 +201,7 @@ def test_std_columnar_join(thicket_axis_columns):
 
 
 def test_percentiles(rajaperf_seq_O3_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values
@@ -232,7 +232,7 @@ def test_percentiles(rajaperf_seq_O3_1M_cali):
 
 
 def test_percentiles_none(rajaperf_seq_O3_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     th.stats.percentiles(th_ens, columns=["Min time/rank"], percentiles=None)
 
@@ -242,7 +242,7 @@ def test_percentiles_none(rajaperf_seq_O3_1M_cali):
 
 
 def test_percentiles_single_value(rajaperf_seq_O3_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     th.stats.percentiles(th_ens, columns=["Min time/rank"], percentiles=[0.3])
 
@@ -366,7 +366,7 @@ def test_percentiles_columnar_join(thicket_axis_columns):
 
 
 def test_variance(rajaperf_seq_O3_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values
@@ -404,7 +404,9 @@ def test_variance_columnar_join(thicket_axis_columns):
 
 
 def test_normality(rajaperf_cuda_block128_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(
+        rajaperf_cuda_block128_1M_cali, disable_tqdm=True
+    )
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values
@@ -459,7 +461,9 @@ def test_normality_columnar_join(thicket_axis_columns, stats_thicket_axis_column
 
 
 def test_correlation(rajaperf_cuda_block128_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(
+        rajaperf_cuda_block128_1M_cali, disable_tqdm=True
+    )
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values
@@ -499,7 +503,7 @@ def test_correlation_columnar_join(thicket_axis_columns):
 
 
 def test_boxplot(rajaperf_seq_O3_1M_cali):
-    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th_ens = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
         th_ens.statsframe.dataframe.index.values

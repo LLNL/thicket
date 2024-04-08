@@ -18,10 +18,10 @@ from thicket.utils import DuplicateIndexError
 
 
 def test_concat_thickets_index(mpi_scaling_cali):
-    th_27 = Thicket.from_caliperreader(mpi_scaling_cali[0])
-    th_64 = Thicket.from_caliperreader(mpi_scaling_cali[1])
+    th_27 = Thicket.from_caliperreader(mpi_scaling_cali[0], disable_tqdm=True)
+    th_64 = Thicket.from_caliperreader(mpi_scaling_cali[1], disable_tqdm=True)
 
-    tk = Thicket.concat_thickets([th_27, th_64])
+    tk = Thicket.concat_thickets([th_27, th_64], disable_tqdm=True)
 
     # Check dataframe shape
     assert tk.dataframe.shape == (90, 7)

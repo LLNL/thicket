@@ -50,16 +50,16 @@ def test_resolve_missing_indicies():
 def test_statsframe(rajaperf_seq_O3_1M_cali):
     def _test_multiindex():
         """Test statsframe when headers are multiindexed."""
-        th1 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0])
-        th2 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[1])
-        th_cj = Thicket.concat_thickets([th1, th2], axis="columns")
+        th1 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0], disable_tqdm=True)
+        th2 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[1], disable_tqdm=True)
+        th_cj = Thicket.concat_thickets([th1, th2], axis="columns", disable_tqdm=True)
 
         # Check column format
         assert ("name", "") in th_cj.statsframe.dataframe.columns
 
     _test_multiindex()
 
-    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[-1])
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[-1], disable_tqdm=True)
 
     # Arbitrary value insertion in aggregated statistics table.
     th.statsframe.dataframe["test"] = 1
@@ -81,7 +81,7 @@ def test_statsframe(rajaperf_seq_O3_1M_cali):
 
 
 def test_metadata_column_to_perfdata(mpi_scaling_cali):
-    t_ens = Thicket.from_caliperreader(mpi_scaling_cali)
+    t_ens = Thicket.from_caliperreader(mpi_scaling_cali, disable_tqdm=True)
 
     example_column = "jobsize"
     example_column_metrics = [27, 64, 125, 216, 343]
@@ -122,7 +122,9 @@ def test_thicketize_graphframe(rajaperf_seq_O3_1M_cali):
 
 
 def test_unique_metadata_base_cuda(rajaperf_cuda_block128_1M_cali):
-    t_ens = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
+    t_ens = Thicket.from_caliperreader(
+        rajaperf_cuda_block128_1M_cali, disable_tqdm=True
+    )
 
     res = t_ens.get_unique_metadata()
     assert res["systype_build"] == ["blueos_3_ppc64le_ib_p9"]

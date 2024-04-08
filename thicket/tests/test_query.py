@@ -53,7 +53,7 @@ def check_query(th, hnids, query):
 
 def test_query(rajaperf_cuda_block128_1M_cali):
     # test thicket
-    th = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
+    th = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali, disable_tqdm=True)
     # test arguments
     hnids = [0, 1, 2, 3, 4]  # 5, 6, 7 have Nones
     query = (

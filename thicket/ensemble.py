@@ -9,6 +9,7 @@ import warnings
 from hatchet import GraphFrame
 import numpy as np
 import pandas as pd
+import tqdm
 
 import thicket.helpers as helpers
 from .utils import (
@@ -23,12 +24,13 @@ class Ensemble:
     """Operations pertaining to ensembling."""
 
     @staticmethod
-    def _unify(thickets, inplace=False):
+    def _unify(thickets, inplace=False, disable_tqdm=False):
         """Create union graph from list of thickets and sync their DataFrames.
 
         Arguments:
             thickets (list): list of Thicket objects
             inplace (bool): whether to modify the original thicket objects or return new
+            disable_tqdm (bool): whether to disable tqdm progress bar
 
         Returns:
             (tuple): tuple containing:
@@ -101,10 +103,12 @@ class Ensemble:
         # Unify graphs if "self" and "other" do not have the same graph
         union_graph = _thickets[0].graph
         old_to_new = {}
-        for i in range(len(_thickets) - 1):
+        pbar = tqdm.tqdm(range(len(_thickets) - 1), disable=disable_tqdm)
+        for i in pbar:
+            pbar.set_description("(2/2) Creating Thicket")
             temp_dict = {}
             union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
-            # Update both graphs to the union graph
+            # Set all graphs to the union graph
             _thickets[i].graph = union_graph
             _thickets[i + 1].graph = union_graph
             # Merge the current old_to_new dictionary with the new mappings
@@ -121,6 +125,7 @@ class Ensemble:
         thickets,
         headers=None,
         metadata_key=None,
+        disable_tqdm=False,
     ):
         """Concatenate Thicket attributes horizontally. For DataFrames, this implies expanding
         in the column direction. New column multi-index will be created with columns
@@ -131,6 +136,7 @@ class Ensemble:
             metadata_key (str): Name of the column from the metadata tables to replace the 'profile'
                 index. If no argument is provided, it is assumed that there is no profile-wise
                 relationship between the thickets.
+            disable_tqdm (bool): whether to disable tqdm progress bar
 
         Returns:
             (Thicket): New ensembled Thicket object
@@ -342,7 +348,9 @@ class Ensemble:
         _check_structures()
 
         # Step 1: Unify the thickets. Can be inplace since we are using copies already
-        union_graph, _thickets = Ensemble._unify(thickets_cp, inplace=True)
+        union_graph, _thickets = Ensemble._unify(
+            thickets_cp, inplace=True, disable_tqdm=disable_tqdm
+        )
         combined_th.graph = union_graph
         thickets_cp = _thickets
 
@@ -361,11 +369,13 @@ class Ensemble:
         return combined_th
 
     @staticmethod
-    def _index(thickets):
+    def _index(thickets, from_statsframes=False, disable_tqdm=False):
         """Unify a list of thickets into a single thicket
 
         Arguments:
             thickets (list): list of Thicket objects
+            from_statsframes (bool): Whether this method was invoked from from_statsframes
+            disable_tqdm (bool): whether to disable tqdm progress bar
 
         Returns:
             unify_graph (hatchet.Graph): unified graph,
@@ -422,7 +432,7 @@ class Ensemble:
         unify_profile_mapping = OrderedDict()
 
         # Unification
-        unify_graph, thickets = Ensemble._unify(thickets)
+        unify_graph, thickets = Ensemble._unify(thickets, disable_tqdm=disable_tqdm)
         for th in thickets:
             # Extend metrics
             unify_inc_metrics.extend(th.inc_metrics)

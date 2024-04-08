@@ -8,12 +8,12 @@ from thicket import Thicket as th
 
 
 def test_intersection(rajaperf_cali_1trial):
-    tk = th.from_caliperreader(rajaperf_cali_1trial)
+    tk = th.from_caliperreader(rajaperf_cali_1trial, disable_tqdm=True)
 
     intersected_tk = tk.intersection()
 
     intersected_tk_other = th.from_caliperreader(
-        rajaperf_cali_1trial, intersection=True
+        rajaperf_cali_1trial, intersection=True, disable_tqdm=True
     )
 
     # Check other methodology

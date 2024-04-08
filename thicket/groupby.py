@@ -13,7 +13,7 @@ class GroupBy(dict):
         super(GroupBy, self).__init__(*args, **kwargs)
         self.by = by
 
-    def agg(self, func):
+    def agg(self, func, disable_tqdm=False):
         """Aggregate the Thickets' PerfData numerical columns in a GroupBy object.
 
         Arguments:
@@ -28,7 +28,7 @@ class GroupBy(dict):
 
         values_list = list(agg_tks.values())
         first_tk = values_list[0]  # TODO: Hack to avoid circular import.
-        agg_tk = first_tk.concat_thickets(values_list)
+        agg_tk = first_tk.concat_thickets(values_list, disable_tqdm=disable_tqdm)
 
         return agg_tk
 
