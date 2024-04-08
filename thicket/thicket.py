@@ -729,7 +729,7 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
-    def from_statsframes(th_list, metadata_key=None, disable_tqdm=False):
+    def from_statsframes(tk_list, metadata_key=None, disable_tqdm=False):
         """Compose a list of Thickets with data in their statsframes.
 
         The Thicket's individual aggregated statistics tables are ensembled and become the
