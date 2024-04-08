@@ -369,7 +369,7 @@ class Thicket(GraphFrame):
                 from_statsframes=from_statsframes,
                 disable_tqdm=disable_tqdm,
             )
-            
+
             return Thicket(
                 graph=thicket_parts[0],
                 dataframe=thicket_parts[1],
