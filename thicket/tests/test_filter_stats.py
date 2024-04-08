@@ -52,7 +52,7 @@ def check_filter_stats(th, columns_values):
 
 def test_filter_stats(rajaperf_seq_O3_1M_cali):
     # example thicket
-    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
     # columns and corresponding values to filter by
     columns_values = {
         "test_string_column": ["less than 20"],

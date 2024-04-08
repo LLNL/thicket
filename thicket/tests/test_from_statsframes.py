@@ -9,7 +9,7 @@ from thicket import Thicket as th
 def test_from_statsframes(mpi_scaling_cali):
     th_list = []
     for file in mpi_scaling_cali:
-        th_list.append(th.from_caliperreader(file))
+        th_list.append(th.from_caliperreader(file, disable_tqdm=True))
 
     # Add arbitrary value to aggregated statistics table
     t_val = 0
@@ -17,7 +17,7 @@ def test_from_statsframes(mpi_scaling_cali):
         t.statsframe.dataframe["test"] = t_val
         t_val += 2
 
-    tk = th.from_statsframes(th_list)
+    tk = th.from_statsframes(th_list, disable_tqdm=True)
 
     # Check level values
     assert set(tk.dataframe.index.get_level_values("profile")) == {
@@ -30,7 +30,9 @@ def test_from_statsframes(mpi_scaling_cali):
     # Check performance data table values
     assert set(tk.dataframe["test"]) == {0, 2, 4, 6, 8}
 
-    tk_named = th.from_statsframes(th_list, metadata_key="mpi.world.size")
+    tk_named = th.from_statsframes(
+        th_list, metadata_key="mpi.world.size", disable_tqdm=True
+    )
 
     # Check level values
     assert set(tk_named.dataframe.index.get_level_values("mpi.world.size")) == {
