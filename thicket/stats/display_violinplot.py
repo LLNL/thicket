@@ -25,7 +25,6 @@ def _column_name_mapper(current_cols):
             (current_cols) : 'current_cols' in string format
             (current_cols[0]): 'current_cols[0]' in string format
     """
-
     if current_cols[0] in ["node", "name"]:
         return current_cols[0]
 
@@ -342,7 +341,6 @@ def display_violinplot_thicket(
     Returns:
         (matplotlib Axes): Object for managing violinplot.
     """
-
     # Ensure thickets, nodes, and columns are all dictionaries
     if not isinstance(thickets, dict):
         raise ValueError("'thickets' argument must be a dictionary of thickets.")
