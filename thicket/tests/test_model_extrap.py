@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: MIT
 
+# Make flake8 ignore unused names in this file
+# flake8: noqa: F401
+
 import sys
 
 import pytest
