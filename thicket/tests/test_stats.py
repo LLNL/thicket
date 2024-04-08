@@ -3,9 +3,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-import thicket as th
-import numpy as np
 import math
+
+import numpy as np
+
+import thicket as th
 
 
 def test_mean(rajaperf_seq_O3_1M_cali):
@@ -645,7 +647,7 @@ def test_score_delta_mean_delta_stdnorm(thicket_axis_columns):
 
     idx = list(combined_th.dataframe.columns.levels[0][0:2])
     columns = [(idx[0], "Min time/rank"), (idx[1], "Min time/rank")]
-    output_column_name = "score_1"
+    output_column_name = "score_delta_mean_delta_stdnorm"
 
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values
@@ -657,7 +659,10 @@ def test_score_delta_mean_delta_stdnorm(thicket_axis_columns):
         combined_th, columns=columns, output_column_name=output_column_name
     )
 
-    assert ("Scoring", "score_1") in combined_th.statsframe.dataframe.columns
+    assert (
+        "Scoring",
+        "score_delta_mean_delta_stdnorm",
+    ) in combined_th.statsframe.dataframe.columns
 
     assert (
         idx[0],
@@ -738,7 +743,7 @@ def test_score_delta_mean_delta_coefficient_of_variation(thicket_axis_columns):
 
     idx = list(combined_th.dataframe.columns.levels[0][0:2])
     columns = [(idx[0], "Min time/rank"), (idx[1], "Min time/rank")]
-    output_column_name = "score_2"
+    output_column_name = "score_delta_mean_delta_coefficient_of_variation"
 
     assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
         combined_th.statsframe.dataframe.index.values

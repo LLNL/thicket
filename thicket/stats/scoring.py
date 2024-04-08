@@ -1,11 +1,12 @@
-import numpy as np
-from ..utils import verify_thicket_structures
 import math
+
+import numpy as np
+
 import thicket as th
+from ..utils import verify_thicket_structures
 
 
-def _scoring_1(means_1, means_2, stds_1, stds_2, num_nodes):
-
+def _calc_score_delta_mean_delta_stdnorm(means_1, means_2, stds_1, stds_2, num_nodes):
     results = []
 
     for i in range(num_nodes):
@@ -15,15 +16,15 @@ def _scoring_1(means_1, means_2, stds_1, stds_2, num_nodes):
                 (stds_1[i] - stds_2[i]) / (np.abs(means_1[i] - means_2[i]))
             )
         except RuntimeWarning:
-            print("Score 1 means's: ", means_1[i], means_2[i], i)
             result = np.nan
         results.append(result)
 
     return results
 
 
-def _scoring_2(means_1, means_2, stds_1, stds_2, num_nodes):
-
+def _calc_score_delta_mean_delta_coefficient_of_variation(
+    means_1, means_2, stds_1, stds_2, num_nodes
+):
     results = []
 
     for i in range(num_nodes):
@@ -36,8 +37,7 @@ def _scoring_2(means_1, means_2, stds_1, stds_2, num_nodes):
     return results
 
 
-def _scoring_3(means_1, means_2, stds_1, stds_2, num_nodes):
-
+def _calc_score_bhattacharyya(means_1, means_2, stds_1, stds_2, num_nodes):
     results = []
 
     for i in range(num_nodes):
@@ -54,14 +54,12 @@ def _scoring_3(means_1, means_2, stds_1, stds_2, num_nodes):
                 (means_1[i] - means_2[i]) ** 2 / (stds_1[i] ** 2 + stds_2[i] ** 2)
             )
         except ZeroDivisionError:
-            # print("Score 3 std's: ", stds_1[i], stds_2[i], i)
             result = np.nan
         results.append(result)
     return results
 
 
-def _scoring_4(means_1, means_2, stds_1, stds_2, num_nodes):
-
+def _calc_score_hellinger(means_1, means_2, stds_1, stds_2, num_nodes):
     results = []
 
     for i in range(num_nodes):
@@ -75,7 +73,6 @@ def _scoring_4(means_1, means_2, stds_1, stds_2, num_nodes):
                 / (stds_1[i] ** 2 + stds_2[i] ** 2)
             )
         except ZeroDivisionError:
-            # print("Score 4 std's: ", stds_1[i], stds_2[i], i)
             result = np.nan
         results.append(result)
     return results
@@ -181,7 +178,7 @@ def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
             \text{result} = (\mu_1[i] - \mu_2[i]) + \frac{{\left(\sigma_1[i] - \sigma_2[i]\right)}}{{\left|\mu_1[i] - \mu_2[i]\right|}}
     \]
     """
-    score(thicket, columns, output_column_name, _scoring_1)
+    score(thicket, columns, output_column_name, _calc_score_delta_mean_delta_stdnorm)
 
 
 def score_delta_mean_delta_coefficient_of_variation(
@@ -210,7 +207,12 @@ def score_delta_mean_delta_coefficient_of_variation(
 
             \text{result} = (\mu_1[i] - \mu_2[i]) + \frac{{\sigma_1[i]}}{{\mu_1[i]}} - \frac{{\sigma_2[i]}}{{\mu_2[i]}}
     """
-    score(thicket, columns, output_column_name, _scoring_2)
+    score(
+        thicket,
+        columns,
+        output_column_name,
+        _calc_score_delta_mean_delta_coefficient_of_variation,
+    )
 
 
 def score_bhattacharyya(thicket, columns, output_column_name=None):
@@ -239,7 +241,7 @@ def score_bhattacharyya(thicket, columns, output_column_name=None):
 
             \text{result} = \frac{1}{4} \cdot \log \left( \frac{1}{4} \cdot \left( \frac{{\sigma_1[i]^2}}{{\sigma_2[i]^2}} + \frac{{\sigma_2[i]^2}}{{\sigma_1[i]^2}} + 2 \right) \right) + \frac{1}{4} \cdot \left( \frac{{(\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}} \right)
     """
-    score(thicket, columns, output_column_name, _scoring_3)
+    score(thicket, columns, output_column_name, _calc_score_bhattacharyya)
 
 
 def score_hellinger(thicket, columns, output_column_name=None):
@@ -269,4 +271,4 @@ def score_hellinger(thicket, columns, output_column_name=None):
 
             \text{result} = 1 - \sqrt{\frac{{2 \sigma_1[i]\sigma_2[i]}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}} \cdot \mathrm{e}^{-\frac{1}{4}\frac{{ (\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}}
     """
-    score(thicket, columns, output_column_name, _scoring_4)
+    score(thicket, columns, output_column_name, _calc_score_hellinger)
