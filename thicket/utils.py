@@ -3,13 +3,59 @@
 #
 # SPDX-License-Identifier: MIT
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
+
+
+# Define custom errors for external checks
+class DuplicateIndexError(IndexError):
+    pass
+
+
+class DuplicateValueError(ValueError):
+    pass
+
+
+class MissingHNIDError(ValueError):
+    pass
+
+
+class InvalidNameError(ValueError):
+    pass
 
 
 def check_same_frame(n1, n2):
     if n1.frame != n2.frame:
         raise ValueError(
             f"Cannot replace the node. Frames do not match: {n1.frame} != {n2.frame}"
+        )
+
+
+def check_duplicate_metadata_key(thickets, metadata_key):
+    """Check for duplicate values in the metadata of a list of Thickets for column 'metadata_key'.
+
+    Arguments:
+        thickets (list): list of Thickets to check
+        metadata_key (str): metadata key to check for duplicates
+
+    Returns:
+        Raises an error if any duplicate metadata values are found
+    """
+    duplicates_dict = defaultdict(list)
+    for i in range(len(thickets)):
+        for j in range(i, len(thickets)):
+            if i != j:
+                m1 = set(thickets[i].metadata[metadata_key])
+                m2 = set(thickets[j].metadata[metadata_key])
+                duplicates = m1.intersection(m2)
+                if len(duplicates) > 0:
+                    duplicates_dict[(i, j)].append(duplicates)
+
+    if len(duplicates_dict) > 0:
+        err_str = ""
+        for (i, j), v in duplicates_dict.items():
+            err_str += f"thickets[{i}].metadata['{metadata_key}'] and thickets[{j}].metadata['{metadata_key}'] have the same values: {v}\n"
+        raise DuplicateValueError(
+            f"Different Thicket.metadata[metadata_key] may not contain duplicate values.\n{err_str}"
         )
 
 
@@ -22,8 +68,8 @@ def validate_dataframe(df):
             inner_idx_values = sorted(df.loc[node].index.tolist())
             inner_idx_values_set = sorted(list(set(inner_idx_values)))
             if inner_idx_values != inner_idx_values_set:
-                raise IndexError(
-                    f"The Thicket.dataframe's index has duplicate values. {inner_idx_values}"
+                raise DuplicateIndexError(
+                    f"Duplicate index {set(inner_idx_values)} found in DataFrame index."
                 )
 
     def _check_missing_hnid(df):
@@ -32,7 +78,7 @@ def validate_dataframe(df):
         set_of_nodes = set(df.index.get_level_values("node"))
         for node in set_of_nodes:
             if hash(node) != i:
-                raise ValueError(
+                raise MissingHNIDError(
                     f"The Thicket.dataframe's index is either not sorted or has a missing node. {hash(node)} ({node}) != {i}"
                 )
             i += 1
@@ -44,7 +90,7 @@ def validate_dataframe(df):
             node_name = node.frame["name"]
             for name in names:
                 if name != node_name and name is not None:
-                    raise ValueError(
+                    raise InvalidNameError(
                         f"Value in the Thicket.dataframe's 'name' column is not valid. {name} != {node_name}"
                     )
 
