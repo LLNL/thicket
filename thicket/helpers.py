@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+from more_itertools import powerset
 import pandas as pd
 
 
@@ -162,3 +163,8 @@ def _get_perf_columns(df):
     # columnar joined thicket object
     else:
         return [x for x in numeric_columns if "nid" not in x]
+
+
+def _powerset_from_tuple(tup):
+    pset = [y for y in powerset(tup)]
+    return {x[0] if len(x) == 1 else x for x in pset}

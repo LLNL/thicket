@@ -47,6 +47,7 @@ setup(
         "pandas >= 1.1",
         "llnl-hatchet",
         "tqdm",
+        "more-itertools",
     ],
     extras_require={
         "extrap": ["extrap", "matplotlib"],
