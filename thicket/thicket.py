@@ -25,7 +25,7 @@ from .utils import (
     verify_thicket_structures,
     check_duplicate_metadata_key,
     validate_profile,
-    validate_nodes
+    validate_nodes,
 )
 from .external.console import ThicketRenderer
 
