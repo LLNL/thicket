@@ -20,7 +20,11 @@ import tqdm
 from thicket.ensemble import Ensemble
 import thicket.helpers as helpers
 from .groupby import GroupBy
-from .utils import verify_thicket_structures, check_duplicate_metadata_key, validate_profile
+from .utils import (
+    verify_thicket_structures,
+    check_duplicate_metadata_key,
+    validate_profile,
+)
 from .external.console import ThicketRenderer
 
 

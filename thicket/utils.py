@@ -5,6 +5,10 @@
 
 from collections import OrderedDict, defaultdict
 
+import pandas as pd
+
+from thicket import helpers
+
 
 # Define custom errors for external checks
 class DuplicateIndexError(IndexError):
@@ -21,10 +25,6 @@ class MissingHNIDError(ValueError):
 
 class InvalidNameError(ValueError):
     pass
-
-import pandas as pd
-
-from thicket import helpers
 
 
 def check_same_frame(n1, n2):
