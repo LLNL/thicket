@@ -16,6 +16,14 @@ from .variance import variance
 from .calc_boxplot_statistics import calc_boxplot_statistics
 from .correlation_nodewise import correlation_nodewise
 from .check_normality import check_normality
+from .scoring import score_delta_mean_delta_stdnorm
+from .scoring import score_delta_mean_delta_coefficient_of_variation
+from .scoring import score_bhattacharyya
+from .scoring import score_hellinger
+from .preference import preference
+from .display_violinplot import display_violinplot_thicket
+from .display_violinplot import display_violinplot
+
 
 try:
     import seaborn as sns

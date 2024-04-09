@@ -15,11 +15,12 @@ import pandas as pd
 import numpy as np
 from hatchet import GraphFrame
 from hatchet.query import AbstractQuery, QueryMatcher
+import tqdm
 
 from thicket.ensemble import Ensemble
 import thicket.helpers as helpers
 from .groupby import GroupBy
-from .utils import verify_thicket_structures, validate_profile
+from .utils import verify_thicket_structures, check_duplicate_metadata_key, validate_profile
 from .external.console import ThicketRenderer
 
 
@@ -183,7 +184,9 @@ class Thicket(GraphFrame):
         return th
 
     @staticmethod
-    def from_caliper(filename_or_stream, query=None, intersection=False):
+    def from_caliper(
+        filename_or_stream, query=None, intersection=False, disable_tqdm=False
+    ):
         """Read in a Caliper .cali or .json file.
 
         Arguments:
@@ -191,38 +194,50 @@ class Thicket(GraphFrame):
                 `.cali` or JSON-split format, or an open file object to read one
             query (str): cali-query in CalQL format
             intersection (bool): whether to perform intersection or union (default)
+            disable_tqdm (bool): whether to display tqdm progress bar
         """
         return Thicket.reader_dispatch(
-            GraphFrame.from_caliper, intersection, filename_or_stream, query
+            GraphFrame.from_caliper,
+            intersection,
+            disable_tqdm,
+            filename_or_stream,
+            query,
         )
 
     @staticmethod
-    def from_hpctoolkit(dirname, intersection=False):
+    def from_hpctoolkit(dirname, intersection=False, disable_tqdm=False):
         """Create a GraphFrame using hatchet's HPCToolkit reader and use its attributes
         to make a new thicket.
 
         Arguments:
             dirname (str): parent directory of an HPCToolkit experiment.xml file
             intersection (bool): whether to perform intersection or union (default)
+            disable_tqdm (bool): whether to display tqdm progress bar
 
         Returns:
             (thicket): new thicket containing HPCToolkit profile data
         """
         return Thicket.reader_dispatch(
-            GraphFrame.from_hpctoolkit, intersection, dirname
+            GraphFrame.from_hpctoolkit, intersection, disable_tqdm, dirname
         )
 
     @staticmethod
-    def from_caliperreader(filename_or_caliperreader, intersection=False):
+    def from_caliperreader(
+        filename_or_caliperreader, intersection=False, disable_tqdm=False
+    ):
         """Helper function to read one caliper file.
 
         Arguments:
             filename_or_caliperreader (str or CaliperReader): name of a Caliper output
                 file in `.cali` format, or a CaliperReader object
             intersection (bool): whether to perform intersection or union (default)
+            disable_tqdm (bool): whether to display tqdm progress bar
         """
         return Thicket.reader_dispatch(
-            GraphFrame.from_caliperreader, intersection, filename_or_caliperreader
+            GraphFrame.from_caliperreader,
+            intersection,
+            disable_tqdm,
+            filename_or_caliperreader,
         )
 
     @staticmethod
@@ -262,12 +277,13 @@ class Thicket(GraphFrame):
         return tk
 
     @staticmethod
-    def reader_dispatch(func, intersection=False, *args, **kwargs):
+    def reader_dispatch(func, intersection, disable_tqdm, *args, **kwargs):
         """Create a thicket from a list, directory of files, or a single file.
 
         Arguments:
             func (function): reader function to be used
             intersection (bool): whether to perform intersection or union (default).
+            tdmq_output (bool): whether to display tqdm progress bar
             args (list): list of args; args[0] should be an object that can be read from
         """
         ens_list = []
@@ -275,11 +291,14 @@ class Thicket(GraphFrame):
         extra_args = []
         if len(args) > 1:
             extra_args = args[1:]
+        pbar_desc = "(1/2) Reading Files"
 
         # Parse the input object
         # if a list of files
         if isinstance(obj, (list, tuple)):
-            for file in obj:
+            pbar = tqdm.tqdm(obj, disable=disable_tqdm)
+            for file in pbar:
+                pbar.set_description(pbar_desc)
                 ens_list.append(
                     Thicket.thicketize_graphframe(
                         func(file, *extra_args, **kwargs), file
@@ -287,7 +306,9 @@ class Thicket(GraphFrame):
                 )
         # if directory of files
         elif os.path.isdir(obj):
-            for file in os.listdir(obj):
+            pbar = tqdm.tqdm(os.listdir(obj), disable=disable_tqdm)
+            for file in pbar:
+                pbar.set_description(pbar_desc)
                 f = os.path.join(obj, file)
                 ens_list.append(
                     Thicket.thicketize_graphframe(func(f, *extra_args, **kwargs), f)
@@ -314,12 +335,15 @@ class Thicket(GraphFrame):
             thickets=ens_list,
             axis="index",
             calltree=calltree,
+            disable_tqdm=disable_tqdm,
         )
 
         return thicket_object
 
     @staticmethod
-    def concat_thickets(thickets, axis="index", calltree="union", **kwargs):
+    def concat_thickets(
+        thickets, axis="index", calltree="union", disable_tqdm=False, **kwargs
+    ):
         """Concatenate thickets together on index or columns.
 
         The calltree can either be unioned or intersected which will affect the other structures.
@@ -328,9 +352,6 @@ class Thicket(GraphFrame):
             thickets (list): list of thicket objects
             axis (str): axis to concatenate on -> "index" or "column"
             calltree (str): calltree to use -> "union" or "intersection"
-
-        Keyword Arguments:
-            from_statsframes (bool): (if axis="index") Whether this method was invoked from from_statsframes
 
         Keyword Arguments:
             headers (list): (if axis="columns") List of headers to use for the new columnar multi-index
@@ -342,9 +363,11 @@ class Thicket(GraphFrame):
             (thicket): concatenated thicket
         """
 
-        def _index(thickets, from_statsframes=False):
+        def _index(thickets, from_statsframes=False, disable_tqdm=disable_tqdm):
             thicket_parts = Ensemble._index(
-                thickets=thickets, from_statsframes=from_statsframes
+                thickets=thickets,
+                from_statsframes=from_statsframes,
+                disable_tqdm=disable_tqdm,
             )
 
             return Thicket(
@@ -357,9 +380,14 @@ class Thicket(GraphFrame):
                 profile_mapping=thicket_parts[6],
             )
 
-        def _columns(thickets, headers=None, metadata_key=None):
+        def _columns(
+            thickets, headers=None, metadata_key=None, disable_tqdm=disable_tqdm
+        ):
             combined_thicket = Ensemble._columns(
-                thickets=thickets, headers=headers, metadata_key=metadata_key
+                thickets=thickets,
+                headers=headers,
+                metadata_key=metadata_key,
+                disable_tqdm=disable_tqdm,
             )
 
             return combined_thicket
@@ -592,6 +620,7 @@ class Thicket(GraphFrame):
         render_header=True,
         min_value=None,
         max_value=None,
+        indices=None,
     ):
         """Visualize the Thicket as a tree
 
@@ -612,6 +641,7 @@ class Thicket(GraphFrame):
             render_header (bool, optional): Shows the Preamble. Defaults to True.
             min_value (int, optional): Overwrites the min value for the coloring legend. Defaults to None.
             max_value (int, optional): Overwrites the max value for the coloring legend. Defaults to None.
+            indices(tuple, list, optional): Index/indices to display on the DataFrame. Defaults to None.
 
         Returns:
             (str): String representation of the tree, ready to print
@@ -637,9 +667,54 @@ class Thicket(GraphFrame):
         elif sys.version_info.major == 3:
             unicode = True
 
+        if indices is None:
+            # Create slice out of first values found starting after the first index.
+            indices = self.dataframe.index[0][1:]
+        elif isinstance(indices, tuple):
+            pass
+        elif isinstance(indices, list):  # Convert list to tuple
+            indices = tuple(indices)
+        else:  # Support for non-iterable types (int, str, ...)
+            try:
+                indices = tuple([indices])
+            except TypeError:
+                raise TypeError(
+                    f"Value provided to 'indices' = {indices} is an unsupported type {type(indices)}"
+                )
+        # For tree legend
+        idx_dict = {
+            self.dataframe.index.names[k + 1]: indices[k] for k in range(len(indices))
+        }
+        # Slices the DataFrame to simulate a single-level index
+        try:
+            slice_df = (
+                self.dataframe.loc[(slice(None),) + indices, :]
+                .reset_index()
+                .set_index("node")
+            )
+        except KeyError:
+            missing_indices = {
+                list(idx_dict.keys())[i]: idx
+                for i, idx in enumerate(indices)
+                if all(idx not in df_idx[1:] for df_idx in self.dataframe.index)
+            }
+            raise KeyError(
+                f"The indices, {missing_indices}, do not exist in the index 'self.dataframe.index'"
+            )
+        # Check for compatibility
+        if len(slice_df) != len(self.graph):
+            raise KeyError(
+                f"Either dataframe cannot be represented as a single index or provided slice, '{indices}' results in a multi-index. See self.dataframe.loc[(slice(None),)+{indices},{metric_column}]"
+            )
+
+        # Prep DataFrame by filling None rows in the "name" column with the node's name.
+        slice_df["name"] = [
+            n.frame["name"] for n in slice_df.index.get_level_values("node")
+        ]
+
         return ThicketRenderer(unicode=unicode, color=color).render(
             self.graph.roots,
-            self.statsframe.dataframe,
+            slice_df,
             metric_column=metric_column,
             annotation_column=annotation_column,
             precision=precision,
@@ -656,17 +731,18 @@ class Thicket(GraphFrame):
             render_header=render_header,
             min_value=min_value,
             max_value=max_value,
+            indices=idx_dict,
         )
 
     @staticmethod
-    def from_statsframes(th_list, metadata_key=None):
+    def from_statsframes(tk_list, metadata_key=None, disable_tqdm=False):
         """Compose a list of Thickets with data in their statsframes.
 
         The Thicket's individual aggregated statistics tables are ensembled and become the
-        new Thickets performance data table.
+        new Thickets performance data table. This also results in aggregation of the metadata.
 
         Arguments:
-            th_list (list): list of thickets
+            tk_list (list): list of thickets
             metadata_key (str, optional): name of the metadata column to use as
                 the new second-level index. Uses the first value so this only makes
                 sense if provided column is all equal values and each thicket's columns
@@ -676,59 +752,56 @@ class Thicket(GraphFrame):
             (thicket): New Thicket object.
         """
         # Pre-check of data structures
-        for th in th_list:
+        for tk in tk_list:
             verify_thicket_structures(
-                th.dataframe, index=["node", "profile"]
+                tk.dataframe, index=["node", "profile"]
             )  # Required for deepcopy operation
             verify_thicket_structures(
-                th.statsframe.dataframe, index=["node"]
+                tk.statsframe.dataframe, index=["node"]
             )  # Required for deepcopy operation
 
         # Setup names list
-        th_names = []
+        tk_names = []
         if metadata_key is None:
-            for i in range(len(th_list)):
-                th_names.append(i)
+            idx_name = "profile"  # Set index name to general "profile"
+            for i in range(len(tk_list)):
+                tk_names.append(i)
         else:  # metadata_key was provided.
-            for th in th_list:
+            check_duplicate_metadata_key(tk_list, metadata_key)
+            idx_name = metadata_key  # Set index name to metadata_key
+            for tk in tk_list:
                 # Get name from metadata table
-                name_list = th.metadata[metadata_key].tolist()
+                name_list = tk.metadata[metadata_key].tolist()
 
-                if len(name_list) > 1:
+                if len(set(name_list)) > 1:
                     warnings.warn(
-                        f"Multiple values for name {name_list} at thicket.metadata[{metadata_key}]. Only the first will be used."
+                        f"Multiple values for name {name_list} at thicket.metadata['{metadata_key}']. Only the first value will be used for the new DataFrame index."
                     )
-                th_names.append(name_list[0])
+                tk_names.append(name_list[0])
 
-        th_copy_list = []
-        for i in range(len(th_list)):
-            th_copy = th_list[i].deepcopy()
+        tk_copy_list = []
+        for i in range(len(tk_list)):
+            tk_copy = tk_list[i].deepcopy()
 
-            th_id = th_names[i]
+            tk_id = tk_names[i]
 
-            if metadata_key is None:
-                idx_name = "profile"
-            else:
-                idx_name = metadata_key
-
-            # Modify graph
-            # Necessary so node ids match up
-            th_copy.graph = th_copy.statsframe.graph
+            # Modify graph. Necessary so node ids match up
+            tk_copy.graph = tk_copy.statsframe.graph
 
             # Modify the performance data table
-            df = th_copy.statsframe.dataframe
-            df[idx_name] = th_id
+            df = tk_copy.statsframe.dataframe
+            df[idx_name] = tk_id
             df.set_index(idx_name, inplace=True, append=True)
-            th_copy.dataframe = df
+            tk_copy.dataframe = df
 
             # Adjust profile and profile_mapping
-            th_copy.profile = [th_id]
-            profile_paths = list(th_copy.profile_mapping.values())
-            th_copy.profile_mapping = OrderedDict({th_id: profile_paths})
+            tk_copy.profile = [tk_id]
+            profile_paths = list(tk_copy.profile_mapping.values())
+            tk_copy.profile_mapping = OrderedDict({tk_id: profile_paths})
 
             # Modify metadata dataframe
-            th_copy.metadata[idx_name] = th_id
-            th_copy.metadata.set_index(idx_name, inplace=True)
+            tk_copy.metadata[idx_name] = tk_id
+            tk_copy.metadata.set_index(idx_name, inplace=True)
 
             def _agg_to_set(obj):
                 """Aggregate values in 'obj' into a set to remove duplicates."""
@@ -745,12 +818,14 @@ class Thicket(GraphFrame):
                         return _set
 
             # Execute aggregation
-            th_copy.metadata = th_copy.metadata.groupby(idx_name).agg(_agg_to_set)
+            tk_copy.metadata = tk_copy.metadata.groupby(idx_name).agg(_agg_to_set)
 
             # Append copy to list
-            th_copy_list.append(th_copy)
+            tk_copy_list.append(tk_copy)
 
-        return Thicket.concat_thickets(th_copy_list, from_statsframes=True)
+        return Thicket.concat_thickets(
+            tk_copy_list, from_statsframes=True, disable_tqdm=disable_tqdm
+        )
 
     def to_json(self, ensemble=True, metadata=True, stats=True):
         jsonified_thicket = {}

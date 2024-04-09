@@ -4,10 +4,12 @@
 # SPDX-License-Identifier: MIT
 
 from collections import OrderedDict
+import warnings
 
 from hatchet import GraphFrame
 import numpy as np
 import pandas as pd
+import tqdm
 
 import thicket.helpers as helpers
 from .utils import (
@@ -22,12 +24,13 @@ class Ensemble:
     """Operations pertaining to ensembling."""
 
     @staticmethod
-    def _unify(thickets, inplace=False):
+    def _unify(thickets, inplace=False, disable_tqdm=False):
         """Create union graph from list of thickets and sync their DataFrames.
 
         Arguments:
             thickets (list): list of Thicket objects
             inplace (bool): whether to modify the original thicket objects or return new
+            disable_tqdm (bool): whether to disable tqdm progress bar
 
         Returns:
             (tuple): tuple containing:
@@ -100,10 +103,12 @@ class Ensemble:
         # Unify graphs if "self" and "other" do not have the same graph
         union_graph = _thickets[0].graph
         old_to_new = {}
-        for i in range(len(_thickets) - 1):
+        pbar = tqdm.tqdm(range(len(_thickets) - 1), disable=disable_tqdm)
+        for i in pbar:
+            pbar.set_description("(2/2) Creating Thicket")
             temp_dict = {}
             union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
-            # Update both graphs to the union graph
+            # Set all graphs to the union graph
             _thickets[i].graph = union_graph
             _thickets[i + 1].graph = union_graph
             # Merge the current old_to_new dictionary with the new mappings
@@ -120,6 +125,7 @@ class Ensemble:
         thickets,
         headers=None,
         metadata_key=None,
+        disable_tqdm=False,
     ):
         """Concatenate Thicket attributes horizontally. For DataFrames, this implies expanding
         in the column direction. New column multi-index will be created with columns
@@ -130,6 +136,7 @@ class Ensemble:
             metadata_key (str): Name of the column from the metadata tables to replace the 'profile'
                 index. If no argument is provided, it is assumed that there is no profile-wise
                 relationship between the thickets.
+            disable_tqdm (bool): whether to disable tqdm progress bar
 
         Returns:
             (Thicket): New ensembled Thicket object
@@ -341,7 +348,9 @@ class Ensemble:
         _check_structures()
 
         # Step 1: Unify the thickets. Can be inplace since we are using copies already
-        union_graph, _thickets = Ensemble._unify(thickets_cp, inplace=True)
+        union_graph, _thickets = Ensemble._unify(
+            thickets_cp, inplace=True, disable_tqdm=disable_tqdm
+        )
         combined_th.graph = union_graph
         thickets_cp = _thickets
 
@@ -360,11 +369,13 @@ class Ensemble:
         return combined_th
 
     @staticmethod
-    def _index(thickets, from_statsframes=False):
+    def _index(thickets, from_statsframes=False, disable_tqdm=False):
         """Unify a list of thickets into a single thicket
 
         Arguments:
+            thickets (list): list of Thicket objects
             from_statsframes (bool): Whether this method was invoked from from_statsframes
+            disable_tqdm (bool): whether to disable tqdm progress bar
 
         Returns:
             unify_graph (hatchet.Graph): unified graph,
@@ -376,17 +387,37 @@ class Ensemble:
             unify_profile_mapping (dict): profile mapping
         """
 
-        def _fill_perfdata(perfdata, fill_value=np.nan):
-            # Fill missing rows in dataframe with NaN's
-            perfdata = perfdata.reindex(
-                pd.MultiIndex.from_product(perfdata.index.levels), fill_value=fill_value
-            )
-            # Replace "NaN" with "None" in columns of string type
-            for col in perfdata.columns:
-                if pd.api.types.is_string_dtype(perfdata[col].dtype):
-                    perfdata[col].replace({fill_value: None}, inplace=True)
+        def _fill_perfdata(df, numerical_fill_value=np.nan):
+            """Create full index for DataFrame and fill created rows with NaN's or None's where applicable.
 
-            return perfdata
+            Arguments:
+                df (DataFrame): DataFrame to fill missing rows in
+                numerical_fill_value (any): value to fill numerical rows with
+
+            Returns:
+                (DataFrame): filled DataFrame
+            """
+            try:
+                # Fill missing rows in dataframe with NaN's
+                df = df.reindex(
+                    pd.MultiIndex.from_product(df.index.levels),
+                    fill_value=numerical_fill_value,
+                )
+                # Replace "NaN" with "None" in columns of string type
+                for col in df.columns:
+                    if pd.api.types.is_string_dtype(df[col].dtype):
+                        df[col].replace({numerical_fill_value: None}, inplace=True)
+            except ValueError as e:
+                estr = str(e)
+                if estr == "cannot handle a non-unique multi-index!":
+                    warnings.warn(
+                        "Non-unique multi-index for DataFrame in _fill_perfdata. Cannot Fill missing rows.",
+                        RuntimeWarning,
+                    )
+                else:
+                    raise
+
+            return df
 
         # Add missing indicies to thickets
         helpers._resolve_missing_indicies(thickets)
@@ -401,7 +432,7 @@ class Ensemble:
         unify_profile_mapping = OrderedDict()
 
         # Unification
-        unify_graph, thickets = Ensemble._unify(thickets)
+        unify_graph, thickets = Ensemble._unify(thickets, disable_tqdm=disable_tqdm)
         for th in thickets:
             # Extend metrics
             unify_inc_metrics.extend(th.inc_metrics)
@@ -421,6 +452,9 @@ class Ensemble:
         # Sort by keys
         unify_profile_mapping = OrderedDict(sorted(unify_profile_mapping.items()))
 
+        # Validate unify_df before next operation
+        validate_dataframe(unify_df)
+
         # Insert missing rows in dataframe
         unify_df = _fill_perfdata(unify_df)
 
@@ -432,9 +466,6 @@ class Ensemble:
         # Remove duplicates in metrics
         unify_inc_metrics = list(set(unify_inc_metrics))
         unify_exc_metrics = list(set(unify_exc_metrics))
-
-        # Validate unify_df
-        validate_dataframe(unify_df)
 
         unify_parts = (
             unify_graph,

@@ -7,29 +7,34 @@ import re
 
 import hatchet as ht
 import pandas as pd
+import pytest
 
 from test_filter_metadata import filter_one_column
 from test_filter_metadata import filter_multiple_and
 from test_filter_stats import check_filter_stats
 from test_query import check_query
 from thicket import Thicket
+from thicket.utils import DuplicateIndexError
 
 
 def test_concat_thickets_index(mpi_scaling_cali):
-    th_27 = Thicket.from_caliperreader(mpi_scaling_cali[0])
-    th_64 = Thicket.from_caliperreader(mpi_scaling_cali[1])
+    th_27 = Thicket.from_caliperreader(mpi_scaling_cali[0], disable_tqdm=True)
+    th_64 = Thicket.from_caliperreader(mpi_scaling_cali[1], disable_tqdm=True)
 
-    tk = Thicket.concat_thickets([th_27, th_64])
+    tk = Thicket.concat_thickets([th_27, th_64], disable_tqdm=True)
 
     # Check dataframe shape
-    tk.dataframe.shape == (90, 7)
-
-    # Check that the two Thickets are equivalent
-    assert tk
+    assert tk.dataframe.shape == (90, 7)
 
     # Check specific values. Row order can vary so use "sum" to check
     node = tk.dataframe.index.get_level_values("node")[8]
     assert sum(tk.dataframe.loc[node, "Min time/rank"]) == 0.000453
+
+    # Check error thrown
+    with pytest.raises(
+        DuplicateIndexError,
+    ):
+        Thicket.from_caliperreader([mpi_scaling_cali[0], mpi_scaling_cali[0]])
 
 
 def test_concat_thickets_columns(thicket_axis_columns):

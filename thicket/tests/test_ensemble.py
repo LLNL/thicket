@@ -9,7 +9,7 @@ from thicket import Ensemble
 def test_unify(literal_thickets):
     tk, tk2, tk3 = literal_thickets
 
-    union_graph, _thickets = Ensemble._unify([tk, tk2, tk3])
+    union_graph, _thickets = Ensemble._unify([tk, tk2, tk3], disable_tqdm=True)
 
     ug_hashes = [0, 1, 2, 3, 4, 5, 6]
     tk_hashes = [

@@ -41,7 +41,7 @@ If you are new to thicket and want to start using it, see :doc:`Getting Started
    :caption: User Docs
 
    getting_started
-   thicket_structures
+   user_guide
    generating_data
 
 If you encounter bugs while using thicket, you can report them by opening an issue on

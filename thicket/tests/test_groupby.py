@@ -82,7 +82,7 @@ def check_groupby(th, columns_values):
 
 
 def test_aggregate(rajaperf_cuda_block128_1M_cali):
-    tk = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali)
+    tk = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali, disable_tqdm=True)
     gb = tk.groupby("spot.format.version")
 
     epsilon = 0.000001
@@ -111,15 +111,18 @@ def test_aggregate(rajaperf_cuda_block128_1M_cali):
             < epsilon
         )
 
-    tk_agg = gb.agg(func={"Min time/rank": [np.mean, np.var], "Total time": np.mean})
+    tk_agg = gb.agg(
+        func={"Min time/rank": [np.mean, np.var], "Total time": np.mean},
+        disable_tqdm=True,
+    )
     _check_values(tk_agg)
-    tk_agg = gb.agg(func=[np.mean, np.var])
+    tk_agg = gb.agg(func=[np.mean, np.var], disable_tqdm=True)
     _check_values(tk_agg)
 
 
 def test_groupby(rajaperf_seq_O3_1M_cali):
     # example thicket
-    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
     # use cases for string, numeric, and single value columns
     columns_values = ["user", "launchdate", "cali.channel"]
 
@@ -129,7 +132,7 @@ def test_groupby(rajaperf_seq_O3_1M_cali):
 def test_groupby_concat_thickets_columns(rajaperf_seq_O3_1M_cali):
     """Tests case where the Sub-Thickets of a groupby are used in a columnar join"""
     # example thicket
-    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     # Creates four Sub-Thickets
     column = "unique_col"
@@ -149,6 +152,7 @@ def test_groupby_concat_thickets_columns(rajaperf_seq_O3_1M_cali):
         thickets=thickets,
         axis="columns",
         metadata_key=selected_column,
+        disable_tqdm=True,
     )
 
     test_concat_thickets_columns((thickets, thickets_cp, combined_th))
@@ -157,7 +161,7 @@ def test_groupby_concat_thickets_columns(rajaperf_seq_O3_1M_cali):
 def test_groupby_concat_thickets_columns_subthickets(rajaperf_seq_O3_1M_cali):
     """Tests case where some specific Sub-Thickets of a groupby are used in a columnar join"""
     # example thicket
-    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali)
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
 
     # Creates four Sub-Thickets
     column = "unique_col"
@@ -180,6 +184,7 @@ def test_groupby_concat_thickets_columns_subthickets(rajaperf_seq_O3_1M_cali):
         thickets=thickets,
         axis="columns",
         metadata_key=selected_column,
+        disable_tqdm=True,
     )
 
     test_concat_thickets_columns((thickets, thickets_cp, combined_th))

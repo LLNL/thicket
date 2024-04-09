@@ -24,7 +24,7 @@ def thicket_axis_columns(rajaperf_cali_1trial):
         list: List of original thickets, list of deepcopies of original thickets, and
             column-joined thicket.
     """
-    tk = Thicket.from_caliperreader(rajaperf_cali_1trial)
+    tk = Thicket.from_caliperreader(rajaperf_cali_1trial, disable_tqdm=True)
 
     gb = tk.groupby("tuning")
 
@@ -38,6 +38,7 @@ def thicket_axis_columns(rajaperf_cali_1trial):
         axis="columns",
         headers=headers,
         metadata_key="ProblemSizeRunParam",
+        disable_tqdm=True,
     )
 
     return thickets, thickets_cp, combined_th
@@ -54,8 +55,12 @@ def stats_thicket_axis_columns(rajaperf_cuda_block128_1M_cali):
         list: List of original thickets, list of deepcopies of original thickets, and
             column-joined thicket.
     """
-    th_cuda128_1 = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali[0:4])
-    th_cuda128_2 = Thicket.from_caliperreader(rajaperf_cuda_block128_1M_cali[5:9])
+    th_cuda128_1 = Thicket.from_caliperreader(
+        rajaperf_cuda_block128_1M_cali[0:4], disable_tqdm=True
+    )
+    th_cuda128_2 = Thicket.from_caliperreader(
+        rajaperf_cuda_block128_1M_cali[5:9], disable_tqdm=True
+    )
 
     # To check later if modifications were unexpectedly made
     th_cuda128_1_deep = th_cuda128_1.deepcopy()
@@ -67,6 +72,7 @@ def stats_thicket_axis_columns(rajaperf_cuda_block128_1M_cali):
         thickets=thickets,
         axis="columns",
         headers=["Cuda 1", "Cuda 2"],
+        disable_tqdm=True,
     )
 
     return thickets, thickets_cp, combined_th
@@ -149,6 +155,19 @@ def rajaperf_seq_O3_1M_cali(data_dir, tmpdir):
             recursive=True,
         )
     )
+    for cf in cali_files:
+        shutil.copy(cf, str(tmpdir))
+    return [os.path.join(str(tmpdir), f) for f in cali_files]
+
+
+@pytest.fixture
+def rajaperf_unique_tunings(data_dir, tmpdir):
+    """1 trial of each unique tuning in the dataset"""
+    cali_files = [
+        f"{data_dir}/rajaperf/lassen/clang10.0.1_nvcc10.2.89_1048576/1/Base_CUDA-block_128.cali",
+        f"{data_dir}/rajaperf/lassen/clang10.0.1_nvcc10.2.89_1048576/1/Base_CUDA-block_256.cali",
+        f"{data_dir}/rajaperf/quartz/gcc10.3.1_1048576/O3/1/Base_Seq-default.cali",
+    ]
     for cf in cali_files:
         shutil.copy(cf, str(tmpdir))
     return [os.path.join(str(tmpdir), f) for f in cali_files]
