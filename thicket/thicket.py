@@ -8,12 +8,13 @@ import os
 import sys
 import json
 import warnings
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from hashlib import md5
 
 import pandas as pd
 import numpy as np
 from hatchet import GraphFrame
+from hatchet.graph import Graph
 from hatchet.query import AbstractQuery, QueryMatcher
 import tqdm
 
@@ -24,6 +25,7 @@ from .utils import (
     verify_thicket_structures,
     check_duplicate_metadata_key,
     validate_profile,
+    validate_nodes,
 )
 from .external.console import ThicketRenderer
 
@@ -498,7 +500,7 @@ class Thicket(GraphFrame):
         if drop:
             self.metadata.drop(metadata_key, axis=1, inplace=True)
 
-    def squash(self, update_inc_cols=True):
+    def squash(self, update_inc_cols=True, new_statsframe=True):
         """Rewrite the Graph to include only nodes present in the performance
         data table's rows.
 
@@ -507,31 +509,125 @@ class Thicket(GraphFrame):
 
         Arguments:
             update_inc_cols (boolean, optional): if True, update inclusive columns.
+            new_statsframe (boolean, optional): if True, create a new statsframe from the new dataframe. Only set to False if the statsframe nodes equal the dataframe nodes.
 
         Returns:
             (thicket): a newly squashed Thicket object
         """
-        squashed_gf = GraphFrame.squash(self, update_inc_cols=update_inc_cols)
-        new_graph = squashed_gf.graph
-        # The following code updates the performance data and the aggregated statistics
-        # table with the remaining (re-indexed) nodes. The dataframe is internally
-        # updated in squash(), so we can easily just save it to our thicket performance
-        # data. For the aggregated statistics table, we'll have to come up with a better
-        # way eventually, but for now, we'll just create a new aggregated statistics
-        # table the same way we do when we create a new thicket.
-        new_dataframe = squashed_gf.dataframe
+
+        #####
+        # Hatchet's squash code
+        #####
+        index_names = self.dataframe.index.names
+        self.dataframe.reset_index(inplace=True)
+
+        # create new nodes for each unique node in the old dataframe
+        old_to_new = {n: n.copy() for n in set(self.dataframe["node"])}
+        for i in old_to_new:
+            old_to_new[i]._hatchet_nid = i._hatchet_nid
+
+        # Maintain sets of connections to make for each old node.
+        # Start with old -> new mapping and update as we traverse subgraphs.
+        connections = defaultdict(lambda: set())
+        connections.update({k: {v} for k, v in old_to_new.items()})
+
+        new_roots = []  # list of new roots
+
+        # connect new nodes to children according to transitive
+        # relationships in the old graph.
+        def rewire(node, new_parent, visited):
+            # make all transitive connections for the node we're visiting
+            for n in connections[node]:
+                if new_parent:
+                    # there is a parent in the new graph; connect it
+                    if n not in new_parent.children:
+                        new_parent.add_child(n)
+                        n.add_parent(new_parent)
+
+                elif n not in new_roots:
+                    # this is a new root
+                    new_roots.append(n)
+
+            new_node = old_to_new.get(node)
+            transitive = set()
+            if node not in visited:
+                visited.add(node)
+                for child in node.children:
+                    transitive |= rewire(child, new_node or new_parent, visited)
+
+            if new_node:
+                # since new_node exists in the squashed graph, we only
+                # need to connect new_node
+                return {new_node}
+            else:
+                # connect parents to the first transitively reachable
+                # new_nodes of nodes we're removing with this squash
+                connections[node] |= transitive
+                return connections[node]
+
+        # run rewire for each root and make a new graph
+        visited = set()
+        for root in self.graph.roots:
+            rewire(root, None, visited)
+        graph = Graph(new_roots)
+        if self.graph.node_ordering:
+            graph.node_ordering = True
+        graph.enumerate_traverse()
+
+        # reindex new dataframe with new nodes
+        df = self.dataframe.copy()
+        df["node"] = df["node"].apply(lambda x: old_to_new[x])
+
+        # at this point, the graph is potentially invalid, as some nodes
+        # may have children with identical frames.
+        merges = graph.normalize()
+        df["node"] = df["node"].apply(lambda n: merges.get(n, n))
+
+        self.dataframe.set_index(index_names, inplace=True)
+        df.set_index(index_names, inplace=True)
+        # create dict that stores aggregation function for each column
+        agg_dict = {}
+        for col in df.columns.tolist():
+            if col in self.exc_metrics + self.inc_metrics:
+                # use min_count=1 (default is 0) here, so sum of an all-NA
+                # series is NaN, not 0
+                # when min_count=1, sum([NaN, NaN)] = NaN
+                # when min_count=0, sum([NaN, NaN)] = 0
+                agg_dict[col] = lambda x: x.sum(min_count=1)
+            else:
+                agg_dict[col] = lambda x: x.iloc[0]
+
+        # perform a groupby to merge nodes with the same callpath
+        agg_df = df.groupby(index_names).agg(agg_dict)
+        agg_df.sort_index(inplace=True)
+
+        #####
+        # Thicket's squash code
+        #####
         multiindex = False
         if isinstance(self.statsframe.dataframe.columns, pd.MultiIndex):
             multiindex = True
-        stats_df = helpers._new_statsframe_df(new_dataframe, multiindex=multiindex)
-        sframe = GraphFrame(
-            graph=new_graph,
-            dataframe=stats_df,
-        )
+
+        if new_statsframe:
+            stats_df = helpers._new_statsframe_df(agg_df, multiindex=multiindex)
+            sframe = GraphFrame(
+                graph=graph,
+                dataframe=stats_df,
+            )
+        else:
+            # Update the node objects in the old statsframe.
+            sframe = self.statsframe
+            sframe.dataframe = sframe.dataframe.reset_index()
+            replace_dict = {}
+            for node in sframe.dataframe["node"]:
+                if node in old_to_new:
+                    replace_dict[node] = old_to_new[node]
+            sframe.dataframe["node"] = sframe.dataframe["node"].replace(replace_dict)
+            sframe.dataframe = sframe.dataframe.set_index("node")
 
         new_tk = Thicket(
-            new_graph,
-            new_dataframe,
+            graph,
+            agg_df,
             exc_metrics=self.exc_metrics,
             inc_metrics=self.inc_metrics,
             default_metric=self.default_metric,
@@ -541,8 +637,12 @@ class Thicket(GraphFrame):
             statsframe=sframe,
         )
 
+        if update_inc_cols:
+            new_tk.update_inclusive_columns()
+
         new_tk._sync_profile_components(new_tk.dataframe)
         validate_profile(new_tk)
+        validate_nodes(new_tk)
 
         return new_tk
 
@@ -1066,7 +1166,7 @@ class Thicket(GraphFrame):
         # copy thicket
         new_thicket = self.copy()
 
-        # filter aggregated statistics table based on greater than restriction
+        # filter aggregated statistics table
         filtered_rows = new_thicket.statsframe.dataframe.apply(filter_function, axis=1)
         new_thicket.statsframe.dataframe = new_thicket.statsframe.dataframe[
             filtered_rows
@@ -1079,10 +1179,7 @@ class Thicket(GraphFrame):
         ]
 
         # filter nodes in the graphframe based on the dataframe nodes
-        # TODO see if the new Thicket.squash function will work here
-        filtered_graphframe = GraphFrame.squash(new_thicket)
-        new_thicket.graph = filtered_graphframe.graph
-        new_thicket.statsframe.graph = filtered_graphframe.graph
+        new_thicket = new_thicket.squash(new_statsframe=False)
 
         return new_thicket
 
