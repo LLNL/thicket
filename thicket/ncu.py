@@ -110,7 +110,9 @@ class NCUReader:
                 }
 
                 # Query action in range
-                for action in tqdm(range):
+                pbar = tqdm(range)
+                for i, action in enumerate(pbar):
+                    pbar.set_description(f"Processing action {i}/{len(range)}")
                     # Name of kernel
                     kernel_name = action.name()
                     # Get NCU-side kernel trace
