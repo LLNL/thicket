@@ -43,6 +43,7 @@ If you are new to thicket and want to start using it, see :doc:`Getting Started
    getting_started
    user_guide
    generating_data
+   examples
 
 If you encounter bugs while using thicket, you can report them by opening an issue on
 `GitHub <http://github.com/llnl/thicket/issues>`_.
