@@ -16,7 +16,13 @@ import numpy as np
 from hatchet import GraphFrame
 from hatchet.graph import Graph
 from hatchet.query import QueryEngine
-from thicket.query import Query, is_hatchet_query, is_old_style_query
+from thicket.query import (
+    Query,
+    ObjectQuery,
+    parse_string_dialect,
+    is_hatchet_query,
+    is_old_style_query,
+)
 import tqdm
 
 from thicket.ensemble import Ensemble
@@ -1059,7 +1065,9 @@ class Thicket(GraphFrame):
             "Invalid function: thicket.filter(), please use thicket.filter_metadata() or thicket.filter_stats()"
         )
 
-    def query(self, query_obj, squash=True, update_inc_cols=True):
+    def query(
+        self, query_obj, squash=True, update_inc_cols=True, multi_index_mode="off"
+    ):
         """Apply a Hatchet query to the Thicket object.
 
         Arguments:
@@ -1073,10 +1081,12 @@ class Thicket(GraphFrame):
         Returns:
             (thicket): a new Thicket object containing the data that matches the query
         """
-        # TODO Add a conditional here to parse Object and String queries when supported
-        if isinstance(query_obj, (list, str)):
-            raise UnsupportedQuery(
-                "Object and String queries from Hatchet are not yet supported in Thicket"
+        local_query_obj = query_obj
+        if isinstance(query_obj, list):
+            local_query_obj = ObjectQuery(query_obj, multi_index_mode=multi_index_mode)
+        elif isinstance(query_obj, str):
+            local_query_obj = parse_string_dialect(
+                query_obj, multi_index_mode=multi_index_mode
             )
         elif not is_hatchet_query(query_obj):
             raise TypeError(
@@ -1088,9 +1098,9 @@ class Thicket(GraphFrame):
         index_names = self.dataframe.index.names
         dframe_copy.reset_index(inplace=True)
         query = (
-            query_obj
+            local_query_obj
             if not is_old_style_query(query_obj)
-            else query_obj._get_new_query()
+            else local_query_obj._get_new_query()
         )
         query_matches = self.query_engine.apply(query, self.graph, self.dataframe)
         filtered_df = dframe_copy.loc[dframe_copy["node"].isin(query_matches)]
