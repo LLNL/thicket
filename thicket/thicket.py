@@ -19,6 +19,11 @@ from hatchet.query import AbstractQuery, QueryMatcher
 import tqdm
 
 from thicket.ensemble import Ensemble
+
+try:
+    from .ncu import NCUReader
+except ModuleNotFoundError:
+    pass
 import thicket.helpers as helpers
 from .groupby import GroupBy
 from .utils import (
@@ -469,6 +474,59 @@ class Thicket(GraphFrame):
 
         # make and return thicket?
         return th
+
+    def add_ncu(self, ncu_report_mapping, chosen_metrics=None):
+        """Add NCU data into the PerformanceDataFrame
+
+        Arguments:
+            ncu_report_mapping (dict): mapping from NCU report file to profile
+            chosen_metrics (list): list of metrics to sub-select from NCU report
+        """
+
+        def _rep_agg_func(col):
+            """Aggregate function for repition data.
+
+            Arguments:
+                col (pd.Series): column of data
+            """
+            rollup_operation = rollup_dict[col.name]
+            agg_func = ncureader.rollup_operations[rollup_operation]
+            if agg_func is not None and pd.api.types.is_numeric_dtype(col):
+                return agg_func(col)
+            else:
+                return col[0]
+
+        # Initialize reader
+        ncureader = NCUReader()
+
+        # Dictionary of NCU data
+        data_dict, rollup_dict = ncureader._read_ncu(self, ncu_report_mapping)
+
+        # Create empty df
+        ncu_df = pd.DataFrame()
+        # Loop to aggregate data across reps
+        for node_profile, rep_data in data_dict.items():
+            # Aggregate data using _rep_agg_func
+            agg_data = pd.DataFrame.from_records(rep_data).agg(_rep_agg_func)
+            # Add node and profile
+            agg_data["node"] = node_profile[0]
+            agg_data["profile"] = node_profile[1]
+            # Append to main df
+            ncu_df = pd.concat([ncu_df, pd.DataFrame([agg_data])], ignore_index=True)
+        ncu_df = ncu_df.set_index(["node", "profile"])
+
+        # Apply chosen metrics
+        if chosen_metrics:
+            ncu_df = ncu_df[chosen_metrics]
+
+        # Join NCU DataFrame into Thicket
+        self.dataframe = self.dataframe.join(
+            ncu_df,
+            how="outer",
+            sort=True,
+            lsuffix="_left",
+            rsuffix="_right",
+        )
 
     def metadata_column_to_perfdata(self, metadata_key, overwrite=False, drop=False):
         """Add a column from the metadata table to the performance data table.
