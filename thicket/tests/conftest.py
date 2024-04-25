@@ -86,6 +86,21 @@ def data_dir():
 
 
 @pytest.fixture
+def simple_cali(data_dir, tmpdir):
+    files = [
+        "example_all_base_seq_1.cali",
+        "example_all_base_seq_2.cali",
+        "example_all_base_seq_3.cali",
+        "example-profile.cali",
+    ]
+    cali_json_dir = os.path.join(data_dir, "simple-cali")
+    cali_files = [os.path.join(cali_json_dir, f) for f in files]
+    for f in cali_files:
+        shutil.copy(f, str(tmpdir))
+    return [os.path.join(str(tmpdir), f) for f in files]
+
+
+@pytest.fixture
 def example_json(data_dir, tmpdir):
     """Builds a temporary directory containing the lulesh cali file."""
     cali_json_dir = os.path.join(data_dir, "example-json")

@@ -70,9 +70,9 @@ def test_query(rajaperf_cuda_block128_1M_cali):
     check_query(th, hnids, query)
 
 
-def test_object_dialect_column_multi_index(example_cali):
-    th1 = Thicket.from_caliperreader(example_cali[0])
-    th2 = Thicket.from_caliperreader(example_cali[1])
+def test_object_dialect_column_multi_index(simple_cali):
+    th1 = Thicket.from_caliperreader(simple_cali[0])
+    th2 = Thicket.from_caliperreader(simple_cali[1])
     th_cj = Thicket.concat_thickets([th1, th2], axis="columns")
 
     query = [
@@ -107,9 +107,9 @@ def test_object_dialect_column_multi_index(example_cali):
     ).all()
 
 
-def test_string_dialect_column_multi_index(example_cali):
-    th1 = Thicket.from_caliperreader(example_cali[0])
-    th2 = Thicket.from_caliperreader(example_cali[1])
+def test_string_dialect_column_multi_index(simple_cali):
+    th1 = Thicket.from_caliperreader(simple_cali[0])
+    th2 = Thicket.from_caliperreader(simple_cali[1])
     th_cj = Thicket.concat_thickets([th1, th2], axis="columns")
 
     query = """MATCH ("+", p)
