@@ -15,7 +15,14 @@ import pandas as pd
 import numpy as np
 from hatchet import GraphFrame
 from hatchet.graph import Graph
-from hatchet.query import AbstractQuery, QueryMatcher
+from hatchet.query import QueryEngine
+from thicket.query import (
+    Query,
+    ObjectQuery,
+    parse_string_dialect,
+    is_hatchet_query,
+    is_old_style_query,
+)
 import tqdm
 
 from thicket.ensemble import Ensemble
@@ -82,7 +89,7 @@ class Thicket(GraphFrame):
             )
         else:
             self.statsframe = statsframe
-
+        self.query_engine = QueryEngine()
         self.performance_cols = helpers._get_perf_columns(self.dataframe)
 
     def __eq__(self, other):
@@ -1042,7 +1049,7 @@ class Thicket(GraphFrame):
         """
 
         # Row that didn't exist will contain "None" in the name column.
-        query = QueryMatcher().match(
+        query = Query().match(
             ".", lambda row: row["name"].apply(lambda n: n is not None).all()
         )
         intersected_th = self.query(query)
@@ -1116,12 +1123,14 @@ class Thicket(GraphFrame):
             "Invalid function: thicket.filter(), please use thicket.filter_metadata() or thicket.filter_stats()"
         )
 
-    def query(self, query_obj, squash=True, update_inc_cols=True):
+    def query(
+        self, query_obj, squash=True, update_inc_cols=True, multi_index_mode="off"
+    ):
         """Apply a Hatchet query to the Thicket object.
 
         Arguments:
-            query_obj (AbstractQuery): the query, represented as by a subclass of
-                Hatchet's AbstractQuery
+            query_obj (AbstractQuery, Query, or CompoundQuery): the query, represented as by Query, CompoundQuery, or (for legacy support)
+                a subclass of Hatchet's AbstractQuery
             squash (bool): if true, run Thicket.squash before returning the result of
                 the query
             update_inc_cols (boolean, optional): if True, update inclusive columns when
@@ -1130,20 +1139,28 @@ class Thicket(GraphFrame):
         Returns:
             (thicket): a new Thicket object containing the data that matches the query
         """
-        if isinstance(query_obj, (list, str)):
-            raise UnsupportedQuery(
-                "Object and String queries from Hatchet are not yet supported in Thicket"
+        local_query_obj = query_obj
+        if isinstance(query_obj, list):
+            local_query_obj = ObjectQuery(query_obj, multi_index_mode=multi_index_mode)
+        elif isinstance(query_obj, str):
+            local_query_obj = parse_string_dialect(
+                query_obj, multi_index_mode=multi_index_mode
             )
-        elif not issubclass(type(query_obj), AbstractQuery):
+        elif not is_hatchet_query(query_obj):
             raise TypeError(
-                "Input to 'query' must be a Hatchet query (i.e., list, str, or subclass of AbstractQuery)"
+                "Encountered unrecognized query type (expected Query, CompoundQuery, or AbstractQuery, got {})".format(
+                    type(query_obj)
+                )
             )
         dframe_copy = self.dataframe.copy()
         index_names = self.dataframe.index.names
         dframe_copy.reset_index(inplace=True)
-        query = query_obj
-        # TODO Add a conditional here to parse Object and String queries when supported
-        query_matches = query.apply(self)
+        query = (
+            local_query_obj
+            if not is_old_style_query(query_obj)
+            else local_query_obj._get_new_query()
+        )
+        query_matches = self.query_engine.apply(query, self.graph, self.dataframe)
         filtered_df = dframe_copy.loc[dframe_copy["node"].isin(query_matches)]
         if filtered_df.shape[0] == 0:
             raise EmptyQuery("The provided query would have produced an empty Thicket.")

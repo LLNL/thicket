@@ -68,3 +68,79 @@ def test_query(rajaperf_cuda_block128_1M_cali):
     )
 
     check_query(th, hnids, query)
+
+
+def test_object_dialect_column_multi_index(rajaperf_seq_O3_1M_cali):
+    th1 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0])
+    th2 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[1])
+    th_cj = Thicket.concat_thickets([th1, th2], axis="columns")
+
+    query = [
+        ("+", {(0, "Avg time/rank"): "> 10.0", (1, "Avg time/rank"): "> 10.0"}),
+    ]
+
+    root = th_cj.graph.roots[0]
+    match = list(
+        set(
+            [
+                root,  # RAJAPerf
+                root.children[1],  # RAJAPerf.Apps
+                root.children[2],  # RAJAPerf.Basic
+                root.children[3],  # RAJAPerf.Lcals
+                root.children[3].children[0],  # RAJAPerf.Lcals.Lcals_DIFF_PREDICT
+                root.children[4],  # RAJAPerf.Polybench
+            ]
+        )
+    )
+
+    new_th = th_cj.query(query, multi_index_mode="all")
+    queried_nodes = list(new_th.graph.traverse())
+
+    match_frames = list(sorted([n.frame for n in match]))
+    queried_frames = list(sorted([n.frame for n in queried_nodes]))
+
+    assert len(queried_nodes) == len(match)
+    assert all(m == q for m, q in zip(match_frames, queried_frames))
+    idx = pd.IndexSlice
+    assert (
+        (new_th.dataframe.loc[idx[queried_nodes, :], (0, "Avg time/rank")] > 10.0)
+        & (new_th.dataframe.loc[idx[queried_nodes, :], (1, "Avg time/rank")] > 10.0)
+    ).all()
+
+
+def test_string_dialect_column_multi_index(rajaperf_seq_O3_1M_cali):
+    th1 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0])
+    th2 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[1])
+    th_cj = Thicket.concat_thickets([th1, th2], axis="columns")
+
+    query = """MATCH ("+", p)
+    WHERE p.(0, "Avg time/rank") > 10.0 AND p.(1, "Avg time/rank") > 10.0
+    """
+
+    root = th_cj.graph.roots[0]
+    match = list(
+        set(
+            [
+                root,  # RAJAPerf
+                root.children[1],  # RAJAPerf.Apps
+                root.children[2],  # RAJAPerf.Basic
+                root.children[3],  # RAJAPerf.Lcals
+                root.children[3].children[0],  # RAJAPerf.Lcals.Lcals_DIFF_PREDICT
+                root.children[4],  # RAJAPerf.Polybench
+            ]
+        )
+    )
+
+    new_th = th_cj.query(query, multi_index_mode="all")
+    queried_nodes = list(new_th.graph.traverse())
+
+    match_frames = list(sorted([n.frame for n in match]))
+    queried_frames = list(sorted([n.frame for n in queried_nodes]))
+
+    assert len(queried_nodes) == len(match)
+    assert all(m == q for m, q in zip(match_frames, queried_frames))
+    idx = pd.IndexSlice
+    assert (
+        (new_th.dataframe.loc[idx[queried_nodes, :], (0, "Avg time/rank")] > 10.0)
+        & (new_th.dataframe.loc[idx[queried_nodes, :], (1, "Avg time/rank")] > 10.0)
+    ).all()
