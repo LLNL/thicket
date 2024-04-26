@@ -8,6 +8,23 @@ version = "2024.1.0"
 description = "A Python-based toolkit for analyzing ensemble performance data."
 license = "MIT"
 
+[tool.ruff]
+line-length = 88
+target-version = 'py37'
+include = ['\.pyi?$']
+exclude = [
+  ".eggs",
+  ".git",
+  ".hg",
+  ".mypy_cache",
+  ".tox",
+  ".venv",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+]
+
 [tool.black]
 line-length = 88
 target-version = ['py37']
