@@ -70,9 +70,9 @@ def test_query(rajaperf_cuda_block128_1M_cali):
     check_query(th, hnids, query)
 
 
-def test_object_dialect_column_multi_index(simple_cali):
-    th1 = Thicket.from_caliperreader(simple_cali[0])
-    th2 = Thicket.from_caliperreader(simple_cali[1])
+def test_object_dialect_column_multi_index(rajaperf_seq_O3_1M_cali):
+    th1 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0])
+    th2 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[1])
     th_cj = Thicket.concat_thickets([th1, th2], axis="columns")
 
     query = [
@@ -83,11 +83,12 @@ def test_object_dialect_column_multi_index(simple_cali):
     match = list(
         set(
             [
-                root,  # Basic_Seq
-                root.children[1],  # Apps
-                root.children[2],  # Basic
-                root.children[3],  # Lcals
-                root.children[4],  # Polybench
+                root,  # RAJAPerf
+                root.children[1],  # RAJAPerf.Apps
+                root.children[2],  # RAJAPerf.Basic
+                root.children[3],  # RAJAPerf.Lcals
+                root.children[3].children[0],  # RAJAPerf.Lcals.Lcals_DIFF_PREDICT
+                root.children[4],  # RAJAPerf.Polybench
             ]
         )
     )
@@ -107,9 +108,9 @@ def test_object_dialect_column_multi_index(simple_cali):
     ).all()
 
 
-def test_string_dialect_column_multi_index(simple_cali):
-    th1 = Thicket.from_caliperreader(simple_cali[0])
-    th2 = Thicket.from_caliperreader(simple_cali[1])
+def test_string_dialect_column_multi_index(rajaperf_seq_O3_1M_cali):
+    th1 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0])
+    th2 = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[1])
     th_cj = Thicket.concat_thickets([th1, th2], axis="columns")
 
     query = """MATCH ("+", p)
@@ -120,11 +121,12 @@ def test_string_dialect_column_multi_index(simple_cali):
     match = list(
         set(
             [
-                root,  # Basic_Seq
-                root.children[1],  # Apps
-                root.children[2],  # Basic
-                root.children[3],  # Lcals
-                root.children[4],  # Polybench
+                root,  # RAJAPerf
+                root.children[1],  # RAJAPerf.Apps
+                root.children[2],  # RAJAPerf.Basic
+                root.children[3],  # RAJAPerf.Lcals
+                root.children[3].children[0],  # RAJAPerf.Lcals.Lcals_DIFF_PREDICT
+                root.children[4],  # RAJAPerf.Polybench
             ]
         )
     )
