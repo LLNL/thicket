@@ -5,6 +5,7 @@ import numpy as np
 import thicket as th
 from ..utils import verify_thicket_structures
 from .stats_utils import cache_stats_op
+from thicket.stats import mean
 
 
 def _calc_score_delta_mean_delta_stdnorm(means_1, means_2, stds_1, stds_2, num_nodes):
@@ -116,19 +117,14 @@ def score(thicket, columns, output_column_name, scoring_function):
     th.stats.mean(thicket, columns)
     th.stats.std(thicket, columns)
 
-    # Grab means and stds calculated from above
-    means_target1 = thicket.statsframe.dataframe[
-        (columns[0][0], "{}_mean".format(columns[0][1]))
-    ].to_list()
-    means_target2 = thicket.statsframe.dataframe[
-        (columns[1][0], "{}_mean".format(columns[1][1]))
-    ].to_list()
-    stds_target1 = thicket.statsframe.dataframe[
-        (columns[0][0], "{}_std".format(columns[0][1]))
-    ].to_list()
-    stds_target2 = thicket.statsframe.dataframe[
-        (columns[1][0], "{}_std".format(columns[1][1]))
-    ].to_list()
+    mean_columns = th.stats.mean(thicket, columns)
+    std_columns = th.stats.std(thicket, columns)
+
+    means_target1 = thicket.statsframe.dataframe[mean_columns[0]]
+    means_target2 = thicket.statsframe.dataframe[mean_columns[1]]
+
+    stds_target1 = thicket.statsframe.dataframe[std_columns[0]]
+    stds_target2 = thicket.statsframe.dataframe[std_columns[1]]
 
     # Call the scoring function that the user specified
     resulting_scores = scoring_function(
@@ -158,7 +154,9 @@ def score(thicket, columns, output_column_name, scoring_function):
 
 
 @cache_stats_op
-def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
+def score_delta_mean_delta_stdnorm(
+    thicket, columns, output_column_name=None, threshold=None
+):
     r"""
     Apply a mean difference with standard deviation difference algorithm on two
     passed columns. The passed columns must be from the performance data table.
@@ -186,14 +184,39 @@ def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
             \text{result} = (\mu_1[i] - \mu_2[i]) + \frac{{\left(\sigma_1[i] - \sigma_2[i]\right)}}{{\left|\mu_1[i] - \mu_2[i]\right|}}
     \]
     """
-    return score(
-        thicket, columns, output_column_name, _calc_score_delta_mean_delta_stdnorm
+
+    stats_column_names = score(
+        thicket,
+        columns,
+        output_column_name,
+        _calc_score_delta_mean_delta_stdnorm,
     )
 
+    if threshold is None:
+        return stats_column_names
+
+    score_data = thicket.statsframe.dataframe[stats_column_names[0]]
+
+    recc_comp = (
+        lambda x: "None"
+        if abs(x) <= abs(threshold)
+        else (columns[0][0] if x < 0 else columns[1][0])
+    )  # noqa: E731
+
+    reccomendations = score_data.apply(recc_comp)
+
+    thicket.statsframe.dataframe[
+        ("Scoring", f"{stats_column_names[0][1]}_preference")
+    ] = reccomendations
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    stats_column_names.append(("Scoring", f"{stats_column_names[0][1]}_preference"))
+
+    return stats_column_names
 
 @cache_stats_op
 def score_delta_mean_delta_coefficient_of_variation(
-    thicket, columns, output_column_name=None
+    thicket, columns, output_column_name=None, threshold=None
 ):
     r"""
     Apply a mean difference with difference spread of data algorithm on two passed columns.
@@ -221,16 +244,46 @@ def score_delta_mean_delta_coefficient_of_variation(
 
             \text{result} = (\mu_1[i] - \mu_2[i]) + \frac{{\sigma_1[i]}}{{\mu_1[i]}} - \frac{{\sigma_2[i]}}{{\mu_2[i]}}
     """
-    return score(
+
+    stats_column_names = score(
         thicket,
         columns,
         output_column_name,
         _calc_score_delta_mean_delta_coefficient_of_variation,
     )
 
+    if threshold is None:
+        return stats_column_names
+
+    score_data = thicket.statsframe.dataframe[stats_column_names[0]]
+
+    recc_comp = (
+        lambda x: "None"
+        if abs(x) <= abs(threshold)
+        else (columns[0][0] if x < 0 else columns[1][0])
+    )  # noqa: E731
+
+    reccomendations = score_data.apply(recc_comp)
+
+    thicket.statsframe.dataframe[
+        ("Scoring", f"{stats_column_names[0][1]}_preference")
+    ] = reccomendations
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    stats_column_names.append(("Scoring", f"{stats_column_names[0][1]}_preference"))
+
+    return stats_column_names
+
 
 @cache_stats_op
-def score_bhattacharyya(thicket, columns, output_column_name=None):
+def score_bhattacharyya(
+    thicket,
+    columns,
+    output_column_name=None,
+    characterization_func=mean,
+    comparison_func=None,
+    **kwargs,
+):
     r"""
     Apply the Bhattacharrya distance algorithm on two passed columns. The passed columns
     must be from the performance data table.
@@ -259,11 +312,42 @@ def score_bhattacharyya(thicket, columns, output_column_name=None):
 
             \text{result} = \frac{1}{4} \cdot \log \left( \frac{1}{4} \cdot \left( \frac{{\sigma_1[i]^2}}{{\sigma_2[i]^2}} + \frac{{\sigma_2[i]^2}}{{\sigma_1[i]^2}} + 2 \right) \right) + \frac{1}{4} \cdot \left( \frac{{(\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}} \right)
     """
-    return score(thicket, columns, output_column_name, _calc_score_bhattacharyya)
+
+    if comparison_func is None:
+        comparison_func = lambda x,y: x < y
+
+    stats_column_names = th.stats.bhattacharyya_distance(thicket, columns)
+    
+    comp_idx = characterization_func(thicket, columns=columns, **kwargs)
+
+    comp_data = thicket.statsframe.dataframe[[comp_idx[0], comp_idx[1]]]
+
+    comp = comp_data.apply(lambda row: comparison_func(row[comp_idx[0]], row[comp_idx[1]]), axis=1)
+    
+    comp = comp.apply(lambda x: -1 if x else 1)
+
+    result = thicket.statsframe.dataframe[stats_column_names[0]] * comp
+
+    if output_column_name is None:
+        output_column_name = "bhattacharyya"
+
+    pref_colum = ("Scoring", output_column_name)
+
+    thicket.statsframe.dataframe[pref_colum] = result
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    return [pref_colum]
 
 
 @cache_stats_op
-def score_hellinger(thicket, columns, output_column_name=None):
+def score_hellinger(
+    thicket,
+    columns,
+    output_column_name=None,
+    characterization_func=mean,
+    comparison_func=None,
+    **kwargs,
+):
     r"""
     Apply the Hellinger's distance algorithm on two passed columns. The passed columns
     must be from the performance data table.
@@ -293,4 +377,28 @@ def score_hellinger(thicket, columns, output_column_name=None):
 
             \text{result} = 1 - \sqrt{\frac{{2 \sigma_1[i]\sigma_2[i]}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}} \cdot \mathrm{e}^{-\frac{1}{4}\frac{{ (\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}}
     """
-    return score(thicket, columns, output_column_name, _calc_score_hellinger)
+
+    if comparison_func is None:
+        comparison_func = lambda x,y: x < y
+
+    stats_column_names = th.stats.hellinger_distance(thicket, columns)
+
+    comp_idx = characterization_func(thicket, columns=columns, **kwargs)
+
+    comp_data = thicket.statsframe.dataframe[[comp_idx[0], comp_idx[1]]]
+
+    comp = comp_data.apply(lambda row: comparison_func(row[comp_idx[0]], row[comp_idx[1]]), axis=1)
+    
+    comp = comp.apply(lambda x: -1 if x else 1)
+
+    result = thicket.statsframe.dataframe[stats_column_names[0]] * comp
+
+    if output_column_name is None:
+        output_column_name = "hellinger"
+
+    pref_colum = ("Scoring", output_column_name)
+
+    thicket.statsframe.dataframe[pref_colum] = result
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    return [pref_colum]

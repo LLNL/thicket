@@ -21,6 +21,8 @@ from .scoring import score_delta_mean_delta_coefficient_of_variation
 from .scoring import score_bhattacharyya
 from .scoring import score_hellinger
 from .preference import preference
+from .bhattacharyya_distance import bhattacharyya_distance
+from .hellinger_distance import hellinger_distance
 
 
 try:
