@@ -647,6 +647,7 @@ class Thicket(GraphFrame):
         # may have children with identical frames.
         merges = graph.normalize()
         df["node"] = df["node"].apply(lambda n: merges.get(n, n))
+       
 
         self.dataframe.set_index(index_names, inplace=True)
         df.set_index(index_names, inplace=True)
@@ -1164,6 +1165,55 @@ class Thicket(GraphFrame):
         filtered_df = dframe_copy.loc[dframe_copy["node"].isin(query_matches)]
         if filtered_df.shape[0] == 0:
             raise EmptyQuery("The provided query would have produced an empty Thicket.")
+        filtered_df.set_index(index_names, inplace=True)
+
+        filtered_th = self.deepcopy()
+        filtered_th.dataframe = filtered_df
+
+        if squash:
+            return filtered_th.squash(update_inc_cols=update_inc_cols)
+        return filtered_th
+
+    def query_stats(self, query_obj, squash=True, update_inc_cols=True):
+        """Apply a Hatchet query to the Thicket object.
+
+        Arguments:
+            query_obj (AbstractQuery): the query, represented as by a subclass of
+                Hatchet's AbstractQuery
+            squash (bool): if true, run Thicket.squash before returning the result of
+                the query
+            update_inc_cols (boolean, optional): if True, update inclusive columns when
+                performing squash.
+
+        Returns:
+            (thicket): a new Thicket object containing the data that matches the query
+        """
+        if isinstance(query_obj, (list, str)):
+            raise UnsupportedQuery(
+                "Object and String queries from Hatchet are not yet supported in Thicket"
+            )
+        elif not issubclass(type(query_obj), AbstractQuery):
+            raise TypeError(
+                "Input to 'query' must be a Hatchet query (i.e., list, str, or subclass of AbstractQuery)"
+            )
+        sframe_copy = self.statsframe.dataframe.copy()
+        index_names = self.statsframe.dataframe.index.names
+        sframe_copy.reset_index(inplace=True)
+        query = query_obj
+
+        # TODO Add a conditional here to parse Object and String queries when supported
+        query_matches = query.apply(self.statsframe)
+        filtered_sf_df = sframe_copy.loc[sframe_copy["node"].isin(query_matches)]
+        if filtered_sf_df.shape[0] == 0:
+            raise EmptyQuery("The provided query would have produced an empty Thicket.")
+
+        index_names = self.dataframe.index.names
+        dframe_copy = self.dataframe.copy()
+        index_names = self.dataframe.index.names
+        dframe_copy.reset_index(inplace=True)
+
+        new_nodes = filtered_sf_df['node'].unique()
+        filtered_df = dframe_copy[dframe_copy['node'].isin(query_matches)]
         filtered_df.set_index(index_names, inplace=True)
 
         filtered_th = self.deepcopy()
