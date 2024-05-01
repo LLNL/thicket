@@ -336,8 +336,8 @@ def test_display_violinplot_thicket(thicket_axis_columns):
         "th_2": ["Min time/rank"],
         "th_3": ["Min time/rank"],
     }
-    node = pd.unique(combined_th.dataframe.reset_index()["node"][0:1]).tolist()[0]
-    nodes = {"th_1": node, "th_2": node, "th_3": node}
+    node = pd.unique(combined_th.dataframe.reset_index()["node"][:]).tolist()
+    nodes = {"th_1": node[0], "th_2": node[0], "th_3": node[0]}
 
     ax = th.stats.display_violinplot_thicket(
         thickets=thickets, nodes=nodes, columns=columns
@@ -347,7 +347,7 @@ def test_display_violinplot_thicket(thicket_axis_columns):
     assert "th_1" in ax.get_xticklabels()[0].get_text()
     assert "th_2" in ax.get_xticklabels()[1].get_text()
     assert "th_3" in ax.get_xticklabels()[2].get_text()
-    assert "node" == ax.get_xlabel()
+    assert "thicket" == ax.get_xlabel()
 
     with pytest.raises(
         ValueError, match="'thickets' argument must be a dictionary of thickets."
@@ -362,6 +362,15 @@ def test_display_violinplot_thicket(thicket_axis_columns):
     ):
         ax = th.stats.display_violinplot_thicket(
             thickets=thickets, nodes=["test"], columns=columns
+        )
+
+    with pytest.raises(
+        ValueError,
+        match=r"Value\(s\) passed to 'nodes' argument must be of same type and name.",
+    ):
+        invalid_nodes = {"th_1": node[1], "th_2": node[0], "th_3": node[0]}
+        ax = th.stats.display_violinplot_thicket(
+            thickets=thickets, nodes=invalid_nodes, columns=columns
         )
 
     with pytest.raises(
@@ -423,7 +432,7 @@ def test_display_violinplot_thicket(thicket_axis_columns):
         ValueError,
         match="Keys in 'nodes' argument dictionary do not match keys in 'thickets' argument dictionary.",
     ):
-        false_nodes = {"th_x": node, "th_2": node, "th_3": node}
+        false_nodes = {"th_x": node[0], "th_2": node[0], "th_3": node[0]}
         ax = th.stats.display_violinplot_thicket(
             thickets=thickets, nodes=false_nodes, columns=columns
         )
@@ -479,7 +488,7 @@ def test_display_violinplot_thicket_columnar_join(thicket_axis_columns):
     assert "th_1" in ax.get_xticklabels()[0].get_text()
     assert "th_2" in ax.get_xticklabels()[1].get_text()
     assert "th_3" in ax.get_xticklabels()[2].get_text()
-    assert "node" == ax.get_xlabel()
+    assert "thicket" == ax.get_xlabel()
 
     with pytest.raises(
         ValueError,

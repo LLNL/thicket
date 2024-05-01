@@ -381,6 +381,12 @@ def display_violinplot_thicket(
             "Value(s) passed to 'nodes' argument must be of type hatchet.node.Node."
         )
 
+    # Verify that all nodes passed are of the same type and name
+    if len(set(nodes.values())) != 1:
+        raise ValueError(
+            "Value(s) passed to 'nodes' argument must be of same type and name."
+        )
+
     # the keys must match the thickets dictionary keys
     if set(thickets.keys()) != set(nodes.keys()):
         raise ValueError(
@@ -476,9 +482,15 @@ def display_violinplot_thicket(
             filtered_dfs[thicket_idx]["node"] = thicket_name
 
     master_df = pd.concat(filtered_dfs, ignore_index=True)
+    master_df.rename(columns={"node": "thicket"}, inplace=True)
 
     graph = sns.violinplot(
-        data=master_df, x="node", y=" ", hue="Performance counter", inner=None, **kwargs
+        data=master_df,
+        x="thicket",
+        y=" ",
+        hue="Performance counter",
+        inner=None,
+        **kwargs,
     )
 
     # No percentiles to plot!
