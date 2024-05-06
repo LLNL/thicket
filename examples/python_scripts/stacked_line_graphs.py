@@ -3,21 +3,6 @@ from glob import glob
 import copy
 import re
 
-#dlist = []
-#for m in sys.modules:
-#    if "dateutil" in m:
-#        dlist.append(m)
-#    if "mpl_toolkits" in m:
-#        dlist.append(m)
-#for m in dlist:
-#    del sys.modules[m]
-#  
-#sys.path = ["/usr/gapps/spot/dev/hatchet-venv/x86_64/lib/python3.9/site-packages"] + sys.path
-#
-#import site
-#site.addsitedir('/usr/gapps/spot/dev/hatchet-venv/x86_64/lib/python3.9/site-packages')
-#
-#sys.path.pop()  # removes thicket-playground from path
 sys.path.append("/usr/gapps/spot/dev/hatchet-venv/x86_64/lib/python3.9/site-packages/")
 
 sys.path.append("/g/g20/hao3/thicket")
@@ -36,6 +21,7 @@ from hatchet import QueryMatcher
 print(th.__file__)
 
 import argparse
+
 
 def arg_parse():
     parser = argparse.ArgumentParser()
@@ -60,7 +46,7 @@ def make_graph(df, value, world_size, y_label):
     ax.set_xticklabels(x_labels)
     ax.legend(reversed(handles), reversed(labels), bbox_to_anchor=(1.1, 1.05))
 
-    plt.savefig(value+".png")
+    plt.savefig(value + ".png")
 
 
 def generate(input_files, filter_operation, output_graphs):
@@ -75,17 +61,19 @@ def generate(input_files, filter_operation, output_graphs):
         axis="columns",
     )
 
-    grouped_ctk = ctk.dataframe.groupby('name').sum()
+    grouped_ctk = ctk.dataframe.groupby("name").sum()
 
     if filter_operation == "mpi":
         filter_ctk = copy.deepcopy(grouped_ctk.filter(like="MPI_", axis=0))
     elif filter_operation == "top10":
-        filter_ctk = copy.deepcopy(grouped_ctk.nlargest(10, [(8, 'Total time')]))
+        filter_ctk = copy.deepcopy(grouped_ctk.nlargest(10, [(8, "Total time")]))
     else:
         filter_ctk = copy.deepcopy(grouped_ctk.filter(like="hypre", axis=0))
 
     for i in world_size:
-        filter_ctk[i, "perc"] = (filter_ctk[i, "Avg time/rank"] /  filter_ctk[i, "Avg time/rank"].sum()) * 100
+        filter_ctk[i, "perc"] = (
+            filter_ctk[i, "Avg time/rank"] /  filter_ctk[i, "Avg time/rank"].sum()
+        ) * 100
     
     if "perc" in output_graphs:
         make_graph(filter_ctk, "perc", world_size, "Percentage of Runtime")
@@ -93,6 +81,6 @@ def generate(input_files, filter_operation, output_graphs):
         make_graph(filter_ctk, "Total time", world_size, "Total Time")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = arg_parse()
     generate(args.input_files, args.filter_operation, args.out_graphs)
