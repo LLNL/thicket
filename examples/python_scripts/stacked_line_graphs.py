@@ -72,9 +72,9 @@ def generate(input_files, filter_operation, output_graphs):
 
     for i in world_size:
         filter_ctk[i, "perc"] = (
-            filter_ctk[i, "Avg time/rank"] /  filter_ctk[i, "Avg time/rank"].sum()
+            filter_ctk[i, "Avg time/rank"] / filter_ctk[i, "Avg time/rank"].sum()
         ) * 100
-    
+
     if "perc" in output_graphs:
         make_graph(filter_ctk, "perc", world_size, "Percentage of Runtime")
     if "total" in output_graphs:
