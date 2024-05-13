@@ -31,6 +31,6 @@ except:
 else:
     from .display_boxplot import display_boxplot
     from .display_histogram import display_histogram
-    from .display_heatmap import display_heatmap    
+    from .display_heatmap import display_heatmap
     from .display_violinplot import display_violinplot_thicket
     from .display_violinplot import display_violinplot
