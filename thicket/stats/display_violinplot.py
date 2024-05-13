@@ -382,7 +382,7 @@ def display_violinplot_thicket(
         )
 
     # Verify that all nodes passed are of the same type and name
-    if len(set(nodes.values())) != 1:
+    if len(set([n.frame for n in nodes.values()])) != 1:
         raise ValueError(
             "Value(s) passed to 'nodes' argument must be of same type and name."
         )

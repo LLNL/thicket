@@ -336,8 +336,8 @@ def test_display_violinplot_thicket(thicket_axis_columns):
         "th_2": ["Min time/rank"],
         "th_3": ["Min time/rank"],
     }
-    node = pd.unique(combined_th.dataframe.reset_index()["node"][:]).tolist()
-    nodes = {"th_1": node[0], "th_2": node[0], "th_3": node[0]}
+    node_list = [i.dataframe.reset_index()["node"][0] for i in list(thickets.values())]
+    nodes = {"th_1": node_list[0], "th_2": node_list[1], "th_3": node_list[2]}
 
     ax = th.stats.display_violinplot_thicket(
         thickets=thickets, nodes=nodes, columns=columns
@@ -368,7 +368,11 @@ def test_display_violinplot_thicket(thicket_axis_columns):
         ValueError,
         match=r"Value\(s\) passed to 'nodes' argument must be of same type and name.",
     ):
-        invalid_nodes = {"th_1": node[1], "th_2": node[0], "th_3": node[0]}
+        invalid_nodes = {
+            "th_1": node_list[0],
+            "th_2": node_list[1],
+            "th_3": list(thickets.values())[1].dataframe.reset_index()["node"].iloc[-1],
+        }
         ax = th.stats.display_violinplot_thicket(
             thickets=thickets, nodes=invalid_nodes, columns=columns
         )
@@ -432,7 +436,7 @@ def test_display_violinplot_thicket(thicket_axis_columns):
         ValueError,
         match="Keys in 'nodes' argument dictionary do not match keys in 'thickets' argument dictionary.",
     ):
-        false_nodes = {"th_x": node[0], "th_2": node[0], "th_3": node[0]}
+        false_nodes = {"th_x": node_list[0], "th_2": node_list[0], "th_3": node_list[0]}
         ax = th.stats.display_violinplot_thicket(
             thickets=thickets, nodes=false_nodes, columns=columns
         )
