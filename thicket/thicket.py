@@ -312,18 +312,28 @@ class Thicket(GraphFrame):
 
         ens_list = []
         obj = args[0]  # First arg should be readable object
-        extra_args = []
         if len(args) > 1:
             extra_args = args[1:]
+        else:
+            extra_args = []
         pbar_desc = "(1/2) Reading Files"
 
-        # Parse the input object
-        # if a list of files
+        # Error checking
         if isinstance(obj, (list, tuple)):
             if len(obj) == 0:
                 raise ValueError("Iterable must contain at least one file")
             for file in obj:
                 check_file_exists(file)
+        elif isinstance(obj, str):
+            check_file_exists(obj)
+        else:
+            raise TypeError(
+                "'" + str(type(obj).__name__) + "' is not a valid type to be read from"
+            )
+
+        # Parse the input object
+        # if a list of files
+        if isinstance(obj, (list, tuple)):
             pbar = tqdm.tqdm(obj, disable=disable_tqdm)
             for file in pbar:
                 pbar.set_description(pbar_desc)
@@ -344,16 +354,6 @@ class Thicket(GraphFrame):
         # if single file
         elif os.path.isfile(obj):
             return Thicket.thicketize_graphframe(func(*args, **kwargs), args[0])
-        # Error checking
-        else:
-            if isinstance(obj, str) and not os.path.isfile(obj):
-                check_file_exists(obj)
-            else:
-                raise TypeError(
-                    "'"
-                    + str(type(obj).__name__)
-                    + "' is not a valid type to be read from"
-                )
 
         # Perform ensembling operation
         calltree = "union"
