@@ -65,6 +65,21 @@ jobs:
       run: |
         pip install extrap
 
+    - name: Install coverage tools
+      run: |
+        pip install codecov
+        pip install pytest-cov
+
     - name: Basic Test with pytest
       run: |
-        PYTHONPATH=. $(which pytest)
+        PYTHONPATH=. $(which pytest) --cov=./ --cov-report=xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        directory: ./coverage/reports/
+        env_vars: OS,PYTHON
+        files: /home/runner/work/thicket/thicket/coverage.xml
+        flags: unittests
+        verbose: true
+        fail_ci_if_error: true
