@@ -21,8 +21,6 @@ from .scoring import score_delta_mean_delta_coefficient_of_variation
 from .scoring import score_bhattacharyya
 from .scoring import score_hellinger
 from .preference import preference
-from .display_violinplot import display_violinplot_thicket
-from .display_violinplot import display_violinplot
 
 
 try:
@@ -34,3 +32,5 @@ else:
     from .display_boxplot import display_boxplot
     from .display_histogram import display_histogram
     from .display_heatmap import display_heatmap
+    from .display_violinplot import display_violinplot_thicket
+    from .display_violinplot import display_violinplot
