@@ -304,6 +304,12 @@ class Thicket(GraphFrame):
             tdmq_output (bool): whether to display tqdm progress bar
             args (list): list of args; args[0] should be an object that can be read from
         """
+
+        def check_file_exists(file):
+            if not os.path.isfile(file):
+                raise FileNotFoundError("File '" + file + "' not found")
+            return True
+
         ens_list = []
         obj = args[0]  # First arg should be readable object
         extra_args = []
@@ -314,6 +320,10 @@ class Thicket(GraphFrame):
         # Parse the input object
         # if a list of files
         if isinstance(obj, (list, tuple)):
+            if len(obj) == 0:
+                raise ValueError("Iterable must contain at least one file")
+            for file in obj:
+                check_file_exists(file)
             pbar = tqdm.tqdm(obj, disable=disable_tqdm)
             for file in pbar:
                 pbar.set_description(pbar_desc)
@@ -337,12 +347,12 @@ class Thicket(GraphFrame):
         # Error checking
         else:
             if isinstance(obj, str) and not os.path.isfile(obj):
-                raise FileNotFoundError("File '" + obj + "' not found.")
+                check_file_exists(obj)
             else:
                 raise TypeError(
                     "'"
                     + str(type(obj).__name__)
-                    + "' is not a valid type to be read from."
+                    + "' is not a valid type to be read from"
                 )
 
         # Perform ensembling operation
