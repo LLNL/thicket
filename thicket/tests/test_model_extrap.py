@@ -23,7 +23,7 @@ try:
 except ImportError:
     extrap_avail = False
 
-if not sys.version_info < (3, 8):
+if sys.version_info < (3, 8):
     pytest.skip(
         "requires python3.8 or greater to use extrap module", allow_module_level=True
     )
