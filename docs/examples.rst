@@ -18,7 +18,7 @@ Scaling Studies
 To run the script
 .. code:: console
 
-  $ python stacked_line_graphs.py --input_files <input file or path> --filter_operation <mpi|top10> --out_graphs <perc|total>
+  $ python stacked_line_graphs.py --input_files <input file or path> --groupby_parameter <parameter varied between runs> --filter_prefix <optional prefix> --top_ten <optional True|False> --out_graphs <perc|total>
 
 
 Example output graph
