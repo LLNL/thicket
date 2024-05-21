@@ -1091,16 +1091,16 @@ class Thicket(GraphFrame):
         # filter metadata table
         filtered_rows = new_thicket.metadata.apply(select_function, axis=1)
         if all(filtered_rows == False):
-            raise EmptyMetadataTable("The provided filter function resulted in an empty MetadataTable.")
+            raise EmptyMetadataTable(
+                "The provided filter function resulted in an empty MetadataTable."
+            )
         new_thicket.metadata = new_thicket.metadata[filtered_rows]
 
         # note index keys to filter performance data table
         index_id = new_thicket.metadata.index.values.tolist()
         # filter performance data table based on the metadata table
         new_thicket.dataframe = new_thicket.dataframe[
-            new_thicket.dataframe.index.get_level_values(index_name).isin(
-                index_id
-            )
+            new_thicket.dataframe.index.get_level_values(index_name).isin(index_id)
         ]
 
         # create an empty aggregated statistics table with the name column
