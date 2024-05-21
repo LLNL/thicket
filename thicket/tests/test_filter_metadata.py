@@ -158,17 +158,24 @@ def filter_multiple_or(th, columns_values):
     assert exp_nodes == stats_nodes
     assert "name" in new_th.statsframe.dataframe.columns
 
+
 def check_errors(th):
     # check for invalid filter exception
     with pytest.raises(InvalidFilter):
         th.filter_metadata(123)
 
+    # check that query with non-existant value raises error
+    with pytest.raises(
+        EmptyMetadataTable,
+        match="The provided filter function resulted in an empty MetadataTable.",
+    ):
+        th.filter_metadata(lambda x: x["cluster"] == "chekov")
     # drop all rows of the metadata table
     th.metadata = th.metadata.iloc[0:0]
     # check for empty metadata table exception
     with pytest.raises(
         EmptyMetadataTable,
-        match="The provided Thicket object has an empty MetadataTable."
+        match="The provided Thicket object has an empty MetadataTable.",
     ):
         th.filter_metadata(lambda x: x["cluster"] == "quartz")
 

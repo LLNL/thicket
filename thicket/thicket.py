@@ -1090,6 +1090,8 @@ class Thicket(GraphFrame):
 
         # filter metadata table
         filtered_rows = new_thicket.metadata.apply(select_function, axis=1)
+        if all(filtered_rows == False):
+            raise EmptyMetadataTable("The provided filter function resulted in an empty MetadataTable.")
         new_thicket.metadata = new_thicket.metadata[filtered_rows]
 
         # note index keys to filter performance data table
