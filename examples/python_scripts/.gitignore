@@ -3,3 +3,4 @@
 # Except this file
 !.gitignore
 !stacked_line_graphs.py
+!stacked_line_graphs_deepcopy.py
