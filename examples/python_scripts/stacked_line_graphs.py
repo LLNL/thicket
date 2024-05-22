@@ -39,8 +39,8 @@ def make_stacked_line_graph(df, value, world_size, title, xlabel, y_label):
     fig = plt.figure()
     ax = df[[(i, value) for i in world_size]].T.plot(
         kind="area",
-        title="Application Runtime Components",
-        xlabel="MPI World Size",
+        title=title,
+        xlabel=xlabel,
         ylabel=y_label,
     )
 
