@@ -35,7 +35,7 @@ def arg_parse():
     return args
 
 
-def make_stacked_line_graph(df, value, world_size, y_label):
+def make_stacked_line_graph(df, value, world_size, title, xlabel, y_label):
     fig = plt.figure()
     ax = df[[(i, value) for i in world_size]].T.plot(
         kind="area",
@@ -80,9 +80,9 @@ def process_thickets(input_files, groupby_parameter, filter_prefix, top_ten, out
         ctk.dataframe = ctk.dataframe.nlargest(10, [(world_size[0], "Total time")])
 
     if "perc" in output_graphs:
-        make_stacked_line_graph(ctk.dataframe, "perc", world_size, "Percentage of Runtime" if additional_args.ylabel == "no_label" else additional_args.ylabel)
+        make_stacked_line_graph(ctk.dataframe, "perc", world_size, additional_args.graph_title, additional_args.graph_xlabel, "Percentage of Runtime" if additional_args.graph_ylabel == "no_label" else additional_args.graph_ylabel)
     if "total" in output_graphs:
-        make_stacked_line_graph(ctk.dataframe, "Total time", world_size, "Total Time" if additional_args.ylabel == "no_label" else additional_args.ylabel)
+        make_stacked_line_graph(ctk.dataframe, "Total time", world_size, additional_args.graph_title, additional_args.graph_xlabel, "Total Time" if additional_args.graph_ylabel == "no_label" else additional_args.graph_ylabel)
 
 
 if __name__ == "__main__":
