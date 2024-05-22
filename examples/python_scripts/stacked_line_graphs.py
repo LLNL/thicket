@@ -28,6 +28,9 @@ def arg_parse():
     parser.add_argument("--filter_prefix", default="", type=str, help="Optional: Filters only entries with prefix to be included in graph.")
     parser.add_argument("--top_ten", default=False, type=bool, help="Optional: Filters only top 10 highest percentage time entries to be included in graph.")
     parser.add_argument("--out_graphs", nargs="+", required=True, choices=["perc", "total"], type=str, help="Specify types of graphs to be output.")
+    parser.add_argument("--graph_title", default="Application Runtime Components", type=str, help="Optional: Title of the output graph.")
+    parser.add_argument("--graph_xlabel", default="MPI World Size", type=str, help="Optional: X Label of graph.")
+    parser.add_argument("--graph_ylabel", default="no_label", type=str, help="Optional: Y Label of graph.")
     args = parser.parse_args()
     return args
 
@@ -51,7 +54,7 @@ def make_stacked_line_graph(df, value, world_size, y_label):
     plt.savefig(value + ".png")
 
 
-def process_thickets(input_files, groupby_parameter, filter_prefix, top_ten, output_graphs):
+def process_thickets(input_files, groupby_parameter, filter_prefix, top_ten, output_graphs, additional_args):
     tk = th.Thicket.from_caliperreader(glob(input_files+"/**/*.cali", recursive=True))
 
     tk.dataframe["perc"] = (
@@ -77,11 +80,11 @@ def process_thickets(input_files, groupby_parameter, filter_prefix, top_ten, out
         ctk.dataframe = ctk.dataframe.nlargest(10, [(world_size[0], "Total time")])
 
     if "perc" in output_graphs:
-        make_stacked_line_graph(ctk.dataframe, "perc", world_size, "Percentage of Runtime")
+        make_stacked_line_graph(ctk.dataframe, "perc", world_size, "Percentage of Runtime" if additional_args.ylabel == "no_label" else additional_args.ylabel)
     if "total" in output_graphs:
-        make_stacked_line_graph(ctk.dataframe, "Total time", world_size, "Total Time")
+        make_stacked_line_graph(ctk.dataframe, "Total time", world_size, "Total Time" if additional_args.ylabel == "no_label" else additional_args.ylabel)
 
 
 if __name__ == "__main__":
     args = arg_parse()
-    process_thickets(args.input_files, args.groupby_parameter, args.filter_prefix, args.top_ten, args.out_graphs)
+    process_thickets(args.input_files, args.groupby_parameter, args.filter_prefix, args.top_ten, args.out_graphs, args)
