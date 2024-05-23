@@ -1,20 +1,20 @@
+import argparse
+import copy
+from glob import glob
+import re
 import sys
 
 sys.path.append("/usr/gapps/spot/dev/hatchet-venv/x86_64/lib/python3.9/site-packages/")
-sys.path.append("/usr/gapps/spot/dev/thicket-playground-dev/")
 sys.path.append("/usr/gapps/spot/dev/hatchet/x86_64/")
+sys.path.append("/usr/gapps/spot/dev/thicket-playground-dev/")
 
+import hatchet as ht
+from hatchet import QueryMatcher
+from IPython.display import display, HTML
 import matplotlib.pyplot as plt
 import pandas as pd
-import hatchet as ht
-import thicket as th
-import copy
-import re
-import argparse
 
-from IPython.display import display, HTML
-from glob import glob
-from hatchet import QueryMatcher
+import thicket as th
 
 
 def arg_parse():
