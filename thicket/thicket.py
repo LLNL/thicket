@@ -1076,9 +1076,7 @@ class Thicket(GraphFrame):
             )
         # check only 1 index in metadata
         if isinstance(self.metadata.index, pd.MultiIndex):
-            raise IndexError(
-                "The metadata index must be single-level."
-            )
+            raise TypeError("The metadata index must be single-level.")
         # Add warning if filtering on multi-index columns
         if isinstance(self.metadata.columns, pd.MultiIndex):
             warnings.warn(
