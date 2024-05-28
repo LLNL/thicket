@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import pandas as pd
 import pytest
 
 from thicket import Thicket
@@ -164,7 +165,7 @@ def check_errors(th):
     with pytest.raises(InvalidFilter):
         th.filter_metadata(123)
 
-    # check that query with non-existant value raises error
+    # check that query with non-existent value raises error
     with pytest.raises(
         EmptyMetadataTable,
         match="The provided filter function resulted in an empty MetadataTable.",
@@ -176,6 +177,13 @@ def check_errors(th):
     with pytest.raises(
         EmptyMetadataTable,
         match="The provided Thicket object has an empty MetadataTable.",
+    ):
+        th.filter_metadata(lambda x: x["cluster"] == "quartz")
+
+    th.metadata = pd.DataFrame(data=[0], index=pd.MultiIndex.from_tuples([("one", "two")], names=["a", "b"]))
+    with pytest.raises(
+        TypeError,
+        match="The metadata index must be single-level."
     ):
         th.filter_metadata(lambda x: x["cluster"] == "quartz")
 
