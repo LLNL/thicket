@@ -179,12 +179,11 @@ def check_errors(th):
         match="The provided Thicket object has an empty MetadataTable.",
     ):
         th.filter_metadata(lambda x: x["cluster"] == "quartz")
-
-    th.metadata = pd.DataFrame(data=[0], index=pd.MultiIndex.from_tuples([("one", "two")], names=["a", "b"]))
-    with pytest.raises(
-        TypeError,
-        match="The metadata index must be single-level."
-    ):
+    # Check for multi-level index exception
+    th.metadata = pd.DataFrame(
+        data=[0], index=pd.MultiIndex.from_tuples([("one", "two")], names=["a", "b"])
+    )
+    with pytest.raises(TypeError, match="The metadata index must be single-level."):
         th.filter_metadata(lambda x: x["cluster"] == "quartz")
 
 
