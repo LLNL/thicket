@@ -1075,7 +1075,10 @@ class Thicket(GraphFrame):
                 "The provided Thicket object has an empty MetadataTable."
             )
         # check only 1 index in metadata
-        assert self.metadata.index.nlevels == 1
+        if isinstance(self.metadata.index, pd.MultiIndex):
+            raise IndexError(
+                "The metadata index must be single-level."
+            )
         # Add warning if filtering on multi-index columns
         if isinstance(self.metadata.columns, pd.MultiIndex):
             warnings.warn(
