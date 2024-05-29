@@ -160,7 +160,9 @@ def filter_multiple_or(th, columns_values):
     assert "name" in new_th.statsframe.dataframe.columns
 
 
-def check_errors(th):
+def test_check_errors(rajaperf_seq_O3_1M_cali):
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
+
     # check for invalid filter exception
     with pytest.raises(InvalidFilter):
         th.filter_metadata(123)
@@ -195,4 +197,3 @@ def test_filter_metadata(rajaperf_seq_O3_1M_cali):
     filter_one_column(th, columns_values)
     filter_multiple_and(th, columns_values)
     filter_multiple_or(th, columns_values)
-    check_errors(th)
