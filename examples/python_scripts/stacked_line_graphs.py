@@ -25,6 +25,7 @@ def arg_parse():
     )
     parser.add_argument("--input_files", required=True, type=str, help="Directory of Caliper file input, including all subdirectories.")
     parser.add_argument("--groupby_parameter", required=True, type=str, help="Parameter that is varied during the experiment.")
+    parser.add_argument("--metric_of_interest", required=True, type=str, help="Metric to be visualized.")
     parser.add_argument("--filter_prefix", default="", type=str, help="Optional: Filters only entries with prefix to be included in graph.")
     parser.add_argument("--top_ten", default=False, type=bool, help="Optional: Filters only top 10 highest percentage time entries to be included in graph.")
     parser.add_argument("--out_graphs", nargs="+", required=True, choices=["perc", "total"], type=str, help="Specify types of graphs to be output.")
@@ -54,12 +55,8 @@ def make_stacked_line_graph(df, value, world_size, title, xlabel, y_label):
     plt.savefig(value + ".png")
 
 
-def process_thickets(input_files, groupby_parameter, filter_prefix, top_ten, output_graphs, additional_args):
+def process_thickets(input_files, groupby_parameter, metric_of_interest, filter_prefix, top_ten, output_graphs, additional_args):
     tk = th.Thicket.from_caliperreader(glob(input_files+"/**/*.cali", recursive=True))
-
-    tk.dataframe["perc"] = (
-        tk.dataframe["Avg time/rank"] / tk.dataframe["Avg time/rank"].sum()
-    ) * 100
 
     gb = tk.groupby(groupby_parameter)
 
@@ -72,6 +69,11 @@ def process_thickets(input_files, groupby_parameter, filter_prefix, top_ten, out
     )
 
     ctk.dataframe = ctk.dataframe.groupby("name").sum()
+
+    for i in world_size: 
+        ctk.dataframe[i, "perc"] = (
+            ctk.dataframe[i, metric_of_interest] / ctk.dataframe[i, metric_of_interest].sum()
+        ) * 100
 
     if filter_prefix != "":
         ctk.dataframe = ctk.dataframe.filter(like=filter_prefix, axis=0)
@@ -87,4 +89,4 @@ def process_thickets(input_files, groupby_parameter, filter_prefix, top_ten, out
 
 if __name__ == "__main__":
     args = arg_parse()
-    process_thickets(args.input_files, args.groupby_parameter, args.filter_prefix, args.top_ten, args.out_graphs, args)
+    process_thickets(args.input_files, args.groupby_parameter, args.metric_of_interest, args.filter_prefix, args.top_ten, args.out_graphs, args)
