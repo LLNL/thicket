@@ -305,11 +305,6 @@ class Thicket(GraphFrame):
             args (list): list of args; args[0] should be an object that can be read from
         """
 
-        def check_file_exists(file):
-            if not os.path.isfile(file):
-                raise FileNotFoundError("File '" + file + "' not found")
-            return True
-
         ens_list = []
         obj = args[0]  # First arg should be readable object
         extra_args = args[1:]
@@ -320,9 +315,11 @@ class Thicket(GraphFrame):
             if len(obj) == 0:
                 raise ValueError("Iterable must contain at least one file")
             for file in obj:
-                check_file_exists(file)
+                if not os.path.isfile(file):
+                    raise FileNotFoundError("File '" + file + "' not found")
         elif isinstance(obj, str):
-            check_file_exists(obj)
+            if not os.path.isfile(obj):
+                raise FileNotFoundError("File '" + obj + "' not found")
         else:
             raise TypeError(
                 "'" + str(type(obj).__name__) + "' is not a valid type to be read from"
