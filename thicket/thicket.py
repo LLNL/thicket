@@ -312,10 +312,7 @@ class Thicket(GraphFrame):
 
         ens_list = []
         obj = args[0]  # First arg should be readable object
-        if len(args) > 1:
-            extra_args = args[1:]
-        else:
-            extra_args = []
+        extra_args = args[1:]
         pbar_desc = "(1/2) Reading Files"
 
         # Error checking
