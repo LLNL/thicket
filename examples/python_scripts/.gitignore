@@ -4,3 +4,4 @@
 !.gitignore
 !stacked_line_graphs.py
 !stacked_line_graphs_deepcopy.py
+!display_valid_metadata_metric.py

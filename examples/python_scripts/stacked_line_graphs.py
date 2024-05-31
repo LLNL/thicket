@@ -28,7 +28,7 @@ def arg_parse():
     parser.add_argument("--y_axis_metric", required=True, type=str, help="Metric to be visualized.")
     parser.add_argument("--filter_prefix", default="", type=str, help="Optional: Filters only entries with prefix to be included in chart.")
     parser.add_argument("--top_ten", default=False, type=bool, help="Optional: Filters only top 10 highest percentage time entries to be included in chart.")
-    parser.add_argument("--out_charts", nargs="+", required=True, choices=["perc", "total"], type=str, help="Specify types of charts to be output.")
+    parser.add_argument("--chart_type", required=True, choices=["percentage_time", "total_time"], type=str, help="Specify type of output chart.")
     parser.add_argument("--chart_title", default="Application Runtime Components", type=str, help="Optional: Title of the output chart.")
     parser.add_argument("--chart_xlabel", default="MPI World Size", type=str, help="Optional: X Label of chart.")
     parser.add_argument("--chart_ylabel", default="no_label", type=str, help="Optional: Y Label of chart.")
@@ -82,12 +82,12 @@ def process_thickets(input_files, x_axis_unique_metadata, y_axis_metric, filter_
     if top_ten:
         ctk.dataframe = ctk.dataframe.nlargest(10, [(world_size[0], "Total time")])
 
-    if "perc" in output_charts:
+    if output_charts == "percentage_time":
         make_stacked_line_chart(ctk.dataframe, "perc", world_size, additional_args.chart_title, additional_args.chart_xlabel, "Percentage of Runtime" if additional_args.chart_ylabel == "no_label" else additional_args.chart_ylabel, additional_args.chart_file_name)
-    if "total" in output_charts:
+    else if output_charts == "total_time":
         make_stacked_line_chart(ctk.dataframe, "Total time", world_size, additional_args.chart_title, additional_args.chart_xlabel, "Total Time" if additional_args.chart_ylabel == "no_label" else additional_args.chart_ylabel, additional_args.chart_file_name)
 
 
 if __name__ == "__main__":
     args = arg_parse()
-    process_thickets(args.input_files, args.x_axis_unique_metadata, args.y_axis_metric, args.filter_prefix, args.top_ten, args.out_charts, args)
+    process_thickets(args.input_files, args.x_axis_unique_metadata, args.y_axis_metric, args.filter_prefix, args.top_ten, args.chart_type, args)
