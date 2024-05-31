@@ -16,7 +16,6 @@ import pandas as pd
 
 import thicket as th
 
-
 def arg_parse():
     parser = argparse.ArgumentParser(
         prog="stacked_line_charts.py",
@@ -27,7 +26,7 @@ def arg_parse():
     parser.add_argument("--x_axis_unique_metadata", required=True, type=str, help="Parameter that is varied during the experiment.")
     parser.add_argument("--y_axis_metric", required=True, type=str, help="Metric to be visualized.")
     parser.add_argument("--filter_prefix", default="", type=str, help="Optional: Filters only entries with prefix to be included in chart.")
-    parser.add_argument("--top_ten", default=False, type=bool, help="Optional: Filters only top 10 highest percentage time entries to be included in chart.")
+    parser.add_argument("--top_n", default=-1, type=int, help="Optional: Filters only top n longest time entries to be included in chart.")
     parser.add_argument("--chart_type", required=True, choices=["percentage_time", "total_time"], type=str, help="Specify type of output chart.")
     parser.add_argument("--chart_title", default="Application Runtime Components", type=str, help="Optional: Title of the output chart.")
     parser.add_argument("--chart_xlabel", default="MPI World Size", type=str, help="Optional: X Label of chart.")
@@ -56,7 +55,7 @@ def make_stacked_line_chart(df, value, world_size, title, xlabel, y_label, filen
     plt.savefig(filename + ".png")
 
 
-def process_thickets(input_files, x_axis_unique_metadata, y_axis_metric, filter_prefix, top_ten, output_charts, additional_args):
+def process_thickets(input_files, x_axis_unique_metadata, y_axis_metric, filter_prefix, top_n, output_charts, additional_args):
     tk = th.Thicket.from_caliperreader(glob(input_files+"/**/*.cali", recursive=True))
 
     gb = tk.groupby(x_axis_unique_metadata)
@@ -79,15 +78,15 @@ def process_thickets(input_files, x_axis_unique_metadata, y_axis_metric, filter_
     if filter_prefix != "":
         ctk.dataframe = ctk.dataframe.filter(like=filter_prefix, axis=0)
 
-    if top_ten:
-        ctk.dataframe = ctk.dataframe.nlargest(10, [(world_size[0], "Total time")])
+    if top_n != -1:
+        ctk.dataframe = ctk.dataframe.nlargest(top_n, [(world_size[0], "Total time")])
 
     if output_charts == "percentage_time":
         make_stacked_line_chart(ctk.dataframe, "perc", world_size, additional_args.chart_title, additional_args.chart_xlabel, "Percentage of Runtime" if additional_args.chart_ylabel == "no_label" else additional_args.chart_ylabel, additional_args.chart_file_name)
-    else if output_charts == "total_time":
+    elif output_charts == "total_time":
         make_stacked_line_chart(ctk.dataframe, "Total time", world_size, additional_args.chart_title, additional_args.chart_xlabel, "Total Time" if additional_args.chart_ylabel == "no_label" else additional_args.chart_ylabel, additional_args.chart_file_name)
 
 
 if __name__ == "__main__":
     args = arg_parse()
-    process_thickets(args.input_files, args.x_axis_unique_metadata, args.y_axis_metric, args.filter_prefix, args.top_ten, args.chart_type, args)
+    process_thickets(args.input_files, args.x_axis_unique_metadata, args.y_axis_metric, args.filter_prefix, args.top_n, args.chart_type, args)
