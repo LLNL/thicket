@@ -19,24 +19,25 @@ import thicket as th
 
 def arg_parse():
     parser = argparse.ArgumentParser(
-        prog="stacked_line_graphs.py",
-        description="Generate stacked line graphs from Caliper files.",
-        epilog="This script reads in Caliper files and generates stacked line graphs based on the specified parameters.",
+        prog="stacked_line_charts.py",
+        description="Generate stacked line charts from Caliper files.",
+        epilog="This script reads in Caliper files and generates stacked line charts based on the specified parameters.",
     )
     parser.add_argument("--input_files", required=True, type=str, help="Directory of Caliper file input, including all subdirectories.")
-    parser.add_argument("--groupby_parameter", required=True, type=str, help="Parameter that is varied during the experiment.")
-    parser.add_argument("--metric_of_interest", required=True, type=str, help="Metric to be visualized.")
-    parser.add_argument("--filter_prefix", default="", type=str, help="Optional: Filters only entries with prefix to be included in graph.")
-    parser.add_argument("--top_ten", default=False, type=bool, help="Optional: Filters only top 10 highest percentage time entries to be included in graph.")
-    parser.add_argument("--out_graphs", nargs="+", required=True, choices=["perc", "total"], type=str, help="Specify types of graphs to be output.")
-    parser.add_argument("--graph_title", default="Application Runtime Components", type=str, help="Optional: Title of the output graph.")
-    parser.add_argument("--graph_xlabel", default="MPI World Size", type=str, help="Optional: X Label of graph.")
-    parser.add_argument("--graph_ylabel", default="no_label", type=str, help="Optional: Y Label of graph.")
+    parser.add_argument("--x_axis_unique_metadata", required=True, type=str, help="Parameter that is varied during the experiment.")
+    parser.add_argument("--y_axis_metric", required=True, type=str, help="Metric to be visualized.")
+    parser.add_argument("--filter_prefix", default="", type=str, help="Optional: Filters only entries with prefix to be included in chart.")
+    parser.add_argument("--top_ten", default=False, type=bool, help="Optional: Filters only top 10 highest percentage time entries to be included in chart.")
+    parser.add_argument("--out_charts", nargs="+", required=True, choices=["perc", "total"], type=str, help="Specify types of charts to be output.")
+    parser.add_argument("--chart_title", default="Application Runtime Components", type=str, help="Optional: Title of the output chart.")
+    parser.add_argument("--chart_xlabel", default="MPI World Size", type=str, help="Optional: X Label of chart.")
+    parser.add_argument("--chart_ylabel", default="no_label", type=str, help="Optional: Y Label of chart.")
+    parser.add_argument("--chart_file_name", default="stacked_line_chart", type=str, help="Optional: Output chart file name.")
     args = parser.parse_args()
     return args
 
 
-def make_stacked_line_graph(df, value, world_size, title, xlabel, y_label):
+def make_stacked_line_chart(df, value, world_size, title, xlabel, y_label, filename):
     fig = plt.figure()
     ax = df[[(i, value) for i in world_size]].T.plot(
         kind="area",
@@ -52,13 +53,13 @@ def make_stacked_line_graph(df, value, world_size, title, xlabel, y_label):
 
     plt.tight_layout()
 
-    plt.savefig(value + ".png")
+    plt.savefig(filename + ".png")
 
 
-def process_thickets(input_files, groupby_parameter, metric_of_interest, filter_prefix, top_ten, output_graphs, additional_args):
+def process_thickets(input_files, x_axis_unique_metadata, y_axis_metric, filter_prefix, top_ten, output_charts, additional_args):
     tk = th.Thicket.from_caliperreader(glob(input_files+"/**/*.cali", recursive=True))
 
-    gb = tk.groupby(groupby_parameter)
+    gb = tk.groupby(x_axis_unique_metadata)
 
     thickets = list(gb.values())
     world_size = list(gb.keys())
@@ -72,7 +73,7 @@ def process_thickets(input_files, groupby_parameter, metric_of_interest, filter_
 
     for i in world_size: 
         ctk.dataframe[i, "perc"] = (
-            ctk.dataframe[i, metric_of_interest] / ctk.dataframe[i, metric_of_interest].sum()
+            ctk.dataframe[i, y_axis_metric] / ctk.dataframe[i, y_axis_metric].sum()
         ) * 100
 
     if filter_prefix != "":
@@ -81,12 +82,12 @@ def process_thickets(input_files, groupby_parameter, metric_of_interest, filter_
     if top_ten:
         ctk.dataframe = ctk.dataframe.nlargest(10, [(world_size[0], "Total time")])
 
-    if "perc" in output_graphs:
-        make_stacked_line_graph(ctk.dataframe, "perc", world_size, additional_args.graph_title, additional_args.graph_xlabel, "Percentage of Runtime" if additional_args.graph_ylabel == "no_label" else additional_args.graph_ylabel)
-    if "total" in output_graphs:
-        make_stacked_line_graph(ctk.dataframe, "Total time", world_size, additional_args.graph_title, additional_args.graph_xlabel, "Total Time" if additional_args.graph_ylabel == "no_label" else additional_args.graph_ylabel)
+    if "perc" in output_charts:
+        make_stacked_line_chart(ctk.dataframe, "perc", world_size, additional_args.chart_title, additional_args.chart_xlabel, "Percentage of Runtime" if additional_args.chart_ylabel == "no_label" else additional_args.chart_ylabel, additional_args.chart_file_name)
+    if "total" in output_charts:
+        make_stacked_line_chart(ctk.dataframe, "Total time", world_size, additional_args.chart_title, additional_args.chart_xlabel, "Total Time" if additional_args.chart_ylabel == "no_label" else additional_args.chart_ylabel, additional_args.chart_file_name)
 
 
 if __name__ == "__main__":
     args = arg_parse()
-    process_thickets(args.input_files, args.groupby_parameter, args.metric_of_interest, args.filter_prefix, args.top_ten, args.out_graphs, args)
+    process_thickets(args.input_files, args.x_axis_unique_metadata, args.y_axis_metric, args.filter_prefix, args.top_ten, args.out_charts, args)
