@@ -36,6 +36,8 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
+    column_names = []
+
     q_list = str(tuple(quartiles))
 
     # thicket object without columnar index
@@ -50,6 +52,8 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                 col + "_upperfence" + q_list: [],
                 col + "_outliers" + q_list: [],
             }
+
+            column_names.append(str(boxplot_dict.keys()))
 
             df = thicket.dataframe.reset_index().groupby("node")
             for node, item in df:
@@ -108,6 +112,8 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                 }
             }
 
+            column_names.append(str((boxplot_dict.keys(), next(iter(boxplot_dict.values())).keys())))
+
             df = thicket.dataframe.reset_index().groupby("node")
             for node, item in df:
                 values = df.get_group(node)[(idx, col)].tolist()
@@ -160,3 +166,12 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    if calc_boxplot_statistics not in thicket.statsframe_ops_cache:
+        thicket.statsframe_ops_cache[calc_boxplot_statistics] = {}
+
+    for col_idx in range(len(column_names)):
+        cached_args = None
+        cached_kwargs = {"columns": [columns[col_idx]], "quartiles": quartiles}
+        cached_kwargs.update(**kwargs)
+        thicket.statsframe_ops_cache[calc_boxplot_statistics][column_names[col_idx]] = (cached_args, cached_kwargs)

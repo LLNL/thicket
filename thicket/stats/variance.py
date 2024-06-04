@@ -30,10 +30,13 @@ def variance(thicket, columns=None):
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
+    column_names = []
+
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         df = thicket.dataframe[columns].reset_index().groupby("node").agg(np.var)
         for column in columns:
+            column_names.append(column + "_var")
             thicket.statsframe.dataframe[column + "_var"] = df[column]
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
@@ -45,6 +48,7 @@ def variance(thicket, columns=None):
     else:
         df = thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(np.var)
         for idx, column in columns:
+            column_names.append(str((idx, column + "_var")))
             thicket.statsframe.dataframe[(idx, column + "_var")] = df[(idx, column)]
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
@@ -55,3 +59,11 @@ def variance(thicket, columns=None):
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    if variance not in thicket.statsframe_ops_cache:
+        thicket.statsframe_ops_cache[variance] = {}
+
+    for col_idx in range(len(column_names)):
+        cached_args = None
+        cached_kwargs = {"columns": [columns[col_idx]]}
+        thicket.statsframe_ops_cache[variance][column_names[col_idx]] = (cached_args, cached_kwargs)

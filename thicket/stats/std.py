@@ -29,10 +29,13 @@ def std(thicket, columns=None):
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
+    column_names = []
+
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         df = thicket.dataframe[columns].reset_index().groupby("node").agg(np.std)
         for column in columns:
+            column_names.append(column + "_std")
             thicket.statsframe.dataframe[column + "_std"] = df[column]
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
@@ -44,6 +47,7 @@ def std(thicket, columns=None):
     else:
         df = thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(np.std)
         for idx, column in columns:
+            column_names.append(str((idx, column + "_std")))
             thicket.statsframe.dataframe[(idx, column + "_std")] = df[(idx, column)]
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
@@ -54,3 +58,11 @@ def std(thicket, columns=None):
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    if std not in thicket.statsframe_ops_cache:
+        thicket.statsframe_ops_cache[std] = {}
+
+    for col_idx in range(len(column_names)):
+        cached_args = None
+        cached_kwargs = {"columns": [columns[col_idx]]}
+        thicket.statsframe_ops_cache[std][column_names[col_idx]] = (cached_args, cached_kwargs)

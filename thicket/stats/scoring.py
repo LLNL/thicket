@@ -110,6 +110,8 @@ def score(thicket, columns, output_column_name, scoring_function):
 
     verify_thicket_structures(thicket.dataframe, columns)
 
+    column_names = ""
+
     # Calculate means and stds, adds both onto statsframe
     th.stats.mean(thicket, columns)
     th.stats.std(thicket, columns)
@@ -149,6 +151,15 @@ def score(thicket, columns, output_column_name, scoring_function):
 
     thicket.statsframe.dataframe["Scoring", stats_frame_column_name] = resulting_scores
     thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    column_names = str(("Scoring", stats_frame_column_name))
+
+    if score not in thicket.statsframe_ops_cache:
+        thicket.statsframe_ops_cache[score] = {}
+
+    cached_args = [columns, output_column_name, scoring_function]
+    cached_kwargs = None
+    thicket.statsframe_ops_cache[score][column_names] = (cached_args, cached_kwargs)
 
     return
 

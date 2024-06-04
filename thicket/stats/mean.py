@@ -27,10 +27,13 @@ def mean(thicket, columns=None):
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
+    column_names = []
+
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         df = thicket.dataframe[columns].reset_index().groupby("node").agg(np.mean)
         for column in columns:
+            column_names.append(column + "_mean")
             thicket.statsframe.dataframe[column + "_mean"] = df[column]
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
@@ -44,6 +47,7 @@ def mean(thicket, columns=None):
             thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(np.mean)
         )
         for idx, column in columns:
+            column_names.append(str((idx, column + "_mean")))
             thicket.statsframe.dataframe[(idx, column + "_mean")] = df[(idx, column)]
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
@@ -54,3 +58,12 @@ def mean(thicket, columns=None):
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+    
+
+    if mean not in thicket.statsframe_ops_cache:
+        thicket.statsframe_ops_cache[mean] = {}
+
+    for col_idx in range(len(column_names)):
+        cached_args = None
+        cached_kwargs = {"columns": [columns[col_idx]]}
+        thicket.statsframe_ops_cache[mean][column_names[col_idx]] = (cached_args, cached_kwargs)

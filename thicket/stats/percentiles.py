@@ -5,6 +5,7 @@
 
 import pandas as pd
 
+import thicket as th
 from ..utils import verify_thicket_structures
 
 
@@ -51,6 +52,8 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
+    column_names = []
+
     # select numeric columns within thicket (.quantiles) will not work without this step
     numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 
@@ -63,8 +66,10 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
             for node in pd.unique(df.reset_index()["node"].tolist()):
                 calculated_percentiles.append(list(df.loc[node][column]))
 
+            column_name_agg = ""
             for index, percentile in enumerate(percentiles):
                 column_to_append = column + "_percentiles_" + str(int(percentile * 100))
+                column_name_agg = column_name_agg + column_to_append
                 thicket.statsframe.dataframe[column_to_append] = [
                     x[index] for x in calculated_percentiles
                 ]
@@ -81,11 +86,14 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
                     and column_to_append not in thicket.statsframe.inc_metrics
                 ):
                     thicket.statsframe.inc_metrics.append(column_to_append)
+            column_names.append(column_name_agg)
 
     # columnar joined thicket object
     else:
         df_num = thicket.dataframe.select_dtypes(include=numerics)[columns]
         df = df_num.reset_index(level=1).groupby("node").quantile(percentiles)
+
+        column_name_agg = ""
         for idx_level, column in columns:
             calculated_percentiles = []
 
@@ -99,6 +107,7 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
                     idx_level,
                     "{}_percentiles_{}".format(column, str(int(percentile * 100))),
                 )
+                column_name_agg = column_name_agg + str(column_to_append)
                 thicket.statsframe.dataframe[column_to_append] = [
                     x[index] for x in calculated_percentiles
                 ]
@@ -115,6 +124,17 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
                     and column_to_append not in thicket.statsframe.inc_metrics
                 ):
                     thicket.statsframe.inc_metrics.append(column_to_append)
+            column_names.append(column_name_agg)
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+    
+
+    # TODO: Fix issue with th.stats.percentiles: dict size changes in replay
+    if th.stats.percentiles not in thicket.statsframe_ops_cache:
+        thicket.statsframe_ops_cache[th.stats.percentiles] = {}
+
+    for col_idx in range(len(column_names)):
+        cached_args = None
+        cached_kwargs = {"columns": [columns[col_idx]], "percentiles": percentiles}
+        thicket.statsframe_ops_cache[th.stats.percentiles][column_names[col_idx]] = (cached_args, cached_kwargs)

@@ -27,10 +27,13 @@ def median(thicket, columns=None):
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
+    column_names = []
+
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         df = thicket.dataframe[columns].reset_index().groupby("node").agg(np.median)
         for column in columns:
+            column_names.append(column + "_median")
             thicket.statsframe.dataframe[column + "_median"] = df[column]
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
@@ -48,6 +51,7 @@ def median(thicket, columns=None):
             .agg(np.median)
         )
         for idx, column in columns:
+            column_names.append(str((idx, column + "_median")))
             thicket.statsframe.dataframe[(idx, column + "_median")] = df[(idx, column)]
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
@@ -58,3 +62,11 @@ def median(thicket, columns=None):
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    if median not in thicket.statsframe_ops_cache:
+        thicket.statsframe_ops_cache[median] = {}
+
+    for col_idx in range(len(column_names)):
+        cached_args = None
+        cached_kwargs = {"columns": [columns[col_idx]]}
+        thicket.statsframe_ops_cache[median][column_names[col_idx]] = (cached_args, cached_kwargs)

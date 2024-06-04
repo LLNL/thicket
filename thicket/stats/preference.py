@@ -41,6 +41,8 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
+    column_names = ""
+
     if test == "ttest":
         tvalue, t_statistics = __statistical_tests[test](
             thicket, columns, *args, **kwargs
@@ -71,6 +73,8 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
         aggregated_cols = columns[0] + " vs " + columns[1]
         thicket.statsframe.dataframe[aggregated_cols + "_std_preferred"] = pref_std
         thicket.statsframe.dataframe[aggregated_cols + "_mean_preferred"] = pref_mean
+
+        column_names = aggregated_cols + "_std_preferred" + aggregated_cols + "_mean_preferred"
     # columnar joined thicket object
     else:
         idx_mean = [(index, col + "_mean") for index, col in columns]
@@ -96,16 +100,17 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
         aggregated_cols = (
             str(columns[0]).replace("'", "") + " vs " + str(columns[1]).replace("'", "")
         )
-        thicket.statsframe.dataframe[
-            (
-                "Preference",
-                aggregated_cols + "_std_preferred",
-            )
-        ] = pref_std
 
-        thicket.statsframe.dataframe[
-            (
-                "Preference",
-                aggregated_cols + "_mean_preferred",
-            )
-        ] = pref_mean
+        col_name = ["Preference", aggregated_cols]
+        thicket.statsframe.dataframe[(col_name[0], col_name[1] + "_std_preferred")] = pref_std
+        thicket.statsframe.dataframe[(col_name[0], col_name[1] + "_mean_preferred")] = pref_mean
+
+        column_names = str(col_name) + "_std_preferred" + str(col_name) + "_mean_preferred"
+    
+    if preference not in thicket.statsframe_ops_cache:
+        thicket.statsframe_ops_cache[preference] = {}
+
+    cached_args = [columns, comparison_func, *args]
+    cached_kwargs = {"test": test,}
+    cached_kwargs.update(**kwargs)
+    thicket.statsframe_ops_cache[preference][column_names] = (cached_args, cached_kwargs)

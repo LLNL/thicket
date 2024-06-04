@@ -59,6 +59,7 @@ class Thicket(GraphFrame):
         profile=None,
         profile_mapping=None,
         statsframe=None,
+        statsframe_ops_cache=None,
     ):
         """Create a new thicket from a graph and a dataframe.
 
@@ -91,6 +92,11 @@ class Thicket(GraphFrame):
             self.statsframe = statsframe
         self.query_engine = QueryEngine()
         self.performance_cols = helpers._get_perf_columns(self.dataframe)
+
+        if statsframe_ops_cache is None:
+            self.statsframe_ops_cache = {}
+        else:
+            self.statsframe_ops_cache = statsframe_ops_cache
 
     def __eq__(self, other):
         """Compare two thicket objects.
@@ -700,6 +706,7 @@ class Thicket(GraphFrame):
             profile=self.profile,
             profile_mapping=self.profile_mapping,
             statsframe=sframe,
+            statsframe_ops_cache=self.statsframe_ops_cache,
         )
 
         if update_inc_cols:
@@ -769,6 +776,7 @@ class Thicket(GraphFrame):
             profile=copy.deepcopy(self.profile),
             profile_mapping=copy.deepcopy(self.profile_mapping),
             statsframe=self.statsframe.deepcopy(),
+            statsframe_ops_cache=self.statsframe_ops_cache,
         )
 
     def tree(
@@ -1231,14 +1239,29 @@ class Thicket(GraphFrame):
             filtered_th.dataframe = filtered_df
 
             final_thicket = filtered_th.squash(
-                update_inc_cols=update_inc_cols, new_statsframe=False
+                update_inc_cols=update_inc_cols, new_statsframe=True
             )
-
             final_thicket.statsframe.graph = final_thicket.graph.copy()
+
+            final_thicket.replay_stats_operations()
 
             return final_thicket
 
         return filtered_th
+
+    # TODO: Add docstring
+    def replay_stats_operations(self):
+        for stats_func, arg_dict in self.statsframe_ops_cache.items():
+            for arg in arg_dict.values():
+                if arg[0] is None:
+                    stats_func(self, **arg[1])
+                    continue
+                if arg[1] is None:
+                    stats_func(self, *arg[0])
+                    continue
+                
+                stats_func(self, *arg[0], **arg[1])
+
 
     def groupby(self, by):
         """Create sub-thickets based on unique values in metadata column(s).
