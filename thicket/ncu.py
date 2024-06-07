@@ -9,7 +9,7 @@ from hatchet import QueryMatcher
 import pandas as pd
 from tqdm import tqdm
 
-import ncu_report
+from .external import ncu_report
 
 
 class NCUReader:
