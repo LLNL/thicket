@@ -7,8 +7,10 @@ import pandas as pd
 import numpy as np
 
 from ..utils import verify_thicket_structures
+from .stats_utils import cache_stats_op
 
 
+@cache_stats_op
 def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **kwargs):
     """Calculate boxplots lowerfence, q1, q2, q3, iqr, upperfence, and outliers for each
     node in the performance data table.
@@ -23,6 +25,9 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
             (column index, column name).
         quartiles (list): List containing three values between 0 and 1 to cut the
             distribution into equal probabilities.
+
+    Returns:
+        (list): returns a list of output statsframe column names
     """
     if len(quartiles) != 3:
         raise ValueError(
@@ -36,7 +41,7 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
-    column_names = []
+    output_column_names = []
 
     q_list = str(tuple(quartiles))
 
@@ -53,7 +58,7 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                 col + "_outliers" + q_list: [],
             }
 
-            column_names.append(str(boxplot_dict.keys()))
+            output_column_names.append(str(boxplot_dict.keys()))
 
             df = thicket.dataframe.reset_index().groupby("node")
             for node, item in df:
@@ -112,7 +117,8 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                 }
             }
 
-            column_names.append(str((boxplot_dict.keys(), next(iter(boxplot_dict.values())).keys())))
+            for k in boxplot_dict[idx]:
+                output_column_names.append(str((idx, k)))
 
             df = thicket.dataframe.reset_index().groupby("node")
             for node, item in df:
@@ -167,11 +173,4 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
-    if calc_boxplot_statistics not in thicket.statsframe_ops_cache:
-        thicket.statsframe_ops_cache[calc_boxplot_statistics] = {}
-
-    for col_idx in range(len(column_names)):
-        cached_args = None
-        cached_kwargs = {"columns": [columns[col_idx]], "quartiles": quartiles}
-        cached_kwargs.update(**kwargs)
-        thicket.statsframe_ops_cache[calc_boxplot_statistics][column_names[col_idx]] = (cached_args, cached_kwargs)
+    return output_column_names

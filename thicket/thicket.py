@@ -8,6 +8,7 @@ import os
 import sys
 import json
 import warnings
+import itertools
 from collections import defaultdict, OrderedDict
 from hashlib import md5
 
@@ -402,6 +403,8 @@ class Thicket(GraphFrame):
                 metadata=thicket_parts[4],
                 profile=thicket_parts[5],
                 profile_mapping=thicket_parts[6],
+                # Cache must be cleared since two caches cannot be merged
+                statsframe_ops_cache={},
             )
 
         def _columns(
@@ -413,6 +416,8 @@ class Thicket(GraphFrame):
                 metadata_key=metadata_key,
                 disable_tqdm=disable_tqdm,
             )
+            # Clear cache since keys become invalid due to multiindex additions
+            combined_thicket.statsframe_ops_cache = {}
 
             return combined_thicket
 
@@ -746,6 +751,7 @@ class Thicket(GraphFrame):
             profile=copy.copy(self.profile),
             profile_mapping=copy.copy(self.profile_mapping),
             statsframe=self.statsframe.copy(),
+            statsframe_ops_cache=self.statsframe_ops_cache.copy(),
         )
 
     def deepcopy(self):
@@ -776,7 +782,7 @@ class Thicket(GraphFrame):
             profile=copy.deepcopy(self.profile),
             profile_mapping=copy.deepcopy(self.profile_mapping),
             statsframe=self.statsframe.deepcopy(),
-            statsframe_ops_cache=self.statsframe_ops_cache,
+            statsframe_ops_cache=self.statsframe_ops_cache.copy(),
         )
 
     def tree(
@@ -1234,34 +1240,34 @@ class Thicket(GraphFrame):
 
         filtered_sf_df.set_index(sf_index_names, inplace=True)
         filtered_th.statsframe.dataframe = filtered_sf_df
+        filtered_th.dataframe = filtered_df
 
         if squash:
-            filtered_th.dataframe = filtered_df
-
-            final_thicket = filtered_th.squash(
+            filtered_th = filtered_th.squash(
                 update_inc_cols=update_inc_cols, new_statsframe=True
             )
-            final_thicket.statsframe.graph = final_thicket.graph.copy()
+            filtered_th.statsframe.graph = filtered_th.graph
 
-            final_thicket.replay_stats_operations()
-
-            return final_thicket
+            filtered_th.reapply_stats_operations()
 
         return filtered_th
 
-    # TODO: Add docstring
-    def replay_stats_operations(self):
+    def reapply_stats_operations(self):
+        """Reapply most recent stats operations."""
+
         for stats_func, arg_dict in self.statsframe_ops_cache.items():
-            for arg in arg_dict.values():
-                if arg[0] is None:
-                    stats_func(self, **arg[1])
-                    continue
-                if arg[1] is None:
-                    stats_func(self, *arg[0])
-                    continue
-                
+            # This makes sure the data is comparable
+            sortkey = lambda x: (  # noqa: E731
+                x[0],
+                tuple(sorted(x[1].items(), key=lambda y: y[0])),
+            )
+            for k, g in itertools.groupby(
+                list(sorted(arg_dict.values(), key=sortkey)), key=sortkey
+            ):
+                arg = list(g)[0]
                 stats_func(self, *arg[0], **arg[1])
 
+            validate_nodes(self)
 
     def groupby(self, by):
         """Create sub-thickets based on unique values in metadata column(s).

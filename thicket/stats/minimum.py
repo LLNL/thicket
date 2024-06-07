@@ -4,8 +4,10 @@
 # SPDX-License-Identifier: MIT
 
 from ..utils import verify_thicket_structures
+from .stats_utils import cache_stats_op
 
 
+@cache_stats_op
 def minimum(thicket, columns=None):
     """Determine the minimum for each node in the performance data table.
 
@@ -19,6 +21,9 @@ def minimum(thicket, columns=None):
         columns (list): List of hardware/timing metrics to determine minimum value for.
             Note, if using a columnar joined thicket a list of tuples must be passed in
             with the format (column index, column name).
+
+    Returns:
+        (list): returns a list of output statsframe column names
     """
     if columns is None:
         raise ValueError(
@@ -27,13 +32,13 @@ def minimum(thicket, columns=None):
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
-    column_names = []
+    output_column_names = []
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         df = thicket.dataframe[columns].reset_index().groupby("node").agg(min)
         for column in columns:
-            column_names.append(column + "_min")
+            output_column_names.append(column + "_min")
             thicket.statsframe.dataframe[column + "_min"] = df[column]
             # check to see if exclusive metric
             if column in thicket.exc_metrics:
@@ -45,7 +50,7 @@ def minimum(thicket, columns=None):
     else:
         df = thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(min)
         for idx, column in columns:
-            column_names.append(str((idx, column + "_min")))
+            output_column_names.append(str((idx, column + "_min")))
             thicket.statsframe.dataframe[(idx, column + "_min")] = df[(idx, column)]
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
@@ -57,10 +62,4 @@ def minimum(thicket, columns=None):
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
-    if minimum not in thicket.statsframe_ops_cache:
-        thicket.statsframe_ops_cache[minimum] = {}
-
-    for col_idx in range(len(column_names)):
-        cached_args = None
-        cached_kwargs = {"columns": [columns[col_idx]]}
-        thicket.statsframe_ops_cache[minimum][column_names[col_idx]] = (cached_args, cached_kwargs)
+    return output_column_names

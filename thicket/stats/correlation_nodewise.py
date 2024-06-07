@@ -6,8 +6,10 @@
 from scipy import stats
 
 from ..utils import verify_thicket_structures
+from .stats_utils import cache_stats_op
 
 
+@cache_stats_op
 def correlation_nodewise(thicket, column1=None, column2=None, correlation="pearson"):
     """Calculate the nodewise correlation for each node in the performance data table.
 
@@ -27,6 +29,9 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
             (column index, column name).
         correlation (str): correlation test to perform -- pearson (default), spearman,
             and kendall.
+
+    Returns:
+        (list): returns a list of output statsframe column names
     """
     if column1 is None or column2 is None:
         raise ValueError(
@@ -36,6 +41,9 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
     verify_thicket_structures(
         thicket.dataframe, index=["node"], columns=[column1, column2]
     )
+
+    output_column_names = []
+
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
         df = thicket.dataframe.reset_index().groupby("node")
@@ -69,6 +77,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
         thicket.statsframe.dataframe[
             column1 + "_vs_" + column2 + " " + correlation
         ] = correlated
+        output_column_names.append(str(column1 + "_vs_" + column2 + " " + correlation))
     # columnar joined thicket object
     else:
         df = thicket.dataframe.reset_index().groupby("node")
@@ -100,17 +109,22 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                     "Invalid correlation, options are pearson, spearman, and kendall."
                 )
         if column1[0] != column2[0]:
-            thicket.statsframe.dataframe[
-                (
-                    "Union statistics",
-                    column1[1] + "_vs_" + column2[1] + " " + correlation,
-                )
-            ] = correlated
+            column_name = (
+                "Union statistics",
+                column1[1] + "_vs_" + column2[1] + " " + correlation,
+            )
+            thicket.statsframe.dataframe[column_name] = correlated
+            output_column_names.append(str(column_name))
         else:
             column_idx = column1[0]
-            thicket.statsframe.dataframe[
-                (column_idx, column1[1] + "_vs_" + column2[1] + " " + correlation)
-            ] = correlated
+            column_name = (
+                column_idx,
+                column1[1] + "_vs_" + column2[1] + " " + correlation,
+            )
+            thicket.statsframe.dataframe[column_name] = correlated
+            output_column_names.append(str(column_name))
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    return output_column_names

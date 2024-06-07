@@ -7,8 +7,10 @@ import pandas as pd
 from scipy import stats
 
 from ..utils import verify_thicket_structures
+from .stats_utils import cache_stats_op
 
 
+@cache_stats_op
 def check_normality(thicket, columns=None):
     """Determine if the data is normal or non-normal for each node in the performance
     data table.
@@ -25,6 +27,9 @@ def check_normality(thicket, columns=None):
         columns (list): List of hardware/timing metrics to perform normality test on.
             Note, if using a columnar joined thicket a list of tuples must be passed in
             with the format (column index, column name).
+
+    Returns:
+        (list): returns a list of output statsframe column names
     """
     if columns is None:
         raise ValueError(
@@ -33,7 +38,7 @@ def check_normality(thicket, columns=None):
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
-    column_names = []
+    output_column_names = []
 
     # thicket object without columnar index
     if thicket.dataframe.columns.nlevels == 1:
@@ -44,7 +49,7 @@ def check_normality(thicket, columns=None):
             .agg(stats.shapiro)
         )
         for column in columns:
-            column_names.append(column + "_normality")
+            output_column_names.append(column + "_normality")
             for i in range(0, len(df[column])):
                 pvalue = df[column][i].pvalue
 
@@ -75,7 +80,7 @@ def check_normality(thicket, columns=None):
             .agg(stats.shapiro)
         )
         for idx, column in columns:
-            column_names.append(str((idx, column + "_normality")))
+            output_column_names.append(str((idx, column + "_normality")))
             for i in range(0, len(df[(idx, column)])):
                 pvalue = df[(idx, column)][i].pvalue
 
@@ -101,11 +106,4 @@ def check_normality(thicket, columns=None):
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
-    
-    if check_normality not in thicket.statsframe_ops_cache:
-        thicket.statsframe_ops_cache[check_normality] = {}
-
-    for col_idx in range(len(column_names)):
-        cached_args = None
-        cached_kwargs = {"columns": [columns[col_idx]]}
-        thicket.statsframe_ops_cache[check_normality][column_names[col_idx]] = (cached_args, cached_kwargs)
+    return output_column_names
