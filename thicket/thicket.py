@@ -4,12 +4,14 @@
 # SPDX-License-Identifier: MIT
 
 import copy
+import multiprocessing
 import os
 import sys
 import json
 import warnings
 from collections import defaultdict, OrderedDict
 from hashlib import md5
+from functools import partial
 
 import pandas as pd
 import numpy as np
@@ -203,7 +205,11 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def from_caliper(
-        filename_or_stream, query=None, intersection=False, disable_tqdm=False
+        filename_or_stream,
+        query=None,
+        intersection=False,
+        disable_tqdm=False,
+        parallel=False,
     ):
         """Read in a Caliper .cali or .json file.
 
@@ -213,17 +219,24 @@ class Thicket(GraphFrame):
             query (str): cali-query in CalQL format
             intersection (bool): whether to perform intersection or union (default)
             disable_tqdm (bool): whether to display tqdm progress bar
+            parallel (bool): speedup reader for many files by using parallelization
+
+        Returns:
+            (thicket): new thicket containing Caliper profile data
         """
         return Thicket.reader_dispatch(
             GraphFrame.from_caliper,
             intersection,
             disable_tqdm,
+            parallel,
             filename_or_stream,
             query,
         )
 
     @staticmethod
-    def from_hpctoolkit(dirname, intersection=False, disable_tqdm=False):
+    def from_hpctoolkit(
+        dirname, intersection=False, disable_tqdm=False, parallel=False
+    ):
         """Create a GraphFrame using hatchet's HPCToolkit reader and use its attributes
         to make a new thicket.
 
@@ -231,17 +244,21 @@ class Thicket(GraphFrame):
             dirname (str): parent directory of an HPCToolkit experiment.xml file
             intersection (bool): whether to perform intersection or union (default)
             disable_tqdm (bool): whether to display tqdm progress bar
+            parallel (bool): speedup reader for many files by using parallelization
 
         Returns:
             (thicket): new thicket containing HPCToolkit profile data
         """
         return Thicket.reader_dispatch(
-            GraphFrame.from_hpctoolkit, intersection, disable_tqdm, dirname
+            GraphFrame.from_hpctoolkit, intersection, disable_tqdm, parallel, dirname
         )
 
     @staticmethod
     def from_caliperreader(
-        filename_or_caliperreader, intersection=False, disable_tqdm=False
+        filename_or_caliperreader,
+        intersection=False,
+        disable_tqdm=False,
+        parallel=False,
     ):
         """Helper function to read one caliper file.
 
@@ -250,11 +267,13 @@ class Thicket(GraphFrame):
                 file in `.cali` format, or a CaliperReader object
             intersection (bool): whether to perform intersection or union (default)
             disable_tqdm (bool): whether to display tqdm progress bar
+            parallel (bool): speedup reader for many files by using parallelization
         """
         return Thicket.reader_dispatch(
             GraphFrame.from_caliperreader,
             intersection,
             disable_tqdm,
+            parallel,
             filename_or_caliperreader,
         )
 
@@ -295,13 +314,14 @@ class Thicket(GraphFrame):
         return tk
 
     @staticmethod
-    def reader_dispatch(func, intersection, disable_tqdm, *args, **kwargs):
+    def reader_dispatch(func, intersection, disable_tqdm, parallel, *args, **kwargs):
         """Create a thicket from a list, directory of files, or a single file.
 
         Arguments:
             func (function): reader function to be used
             intersection (bool): whether to perform intersection or union (default).
-            tdmq_output (bool): whether to display tqdm progress bar
+            disable_tqdm (bool): whether to display tqdm progress bar
+            parallel (bool): speedup reader for many files by using parallelization
             args (list): list of args; args[0] should be an object that can be read from
         """
         ens_list = []
@@ -349,6 +369,27 @@ class Thicket(GraphFrame):
         calltree = "union"
         if intersection:
             calltree = "intersection"
+        # Divide and conquer list of Thickets into smaller ens_list
+        if parallel:
+            ncpus = multiprocessing.cpu_count()
+            if len(ens_list) < ncpus * 2:
+                raise ValueError(
+                    "Not enough files for parallel read operation. Set 'parallel=False'"
+                )
+            pool = multiprocessing.Pool(processes=ncpus)
+            np_ens_list = np.array(ens_list)
+            split_ens_list = np.array_split(np_ens_list, ncpus)
+            # Concatenate the list of single-profile Thickets in parallel
+            ens_list = pool.map(
+                partial(
+                    Thicket.concat_thickets,
+                    axis="index",
+                    calltree=calltree,
+                    disable_tqdm=disable_tqdm,
+                ),
+                split_ens_list,
+            )
+        # Concatenate Thickets in ens_list
         thicket_object = Thicket.concat_thickets(
             thickets=ens_list,
             axis="index",
