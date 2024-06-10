@@ -203,7 +203,11 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def from_caliper(
-        filename_or_stream, query=None, intersection=False, disable_tqdm=False
+        filename_or_stream,
+        query=None,
+        intersection=False,
+        fill_perfdata=True,
+        disable_tqdm=False,
     ):
         """Read in a Caliper .cali or .json file.
 
@@ -212,36 +216,48 @@ class Thicket(GraphFrame):
                 `.cali` or JSON-split format, or an open file object to read one
             query (str): cali-query in CalQL format
             intersection (bool): whether to perform intersection or union (default)
+            fill_perfdata (bool): whether to fill missing performance data with NaNs
             disable_tqdm (bool): whether to display tqdm progress bar
         """
         return Thicket.reader_dispatch(
             GraphFrame.from_caliper,
             intersection,
+            fill_perfdata,
             disable_tqdm,
             filename_or_stream,
             query,
         )
 
     @staticmethod
-    def from_hpctoolkit(dirname, intersection=False, disable_tqdm=False):
+    def from_hpctoolkit(
+        dirname, intersection=False, fill_perfdata=True, disable_tqdm=False
+    ):
         """Create a GraphFrame using hatchet's HPCToolkit reader and use its attributes
         to make a new thicket.
 
         Arguments:
             dirname (str): parent directory of an HPCToolkit experiment.xml file
             intersection (bool): whether to perform intersection or union (default)
+            fill_perfdata (bool): whether to fill missing performance data with NaNs
             disable_tqdm (bool): whether to display tqdm progress bar
 
         Returns:
             (thicket): new thicket containing HPCToolkit profile data
         """
         return Thicket.reader_dispatch(
-            GraphFrame.from_hpctoolkit, intersection, disable_tqdm, dirname
+            GraphFrame.from_hpctoolkit,
+            intersection,
+            fill_perfdata,
+            disable_tqdm,
+            dirname,
         )
 
     @staticmethod
     def from_caliperreader(
-        filename_or_caliperreader, intersection=False, disable_tqdm=False
+        filename_or_caliperreader,
+        intersection=False,
+        fill_perfdata=True,
+        disable_tqdm=False,
     ):
         """Helper function to read one caliper file.
 
@@ -249,11 +265,13 @@ class Thicket(GraphFrame):
             filename_or_caliperreader (str or CaliperReader): name of a Caliper output
                 file in `.cali` format, or a CaliperReader object
             intersection (bool): whether to perform intersection or union (default)
+            fill_perfdata (bool): whether to fill missing performance data with NaNs
             disable_tqdm (bool): whether to display tqdm progress bar
         """
         return Thicket.reader_dispatch(
             GraphFrame.from_caliperreader,
             intersection,
+            fill_perfdata,
             disable_tqdm,
             filename_or_caliperreader,
         )
@@ -295,7 +313,9 @@ class Thicket(GraphFrame):
         return tk
 
     @staticmethod
-    def reader_dispatch(func, intersection, disable_tqdm, *args, **kwargs):
+    def reader_dispatch(
+        func, intersection, fill_perfdata, disable_tqdm, *args, **kwargs
+    ):
         """Create a thicket from a list, directory of files, or a single file.
 
         Arguments:
@@ -353,6 +373,7 @@ class Thicket(GraphFrame):
             thickets=ens_list,
             axis="index",
             calltree=calltree,
+            fill_perfdata=fill_perfdata,
             disable_tqdm=disable_tqdm,
         )
 
@@ -372,6 +393,7 @@ class Thicket(GraphFrame):
             calltree (str): calltree to use -> "union" or "intersection"
 
         Keyword Arguments:
+            fill_perfdata (bool): (if axis="index") Whether to fill missing performance data with NaNs
             headers (list): (if axis="columns") List of headers to use for the new columnar multi-index
             metadata_key (str): (if axis="columns") Name of the column from the metadata tables to replace the 'profile'
                 index. If no argument is provided, it is assumed that there is no profile-wise
@@ -381,10 +403,16 @@ class Thicket(GraphFrame):
             (thicket): concatenated thicket
         """
 
-        def _index(thickets, from_statsframes=False, disable_tqdm=disable_tqdm):
+        def _index(
+            thickets,
+            from_statsframes=False,
+            fill_perfdata=True,
+            disable_tqdm=disable_tqdm,
+        ):
             thicket_parts = Ensemble._index(
                 thickets=thickets,
                 from_statsframes=from_statsframes,
+                fill_perfdata=fill_perfdata,
                 disable_tqdm=disable_tqdm,
             )
 
