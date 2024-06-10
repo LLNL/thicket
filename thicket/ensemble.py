@@ -377,7 +377,7 @@ class Ensemble:
         Arguments:
             thickets (list): list of Thicket objects
             from_statsframes (bool): Whether this method was invoked from from_statsframes
-            fill_perfdata (bool): whether to fill missing rows in performance data table
+            fill_perfdata (bool): whether to fill missing performance data with NaNs
             disable_tqdm (bool): whether to disable tqdm progress bar
 
         Returns:
