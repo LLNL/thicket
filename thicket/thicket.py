@@ -1140,6 +1140,12 @@ class Thicket(GraphFrame):
         else:
             raise InvalidFilter("The argument passed to filter must be a callable.")
 
+        # If fill_perfdata is False, may need to squash
+        unique_perf_indices = set(new_thicket.dataframe.index.droplevel("node"))
+        full_idx = all([idx in unique_perf_indices for idx in new_thicket.profile])
+        if not full_idx:
+            new_thicket = new_thicket.squash()
+
         return new_thicket
 
     def filter(self, filter_func):
