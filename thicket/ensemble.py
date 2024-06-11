@@ -406,7 +406,7 @@ class Ensemble:
                 # Replace "NaN" with "None" in columns of string type
                 for col in df.columns:
                     if pd.api.types.is_string_dtype(df[col].dtype):
-                        df[col].replace({numerical_fill_value: None}, inplace=True)
+                        df[col] = df[col].replace({numerical_fill_value: None})
             except ValueError as e:
                 estr = str(e)
                 if estr == "cannot handle a non-unique multi-index!":
