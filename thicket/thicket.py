@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: MIT
 
 import copy
-import math
 import os
 import pickle
 import sys
@@ -391,30 +390,20 @@ class Thicket(GraphFrame):
         calltree = "union"
         if intersection:
             calltree = "intersection"
-
-        num_tks = len(ens_list)
-        tk_limit = 2**9
-        if num_tks > tk_limit:
-            split_list = np.array_split(ens_list, math.ceil(num_tks / tk_limit))
-            ens_list = []
-            for sub_list in split_list:
-                ens_list.append(
-                    Thicket.concat_thickets(
-                        thickets=sub_list,
-                        axis="index",
-                        calltree=calltree,
-                        disable_tqdm=disable_tqdm,
-                    )
-                )
-        thicket_object = Thicket.concat_thickets(
-            thickets=ens_list,
-            axis="index",
-            calltree=calltree,
-            fill_perfdata=fill_perfdata,
-            disable_tqdm=disable_tqdm,
-        )
-
-        return thicket_object
+        # n - 1 edges in a binary tree
+        pbar = tqdm.tqdm(range(len(ens_list) - 1), disable=disable_tqdm)
+        for i in pbar:
+            pbar.set_description("(2/2) Creating Thicket")
+            new_tk = Thicket.concat_thickets(
+                thickets=[ens_list.pop(0), ens_list.pop(0)],
+                axis="index",
+                calltree=calltree,
+                fill_perfdata=fill_perfdata,
+                disable_tqdm=disable_tqdm,
+            )
+            ens_list.append(new_tk)
+        assert len(ens_list) == 1
+        return ens_list[0]
 
     @staticmethod
     def concat_thickets(

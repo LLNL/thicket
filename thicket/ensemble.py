@@ -9,7 +9,6 @@ import warnings
 from hatchet import GraphFrame
 import numpy as np
 import pandas as pd
-import tqdm
 
 import thicket.helpers as helpers
 from .utils import (
@@ -103,9 +102,7 @@ class Ensemble:
         # Unify graphs if "self" and "other" do not have the same graph
         union_graph = _thickets[0].graph
         old_to_new = {}
-        pbar = tqdm.tqdm(range(len(_thickets) - 1), disable=disable_tqdm)
-        for i in pbar:
-            pbar.set_description("(2/2) Creating Thicket")
+        for i in range(len(_thickets) - 1):
             temp_dict = {}
             union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
             # Set all graphs to the union graph
