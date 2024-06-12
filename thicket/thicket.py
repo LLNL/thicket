@@ -1067,50 +1067,50 @@ class Thicket(GraphFrame):
         Returns:
             (thicket): new thicket object with selected value
         """
-        if callable(select_function):
-            if not self.metadata.empty:
-                # check only 1 index in metadata
-                assert self.metadata.index.nlevels == 1
-
-                # Add warning if filtering on multi-index columns
-                if isinstance(self.metadata.columns, pd.MultiIndex):
-                    warnings.warn(
-                        "Filtering on MultiIndex columns will impact the entire row, not just the subsection of the provided MultiIndex."
-                    )
-
-                # Get index name
-                index_name = self.metadata.index.name
-
-                # create a copy of the thicket object
-                new_thicket = self.copy()
-
-                # filter metadata table
-                filtered_rows = new_thicket.metadata.apply(select_function, axis=1)
-                new_thicket.metadata = new_thicket.metadata[filtered_rows]
-
-                # note index keys to filter performance data table
-                index_id = new_thicket.metadata.index.values.tolist()
-                # filter performance data table based on the metadata table
-                new_thicket.dataframe = new_thicket.dataframe[
-                    new_thicket.dataframe.index.get_level_values(index_name).isin(
-                        index_id
-                    )
-                ]
-
-                # create an empty aggregated statistics table with the name column
-                new_thicket.statsframe.dataframe = helpers._new_statsframe_df(
-                    new_thicket.dataframe
-                )
-
-                new_thicket._sync_profile_components(new_thicket.metadata)
-                validate_profile(new_thicket)
-            else:
-                raise EmptyMetadataTable(
-                    "The provided Thicket object has an empty MetadataTable."
-                )
-
-        else:
+        # Error checks
+        if not callable(select_function):
             raise InvalidFilter("The argument passed to filter must be a callable.")
+        if self.metadata.empty:
+            raise EmptyMetadataTable(
+                "The provided Thicket object has an empty MetadataTable."
+            )
+        # check only 1 index in metadata
+        if isinstance(self.metadata.index, pd.MultiIndex):
+            raise TypeError("The metadata index must be single-level.")
+        # Add warning if filtering on multi-index columns
+        if isinstance(self.metadata.columns, pd.MultiIndex):
+            warnings.warn(
+                "Filtering on MultiIndex columns will impact the entire row, not just the subsection of the provided MultiIndex."
+            )
+
+        # Get index name
+        index_name = self.metadata.index.name
+
+        # create a copy of the thicket object
+        new_thicket = self.copy()
+
+        # filter metadata table
+        filtered_rows = new_thicket.metadata.apply(select_function, axis=1)
+        if not filtered_rows.any():
+            raise EmptyMetadataTable(
+                "The provided filter function resulted in an empty MetadataTable."
+            )
+        new_thicket.metadata = new_thicket.metadata[filtered_rows]
+
+        # note index keys to filter performance data table
+        index_id = new_thicket.metadata.index.values.tolist()
+        # filter performance data table based on the metadata table
+        new_thicket.dataframe = new_thicket.dataframe[
+            new_thicket.dataframe.index.get_level_values(index_name).isin(index_id)
+        ]
+
+        # create an empty aggregated statistics table with the name column
+        new_thicket.statsframe.dataframe = helpers._new_statsframe_df(
+            new_thicket.dataframe
+        )
+
+        new_thicket._sync_profile_components(new_thicket.metadata)
+        validate_profile(new_thicket)
 
         return new_thicket
 

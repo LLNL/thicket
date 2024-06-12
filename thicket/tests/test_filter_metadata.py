@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import pandas as pd
 import pytest
 
 from thicket import Thicket
@@ -158,23 +159,41 @@ def filter_multiple_or(th, columns_values):
     assert exp_nodes == stats_nodes
     assert "name" in new_th.statsframe.dataframe.columns
 
+
+def test_check_errors(rajaperf_seq_O3_1M_cali):
+    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
+
     # check for invalid filter exception
     with pytest.raises(InvalidFilter):
         th.filter_metadata(123)
 
+    # check that query with non-existent value raises error
+    with pytest.raises(
+        EmptyMetadataTable,
+        match="The provided filter function resulted in an empty MetadataTable.",
+    ):
+        th.filter_metadata(lambda x: x["cluster"] == "chekov")
     # drop all rows of the metadata table
     th.metadata = th.metadata.iloc[0:0]
-
     # check for empty metadata table exception
-    with pytest.raises(EmptyMetadataTable):
-        th.filter_metadata(lambda x: x["cluster"] == "chekov")
+    with pytest.raises(
+        EmptyMetadataTable,
+        match="The provided Thicket object has an empty MetadataTable.",
+    ):
+        th.filter_metadata(lambda x: x["cluster"] == "quartz")
+    # Check for multi-level index exception
+    th.metadata = pd.DataFrame(
+        data=[0], index=pd.MultiIndex.from_tuples([("one", "two")], names=["a", "b"])
+    )
+    with pytest.raises(TypeError, match="The metadata index must be single-level."):
+        th.filter_metadata(lambda x: x["cluster"] == "quartz")
 
 
 def test_filter_metadata(rajaperf_seq_O3_1M_cali):
     # example thicket
     th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
     # columns and corresponding values to filter by
-    columns_values = {"ProblemSizeRunParam": ["30"], "cluster": ["chekov", "quartz"]}
+    columns_values = {"ProblemSizeRunParam": [1048576.0], "cluster": ["quartz"]}
     filter_one_column(th, columns_values)
     filter_multiple_and(th, columns_values)
     filter_multiple_or(th, columns_values)
