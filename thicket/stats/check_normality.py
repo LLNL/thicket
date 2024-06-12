@@ -80,7 +80,7 @@ def check_normality(thicket, columns=None):
             .agg(stats.shapiro)
         )
         for idx, column in columns:
-            output_column_names.append(str((idx, column + "_normality")))
+            output_column_names.append((idx, column + "_normality"))
             for i in range(0, len(df[(idx, column)])):
                 pvalue = df[(idx, column)][i].pvalue
 

@@ -1236,11 +1236,19 @@ class Thicket(GraphFrame):
         filtered_df = dframe_copy[dframe_copy["node"].isin(query_matches)]
         filtered_df.set_index(df_index_names, inplace=True)
 
-        filtered_th = self.deepcopy()
-
         filtered_sf_df.set_index(sf_index_names, inplace=True)
-        filtered_th.statsframe.dataframe = filtered_sf_df
-        filtered_th.dataframe = filtered_df
+
+        filtered_th = Thicket(
+            graph=self.graph,
+            dataframe=filtered_df,
+            exc_metrics=self.exc_metrics.copy(),
+            inc_metrics=self.inc_metrics.copy(),
+            metadata=self.metadata,
+            profile=self.profile,
+            profile_mapping=self.profile_mapping,
+            statsframe=GraphFrame(graph=self.graph, dataframe=filtered_sf_df),
+            statsframe_ops_cache=self.statsframe_ops_cache.copy(),
+        )
 
         if squash:
             filtered_th = filtered_th.squash(

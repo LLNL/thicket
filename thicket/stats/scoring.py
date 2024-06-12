@@ -152,7 +152,7 @@ def score(thicket, columns, output_column_name, scoring_function):
     thicket.statsframe.dataframe["Scoring", stats_frame_column_name] = resulting_scores
     thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
-    output_column_names.append(str(("Scoring", stats_frame_column_name)))
+    output_column_names.append(("Scoring", stats_frame_column_name))
 
     return output_column_names
 

@@ -115,7 +115,7 @@ def preference(thicket, columns, comparison_func, *args, test="ttest", **kwargs)
             (col_name[0], col_name[1] + "_mean_preferred")
         ] = pref_mean
 
-        output_column_names.append(str(col_name) + "_std_preferred")
-        output_column_names.append(str(col_name) + "_mean_preferred")
+        output_column_names.append((col_name[0], col_name[1] + "_std_preferred"))
+        output_column_names.append((col_name[0], col_name[1] + "_mean_preferred"))
 
     return output_column_names

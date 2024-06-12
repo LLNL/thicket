@@ -77,7 +77,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
         thicket.statsframe.dataframe[
             column1 + "_vs_" + column2 + " " + correlation
         ] = correlated
-        output_column_names.append(str(column1 + "_vs_" + column2 + " " + correlation))
+        output_column_names.append(column1 + "_vs_" + column2 + " " + correlation)
     # columnar joined thicket object
     else:
         df = thicket.dataframe.reset_index().groupby("node")
@@ -114,7 +114,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                 column1[1] + "_vs_" + column2[1] + " " + correlation,
             )
             thicket.statsframe.dataframe[column_name] = correlated
-            output_column_names.append(str(column_name))
+            output_column_names.append(column_name)
         else:
             column_idx = column1[0]
             column_name = (
@@ -122,7 +122,7 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                 column1[1] + "_vs_" + column2[1] + " " + correlation,
             )
             thicket.statsframe.dataframe[column_name] = correlated
-            output_column_names.append(str(column_name))
+            output_column_names.append(column_name)
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)

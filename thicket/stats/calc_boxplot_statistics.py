@@ -58,7 +58,9 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
                 col + "_outliers" + q_list: [],
             }
 
-            output_column_names.append(str(boxplot_dict.keys()))
+            # output_column_names.append(str(boxplot_dict.keys()))
+            for k in boxplot_dict:
+                output_column_names.append(k)
 
             df = thicket.dataframe.reset_index().groupby("node")
             for node, item in df:
@@ -118,7 +120,7 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
             }
 
             for k in boxplot_dict[idx]:
-                output_column_names.append(str((idx, k)))
+                output_column_names.append((idx, k))
 
             df = thicket.dataframe.reset_index().groupby("node")
             for node, item in df:

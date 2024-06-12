@@ -52,7 +52,7 @@ def mean(thicket, columns=None):
             thicket.dataframe[columns].reset_index(level=1).groupby("node").agg(np.mean)
         )
         for idx, column in columns:
-            output_column_names.append(str((idx, column + "_mean")))
+            output_column_names.append((idx, column + "_mean"))
             thicket.statsframe.dataframe[(idx, column + "_mean")] = df[(idx, column)]
             # check to see if exclusive metric
             if (idx, column) in thicket.exc_metrics:
