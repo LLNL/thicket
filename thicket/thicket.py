@@ -1198,6 +1198,27 @@ class Thicket(GraphFrame):
 
         return new_thicket
 
+    def filter_profile(self, profile_list):
+        """Filter thicket object based on a list of profiles.
+
+        Arguments:
+            profile_list (list): list of profiles to filter on
+
+        Returns:
+            (thicket): new thicket object with selected profiles
+        """
+        new_thicket = self.copy()
+
+        new_thicket._sync_profile_components(profile_list)
+        validate_profile(new_thicket)
+
+        if len(new_thicket.graph) != len(
+            new_thicket.dataframe.index.get_level_values("node").unique()
+        ):
+            new_thicket.squash()
+
+        return new_thicket
+
     def filter(self, filter_func):
         """Overloaded generic filter function.
 
@@ -1468,12 +1489,12 @@ class Thicket(GraphFrame):
 
     def _sync_profile_components(self, component):
         """Synchronize the Performance DataFrame, Metadata Dataframe, profile and
-        profile mapping objects based on the component's index. This is useful when a
-        non-Thicket function modifies the profiles in an object and those changes need
-        to be reflected in the other objects.
+        profile mapping objects based on the component's index or a list of profiles.
+        This is useful when a non-Thicket function modifies the profiles in an object
+        and those changes need to be reflected in the other objects.
 
         Arguments:
-            component (DataFrame) -> (Thicket.dataframe or Thicket.metadata): The index
+            component (list or DataFrame) -> (list, Thicket.dataframe, or Thicket.metadata): The index
             of this component is used to synchronize the other objects.
 
         Returns:
@@ -1516,8 +1537,10 @@ class Thicket(GraphFrame):
                 }
             )
 
+            if isinstance(component, list):
+                pass
             # For Columnar-indexed Thicket
-            if isinstance(component.columns, pd.MultiIndex):
+            elif isinstance(component.columns, pd.MultiIndex):
                 # Create powerset from all profiles
                 pset = set()
                 for p in profile_truth:
@@ -1531,13 +1554,15 @@ class Thicket(GraphFrame):
 
             return self
 
-        if not isinstance(component, pd.DataFrame):
+        if isinstance(component, list):
+            self = _sync_indices(component, component)
+        elif isinstance(component, pd.DataFrame):
+            profile_truth = _profile_truth_from_component(component)
+            self = _sync_indices(component, profile_truth)
+        else:
             raise ValueError(
-                "Component must be either Thicket.dataframe or Thicket.metadata"
+                "Component must be either list, Thicket.dataframe, or Thicket.metadata"
             )
-
-        profile_truth = _profile_truth_from_component(component)
-        self = _sync_indices(component, profile_truth)
 
         return self
 
