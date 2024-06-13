@@ -1090,8 +1090,8 @@ class Thicket(GraphFrame):
         # Get index name
         index_name = self.metadata.index.name
 
-        # create a copy of the thicket object
-        new_thicket = self.copy()
+        # create a deepcopy of the thicket object
+        new_thicket = self.deepcopy()
 
         # filter metadata table
         filtered_rows = new_thicket.metadata.apply(select_function, axis=1)
@@ -1242,8 +1242,8 @@ class Thicket(GraphFrame):
         Returns:
             (thicket): new thicket object with applied filter function
         """
-        # copy thicket
-        new_thicket = self.copy()
+        # deepcopy thicket
+        new_thicket = self.deepcopy()
 
         # filter aggregated statistics table
         filtered_rows = new_thicket.statsframe.dataframe.apply(filter_function, axis=1)
