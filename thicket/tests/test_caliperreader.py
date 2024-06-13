@@ -81,8 +81,9 @@ def test_node_ordering_from_caliper(caliper_ordered):
         assert node_data == expected_data_order[i]
 
     # check the tree ordering is correct as well
-    output = tk.tree(metric_column="nid")
-    for i in range(1, 20):
-        location = output.find(str(i))
-        assert location != 0
+    tk.dataframe["hnid"] = [node._hatchet_nid for node in tk.graph.node_order_traverse()]
+    output = tk.tree(metric_column="hnid", render_header=False, precision=3)
+    for i in tk.dataframe["hnid"].tolist():
+        location = output.find(str(i)+".000")
+        assert location != -1
         output = output[location:]
