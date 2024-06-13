@@ -1207,7 +1207,7 @@ class Thicket(GraphFrame):
         Returns:
             (thicket): new thicket object with selected profiles
         """
-        new_thicket = self.copy()
+        new_thicket = self.deepcopy()
 
         new_thicket._sync_profile_components(profile_list)
         validate_profile(new_thicket)
