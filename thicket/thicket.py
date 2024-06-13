@@ -1545,7 +1545,7 @@ class Thicket(GraphFrame):
                 pset = set()
                 for p in profile_truth:
                     pset.update(helpers._powerset_from_tuple(p))
-                profile_truth = pset
+                profile_truth = list(pset)
 
             self.dataframe = self.dataframe[
                 self.dataframe.index.droplevel(level="node").isin(profile_truth)
