@@ -20,7 +20,7 @@ def test_from_caliperreader(rajaperf_seq_O3_1M_cali):
     assert (
         tk.dataframe.loc[
             tk.dataframe.index.get_level_values(0)[0], "Avg time/rank"
-        ].values[0] 
+        ].values[0]
         == 103.47638
     )
 
@@ -28,7 +28,7 @@ def test_from_caliperreader(rajaperf_seq_O3_1M_cali):
 def test_node_ordering_from_caliper(caliper_ordered):
     """Check the order of output from the native Caliper reader by examining a known input with node order column."""
 
-    tk = Thicket.from_caliperreader(caliper_ordered) 
+    tk = Thicket.from_caliperreader(caliper_ordered)
 
     expected_order = [
         "main",
