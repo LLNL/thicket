@@ -174,6 +174,18 @@ def rajaperf_unique_tunings(data_dir, tmpdir):
 
 
 @pytest.fixture
+def caliper_ordered(data_dir, tmpdir):
+    """Builds a temporary directory containing the lulesh cali file."""
+    cali_json_dir = os.path.join(data_dir, "caliper-ordered")
+    cali_file = os.path.join(cali_json_dir, "230525-151052_1930517_eWbGeyrlBOPT.cali")
+
+    shutil.copy(cali_file, str(tmpdir))
+    tmpfile = os.path.join(str(tmpdir), "230525-151052_1930517_eWbGeyrlBOPT.cali")
+
+    return tmpfile
+
+
+@pytest.fixture
 def literal_thickets():
     """Returns a list of Thicket objects created from literals."""
     dag_ldict = [
