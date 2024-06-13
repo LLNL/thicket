@@ -32,6 +32,9 @@ def filter_one_column(th, columns_values):
             # check if output is a thicket object
             assert isinstance(new_th, Thicket)
 
+            # check filtered Thicket is separate object
+            assert th.graph is not new_th.graph
+
             # metadata table: compare profile hash keys after filter to expected
             metadata_profile = new_th.metadata.index.tolist()
             assert metadata_profile == exp_index

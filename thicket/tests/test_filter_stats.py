@@ -35,6 +35,10 @@ def check_filter_stats(th, columns_values):
             # check if output is a thicket object
             assert isinstance(new_th, Thicket)
 
+            # check filtered Thicket is separate object
+            # We can't check th.graph because of squash in filter_stats
+            assert th.statsframe.graph is not new_th.statsframe.graph
+
             # filtered nodes in aggregated statistics table
             stats_nodes = sorted(
                 new_th.statsframe.dataframe.index.drop_duplicates().tolist()
