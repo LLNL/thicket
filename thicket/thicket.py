@@ -1243,9 +1243,9 @@ class Thicket(GraphFrame):
             dataframe=filtered_df,
             exc_metrics=self.exc_metrics.copy(),
             inc_metrics=self.inc_metrics.copy(),
-            metadata=self.metadata,
-            profile=self.profile,
-            profile_mapping=self.profile_mapping,
+            metadata=self.metadata.copy(),
+            profile=copy.copy(self.profile),
+            profile_mapping=copy.copy(self.profile_mapping),
             statsframe=GraphFrame(graph=self.graph, dataframe=filtered_sf_df),
             statsframe_ops_cache=self.statsframe_ops_cache.copy(),
         )
