@@ -24,6 +24,7 @@ def arg_parse():
     )
     parser.add_argument("--input_files", required=True, type=str, help="Directory of Caliper file input, including all subdirectories.")
     parser.add_argument("--x_axis_unique_metadata", required=True, type=str, help="Parameter that is varied during the experiment.")
+    parser.add_argument("--x_axis_scaling", default='linear', choices=['linear', 'log'], type=str, help="Scaling of x axis values for display on chart.")
     parser.add_argument("--y_axis_metric", required=True, type=str, help="Metric to be visualized.")
     parser.add_argument("--filter_prefix", default="", type=str, help="Optional: Filters only entries with prefix to be included in chart.")
     parser.add_argument("--top_n", default=-1, type=int, help="Optional: Filters only top n longest time entries to be included in chart.")
@@ -36,18 +37,25 @@ def arg_parse():
     return args
 
 
-def make_stacked_line_chart(df, value, world_size, title, xlabel, y_label, filename):
+def make_stacked_line_chart(df, value, world_size, title, xlabel, y_label, filename, x_axis_scaling):
     fig = plt.figure()
-    ax = df[[(i, value) for i in world_size]].T.plot(
+
+    tdf = df[[(i, value) for i in world_size]].T
+    tdf.index = [int(re.sub(r"\D", "", str(item))) for item in tdf.index]
+
+    ax = tdf.plot(
         kind="area",
         title=title,
         xlabel=xlabel,
         ylabel=y_label,
     )
 
+    if x_axis_scaling == "log":
+        plt.xscale('log')
+    
+    ax.tick_params(axis='x', rotation=45)
     handles, labels = ax.get_legend_handles_labels()
-    x_labels = [re.sub(r"\D", "", item.get_text()) for item in ax.get_xticklabels()]
-    ax.set_xticklabels(x_labels)
+    plt.xticks(tdf.index)
     ax.legend(reversed(handles), reversed(labels), bbox_to_anchor=(1.1, 1.05))
 
     plt.tight_layout()
@@ -82,9 +90,9 @@ def process_thickets(input_files, x_axis_unique_metadata, y_axis_metric, filter_
         ctk.dataframe = ctk.dataframe.nlargest(top_n, [(world_size[0], "Total time")])
 
     if output_charts == "percentage_time":
-        make_stacked_line_chart(ctk.dataframe, "perc", world_size, additional_args.chart_title, additional_args.chart_xlabel, "Percentage of Runtime" if additional_args.chart_ylabel == "no_label" else additional_args.chart_ylabel, additional_args.chart_file_name)
+        make_stacked_line_chart(ctk.dataframe, "perc", world_size, additional_args.chart_title, additional_args.chart_xlabel, "Percentage of Runtime" if additional_args.chart_ylabel == "no_label" else additional_args.chart_ylabel, additional_args.chart_file_name, additional_args.x_axis_scaling)
     elif output_charts == "total_time":
-        make_stacked_line_chart(ctk.dataframe, "Total time", world_size, additional_args.chart_title, additional_args.chart_xlabel, "Total Time" if additional_args.chart_ylabel == "no_label" else additional_args.chart_ylabel, additional_args.chart_file_name)
+        make_stacked_line_chart(ctk.dataframe, "Total time", world_size, additional_args.chart_title, additional_args.chart_xlabel, "Total Time" if additional_args.chart_ylabel == "no_label" else additional_args.chart_ylabel, additional_args.chart_file_name, additional_args.x_axis_scaling)
 
 
 if __name__ == "__main__":

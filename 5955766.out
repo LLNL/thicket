@@ -1,0 +1,116 @@
+/usr/bin/lua: /usr/bin/hostlist:11: module 'hostlist' not found:
+	no field package.preload['hostlist']
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-mpack-1.0.12-zhmmanuri67j3etykvhxidk62ribhdfg/lib/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-mpack-1.0.12-zhmmanuri67j3etykvhxidk62ribhdfg/lib/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/lib/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/lib/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/share/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/share/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-mpack-1.0.12-zhmmanuri67j3etykvhxidk62ribhdfg/lib/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/lib/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/share/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist.so'
+stack traceback:
+	[C]: in function 'require'
+	/usr/bin/hostlist:11: in main chunk
+	[C]: ?
+/usr/bin/lua: /usr/bin/hostlist:11: module 'hostlist' not found:
+	no field package.preload['hostlist']
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-mpack-1.0.12-zhmmanuri67j3etykvhxidk62ribhdfg/lib/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-mpack-1.0.12-zhmmanuri67j3etykvhxidk62ribhdfg/lib/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/lib/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/lib/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/share/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/share/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist/init.lua'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-mpack-1.0.12-zhmmanuri67j3etykvhxidk62ribhdfg/lib/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/lib/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-lpeg-1.0.2-1-o2orbdqnnygwugtzgdfhlmmrng77golh/share/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/lib64/lua/5.1/hostlist.so'
+	no file '/g/g20/hao3/spack/opt/spack/linux-rhel8-broadwell/gcc-10.3.1/lua-luajit-openresty-2.1-20230410-uswupk2ufma5kyddh5fngojbk54nqyxq/share/lua/5.1/hostlist.so'
+stack traceback:
+	[C]: in function 'require'
+	/usr/bin/hostlist:11: in main chunk
+	[C]: ?
+/bin/bash: /g/g20/hao3/kripke_cuda_6_13/kripke/cuda/LLNL-Sierra-IBM-power9-V100-Infiniband/workspace/experiments/kripke/kripke/kripke_cuda_1000001_64_1_128_128_4_64_64_32_2_2_1/execute_experiment: No such file or directory
+logout
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@lassen710>
+Subject: Job 5955766: </g/g20/hao3/kripke_cuda_6_13/kripke/cuda/LLNL-Sierra-IBM-power9-V100-Infiniband/workspace/experiments/kripke/kripke/kripke_cuda_1000001_64_1_128_128_4_64_64_32_2_2_1/execute_experiment> in cluster <lassen> Exited
+
+Job </g/g20/hao3/kripke_cuda_6_13/kripke/cuda/LLNL-Sierra-IBM-power9-V100-Infiniband/workspace/experiments/kripke/kripke/kripke_cuda_1000001_64_1_128_128_4_64_64_32_2_2_1/execute_experiment> was submitted from host <lassen709> by user <hao3> in cluster <lassen> at Thu Jun 13 15:32:53 2024
+Job was executed on host(s) <1*lassen710>, in queue <pbatch>, as user <hao3> in cluster <lassen> at Thu Jun 13 15:39:39 2024
+                            <40*lassen438>
+</g/g20/hao3> was used as the home directory.
+</g/g20/hao3/benchmark_graph_code/thicket> was used as the working directory.
+Started at Thu Jun 13 15:39:39 2024
+Terminated at Thu Jun 13 15:40:21 2024
+Results reported at Thu Jun 13 15:40:21 2024
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/g/g20/hao3/kripke_cuda_6_13/kripke/cuda/LLNL-Sierra-IBM-power9-V100-Infiniband/workspace/experiments/kripke/kripke/kripke_cuda_1000001_64_1_128_128_4_64_64_32_2_2_1/execute_experiment
+------------------------------------------------------------
+
+Exited with exit code 127.
+
+Resource usage summary:
+
+    CPU time :                                   0.34 sec.
+    Max Memory :                                 59 MB
+    Average Memory :                             52.57 MB
+    Total Requested Memory :                     -
+    Delta Memory :                               -
+    Max Swap :                                   1425 MB
+    Max Processes :                              4
+    Max Threads :                                27
+    Run time :                                   41 sec.
+    Turnaround time :                            448 sec.
+
+The output (if any) is above this job summary.
+
