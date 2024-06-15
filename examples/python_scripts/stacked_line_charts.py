@@ -27,6 +27,7 @@ def arg_parse():
     parser.add_argument("--x_axis_scaling", default='linear', choices=['linear', 'log'], type=str, help="Scaling of x axis values for display on chart.")
     parser.add_argument("--y_axis_metric", required=True, type=str, help="Metric to be visualized.")
     parser.add_argument("--filter_prefix", default="", type=str, help="Optional: Filters only entries with prefix to be included in chart.")
+    parser.add_argument("--group_nodes_name", default=True, type=bool, help="Optional: Specify if nodes with the same name are combined or not.")
     parser.add_argument("--top_n", default=-1, type=int, help="Optional: Filters only top n longest time entries to be included in chart.")
     parser.add_argument("--chart_type", required=True, choices=["percentage_time", "total_time"], type=str, help="Specify type of output chart.")
     parser.add_argument("--chart_title", default="Application Runtime Components", type=str, help="Optional: Title of the output chart.")
@@ -76,7 +77,8 @@ def process_thickets(input_files, x_axis_unique_metadata, y_axis_metric, filter_
         axis="columns",
     )
 
-    ctk.dataframe = ctk.dataframe.groupby("name").sum()
+    if additional_args.group_nodes_name:
+        ctk.dataframe = ctk.dataframe.groupby("name").sum()
 
     for i in world_size: 
         ctk.dataframe[i, "perc"] = (
