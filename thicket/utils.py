@@ -63,6 +63,25 @@ def check_duplicate_metadata_key(thickets, metadata_key):
         )
 
 
+def overwrite_column(df, col, overwrite):
+    """Check and overwrite a column in a DataFrame if it already exists.
+
+    Arguments:
+        df (DataFrame): Input DataFrame
+        col (str): Column name to check
+        overwrite (bool): Option to overwrite column if it already exists
+
+    Returns:
+        (DataFrame): DataFrame with column removed
+    """
+    if overwrite:
+        return df.drop(col, axis=1)
+    else:
+        raise ValueError(
+            f"Column {col} already exists. Set 'overwrite=True' to overwrite."
+        )
+
+
 def validate_dataframe(df):
     """Check validity of a Thicket DataFrame."""
 

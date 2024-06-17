@@ -34,6 +34,7 @@ except ModuleNotFoundError:
 import thicket.helpers as helpers
 from .groupby import GroupBy
 from .utils import (
+    overwrite_column,
     verify_thicket_structures,
     check_duplicate_metadata_key,
     validate_profile,
@@ -486,12 +487,13 @@ class Thicket(GraphFrame):
         # make and return thicket?
         return th
 
-    def add_ncu(self, ncu_report_mapping, chosen_metrics=None):
+    def add_ncu(self, ncu_report_mapping, chosen_metrics=None, overwrite=False):
         """Add NCU data into the PerformanceDataFrame
 
         Arguments:
             ncu_report_mapping (dict): mapping from NCU report file to profile
             chosen_metrics (list): list of metrics to sub-select from NCU report
+            overwrite (bool): whether to overwrite existing columns in the Thicket.DataFrame
         """
 
         def _rep_agg_func(col):
@@ -506,6 +508,11 @@ class Thicket(GraphFrame):
                 return agg_func(col)
             else:
                 return col[0]
+
+        # Check if chosen_metrics are in the dataframe
+        for col in chosen_metrics:
+            if col in self.dataframe.columns:
+                self.dataframe = overwrite_column(self.dataframe, col, overwrite)
 
         # Initialize reader
         ncureader = NCUReader()
@@ -547,18 +554,9 @@ class Thicket(GraphFrame):
             overwrite (bool): Determines overriding behavior in performance data table
             drop (bool): Whether to drop the column from the metadata table afterwards
         """
-        # Add warning if column already exists in performance data table
+        # Check if column already exists in performance data table
         if metadata_key in self.dataframe.columns:
-            # Drop column to overwrite, otherwise warn and return
-            if overwrite:
-                self.dataframe.drop(metadata_key, axis=1, inplace=True)
-            else:
-                warnings.warn(
-                    "Column "
-                    + metadata_key
-                    + " already exists. Set 'overwrite=True' to force update the column."
-                )
-                return
+            self.dataframe = overwrite_column(self.dataframe, metadata_key, overwrite)
 
         # Add the column to the performance data table
         self.dataframe = self.dataframe.join(
