@@ -282,6 +282,7 @@ def score_bhattacharyya(
     output_column_name=None,
     characterization_func=mean,
     comparison_func=None,
+    preference_threshold=None,
     **kwargs,
 ):
     r"""
@@ -312,6 +313,9 @@ def score_bhattacharyya(
 
             \text{result} = \frac{1}{4} \cdot \log \left( \frac{1}{4} \cdot \left( \frac{{\sigma_1[i]^2}}{{\sigma_2[i]^2}} + \frac{{\sigma_2[i]^2}}{{\sigma_1[i]^2}} + 2 \right) \right) + \frac{1}{4} \cdot \left( \frac{{(\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}} \right)
     """
+    # TODO: Ensure columnar joined thicket
+
+    output_column_names = []
 
     if comparison_func is None:
         comparison_func = lambda x,y: x < y
@@ -336,7 +340,29 @@ def score_bhattacharyya(
     thicket.statsframe.dataframe[pref_colum] = result
     thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
-    return [pref_colum]
+    output_column_names.append(pref_colum)
+
+    if preference_threshold is None:
+        return stats_column_names
+
+    score_data = thicket.statsframe.dataframe[pref_colum]
+
+    recc_comp = (
+        lambda x: "None"
+        if abs(x) <= abs(preference_threshold)
+        else (columns[0][0] if x < 0 else columns[1][0])
+    )  # noqa: E731
+
+    reccomendations = score_data.apply(recc_comp)
+
+    thicket.statsframe.dataframe[
+        ("Scoring", f"{output_column_name}_preference")
+    ] = reccomendations
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    output_column_names.append(("Scoring", f"{output_column_name}_preference"))
+
+    return output_column_names
 
 
 @cache_stats_op
@@ -346,6 +372,7 @@ def score_hellinger(
     output_column_name=None,
     characterization_func=mean,
     comparison_func=None,
+    preference_threshold=None,
     **kwargs,
 ):
     r"""
@@ -378,6 +405,8 @@ def score_hellinger(
             \text{result} = 1 - \sqrt{\frac{{2 \sigma_1[i]\sigma_2[i]}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}} \cdot \mathrm{e}^{-\frac{1}{4}\frac{{ (\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}}
     """
 
+    output_column_names = []
+
     if comparison_func is None:
         comparison_func = lambda x,y: x < y
 
@@ -388,7 +417,8 @@ def score_hellinger(
     comp_data = thicket.statsframe.dataframe[[comp_idx[0], comp_idx[1]]]
 
     comp = comp_data.apply(lambda row: comparison_func(row[comp_idx[0]], row[comp_idx[1]]), axis=1)
-    
+
+    # This could pose issues
     comp = comp.apply(lambda x: -1 if x else 1)
 
     result = thicket.statsframe.dataframe[stats_column_names[0]] * comp
@@ -401,4 +431,34 @@ def score_hellinger(
     thicket.statsframe.dataframe[pref_colum] = result
     thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
-    return [pref_colum]
+    if output_column_name is None:
+        output_column_name = "bhattacharyya"
+
+    pref_colum = ("Scoring", output_column_name)
+
+    thicket.statsframe.dataframe[pref_colum] = result
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    output_column_names.append(pref_colum)
+
+    if preference_threshold is None:
+        return stats_column_names
+
+    score_data = thicket.statsframe.dataframe[pref_colum]
+
+    recc_comp = (
+        lambda x: "None"
+        if abs(x) <= abs(preference_threshold)
+        else (columns[0][0] if x < 0 else columns[1][0])
+    )  # noqa: E731
+
+    reccomendations = score_data.apply(recc_comp)
+
+    thicket.statsframe.dataframe[
+        ("Scoring", f"{output_column_name}_preference")
+    ] = reccomendations
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    output_column_names.append(("Scoring", f"{output_column_name}_preference"))
+
+    return output_column_names
