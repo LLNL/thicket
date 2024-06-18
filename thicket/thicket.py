@@ -1496,9 +1496,6 @@ class Thicket(GraphFrame):
         Arguments:
             component (list or DataFrame) -> (list, Thicket.dataframe, or Thicket.metadata): The index
             of this component is used to synchronize the other objects.
-
-        Returns:
-            (thicket): self
         """
 
         def _profile_truth_from_component(component):
@@ -1563,8 +1560,6 @@ class Thicket(GraphFrame):
             raise ValueError(
                 "Component must be either list, Thicket.dataframe, or Thicket.metadata"
             )
-
-        return self
 
 
 class InvalidFilter(Exception):
