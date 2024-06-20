@@ -369,12 +369,15 @@ class Ensemble:
         return combined_th
 
     @staticmethod
-    def _index(thickets, from_statsframes=False, disable_tqdm=False):
+    def _index(
+        thickets, from_statsframes=False, fill_perfdata=True, disable_tqdm=False
+    ):
         """Unify a list of thickets into a single thicket
 
         Arguments:
             thickets (list): list of Thicket objects
             from_statsframes (bool): Whether this method was invoked from from_statsframes
+            fill_perfdata (bool): whether to fill missing performance data with NaNs
             disable_tqdm (bool): whether to disable tqdm progress bar
 
         Returns:
@@ -456,7 +459,8 @@ class Ensemble:
         validate_dataframe(unify_df)
 
         # Insert missing rows in dataframe
-        unify_df = _fill_perfdata(unify_df)
+        if fill_perfdata:
+            unify_df = _fill_perfdata(unify_df)
 
         # Sort PerfData
         unify_df.sort_index(inplace=True)
