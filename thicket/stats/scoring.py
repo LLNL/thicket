@@ -39,47 +39,7 @@ def _calc_score_delta_mean_delta_coefficient_of_variation(
     return results
 
 
-def _calc_score_bhattacharyya(means_1, means_2, stds_1, stds_2, num_nodes):
-    results = []
-
-    for i in range(num_nodes):
-        result = None
-        try:
-            result = 0.25 * np.log(
-                0.25
-                * (
-                    (stds_1[i] ** 2 / stds_2[i] ** 2)
-                    + (stds_2[i] ** 2 / stds_1[i] ** 2)
-                    + 2
-                )
-            ) + 0.25 * (
-                (means_1[i] - means_2[i]) ** 2 / (stds_1[i] ** 2 + stds_2[i] ** 2)
-            )
-        except ZeroDivisionError:
-            result = np.nan
-        results.append(result)
-    return results
-
-
-def _calc_score_hellinger(means_1, means_2, stds_1, stds_2, num_nodes):
-    results = []
-
-    for i in range(num_nodes):
-        result = None
-        try:
-            result = 1 - math.sqrt(
-                (2 * stds_1[i] * stds_2[i]) / (stds_1[i] ** 2 + stds_2[i] ** 2)
-            ) * math.exp(
-                -0.25
-                * ((means_1[i] - means_2[i]) ** 2)
-                / (stds_1[i] ** 2 + stds_2[i] ** 2)
-            )
-        except ZeroDivisionError:
-            result = np.nan
-        results.append(result)
-    return results
-
-
+# TODO: Rename this to something more descriptive
 def score(thicket, columns, output_column_name, scoring_function):
     if isinstance(columns, list) is False:
         raise ValueError("Value passed to 'columns' must be of type list.")
@@ -155,7 +115,7 @@ def score(thicket, columns, output_column_name, scoring_function):
 
 @cache_stats_op
 def score_delta_mean_delta_stdnorm(
-    thicket, columns, output_column_name=None, threshold=None
+    thicket, columns, output_column_name=None, preference_threshold=None
 ):
     r"""
     Apply a mean difference with standard deviation difference algorithm on two
@@ -185,38 +145,39 @@ def score_delta_mean_delta_stdnorm(
     \]
     """
 
-    stats_column_names = score(
+    output_column_names = score(
         thicket,
         columns,
         output_column_name,
         _calc_score_delta_mean_delta_stdnorm,
     )
 
-    if threshold is None:
-        return stats_column_names
+    if preference_threshold is None:
+        return output_column_names
 
-    score_data = thicket.statsframe.dataframe[stats_column_names[0]]
+    # TODO: Check this entire section into a function
+    score_data = thicket.statsframe.dataframe[output_column_names[0]]
 
     recc_comp = (
         lambda x: "None"
-        if abs(x) <= abs(threshold)
+        if abs(x) <= abs(preference_threshold)
         else (columns[0][0] if x < 0 else columns[1][0])
     )  # noqa: E731
 
     reccomendations = score_data.apply(recc_comp)
 
     thicket.statsframe.dataframe[
-        ("Scoring", f"{stats_column_names[0][1]}_preference")
+        ("Scoring", f"{output_column_name}_preference")
     ] = reccomendations
     thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
-    stats_column_names.append(("Scoring", f"{stats_column_names[0][1]}_preference"))
+    output_column_names.append(("Scoring", f"{output_column_name}_preference"))
 
-    return stats_column_names
+    return output_column_names
 
 @cache_stats_op
 def score_delta_mean_delta_coefficient_of_variation(
-    thicket, columns, output_column_name=None, threshold=None
+    thicket, columns, output_column_name=None, preference_threshold=None
 ):
     r"""
     Apply a mean difference with difference spread of data algorithm on two passed columns.
@@ -252,14 +213,14 @@ def score_delta_mean_delta_coefficient_of_variation(
         _calc_score_delta_mean_delta_coefficient_of_variation,
     )
 
-    if threshold is None:
+    if preference_threshold is None:
         return stats_column_names
 
     score_data = thicket.statsframe.dataframe[stats_column_names[0]]
 
     recc_comp = (
         lambda x: "None"
-        if abs(x) <= abs(threshold)
+        if abs(x) <= abs(preference_threshold)
         else (columns[0][0] if x < 0 else columns[1][0])
     )  # noqa: E731
 
@@ -270,7 +231,7 @@ def score_delta_mean_delta_coefficient_of_variation(
     ] = reccomendations
     thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
-    stats_column_names.append(("Scoring", f"{stats_column_names[0][1]}_preference"))
+    stats_column_names.append(("Scoring", f"{output_column_name}_preference"))
 
     return stats_column_names
 
