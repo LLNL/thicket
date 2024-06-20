@@ -15,6 +15,7 @@ def test_empty_iterable():
             GraphFrame.from_caliperreader,
             False,
             True,
+            True,
             [],
         )
 
@@ -22,6 +23,7 @@ def test_empty_iterable():
         Thicket.reader_dispatch(
             GraphFrame.from_caliperreader,
             False,
+            True,
             True,
             tuple([]),
         )
@@ -33,6 +35,7 @@ def test_file_not_found():
             GraphFrame.from_caliperreader,
             False,
             True,
+            True,
             "blah",
         )
 
@@ -40,6 +43,7 @@ def test_file_not_found():
         Thicket.reader_dispatch(
             GraphFrame.from_caliperreader,
             False,
+            True,
             True,
             ["blah"],
         )
@@ -50,6 +54,7 @@ def test_valid_type():
         Thicket.reader_dispatch(
             GraphFrame.from_caliperreader,
             False,
+            True,
             True,
             -1,
         )
