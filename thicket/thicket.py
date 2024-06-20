@@ -9,6 +9,7 @@ import pickle
 import sys
 import json
 import warnings
+import itertools
 from collections import defaultdict, OrderedDict
 from hashlib import md5
 
@@ -60,6 +61,7 @@ class Thicket(GraphFrame):
         profile=None,
         profile_mapping=None,
         statsframe=None,
+        statsframe_ops_cache=None,
     ):
         """Create a new thicket from a graph and a dataframe.
 
@@ -92,6 +94,11 @@ class Thicket(GraphFrame):
             self.statsframe = statsframe
         self.query_engine = QueryEngine()
         self.performance_cols = helpers._get_perf_columns(self.dataframe)
+
+        if statsframe_ops_cache is None:
+            self.statsframe_ops_cache = {}
+        else:
+            self.statsframe_ops_cache = statsframe_ops_cache
 
     def __eq__(self, other):
         """Compare two thicket objects.
@@ -410,6 +417,8 @@ class Thicket(GraphFrame):
                 metadata=thicket_parts[4],
                 profile=thicket_parts[5],
                 profile_mapping=thicket_parts[6],
+                # Cache must be cleared since two caches cannot be merged
+                statsframe_ops_cache={},
             )
 
         def _columns(
@@ -421,6 +430,8 @@ class Thicket(GraphFrame):
                 metadata_key=metadata_key,
                 disable_tqdm=disable_tqdm,
             )
+            # Clear cache since keys become invalid due to multiindex additions
+            combined_thicket.statsframe_ops_cache = {}
 
             return combined_thicket
 
@@ -714,6 +725,7 @@ class Thicket(GraphFrame):
             profile=self.profile,
             profile_mapping=self.profile_mapping,
             statsframe=sframe,
+            statsframe_ops_cache=self.statsframe_ops_cache,
         )
 
         if update_inc_cols:
@@ -753,6 +765,7 @@ class Thicket(GraphFrame):
             profile=copy.copy(self.profile),
             profile_mapping=copy.copy(self.profile_mapping),
             statsframe=self.statsframe.copy(),
+            statsframe_ops_cache=self.statsframe_ops_cache.copy(),
         )
 
     def deepcopy(self):
@@ -783,6 +796,7 @@ class Thicket(GraphFrame):
             profile=copy.deepcopy(self.profile),
             profile_mapping=copy.deepcopy(self.profile_mapping),
             statsframe=self.statsframe.deepcopy(),
+            statsframe_ops_cache=self.statsframe_ops_cache.copy(),
         )
 
     def tree(
@@ -1186,6 +1200,96 @@ class Thicket(GraphFrame):
         if squash:
             return filtered_th.squash(update_inc_cols=update_inc_cols)
         return filtered_th
+
+    def query_stats(self, query_obj, squash=True, update_inc_cols=True):
+        """Apply a Hatchet query to the Thicket object.
+
+        Arguments:
+            query_obj (AbstractQuery): the query, represented as by a subclass of
+                Hatchet's AbstractQuery
+            squash (bool): if true, run Thicket.squash before returning the result of
+                the query
+            update_inc_cols (boolean, optional): if True, update inclusive columns when
+                performing squash.
+
+        Returns:
+            (thicket): a new Thicket object containing the data that matches the query
+        """
+        local_query_obj = query_obj
+        if isinstance(query_obj, list):
+            local_query_obj = ObjectQuery(query_obj, multi_index_mode="off")
+        elif isinstance(query_obj, str):
+            local_query_obj = parse_string_dialect(query_obj, multi_index_mode="off")
+        elif not is_hatchet_query(query_obj):
+            raise TypeError(
+                "Encountered unrecognized query type (expected Query, CompoundQuery, or AbstractQuery, got {})".format(
+                    type(query_obj)
+                )
+            )
+        sframe_copy = self.statsframe.dataframe.copy()
+        sf_index_names = self.statsframe.dataframe.index.names
+        sframe_copy.reset_index(inplace=True)
+
+        query = (
+            local_query_obj
+            if not is_old_style_query(query_obj)
+            else local_query_obj._get_new_query()
+        )
+        query_matches = self.query_engine.apply(
+            query, self.statsframe.graph, self.statsframe.dataframe
+        )
+        filtered_sf_df = sframe_copy.loc[sframe_copy["node"].isin(query_matches)]
+
+        if filtered_sf_df.shape[0] == 0:
+            raise EmptyQuery("The provided query would have produced an empty Thicket.")
+
+        df_index_names = self.dataframe.index.names
+        dframe_copy = self.dataframe.copy()
+        dframe_copy.reset_index(inplace=True)
+
+        filtered_df = dframe_copy[dframe_copy["node"].isin(query_matches)]
+        filtered_df.set_index(df_index_names, inplace=True)
+
+        filtered_sf_df.set_index(sf_index_names, inplace=True)
+
+        filtered_th = Thicket(
+            graph=self.graph,
+            dataframe=filtered_df,
+            exc_metrics=self.exc_metrics.copy(),
+            inc_metrics=self.inc_metrics.copy(),
+            metadata=self.metadata.copy(),
+            profile=copy.copy(self.profile),
+            profile_mapping=copy.copy(self.profile_mapping),
+            statsframe=GraphFrame(graph=self.graph, dataframe=filtered_sf_df),
+            statsframe_ops_cache=self.statsframe_ops_cache.copy(),
+        )
+
+        if squash:
+            filtered_th = filtered_th.squash(
+                update_inc_cols=update_inc_cols, new_statsframe=True
+            )
+            filtered_th.statsframe.graph = filtered_th.graph
+
+            filtered_th.reapply_stats_operations()
+
+        return filtered_th
+
+    def reapply_stats_operations(self):
+        """Reapply most recent stats operations."""
+
+        for stats_func, arg_dict in self.statsframe_ops_cache.items():
+            # This makes sure the data is comparable
+            sortkey = lambda x: (  # noqa: E731
+                x[0],
+                tuple(sorted(x[1].items(), key=lambda y: y[0])),
+            )
+            for k, g in itertools.groupby(
+                list(sorted(arg_dict.values(), key=sortkey)), key=sortkey
+            ):
+                arg = list(g)[0]
+                stats_func(self, *arg[0], **arg[1])
+
+            validate_nodes(self)
 
     def groupby(self, by):
         """Create sub-thickets based on unique values in metadata column(s).

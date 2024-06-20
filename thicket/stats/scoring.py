@@ -4,6 +4,7 @@ import numpy as np
 
 import thicket as th
 from ..utils import verify_thicket_structures
+from .stats_utils import cache_stats_op
 
 
 def _calc_score_delta_mean_delta_stdnorm(means_1, means_2, stds_1, stds_2, num_nodes):
@@ -78,7 +79,6 @@ def _calc_score_hellinger(means_1, means_2, stds_1, stds_2, num_nodes):
     return results
 
 
-# Implement warning for user that NAN's were put in stats frame, and why
 def score(thicket, columns, output_column_name, scoring_function):
     if isinstance(columns, list) is False:
         raise ValueError("Value passed to 'columns' must be of type list.")
@@ -109,6 +109,8 @@ def score(thicket, columns, output_column_name, scoring_function):
         raise ValueError("Must have more than one data point per node to score with!")
 
     verify_thicket_structures(thicket.dataframe, columns)
+
+    output_column_names = []
 
     # Calculate means and stds, adds both onto statsframe
     th.stats.mean(thicket, columns)
@@ -150,9 +152,12 @@ def score(thicket, columns, output_column_name, scoring_function):
     thicket.statsframe.dataframe["Scoring", stats_frame_column_name] = resulting_scores
     thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
-    return
+    output_column_names.append(("Scoring", stats_frame_column_name))
+
+    return output_column_names
 
 
+@cache_stats_op
 def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
     r"""
     Apply a mean difference with standard deviation difference algorithm on two
@@ -172,15 +177,21 @@ def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
 
+    Returns:
+        (list): returns a list of output statsframe column names
+
     Equation:
         .. math::
 
             \text{result} = (\mu_1[i] - \mu_2[i]) + \frac{{\left(\sigma_1[i] - \sigma_2[i]\right)}}{{\left|\mu_1[i] - \mu_2[i]\right|}}
     \]
     """
-    score(thicket, columns, output_column_name, _calc_score_delta_mean_delta_stdnorm)
+    return score(
+        thicket, columns, output_column_name, _calc_score_delta_mean_delta_stdnorm
+    )
 
 
+@cache_stats_op
 def score_delta_mean_delta_coefficient_of_variation(
     thicket, columns, output_column_name=None
 ):
@@ -202,12 +213,15 @@ def score_delta_mean_delta_coefficient_of_variation(
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
 
+    Returns:
+        (list): returns a list of output statsframe column names
+
     Equation:
         .. math::
 
             \text{result} = (\mu_1[i] - \mu_2[i]) + \frac{{\sigma_1[i]}}{{\mu_1[i]}} - \frac{{\sigma_2[i]}}{{\mu_2[i]}}
     """
-    score(
+    return score(
         thicket,
         columns,
         output_column_name,
@@ -215,6 +229,7 @@ def score_delta_mean_delta_coefficient_of_variation(
     )
 
 
+@cache_stats_op
 def score_bhattacharyya(thicket, columns, output_column_name=None):
     r"""
     Apply the Bhattacharrya distance algorithm on two passed columns. The passed columns
@@ -236,14 +251,18 @@ def score_bhattacharyya(thicket, columns, output_column_name=None):
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
 
+    Returns:
+        (list): returns a list of output statsframe column names
+
     Equation:
         .. math::
 
             \text{result} = \frac{1}{4} \cdot \log \left( \frac{1}{4} \cdot \left( \frac{{\sigma_1[i]^2}}{{\sigma_2[i]^2}} + \frac{{\sigma_2[i]^2}}{{\sigma_1[i]^2}} + 2 \right) \right) + \frac{1}{4} \cdot \left( \frac{{(\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}} \right)
     """
-    score(thicket, columns, output_column_name, _calc_score_bhattacharyya)
+    return score(thicket, columns, output_column_name, _calc_score_bhattacharyya)
 
 
+@cache_stats_op
 def score_hellinger(thicket, columns, output_column_name=None):
     r"""
     Apply the Hellinger's distance algorithm on two passed columns. The passed columns
@@ -265,10 +284,13 @@ def score_hellinger(thicket, columns, output_column_name=None):
             passed in with the format (column index, column name).
         output_column_name  : A string that assigns a name to the scoring column.
 
+    Returns:
+        (list): returns a list of output statsframe column names
+
     Equation:
 
         .. math::
 
             \text{result} = 1 - \sqrt{\frac{{2 \sigma_1[i]\sigma_2[i]}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}} \cdot \mathrm{e}^{-\frac{1}{4}\frac{{ (\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}}
     """
-    score(thicket, columns, output_column_name, _calc_score_hellinger)
+    return score(thicket, columns, output_column_name, _calc_score_hellinger)

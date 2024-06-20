@@ -4,12 +4,14 @@
 # SPDX-License-Identifier: MIT
 
 from ..utils import verify_thicket_structures
+from .stats_utils import cache_stats_op
 from .ttest import __ttest
 
 __statistical_tests = {"ttest": __ttest}
 
 
-def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs):
+@cache_stats_op
+def preference(thicket, columns, comparison_func, *args, test="ttest", **kwargs):
     """Determine a preference between compilers, architecture, platform, etc.
 
     Designed to take in a thicket and will append eight total columns to the
@@ -32,6 +34,9 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
         comparison_func (function): User-defined python or lambda function to decide a
             preference.
         test (str): User-selected test.
+
+    Returns:
+        (list): returns a list of output statsframe column names
     """
     if len(columns) != 2:
         raise ValueError("Must specify 2 columns in columns=.")
@@ -40,6 +45,8 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
         raise ValueError("Test is not available.")
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
+
+    output_column_names = []
 
     if test == "ttest":
         tvalue, t_statistics = __statistical_tests[test](
@@ -71,6 +78,9 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
         aggregated_cols = columns[0] + " vs " + columns[1]
         thicket.statsframe.dataframe[aggregated_cols + "_std_preferred"] = pref_std
         thicket.statsframe.dataframe[aggregated_cols + "_mean_preferred"] = pref_mean
+
+        output_column_names.append(aggregated_cols + "_std_preferred")
+        output_column_names.append(aggregated_cols + "_mean_preferred")
     # columnar joined thicket object
     else:
         idx_mean = [(index, col + "_mean") for index, col in columns]
@@ -96,16 +106,16 @@ def preference(thicket, columns, comparison_func, test="ttest", *args, **kwargs)
         aggregated_cols = (
             str(columns[0]).replace("'", "") + " vs " + str(columns[1]).replace("'", "")
         )
-        thicket.statsframe.dataframe[
-            (
-                "Preference",
-                aggregated_cols + "_std_preferred",
-            )
-        ] = pref_std
 
+        col_name = ["Preference", aggregated_cols]
         thicket.statsframe.dataframe[
-            (
-                "Preference",
-                aggregated_cols + "_mean_preferred",
-            )
+            (col_name[0], col_name[1] + "_std_preferred")
+        ] = pref_std
+        thicket.statsframe.dataframe[
+            (col_name[0], col_name[1] + "_mean_preferred")
         ] = pref_mean
+
+        output_column_names.append((col_name[0], col_name[1] + "_std_preferred"))
+        output_column_names.append((col_name[0], col_name[1] + "_mean_preferred"))
+
+    return output_column_names

@@ -6,8 +6,10 @@
 import pandas as pd
 
 from ..utils import verify_thicket_structures
+from .stats_utils import cache_stats_op
 
 
+@cache_stats_op
 def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
     """Calculate the q-th percentile for each node in the performance data table.
 
@@ -33,6 +35,9 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
         percentiles (list): List of percentile values that is desired to be calculated
             for each column in columns. If no list is specified, the default values,
             [0.25, 0.50, 0.75] are used for calculations
+
+    Returns:
+        (list): returns a list of output statsframe column names
     """
     if not percentiles:
         percentiles = [0.25, 0.50, 0.75]
@@ -51,6 +56,8 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
 
     verify_thicket_structures(thicket.dataframe, index=["node"], columns=columns)
 
+    output_column_names = []
+
     # select numeric columns within thicket (.quantiles) will not work without this step
     numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 
@@ -65,6 +72,7 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
 
             for index, percentile in enumerate(percentiles):
                 column_to_append = column + "_percentiles_" + str(int(percentile * 100))
+                output_column_names.append(column_to_append)
                 thicket.statsframe.dataframe[column_to_append] = [
                     x[index] for x in calculated_percentiles
                 ]
@@ -86,6 +94,7 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
     else:
         df_num = thicket.dataframe.select_dtypes(include=numerics)[columns]
         df = df_num.reset_index(level=1).groupby("node").quantile(percentiles)
+
         for idx_level, column in columns:
             calculated_percentiles = []
 
@@ -99,6 +108,7 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
                     idx_level,
                     "{}_percentiles_{}".format(column, str(int(percentile * 100))),
                 )
+                output_column_names.append(column_to_append)
                 thicket.statsframe.dataframe[column_to_append] = [
                     x[index] for x in calculated_percentiles
                 ]
@@ -118,3 +128,5 @@ def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
 
         # sort columns in index
         thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+
+    return output_column_names

@@ -1096,3 +1096,33 @@ def test_score_hellinger(thicket_axis_columns):
     th_score = [-1 if math.isnan(x) else x for x in th_score]
 
     assert results == th_score
+
+
+def test_reapply_statsframe_operations(rajaperf_seq_O3_1M_cali):
+    th_1 = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=False)
+
+    th.stats.mean(th_1, columns=["Min time/rank"])
+
+    assert len(th_1.statsframe_ops_cache) == 1
+
+    statsframe_copy = th_1.statsframe.dataframe.copy()
+    th_1.statsframe.dataframe = th.helpers._new_statsframe_df(
+        th_1.dataframe, multiindex=False
+    )
+
+    th_1.reapply_stats_operations()
+
+    comp_val = statsframe_copy.eq(th_1.statsframe.dataframe)
+
+    assert all([comp_val[c].all() for c in comp_val.columns])
+
+
+def test_cache_decorator(rajaperf_seq_O3_1M_cali):
+    th_1 = th.Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=False)
+
+    th.stats.mean(th_1, columns=["Min time/rank"])
+
+    assert len(th_1.statsframe_ops_cache) == 1
+    assert (
+        len(th_1.statsframe_ops_cache[list(th_1.statsframe_ops_cache.keys())[0]]) == 1
+    )
