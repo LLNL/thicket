@@ -1215,7 +1215,7 @@ class Thicket(GraphFrame):
         if len(new_thicket.graph) != len(
             new_thicket.dataframe.index.get_level_values("node").unique()
         ):
-            new_thicket.squash()
+            new_thicket = new_thicket.squash()
 
         return new_thicket
 
