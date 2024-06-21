@@ -34,7 +34,6 @@ except ModuleNotFoundError:
 import thicket.helpers as helpers
 from .groupby import GroupBy
 from .utils import (
-    overwrite_column,
     verify_thicket_structures,
     check_duplicate_metadata_key,
     validate_profile,
@@ -510,9 +509,13 @@ class Thicket(GraphFrame):
                 return col[0]
 
         # Check if chosen_metrics are in the dataframe
-        for col in chosen_metrics:
-            if col in self.dataframe.columns:
-                self.dataframe = overwrite_column(self.dataframe, col, overwrite)
+        dupe_cols = [col for col in chosen_metrics if col in self.dataframe.columns]
+        if overwrite:
+            self.dataframe = self.dataframe.drop(columns=dupe_cols)
+        elif not overwrite and len(dupe_cols) > 0:
+            raise ValueError(
+                f"Columns {dupe_cols} already exist in the performance data table. Set overwrite=True to overwrite."
+            )
 
         # Initialize reader
         ncureader = NCUReader()
@@ -556,7 +559,12 @@ class Thicket(GraphFrame):
         """
         # Check if column already exists in performance data table
         if metadata_key in self.dataframe.columns:
-            self.dataframe = overwrite_column(self.dataframe, metadata_key, overwrite)
+            if overwrite:
+                self.dataframe = self.dataframe.drop(columns=metadata_key)
+            else:
+                raise ValueError(
+                    f"Column {metadata_key} already exists in the performance data table. Set overwrite=True to overwrite."
+                )
 
         # Add the column to the performance data table
         self.dataframe = self.dataframe.join(
@@ -565,7 +573,7 @@ class Thicket(GraphFrame):
 
         # Drop column
         if drop:
-            self.metadata.drop(metadata_key, axis=1, inplace=True)
+            self.metadata = self.metadata.drop(columns=metadata_key)
 
     def squash(self, update_inc_cols=True, new_statsframe=True):
         """Rewrite the Graph to include only nodes present in the performance
