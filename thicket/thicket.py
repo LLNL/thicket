@@ -557,14 +557,18 @@ class Thicket(GraphFrame):
             overwrite (bool): Determines overriding behavior in performance data table
             drop (bool): Whether to drop the column from the metadata table afterwards
         """
-        # Check if column already exists in performance data table
+        # Add warning if column already exists in performance data table
         if metadata_key in self.dataframe.columns:
+            # Drop column to overwrite, otherwise warn and return
             if overwrite:
-                self.dataframe = self.dataframe.drop(columns=metadata_key)
+                self.dataframe.drop(metadata_key, axis=1, inplace=True)
             else:
-                raise ValueError(
-                    f"Column {metadata_key} already exists in the performance data table. Set overwrite=True to overwrite."
+                warnings.warn(
+                    "Column "
+                    + metadata_key
+                    + " already exists. Set 'overwrite=True' to force update the column."
                 )
+                return
 
         # Add the column to the performance data table
         self.dataframe = self.dataframe.join(
@@ -573,7 +577,7 @@ class Thicket(GraphFrame):
 
         # Drop column
         if drop:
-            self.metadata = self.metadata.drop(columns=metadata_key)
+            self.metadata.drop(metadata_key, axis=1, inplace=True)
 
     def squash(self, update_inc_cols=True, new_statsframe=True):
         """Rewrite the Graph to include only nodes present in the performance
