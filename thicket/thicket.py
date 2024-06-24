@@ -392,7 +392,7 @@ class Thicket(GraphFrame):
             calltree = "intersection"
         # We concatenate t Thickets with 1 prof each until 1 Thicket with t profs.
         # Consider a binary tree with t leaves (Thickets) => t-1 parents (Knuth 1997).
-        # Each non-leaf node (parent) is a result of a concat_thickets, therefore
+        # Each non-leaf Thicket (parent) is a result of a concat_thickets, therefore
         # we have t-1 concat_thickets operations. t == len(ens_list)
         pbar = tqdm.tqdm(total=len(ens_list) - 1, disable=disable_tqdm)
         while len(ens_list) > 1:
