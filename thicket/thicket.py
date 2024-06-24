@@ -390,12 +390,13 @@ class Thicket(GraphFrame):
         calltree = "union"
         if intersection:
             calltree = "intersection"
-        # Consider a binary tree with t leaves (Thickets) => t-1 parents (Knuth 1997).
+        # Consider a binary tree with t leaves (Thickets) and 2t-1 total nodes (Full tree)
+        # This implies t-1 parents (Knuth 1997).
         # Each non-leaf Thicket (parent) is a result of a concat_thickets, therefore
         # we have t-1 concat_thickets operations. t == len(ens_list)
         pbar = tqdm.tqdm(total=len(ens_list) - 1, disable=disable_tqdm)
         # We start with t Thickets with 1 prof each until 1 Thicket with t profs.
-        # Each iteration is concatenating 2 Thickets with n, m profs into 1 Thicket 
+        # Each iteration is concatenating 2 Thickets with n, m profs into 1 Thicket
         # with n+m profs, appending the new Thicket to the back of the ens_list.
         while len(ens_list) > 1:
             pbar.set_description("(2/2) Creating Thicket")
