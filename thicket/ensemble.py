@@ -188,7 +188,7 @@ class Ensemble:
             for k, v in profile_mapping_cp.items():
                 combined_th.profile_mapping[
                     new_mappings[k]
-                    ] = combined_th.profile_mapping.pop(k)
+                ] = combined_th.profile_mapping.pop(k)
             combined_th.performance_cols = helpers._get_perf_columns(
                 combined_th.dataframe
             )
