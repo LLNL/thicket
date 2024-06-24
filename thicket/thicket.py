@@ -1383,9 +1383,6 @@ class Thicket(GraphFrame):
                 "The provided Thicket object has an empty metadata table."
             )
 
-        print(len(sub_thickets), " thickets created...")
-        print(sub_thickets)
-
         return GroupBy(by, sub_thickets)
 
     def filter_stats(self, filter_function):
