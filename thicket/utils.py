@@ -4,7 +4,9 @@
 # SPDX-License-Identifier: MIT
 
 from collections import OrderedDict, defaultdict
+import warnings
 
+import numpy as np
 import pandas as pd
 
 from thicket import helpers
@@ -256,3 +258,36 @@ def validate_nodes(tk):
         raise ValueError(
             f"Node objects do not match between Thicket.graph, Thicket.dataframe, and Thicket.statsframe.dataframe.\n{debug_str}"
         )
+
+
+def _fill_perfdata(df, numerical_fill_value=np.nan):
+    """Create full index for DataFrame and fill created rows with NaN's or None's where applicable.
+
+    Arguments:
+        df (DataFrame): DataFrame to fill missing rows in
+        numerical_fill_value (any): value to fill numerical rows with
+
+    Returns:
+        (DataFrame): filled DataFrame
+    """
+    try:
+        # Fill missing rows in dataframe with NaN's
+        df = df.reindex(
+            pd.MultiIndex.from_product(df.index.levels),
+            fill_value=numerical_fill_value,
+        )
+        # Replace "NaN" with "None" in columns of string type
+        for col in df.columns:
+            if pd.api.types.is_string_dtype(df[col].dtype):
+                df[col] = df[col].replace({numerical_fill_value: None})
+    except ValueError as e:
+        estr = str(e)
+        if estr == "cannot handle a non-unique multi-index!":
+            warnings.warn(
+                "Non-unique multi-index for DataFrame in _fill_perfdata. Cannot Fill missing rows.",
+                RuntimeWarning,
+            )
+        else:
+            raise
+
+    return df

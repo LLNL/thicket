@@ -28,6 +28,7 @@ from thicket.query import (
 import tqdm
 
 from thicket.ensemble import Ensemble
+from thicket.utils import _fill_perfdata
 
 try:
     from .ncu import NCUReader
@@ -934,8 +935,10 @@ class Thicket(GraphFrame):
         }
         # Slices the DataFrame to simulate a single-level index
         try:
+            # _fill_perfdata to make sure number of nodes in df == graph
+            slice_df = _fill_perfdata(self.dataframe)
             slice_df = (
-                self.dataframe.loc[(slice(None),) + indices, :]
+                slice_df.loc[(slice(None),) + indices, :]
                 .reset_index()
                 .set_index("node")
             )
