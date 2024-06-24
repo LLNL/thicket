@@ -8,8 +8,8 @@ import pytest
 import thicket as th
 
 
-def test_indices(rajaperf_unique_tunings):
-    tk = th.Thicket.from_caliperreader(rajaperf_unique_tunings)
+def test_indices(rajaperf_unique_tunings, intersection, fill_perfdata):
+    tk = th.Thicket.from_caliperreader(rajaperf_unique_tunings, intersection=intersection, fill_perfdata=fill_perfdata, disable_tqdm=True)
 
     # No error
     tk.tree(metric_column="Avg time/rank", indices=tk.profile[0])
