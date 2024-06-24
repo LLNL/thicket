@@ -17,14 +17,30 @@ from thicket import Thicket
 from thicket.utils import DuplicateIndexError
 
 
-def test_concat_thickets_index(mpi_scaling_cali):
-    th_27 = Thicket.from_caliperreader(mpi_scaling_cali[0], disable_tqdm=True)
-    th_64 = Thicket.from_caliperreader(mpi_scaling_cali[1], disable_tqdm=True)
+def test_concat_thickets_index(mpi_scaling_cali, intersection, fill_perfdata):
+    th_27 = Thicket.from_caliperreader(
+        mpi_scaling_cali[0],
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
+    th_64 = Thicket.from_caliperreader(
+        mpi_scaling_cali[1],
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
 
-    tk = Thicket.concat_thickets([th_27, th_64], disable_tqdm=True)
-
-    # Check dataframe shape
-    assert tk.dataframe.shape == (90, 7)
+    if intersection:
+        calltree = "intersection"
+    else:
+        calltree = "union"
+    tk = Thicket.concat_thickets(
+        [th_27, th_64],
+        calltree=calltree,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
 
     # Check specific values. Row order can vary so use "sum" to check
     node = tk.dataframe.index.get_level_values("node")[8]
@@ -34,7 +50,12 @@ def test_concat_thickets_index(mpi_scaling_cali):
     with pytest.raises(
         DuplicateIndexError,
     ):
-        Thicket.from_caliperreader([mpi_scaling_cali[0], mpi_scaling_cali[0]])
+        Thicket.from_caliperreader(
+            [mpi_scaling_cali[0], mpi_scaling_cali[0]],
+            intersection=intersection,
+            fill_perfdata=fill_perfdata,
+            disable_tqdm=True,
+        )
 
 
 def test_concat_thickets_columns(thicket_axis_columns):

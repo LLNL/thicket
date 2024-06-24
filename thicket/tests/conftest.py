@@ -16,9 +16,11 @@ from thicket import Thicket
 def fill_perfdata(request):
     return request.param
 
+
 @pytest.fixture(params=[True, False])
 def intersection(request):
     return request.param
+
 
 @pytest.fixture
 def thicket_axis_columns(rajaperf_cali_1trial):
