@@ -535,12 +535,13 @@ class Thicket(GraphFrame):
         # make and return thicket?
         return th
 
-    def add_ncu(self, ncu_report_mapping, chosen_metrics=None):
+    def add_ncu(self, ncu_report_mapping, chosen_metrics=None, overwrite=False):
         """Add NCU data into the PerformanceDataFrame
 
         Arguments:
             ncu_report_mapping (dict): mapping from NCU report file to profile
             chosen_metrics (list): list of metrics to sub-select from NCU report
+            overwrite (bool): whether to overwrite existing columns in the Thicket.DataFrame
         """
 
         def _rep_agg_func(col):
@@ -555,6 +556,15 @@ class Thicket(GraphFrame):
                 return agg_func(col)
             else:
                 return col[0]
+
+        # Check if chosen_metrics are in the dataframe
+        dupe_cols = [col for col in chosen_metrics if col in self.dataframe.columns]
+        if overwrite:
+            self.dataframe = self.dataframe.drop(columns=dupe_cols)
+        elif not overwrite and len(dupe_cols) > 0:
+            raise ValueError(
+                f"Columns {dupe_cols} already exist in the performance data table. Set overwrite=True to overwrite."
+            )
 
         # Initialize reader
         ncureader = NCUReader()
