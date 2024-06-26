@@ -49,16 +49,17 @@ class Ensemble:
             """
             merged_dict = {}
 
+            # If cur_dict is empty, return update_dict
             if len(cur_dict) == 0:
                 return update_dict
 
             # Merge values from update_dict into keys from cur_dict
             seen_keys = []
-            for new_id, new_node in update_dict.items():
-                for cur_id, cur_node in cur_dict.items():
-                    if id(cur_node) == new_id:
-                        merged_dict[cur_id] = new_node
-                        seen_keys.append(new_id)
+            for cur_id, cur_node in cur_dict.items():
+                new_id = id(cur_node)
+                if new_id in update_dict:
+                    merged_dict[cur_id] = update_dict[new_id]
+                    seen_keys.append(new_id)
 
             # Pairs that are left in update_dict
             for tid, node in update_dict.items():
