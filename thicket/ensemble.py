@@ -53,16 +53,18 @@ class Ensemble:
             # Merge the current old_to_new dictionary with the new mappings.
             # This is necessary to avoid applying updates to the DataFrames every iteration.
             # Merge values of temp_dict into keys of old_to_new
+            merged_dict = {}
             seen_keys = []
             for cur_id, cur_node in old_to_new.items():
                 new_id = id(cur_node)
                 if new_id in temp_dict:
-                    old_to_new[cur_id] = temp_dict[new_id]
+                    merged_dict[cur_id] = temp_dict[new_id]
                     seen_keys.append(new_id)
             # Add pairs that are left from temp_dict into old_to_new
             for temp_id, node in temp_dict.items():
                 if temp_id not in seen_keys:
-                    old_to_new[temp_id] = node
+                    merged_dict[temp_id] = node
+            old_to_new = merged_dict
         # Update the nodes in the dataframe
         for i in range(len(_thickets)):
             _thickets[i].graph = union_graph
