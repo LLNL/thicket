@@ -12,7 +12,7 @@ import pytest
 from thicket import Thicket
 
 
-@pytest.fixture(params=[True, False], ids=["Padding", "NoPadding"])
+@pytest.fixture(params=[True, False], ids=["PadPerfdata", "NoPadPerfdata"])
 def fill_perfdata(request):
     return request.param
 
@@ -23,7 +23,7 @@ def intersection(request):
 
 
 @pytest.fixture
-def thicket_axis_columns(rajaperf_cali_1trial):
+def thicket_axis_columns(rajaperf_cali_1trial, intersection, fill_perfdata):
     """Generator for 'concat_thickets(axis="columns")' thicket.
 
     Arguments:
@@ -34,7 +34,12 @@ def thicket_axis_columns(rajaperf_cali_1trial):
         list: List of original thickets, list of deepcopies of original thickets, and
             column-joined thicket.
     """
-    tk = Thicket.from_caliperreader(rajaperf_cali_1trial, disable_tqdm=True)
+    tk = Thicket.from_caliperreader(
+        rajaperf_cali_1trial,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
 
     gb = tk.groupby("tuning")
 
@@ -55,7 +60,9 @@ def thicket_axis_columns(rajaperf_cali_1trial):
 
 
 @pytest.fixture
-def stats_thicket_axis_columns(rajaperf_cuda_block128_1M_cali):
+def stats_thicket_axis_columns(
+    rajaperf_cuda_block128_1M_cali, intersection, fill_perfdata
+):
     """Generator for 'concat_thickets(axis="columns")' thicket for test_stats.py.
 
     Arguments:
@@ -66,10 +73,16 @@ def stats_thicket_axis_columns(rajaperf_cuda_block128_1M_cali):
             column-joined thicket.
     """
     th_cuda128_1 = Thicket.from_caliperreader(
-        rajaperf_cuda_block128_1M_cali[0:4], disable_tqdm=True
+        rajaperf_cuda_block128_1M_cali[0:4],
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
     )
     th_cuda128_2 = Thicket.from_caliperreader(
-        rajaperf_cuda_block128_1M_cali[5:9], disable_tqdm=True
+        rajaperf_cuda_block128_1M_cali[5:9],
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
     )
 
     # To check later if modifications were unexpectedly made

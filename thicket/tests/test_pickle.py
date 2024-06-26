@@ -6,11 +6,16 @@
 import thicket as th
 
 
-def test_pickle(rajaperf_cali_1trial, tmpdir):
+def test_pickle(rajaperf_cali_1trial, tmpdir, intersection, fill_perfdata):
     """Test pickling and unpickling of Thicket object."""
 
     # Create thicket
-    tk = th.Thicket.from_caliperreader(rajaperf_cali_1trial)
+    tk = th.Thicket.from_caliperreader(
+        rajaperf_cali_1trial,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
 
     # Create temporary pickle file and write to it
     pkl_file = tmpdir.join("tk.pkl")

@@ -9,10 +9,17 @@ import thicket as th
 from thicket.utils import DuplicateValueError
 
 
-def test_single_trial(mpi_scaling_cali):
+def test_single_trial(mpi_scaling_cali, intersection, fill_perfdata):
     th_list = []
     for file in mpi_scaling_cali:
-        th_list.append(th.Thicket.from_caliperreader(file, disable_tqdm=True))
+        th_list.append(
+            th.Thicket.from_caliperreader(
+                file,
+                intersection=intersection,
+                fill_perfdata=fill_perfdata,
+                disable_tqdm=True,
+            )
+        )
 
     # Add arbitrary value to aggregated statistics table
     t_val = 0
@@ -49,8 +56,17 @@ def test_single_trial(mpi_scaling_cali):
     assert set(tk_named.dataframe["test"]) == {0, 2, 4, 6, 8}
 
 
-def test_multi_trial(rajaperf_cali_alltrials):
-    tk = th.Thicket.from_caliperreader(rajaperf_cali_alltrials)
+def test_multi_trial(
+    rajaperf_cali_alltrials,
+    intersection,
+    fill_perfdata,
+):
+    tk = th.Thicket.from_caliperreader(
+        rajaperf_cali_alltrials,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
 
     # Simulate multiple trial from grouping by tuning.
     gb = tk.groupby("tuning")
