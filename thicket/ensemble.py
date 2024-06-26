@@ -45,25 +45,25 @@ class Ensemble:
         union_graph = _thickets[0].graph
         old_to_new = {}
         for i in range(len(_thickets) - 1):
-            temp_dict = {}
-            union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
+            new_dict = {}
+            union_graph = union_graph.union(_thickets[i + 1].graph, new_dict)
             # Set all graphs to the union graph
             _thickets[i].graph = union_graph
             _thickets[i + 1].graph = union_graph
             # Merge the current old_to_new dictionary with the new mappings.
             # This is necessary to avoid applying updates to the DataFrames every iteration.
-            # Merge values of temp_dict into keys of old_to_new
+            # Merge values of new_dict into keys of old_to_new
             merged_dict = {}
             seen_keys = []
-            for cur_id, cur_node in old_to_new.items():
-                new_id = id(cur_node)
-                if new_id in temp_dict:
-                    merged_dict[cur_id] = temp_dict[new_id]
-                    seen_keys.append(new_id)
-            # Add pairs that are left from temp_dict into old_to_new
-            for temp_id, node in temp_dict.items():
-                if temp_id not in seen_keys:
-                    merged_dict[temp_id] = node
+            for old_id, cur_node in old_to_new.items():
+                cur_id = id(cur_node)
+                if cur_id in new_dict:
+                    merged_dict[old_id] = new_dict[cur_id]
+                    seen_keys.append(cur_id)
+            # Add pairs that are left from new_dict into old_to_new
+            for cur_id, new_node in new_dict.items():
+                if cur_id not in seen_keys:
+                    merged_dict[cur_id] = new_node
             old_to_new = merged_dict
         # Update the nodes in the dataframe
         for i in range(len(_thickets)):
