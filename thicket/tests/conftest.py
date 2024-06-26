@@ -12,12 +12,12 @@ import pytest
 from thicket import Thicket
 
 
-@pytest.fixture(params=[True, False])
+@pytest.fixture(params=[True, False], ids=["Padding", "NoPadding"])
 def fill_perfdata(request):
     return request.param
 
 
-@pytest.fixture(params=[True, False])
+@pytest.fixture(params=[True, False], ids=["Intersection", "Union"])
 def intersection(request):
     return request.param
 
