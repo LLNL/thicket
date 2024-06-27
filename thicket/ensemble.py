@@ -54,12 +54,12 @@ class Ensemble:
             # This is necessary to avoid applying updates to the DataFrames every iteration.
             # Merge values of new_dict into keys of old_to_new
             merged_dict = {}
-            seen_keys = []
+            seen_keys = set()
             for old_id, cur_node in old_to_new.items():
                 cur_id = id(cur_node)
                 if cur_id in new_dict:
                     merged_dict[old_id] = new_dict[cur_id]
-                    seen_keys.append(cur_id)
+                    seen_keys.add(cur_id)            
             # Add pairs that are left from new_dict into old_to_new
             for cur_id, new_node in new_dict.items():
                 if cur_id not in seen_keys:
