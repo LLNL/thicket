@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 from collections import OrderedDict
+import logging
 import warnings
 
 from hatchet import GraphFrame
@@ -37,6 +38,8 @@ class Ensemble:
                 (list): list of Thicket objects
         """
 
+        logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.DEBUG)
         _thickets = thickets
         if not inplace:
             _thickets = [th.deepcopy() for th in thickets]
@@ -45,6 +48,7 @@ class Ensemble:
         union_graph = _thickets[0].graph
         old_to_new = {}
         for i in range(len(_thickets) - 1):
+            logger.debug(f"Unifying {i} and {i + 1}")
             new_dict = {}
             union_graph = union_graph.union(_thickets[i + 1].graph, new_dict)
             # Set all graphs to the union graph
@@ -58,11 +62,13 @@ class Ensemble:
             for old_id, cur_node in old_to_new.items():
                 cur_id = id(cur_node)
                 if cur_id in new_dict:
+                    logger.debug(f"\tReplacing merged_dict[{old_id}]: ({cur_node} {cur_id} -> {cur_id}) with ({new_dict[cur_id]} {id(new_dict[cur_id])})")
                     merged_dict[old_id] = new_dict[cur_id]
                     seen_keys.add(cur_id)
             # Add pairs that are left from new_dict into old_to_new
             for cur_id, new_node in new_dict.items():
                 if cur_id not in seen_keys:
+                    logger.debug(f"\tDidn't see {cur_id} in old_to_new, adding merged_dict[{cur_id}] = ({new_node} {id(new_node)})")
                     merged_dict[cur_id] = new_node
             old_to_new = merged_dict
         # Update the nodes in the dataframe
