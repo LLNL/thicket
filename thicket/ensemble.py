@@ -59,7 +59,7 @@ class Ensemble:
                 cur_id = id(cur_node)
                 if cur_id in new_dict:
                     merged_dict[old_id] = new_dict[cur_id]
-                    seen_keys.add(cur_id)            
+                    seen_keys.add(cur_id)
             # Add pairs that are left from new_dict into old_to_new
             for cur_id, new_node in new_dict.items():
                 if cur_id not in seen_keys:
