@@ -37,64 +37,6 @@ class Ensemble:
                 (list): list of Thicket objects
         """
 
-        def _merge_dicts(cur_dict, update_dict):
-            """Merge old_to_new dictionary from the result of thicket i and i + 1 with old_to_new from i + 1 and i + 2.
-
-            Arguments:
-                cur_dict (dict): dictionary mapping old node to new node
-                update_dict (dict): dictionary mapping old node to new node
-
-            Returns:
-                (dict): merged dictionary
-            """
-            merged_dict = {}
-
-            if len(cur_dict) == 0:
-                return update_dict
-
-            # Merge values from update_dict into keys from cur_dict
-            seen_keys = []
-            for new_id, new_node in update_dict.items():
-                for cur_id, cur_node in cur_dict.items():
-                    if id(cur_node) == new_id:
-                        merged_dict[cur_id] = new_node
-                        seen_keys.append(new_id)
-
-            # Pairs that are left in update_dict
-            for tid, node in update_dict.items():
-                if tid not in seen_keys:
-                    merged_dict[tid] = node
-
-            return merged_dict
-
-        def _replace_graph_df_nodes(thickets, old_to_new, union_graph):
-            """Replace the node objects in the graph and DataFrame of a Thicket object from the result of graph.union().
-
-            Arguments:
-                thickets (list): list of Thicket objects
-                old_to_new (dict): dictionary mapping old node to new node
-                union_graph (hatchet.Graph): unified graph
-
-            Returns:
-                (Thicket): modified Thicket object
-            """
-            for i in range(len(thickets)):
-                thickets[i].graph = union_graph
-                idx_names = thickets[i].dataframe.index.names
-                thickets[i].dataframe = thickets[i].dataframe.reset_index()
-                replace_dict = {}
-                for node in thickets[i].dataframe["node"]:
-                    node_id = id(node)
-                    if node_id in old_to_new:
-                        check_same_frame(node, old_to_new[node_id])
-                        replace_dict[node] = old_to_new[node_id]
-                thickets[i].dataframe["node"] = (
-                    thickets[i].dataframe["node"].replace(replace_dict)
-                )
-                thickets[i].dataframe = thickets[i].dataframe.set_index(idx_names)
-
-            return thickets
-
         _thickets = thickets
         if not inplace:
             _thickets = [th.deepcopy() for th in thickets]
@@ -103,18 +45,42 @@ class Ensemble:
         union_graph = _thickets[0].graph
         old_to_new = {}
         for i in range(len(_thickets) - 1):
-            temp_dict = {}
-            union_graph = union_graph.union(_thickets[i + 1].graph, temp_dict)
+            new_dict = {}
+            union_graph = union_graph.union(_thickets[i + 1].graph, new_dict)
             # Set all graphs to the union graph
             _thickets[i].graph = union_graph
             _thickets[i + 1].graph = union_graph
-            # Merge the current old_to_new dictionary with the new mappings
-            old_to_new = _merge_dicts(old_to_new, temp_dict)
+            # Merge the current old_to_new dictionary with the new mappings.
+            # This is necessary to avoid applying updates to the DataFrames every iteration.
+            # Merge values of new_dict into keys of old_to_new
+            merged_dict = {}
+            seen_keys = set()
+            for old_id, cur_node in old_to_new.items():
+                cur_id = id(cur_node)
+                if cur_id in new_dict:
+                    merged_dict[old_id] = new_dict[cur_id]
+                    seen_keys.add(cur_id)
+            # Add pairs that are left from new_dict into old_to_new
+            for cur_id, new_node in new_dict.items():
+                if cur_id not in seen_keys:
+                    merged_dict[cur_id] = new_node
+            old_to_new = merged_dict
         # Update the nodes in the dataframe
-        _thickets = _replace_graph_df_nodes(_thickets, old_to_new, union_graph)
         for i in range(len(_thickets)):
-            # For tree diff. dataframes need to be sorted.
-            _thickets[i].dataframe.sort_index(inplace=True)
+            _thickets[i].graph = union_graph
+            idx_names = _thickets[i].dataframe.index.names
+            _thickets[i].dataframe = _thickets[i].dataframe.reset_index()
+            replace_dict = {}
+            for node in _thickets[i].dataframe["node"]:
+                node_id = id(node)
+                if node_id in old_to_new:
+                    check_same_frame(node, old_to_new[node_id])
+                    replace_dict[node] = old_to_new[node_id]
+            _thickets[i].dataframe["node"] = (
+                _thickets[i].dataframe["node"].replace(replace_dict)
+            )
+            _thickets[i].dataframe = _thickets[i].dataframe.set_index(idx_names)
+            _thickets[i].dataframe = _thickets[i].dataframe.sort_index()
         return union_graph, _thickets
 
     @staticmethod
