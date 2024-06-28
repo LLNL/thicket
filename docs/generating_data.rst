@@ -23,7 +23,7 @@ Caliper usage can be found in the `Caliper documentation
 <https://software.llnl.gov/Caliper/CaliperBasics.html>`__.
 
 To generate profiling data, you can use Caliper's `built-in profiling configurations
-<https://software.llnl.gov/Caliper/BuiltinConfigurations.htm>`_ customized for thicket:
+<https://software.llnl.gov/Caliper/BuiltinConfigurations.html>`_ customized for thicket:
 ``hatchet-region-profile`` and ``spot`` or ``hatchet-sample-profile``. The former
 generates a profile based on user annotations in the code while the latter generates a
 call path profile (similar to HPCToolkit's output). If you want to use one of the
