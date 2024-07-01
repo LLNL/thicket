@@ -270,16 +270,17 @@ def _fill_perfdata(df, numerical_fill_value=np.nan):
     Returns:
         (DataFrame): filled DataFrame
     """
+    new_df = df.copy()
     try:
         # Fill missing rows in dataframe with NaN's
-        df = df.reindex(
-            pd.MultiIndex.from_product(df.index.levels),
+        new_df = new_df.reindex(
+            pd.MultiIndex.from_product(new_df.index.levels),
             fill_value=numerical_fill_value,
         )
         # Replace "NaN" with "None" in columns of string type
-        for col in df.columns:
-            if pd.api.types.is_string_dtype(df[col].dtype):
-                df[col] = df[col].replace({numerical_fill_value: None})
+        for col in new_df.columns:
+            if pd.api.types.is_string_dtype(new_df[col].dtype):
+                new_df[col] = new_df[col].replace({numerical_fill_value: None})
     except ValueError as e:
         estr = str(e)
         if estr == "cannot handle a non-unique multi-index!":
@@ -290,4 +291,4 @@ def _fill_perfdata(df, numerical_fill_value=np.nan):
         else:
             raise
 
-    return df
+    return new_df
