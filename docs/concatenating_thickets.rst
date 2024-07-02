@@ -34,14 +34,16 @@ This section mainly refers to the :code:`Thicket.Ensemble._unify()` function.
 Unifying Calltrees
 ===================
 
-*Unifying Calltrees* is the process of performing a **set operation** (e.g. :code:`Hatchet.graph.union()`) on multiple :code:`Thicket.graph`'s. Comparing two graphs involves comparing :code:`Hatchet.Node` objects between the graphs.  The :code:`Hatchet.graph.union()` function computes the union graph between two Hatchet graphs. Nodes are compared by:
+*Unifying Calltrees* is the process of performing a **set operation** (e.g. :code:`Hatchet.graph.union()`) on multiple :code:`Thicket.graph`'s. Comparing two graphs involves comparing :code:`Hatchet.Node` objects between the graphs.  The :code:`Hatchet.graph.union()` function computes the union graph between two Hatchet graphs. For the union, nodes are compared by:
 
 1. `Their depth in the tree <https://github.com/LLNL/hatchet/blob/6a6d7027056df96bd1c919ab34a9acce81f3b9a1/hatchet/graph.py#L247>`_ - :code:`Node._depth`.
 2. `Their frame <https://github.com/LLNL/hatchet/blob/6a6d7027056df96bd1c919ab34a9acce81f3b9a1/hatchet/graph.py#L248>`_ ("name" and "type") - :code:`Node.frame._tuple_repr` 
 
 Nodes that match in #1 and #2 are merged in the resulting union graph as a new :code:`Hatchet.Node` object (`deep copy of the first node <https://github.com/LLNL/hatchet/blob/6a6d7027056df96bd1c919ab34a9acce81f3b9a1/hatchet/graph.py#L227>`_). Deep copies of nodes that do **not** match are inserted into the union graph at the appropriate depth.
 
-*Note:* The :code:`Thicket.intersection()` function first applies the :code:`Hatchet.graph.union()` before computing the intersection of the graphs, since their does not exist a :code:`Hatchet.graph.intersection` function.
+*Note:* Comparing nodes with the equality operator (:code:`==`) is not sufficient, as the equality operator only compares the :code:`Node._hatchet_nid`, which is not the same as the above comparison.
+
+*Note:* The :code:`Thicket.intersection()` function first applies the :code:`Hatchet.graph.union()` before computing the intersection of the graphs, since their does not exist a :code:`Hatchet.graph.intersection()` function.
 
 ======================
 Updating Node Objects
