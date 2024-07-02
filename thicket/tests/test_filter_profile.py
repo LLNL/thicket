@@ -10,8 +10,8 @@ def test_filter_profile(rajaperf_cali_1trial):
     tk = Thicket.from_caliperreader(rajaperf_cali_1trial, disable_tqdm=True)
 
     # Split profile list into two halves
-    rm_profs = tk.profile[len(tk.profile)//2:]
-    keep_profs = tk.profile[:len(tk.profile)//2]
+    rm_profs = tk.profile[len(tk.profile) // 2 :]
+    keep_profs = tk.profile[: len(tk.profile) // 2]
 
     tk_filt = tk.filter_profile(keep_profs)
 
