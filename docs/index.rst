@@ -65,7 +65,7 @@ If you encounter bugs while using thicket, you can report them by opening an iss
 
    developer_guide
    thicket_properties
-   unification.rst
+   concatenating_thickets
 
 .. toctree::
    :maxdepth: 2
