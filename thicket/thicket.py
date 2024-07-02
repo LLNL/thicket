@@ -1550,10 +1550,10 @@ class Thicket(GraphFrame):
             return self
 
         if isinstance(component, list):
-            self = _sync_indices(component, component)
+            self = _sync_indices(component)
         elif isinstance(component, pd.DataFrame):
             profile_truth = _profile_truth_from_component(component)
-            self = _sync_indices(component, profile_truth)
+            self = _sync_indices(profile_truth)
         else:
             raise ValueError(
                 "Component must be either list, Thicket.dataframe, or Thicket.metadata"
