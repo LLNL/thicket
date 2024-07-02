@@ -1523,7 +1523,7 @@ class Thicket(GraphFrame):
                     profile_truth = component.index
             return list(set(profile_truth))
 
-        def _sync_indices(component, profile_truth):
+        def _sync_indices(profile_truth):
             """Sync the Thicket attributes"""
             self.profile = profile_truth
             self.profile_mapping = OrderedDict(
@@ -1534,10 +1534,8 @@ class Thicket(GraphFrame):
                 }
             )
 
-            if isinstance(component, list):
-                pass
             # For Columnar-indexed Thicket
-            elif isinstance(component.columns, pd.MultiIndex):
+            if isinstance(self.dataframe.columns, pd.MultiIndex):
                 # Create powerset from all profiles
                 pset = set()
                 for p in profile_truth:
