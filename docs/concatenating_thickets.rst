@@ -47,16 +47,16 @@ Nodes that match in #1 and #2 are merged in the resulting union graph as a new :
 Updating Node Objects
 ======================
 
-Because Node objects must be identical between Thicket components (see :ref:`/thicket_properties.rst`), The resulting new nodes in the union graph must replace the old node objects in components like the :code:`Thicket.dataframe.index` (see `code <https://github.com/LLNL/thicket/blob/develop/thicket/ensemble.py#L68-L83>`_). The :code:`Hatchet.graph.union()` function provides a dictionary mapping old nodes to new nodes, however to avoid applying these updates after every union between two graphs, we `update a dictionary of all the node mappings <https://github.com/LLNL/thicket/blob/develop/thicket/ensemble.py#L53-L67>`_ and apply the updates after all of the unions have been computed. This is **only** necessary when concatenating more than **two** Thickets, as only one union will be performed when concatenating two Thickets. We `apply this idea when reading files <https://github.com/LLNL/thicket/blob/develop/thicket/thicket.py#L393-L413>`_ to avoid this cost.
+Because Node objects must be identical between Thicket components (see :ref:`/thicket_properties.rst#nodes`), The resulting new nodes in the union graph must replace the old node objects in components like the :code:`Thicket.dataframe.index` (see `code <https://github.com/LLNL/thicket/blob/develop/thicket/ensemble.py#L68-L83>`_). The :code:`Hatchet.graph.union()` function provides a dictionary mapping old nodes to new nodes, however to avoid applying these updates after every union between two graphs, we `update a dictionary of all the node mappings <https://github.com/LLNL/thicket/blob/develop/thicket/ensemble.py#L53-L67>`_ and apply the updates after all of the unions have been computed. This is **only** necessary when concatenating more than **two** Thickets, as only one union will be performed when concatenating two Thickets. We `apply this idea when reading files <https://github.com/LLNL/thicket/blob/develop/thicket/thicket.py#L393-L413>`_ to avoid this cost.
 
 ####################
 Index Concatenation
 ####################
 
-todo
+*Index Concatenation* refers to the process that happens for the performance and metadata tables. We concatenate the tables, which is essentially "stacking the rows on top of each other". Because we check that the performance profiles we concatenate are unique (:ref:`/thicket_properties.rst#profiles`), we do not need to worry about duplicate indices in either table. We sort the index of both tables, which interleaves the profiles in the MultiIndex of the performance table to visually group all of the profiles in the table for each node. An example of this operation can be seen in the :ref:`/thicket_tutorial.ipynb`, when :code:`axis="columns"`.
 
 #####################
 Column Concatenation
 #####################
 
-todo
+*Column Concatenation* refers to the process that happens in the performance, metadata, and statistics tables. We create a MultiIndex out of the columns, such that for each metric, there is a higher level index label. An example of this operation can be seen in the :ref:`/thicket_tutorial.ipynb`, when :code:`axis="columns"`.
