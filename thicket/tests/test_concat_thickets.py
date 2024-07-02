@@ -134,3 +134,24 @@ def test_query_concat_thickets_columns(thicket_axis_columns):
     )
 
     check_query(combined_th, hnids, query)
+
+
+def test_filter_profile_concat_thickets_columns(thicket_axis_columns):
+    thickets, thickets_cp, combined_th = thicket_axis_columns
+
+    rm_profs = [
+        (2097152.0, "block_128"),
+        (1048576.0, "block_128"),
+        (1048576.0, "block_256"),
+    ]
+    keep_profs = [
+        (2097152.0, "block_256"),
+        (2097152.0, "default"),
+        (1048576.0, "default"),
+    ]
+
+    tk_filt = combined_th.filter_profile(keep_profs)
+
+    for component in [tk_filt.profile, tk_filt.profile_mapping.keys()]:
+        assert all([prof not in component for prof in rm_profs])
+        assert all([prof in component for prof in keep_profs])
