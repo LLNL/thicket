@@ -156,7 +156,9 @@ def test_filter_profile_concat_thickets_columns(thicket_axis_columns):
         assert all([prof not in component for prof in rm_profs])
         assert all([prof in component for prof in keep_profs])
 
-    assert 1048576.0 not in tk_filt.dataframe.index.get_level_values("ProblemSizeRunParam")
+    assert 1048576.0 not in tk_filt.dataframe.index.get_level_values(
+        "ProblemSizeRunParam"
+    )
     assert 2097152.0 in tk_filt.dataframe.index.get_level_values("ProblemSizeRunParam")
     assert 1048576.0 not in tk_filt.metadata.index
     assert 2097152.0 in tk_filt.metadata.index
