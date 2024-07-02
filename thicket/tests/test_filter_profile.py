@@ -9,8 +9,9 @@ from thicket import Thicket
 def test_filter_profile(rajaperf_cali_1trial):
     tk = Thicket.from_caliperreader(rajaperf_cali_1trial, disable_tqdm=True)
 
-    rm_profs = [2139808518, 2783439032, 1389420692]
-    keep_profs = [3031003747, 847237663, 3347816895]
+    # Split profile list into two halves
+    rm_profs = tk.profile[len(tk.profile)//2:]
+    keep_profs = tk.profile[:len(tk.profile)//2]
 
     tk_filt = tk.filter_profile(keep_profs)
 
