@@ -1500,8 +1500,10 @@ class Thicket(GraphFrame):
 
         def _profile_truth_from_component(component):
             """Derive the profiles from the component index."""
+            if isinstance(component, list):
+                return component
             # Option A: Columnar-indexed Thicket
-            if isinstance(component.columns, pd.MultiIndex):
+            elif isinstance(component.columns, pd.MultiIndex):
                 # Performance DataFrame
                 if isinstance(component.index, pd.MultiIndex):
                     row_idx = component.index.droplevel(level="node")
@@ -1549,9 +1551,7 @@ class Thicket(GraphFrame):
 
             return self
 
-        if isinstance(component, list):
-            self = _sync_indices(component)
-        elif isinstance(component, pd.DataFrame):
+        if isinstance(component, list) or isinstance(component, pd.DataFrame):
             profile_truth = _profile_truth_from_component(component)
             self = _sync_indices(profile_truth)
         else:
