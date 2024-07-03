@@ -34,7 +34,7 @@ This section mainly refers to the :code:`Thicket.Ensemble._unify()` function.
 Unifying Calltrees
 ===================
 
-*Unifying Calltrees* is the process of performing a **set operation** (e.g. :code:`Hatchet.graph.union()`) on multiple :code:`Thicket.graph`'s. Comparing two graphs involves comparing :code:`Hatchet.Node` objects between the graphs.  The :code:`Hatchet.graph.union()` function computes the union graph between two Hatchet graphs. For the union, nodes are compared by:
+*Unifying Calltrees* is the process of performing a **graph operation** (e.g. :code:`Hatchet.graph.union()`) on multiple :code:`Thicket.graph`'s. Comparing two graphs involves comparing :code:`Hatchet.Node` objects between the graphs.  The :code:`Hatchet.graph.union()` function computes the union graph between two Hatchet graphs. For the union, nodes are compared by:
 
 1. `Their depth in the tree <https://github.com/LLNL/hatchet/blob/6a6d7027056df96bd1c919ab34a9acce81f3b9a1/hatchet/graph.py#L247>`_ - :code:`Node._depth`.
 2. `Their frame <https://github.com/LLNL/hatchet/blob/6a6d7027056df96bd1c919ab34a9acce81f3b9a1/hatchet/graph.py#L248>`_ ("name" and "type") - :code:`Node.frame._tuple_repr` 
