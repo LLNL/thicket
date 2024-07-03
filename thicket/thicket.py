@@ -936,28 +936,17 @@ class Thicket(GraphFrame):
         # Slices the DataFrame to simulate a single-level index
         try:
             # Select only columns used by tree for efficiency in _fill_perfdata
-            if isinstance(metric_column, list):
-                df_cols = [
-                    col
-                    for col in [
-                        *metric_column,
-                        annotation_column,
-                        name_column,
-                        context_column,
-                    ]
-                    if col in self.dataframe.columns
+            tree_cols = (
+                metric_column
+                if isinstance(metric_column, list)
+                else [metric_column]
+                + [
+                    annotation_column,
+                    name_column,
+                    context_column,
                 ]
-            else:
-                df_cols = [
-                    col
-                    for col in [
-                        metric_column,
-                        annotation_column,
-                        name_column,
-                        context_column,
-                    ]
-                    if col in self.dataframe.columns
-                ]
+            )
+            df_cols = [col for col in tree_cols if col in self.dataframe.columns]
             slice_df = self.dataframe.loc[:, df_cols]
             # _fill_perfdata to make sure number of nodes in df == graph
             slice_df = _fill_perfdata(slice_df)
