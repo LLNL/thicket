@@ -15,7 +15,11 @@ from hashlib import md5
 
 import pandas as pd
 import numpy as np
-from hatchet import GraphFrame
+from hatchet import (
+    frame,
+    GraphFrame,
+    node,
+)
 from hatchet.graph import Graph
 from hatchet.query import QueryEngine
 from thicket.query import (
@@ -1513,6 +1517,35 @@ class Thicket(GraphFrame):
                 )
 
         return sorted_meta
+
+
+    def add_root_node(self, attrs):
+        """Add node at root level"""
+        assert self.graph is self.statsframe.graph
+
+        new_node = node.Node(
+            frame_obj=frame.Frame(
+                attrs=attrs
+            ),
+            hnid=len(self.graph)
+        )
+
+        # graph and statsframe.graph
+        self.graph.roots.append(new_node)
+
+        # dataframe
+        idx_levels = self.dataframe.index.names
+        new_idx = [[new_node]] + [self.profile]
+        new_node_df = pd.DataFrame(
+            index=pd.MultiIndex.from_product(new_idx, names=idx_levels)
+        )
+        self.dataframe = pd.concat([self.dataframe, new_node_df])
+
+        # statsframe.dataframe
+        self.statsframe.dataframe = helpers._new_statsframe_df(self.dataframe)
+
+        assert self.graph is self.statsframe.graph
+
 
     def _sync_profile_components(self, component):
         """Synchronize the Performance DataFrame, Metadata Dataframe, profile and
