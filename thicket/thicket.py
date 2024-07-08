@@ -1539,6 +1539,7 @@ class Thicket(GraphFrame):
         new_node_df = pd.DataFrame(
             index=pd.MultiIndex.from_product(new_idx, names=idx_levels)
         )
+        new_node_df["name"] = attrs["name"]
         self.dataframe = pd.concat([self.dataframe, new_node_df])
 
         # statsframe.dataframe
