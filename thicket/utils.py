@@ -270,7 +270,7 @@ def _fill_perfdata(df, numerical_fill_value=np.nan):
     Returns:
         (DataFrame): filled DataFrame
     """
-    new_df = df.copy()
+    new_df = df.copy(deep=True)
     try:
         # Fill missing rows in dataframe with NaN's
         new_df = new_df.reindex(
