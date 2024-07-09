@@ -1519,8 +1519,12 @@ class Thicket(GraphFrame):
         return sorted_meta
 
     def add_root_node(self, attrs):
-        """Add node at root level"""
-        assert self.graph is self.statsframe.graph
+        """Add node at root level with given attributes.
+
+        Arguments:
+            attrs (dict): attributes for the new node which will be used to initilize the
+            node.frame.
+        """
 
         new_node = node.Node(frame_obj=frame.Frame(attrs=attrs), hnid=len(self.graph))
 
@@ -1539,9 +1543,16 @@ class Thicket(GraphFrame):
         # statsframe.dataframe
         self.statsframe.dataframe = helpers._new_statsframe_df(self.dataframe)
 
-        assert self.graph is self.statsframe.graph
-
     def get_node(self, name):
+        """Get a node object in the Thicket by its node.frame['name']. If more than one
+        node has the same name, a list of nodes is returned.
+
+        Arguments:
+            name (str): name of the node (node.frame['name']).
+
+        Returns:
+            (node): Hatchet Node object
+        """
         node = [n for n in self.graph.traverse() if n.frame["name"] == name]
 
         if len(node) > 1:
