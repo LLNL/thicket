@@ -15,10 +15,10 @@ from hashlib import md5
 
 import pandas as pd
 import numpy as np
+import hatchet.node
 from hatchet import (
     frame,
     GraphFrame,
-    node,
 )
 from hatchet.graph import Graph
 from hatchet.query import QueryEngine
@@ -1526,7 +1526,9 @@ class Thicket(GraphFrame):
             node.frame.
         """
 
-        new_node = node.Node(frame_obj=frame.Frame(attrs=attrs), hnid=len(self.graph))
+        new_node = hatchet.node.Node(
+            frame_obj=frame.Frame(attrs=attrs), hnid=len(self.graph)
+        )
 
         # graph and statsframe.graph
         self.graph.roots.append(new_node)
