@@ -85,7 +85,7 @@ def test_multi_trial(
             [list(gb.values())[0], list(gb.values())[0]], metadata_key="tuning"
         )
 
-    if intersection == False:
-        assert stk.dataframe.shape == (222, 2)
-    else:
+    if intersection:
         assert stk.dataframe.shape == (192, 2)
+    else:
+        assert stk.dataframe.shape == (222, 2)
