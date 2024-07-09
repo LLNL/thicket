@@ -1518,17 +1518,11 @@ class Thicket(GraphFrame):
 
         return sorted_meta
 
-
     def add_root_node(self, attrs):
         """Add node at root level"""
         assert self.graph is self.statsframe.graph
 
-        new_node = node.Node(
-            frame_obj=frame.Frame(
-                attrs=attrs
-            ),
-            hnid=len(self.graph)
-        )
+        new_node = node.Node(frame_obj=frame.Frame(attrs=attrs), hnid=len(self.graph))
 
         # graph and statsframe.graph
         self.graph.roots.append(new_node)
@@ -1547,6 +1541,14 @@ class Thicket(GraphFrame):
 
         assert self.graph is self.statsframe.graph
 
+    def get_node(self, name):
+        node = [n for n in self.graph.traverse() if n.frame["name"] == name]
+
+        if len(node) > 1:
+            warnings.warn(f'More than one node with name "{name}". Returning a list')
+            return node
+
+        return node.pop()
 
     def _sync_profile_components(self, component):
         """Synchronize the Performance DataFrame, Metadata Dataframe, profile and
