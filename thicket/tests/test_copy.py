@@ -121,3 +121,6 @@ def test_deepcopy(rajaperf_seq_O3_1M_cali):
     assert len(self.dataframe.columns) + len(self.dataframe.index[0]) == len(
         other.dataframe.reset_index().columns
     )
+
+    # Check new graph is statsframe graph
+    assert other.graph is other.statsframe.graph
