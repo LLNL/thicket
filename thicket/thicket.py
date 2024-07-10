@@ -1544,6 +1544,8 @@ class Thicket(GraphFrame):
 
         # statsframe.dataframe
         self.statsframe.dataframe = helpers._new_statsframe_df(self.dataframe)
+        # Reapply stats operations after clearing statsframe dataframe
+        self.reapply_stats_operations()
 
     def get_node(self, name):
         """Get a node object in the Thicket by its node.frame['name']. If more than one
