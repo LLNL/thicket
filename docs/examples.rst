@@ -11,17 +11,19 @@ Analysis Examples
 Scaling Studies
 ===============
 
-.. literalinclude:: ../examples/python_scripts/stacked_line_graphs.py
+.. literalinclude:: ../examples/python_scripts/stacked_line_charts.py
     :language: python
 
 
-To run the script
+To run the script:
+
 .. code:: console
 
-  $ python stacked_line_graphs.py --input_files <input file or path> --groupby_parameter <parameter varied between runs> --filter_prefix <optional prefix> --top_ten <optional True|False> --out_graphs <perc|total>
+   $ python stacked_line_charts.py --input_files <input file or path> --groupby_parameter <parameter varied between runs> --filter_prefix <optional prefix> --top_ten <optional True|False> --out_graphs <perc|total>
 
 
 Example output graph
+
 .. figure:: images/perc.png
   :width: 800
   :align: center
