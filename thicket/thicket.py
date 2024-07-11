@@ -1546,11 +1546,11 @@ class Thicket(GraphFrame):
         self.reapply_stats_operations()
 
     def get_node(self, name):
-        """Get a node object in the Thicket by its node.frame['name']. If more than one
+        """Get a node object in the Thicket by its Node.frame['name']. If more than one
         node has the same name, a list of nodes is returned.
 
         Arguments:
-            name (str): name of the node (node.frame['name']).
+            name (str): name of the node (Node.frame['name']).
 
         Returns:
             (node): Hatchet Node object
