@@ -1550,6 +1550,9 @@ class Thicket(GraphFrame):
         # Reapply stats operations after clearing statsframe dataframe
         self.reapply_stats_operations()
 
+        # Check Thicket state
+        validate_nodes(self)
+
     def get_node(self, name):
         """Get a node object in the Thicket by its Node.frame['name']. If more than one
         node has the same name, a list of nodes is returned.
