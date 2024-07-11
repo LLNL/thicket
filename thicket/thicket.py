@@ -1529,9 +1529,7 @@ class Thicket(GraphFrame):
         # graph and statsframe.graph
         self.graph.roots.append(new_node)
 
-        # Set depth
-        self.graph.enumerate_depth()
-        # Set hatchet nid
+        # Set hatchet nid and depth
         self.graph.enumerate_traverse()
 
         # dataframe
