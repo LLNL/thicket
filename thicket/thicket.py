@@ -1563,7 +1563,7 @@ class Thicket(GraphFrame):
             warnings.warn(f'More than one node with name "{name}". Returning a list')
             return node
 
-        return node.pop()
+        return node[0]
 
     def _sync_profile_components(self, component):
         """Synchronize the Performance DataFrame, Metadata Dataframe, profile and
