@@ -10,7 +10,7 @@ def test_get_node(literal_thickets):
     tk, tk2, tk3 = literal_thickets
 
     with pytest.raises(ValueError):
-        foo = tk.get_node("Foo")
+        tk.get_node("Foo")
 
     baz = tk.get_node("Baz")
 
