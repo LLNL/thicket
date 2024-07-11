@@ -1524,9 +1524,7 @@ class Thicket(GraphFrame):
             node.frame.
         """
 
-        new_node = Node(
-            frame_obj=Frame(attrs=attrs)
-        )
+        new_node = Node(frame_obj=Frame(attrs=attrs))
 
         # graph and statsframe.graph
         self.graph.roots.append(new_node)
