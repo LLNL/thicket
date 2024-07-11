@@ -1560,6 +1560,8 @@ class Thicket(GraphFrame):
         if len(node) > 1:
             warnings.warn(f'More than one node with name "{name}". Returning a list')
             return node
+        elif len(node) == 0:
+            raise ValueError(f'Node with name "{name}" not found.')
 
         return node[0]
 
