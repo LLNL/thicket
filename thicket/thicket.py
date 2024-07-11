@@ -1147,10 +1147,16 @@ class Thicket(GraphFrame):
             (thicket): intersected thicket
         """
 
-        # Row that didn't exist will contain "None" in the name column.
-        query = Query().match(
-            ".", lambda row: row["name"].apply(lambda n: n is not None).all()
-        )
+        # Check for padded perfdata
+        if self.dataframe["name"].isnull().any():
+            # Row that didn't exist will contain "None" in the name column.
+            query = Query().match(
+                ".", lambda df: df["name"].apply(lambda n: n is not None).all()
+            )
+        else:
+            # If perfdata not padded
+            query = Query().match(".", lambda df: len(df) == len(self.profile))
+
         intersected_th = self.query(query)
 
         return intersected_th
