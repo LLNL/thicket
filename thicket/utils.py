@@ -260,27 +260,28 @@ def validate_nodes(tk):
         )
 
 
-def _fill_perfdata(df, numerical_fill_value=np.nan):
-    """Create full index for DataFrame and fill created rows with NaN's or None's where applicable.
+def _fill_perfdata(df):
+    """Create full index for DataFrame and fill created rows with NaN's or Nones where applicable.
 
     Arguments:
         df (DataFrame): DataFrame to fill missing rows in
-        numerical_fill_value (any): value to fill numerical rows with
 
     Returns:
         (DataFrame): filled DataFrame
     """
     new_df = df.copy(deep=True)
     try:
+        # Value used to fill new rows
+        fill_value = np.nan
         # Fill missing rows in dataframe with NaN's
         new_df = new_df.reindex(
             pd.MultiIndex.from_product(new_df.index.levels),
-            fill_value=numerical_fill_value,
+            fill_value=fill_value,
         )
         # Replace "NaN" with "None" in columns of string type
         for col in new_df.columns:
             if pd.api.types.is_string_dtype(new_df[col].dtype):
-                new_df[col] = new_df[col].replace({numerical_fill_value: None})
+                new_df[col] = new_df[col].replace({fill_value: None})
     except ValueError as e:
         estr = str(e)
         if estr == "cannot handle a non-unique multi-index!":
