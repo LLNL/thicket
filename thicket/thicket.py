@@ -1525,11 +1525,16 @@ class Thicket(GraphFrame):
         """
 
         new_node = Node(
-            frame_obj=Frame(attrs=attrs), hnid=len(self.graph)
+            frame_obj=Frame(attrs=attrs)
         )
 
         # graph and statsframe.graph
         self.graph.roots.append(new_node)
+
+        # Set depth
+        self.graph.enumerate_depth()
+        # Set hatchet nid
+        self.graph.enumerate_traverse()
 
         # dataframe
         idx_levels = self.dataframe.index.names
