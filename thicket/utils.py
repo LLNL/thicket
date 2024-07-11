@@ -261,7 +261,7 @@ def validate_nodes(tk):
 
 
 def _fill_perfdata(df):
-    """Create full index for DataFrame and fill created rows with NaN's or None's where applicable.
+    """Create full index for DataFrame and fill created rows with NaN's or Nones where applicable.
 
     Arguments:
         df (DataFrame): DataFrame to fill missing rows in
