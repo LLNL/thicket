@@ -12,7 +12,7 @@ import pytest
 from thicket import Thicket
 
 
-@pytest.fixture(params=[True, False], ids=["PadPerfdata", "NoPadPerfdata"])
+@pytest.fixture(params=[True, False], ids=["FillPerfdata", "NoFillPerfdata"])
 def fill_perfdata(request):
     return request.param
 
