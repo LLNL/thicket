@@ -5,8 +5,10 @@
 
 from more_itertools import powerset
 import pandas as pd
+from hatchet.util.perf_measure import annotate
 
 
+@annotate()
 def _are_synced(gh, df):
     """Check if node objects are equal in graph and dataframe id(graph_node) ==
     id(df_node).
@@ -22,6 +24,7 @@ def _are_synced(gh, df):
     return True
 
 
+@annotate()
 def _missing_nodes_to_list(a_df, b_df):
     """Get a list of node differences between two dataframes. Mainly used for "tree"
     function.
@@ -65,6 +68,7 @@ def _missing_nodes_to_list(a_df, b_df):
     return missing_nodes
 
 
+@annotate()
 def _new_statsframe_df(df, multiindex=False):
     """Generate new aggregated statistics table from a dataframe. This is most commonly
     needed when changes are made to the performance data table's index.
@@ -92,6 +96,7 @@ def _new_statsframe_df(df, multiindex=False):
     return new_df
 
 
+@annotate()
 def _print_graph(graph):
     """Print the nodes in a hatchet graph"""
     i = 0
@@ -101,6 +106,7 @@ def _print_graph(graph):
     return i
 
 
+@annotate()
 def _resolve_missing_indicies(th_list):
     """Resolve indices if at least 1 profile has an index that another doesn't.
 
@@ -124,6 +130,7 @@ def _resolve_missing_indicies(th_list):
                 th.dataframe.set_index(idx, append=True, inplace=True)
 
 
+@annotate()
 def _set_node_ordering(thickets):
     """Set node ordering for each thicket in a list. All thickets must have node ordering on, otherwise it will be set to False.
 
@@ -139,6 +146,7 @@ def _set_node_ordering(thickets):
             tk.graph.enumerate_traverse()
 
 
+@annotate()
 def _get_perf_columns(df):
     """Get list of performance dataframe columns that are numeric.
 
@@ -165,6 +173,7 @@ def _get_perf_columns(df):
         return [x for x in numeric_columns if "nid" not in x]
 
 
+@annotate()
 def _powerset_from_tuple(tup):
     pset = [y for y in powerset(tup)]
     return {x[0] if len(x) == 1 else x for x in pset}

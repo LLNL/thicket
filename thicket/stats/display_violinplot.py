@@ -8,11 +8,14 @@ import seaborn as sns
 import matplotlib as mpl
 import hatchet as ht
 
+from hatchet.util.perf_measure import annotate
+
 import thicket as th
 from .percentiles import percentiles
 from ..utils import verify_thicket_structures
 
 
+@annotate()
 def _column_name_mapper(current_cols):
     """
     Internal function that returns a string representation of 'current_cols'.
@@ -31,6 +34,7 @@ def _column_name_mapper(current_cols):
     return str(current_cols)
 
 
+@annotate()
 def _add_percentile_lines(
     graph,
     graphType,
@@ -164,6 +168,7 @@ def _add_percentile_lines(
     return graph
 
 
+@annotate()
 def display_violinplot(
     thicket,
     nodes=None,
@@ -303,6 +308,7 @@ def display_violinplot(
             return sns.violinplot(data=filtered_df, x="node", y=" ", **kwargs)
 
 
+@annotate()
 def display_violinplot_thicket(
     thickets,
     nodes=None,

@@ -6,9 +6,13 @@
 import seaborn as sns
 
 import thicket as th
+
+from hatchet.util.perf_measure import annotate
+
 from ..utils import verify_thicket_structures
 
 
+@annotate()
 def display_heatmap(thicket, columns=None, **kwargs):
     """Display a heatmap which contains a full list of nodes and user passed columns.
     Columns must be from the aggregated statistics table.

@@ -6,10 +6,14 @@
 from collections import defaultdict
 
 from hatchet import QueryMatcher
+from hatchet.util.perf_measure import annotate, begin_code_region, end_code_region
 import pandas as pd
 from tqdm import tqdm
 
 import ncu_report
+
+
+_ncu_reader_annotate = annotate(fmt="NCUReader.{}")
 
 
 class NCUReader:
@@ -24,6 +28,7 @@ class NCUReader:
     }
 
     @staticmethod
+    @_ncu_reader_annotate
     def _build_query_from_ncu_trace(kernel_call_trace):
         """Build QueryLanguage query from an NCU kernel call trace
 
@@ -63,6 +68,7 @@ class NCUReader:
         return query
 
     @staticmethod
+    @_ncu_reader_annotate
     def _read_ncu(thicket, ncu_report_mapping):
         """Read NCU report files and return dictionary of data.
 
@@ -80,6 +86,7 @@ class NCUReader:
         # Kernel mapping from NCU kernel to thicket node to save re-querying
         kernel_map = {}
 
+        begin_code_region("iterate_over_ncu_reports")
         # Loop through NCU files
         for ncu_report_file in ncu_report_mapping:
             # NCU hash
@@ -87,7 +94,9 @@ class NCUReader:
             ncu_hash = profile_mapping_flipped[ncu_report_mapping[ncu_report_file]]
 
             # Load file
+            begin_code_region("load_ncu_report")
             report = ncu_report.load_report(ncu_report_file)
+            end_code_region("load_ncu_report")
 
             # Error check
             if report.num_ranges() > 1:
@@ -96,6 +105,7 @@ class NCUReader:
                     + ncu_report_file
                     + " has multiple ranges. Not supported yet."
                 )
+            begin_code_region("iterate_through_single_report")
             # Loop through ranges in report
             for range in report:
                 # Grab first action
@@ -111,14 +121,17 @@ class NCUReader:
 
                 # Query action in range
                 pbar = tqdm(range)
+                begin_code_region("iterate_over_kernel_names")
                 for i, action in enumerate(pbar):
                     pbar.set_description(f"Processing action {i}/{len(range)}")
                     # Name of kernel
                     kernel_name = action.name()
                     # Get NCU-side kernel trace
+                    begin_code_region("get_kernel_trace")
                     kernel_call_trace = list(
                         action.nvtx_state().domain_by_id(0).push_pop_ranges()
                     )
+                    end_code_region("get_kernel_trace")
 
                     # Skip warmup kernels
                     if len(kernel_call_trace) == 0:
@@ -133,6 +146,7 @@ class NCUReader:
                             # Skip query building
                             matched_node = kernel_map[kernel_name]
                         else:  # kernel hasn't been seen yet
+                            begin_code_region("process_new_kernel_with_query")
                             # Build query
                             query = NCUReader._build_query_from_ncu_trace(
                                 kernel_call_trace
@@ -143,6 +157,7 @@ class NCUReader:
                             matched_node = [
                                 n for n in node_set if kernel_name in n.frame["name"]
                             ][0]
+                            end_code_region("process_new_kernel_with_query")
 
                         # matched_node should always exist at this point
                         assert matched_node is not None
@@ -154,5 +169,8 @@ class NCUReader:
                         data_dict[(matched_node, ncu_hash)].append(
                             dict(zip(metric_names, metric_values))
                         )
+                end_code_region("iterate_over_kernel_names")
+            end_code_region("iterate_through_single_report")
+        end_code_region("iterate_over_ncu_reports")
 
         return data_dict, rollup_dict

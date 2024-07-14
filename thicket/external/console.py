@@ -4,14 +4,19 @@ import numpy as np
 import pandas as pd
 from hatchet.external.console import ConsoleRenderer
 from hatchet.util.colormaps import ColorMaps
+from hatchet.util.perf_measure import annotate
 
 from ..version import __version__
+
+
+_thicket_console_renderer_annotate = annotate(fmt="ThicketRenderer.{}")
 
 
 class ThicketRenderer(ConsoleRenderer):
     """Extends the Hatchet ConsoleRenderer to support multi-dimensional Thicket data."""
 
     # pylint: disable=W1401
+    @_thicket_console_renderer_annotate
     def render_preamble(self):
         lines = [
             r"  _____ _     _      _        _   ",
@@ -25,6 +30,7 @@ class ThicketRenderer(ConsoleRenderer):
 
         return "\n".join(lines)
 
+    @_thicket_console_renderer_annotate
     def render(self, roots, dataframe, **kwargs):
         self.render_header = kwargs["render_header"]
 
@@ -143,6 +149,7 @@ class ThicketRenderer(ConsoleRenderer):
         else:
             return result.encode("utf-8")
 
+    @_thicket_console_renderer_annotate
     def render_legend(self):
         def render_label(index, low, high):
             metric_range = self.max_metric - self.min_metric
@@ -218,6 +225,7 @@ class ThicketRenderer(ConsoleRenderer):
 
         return legend
 
+    @_thicket_console_renderer_annotate
     def render_frame(self, node, dataframe, indent="", child_indent=""):
         node_depth = node._depth
         if node_depth < self.depth:

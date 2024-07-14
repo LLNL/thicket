@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+from hatchet.util.perf_measure import annotate
+
 from ..utils import verify_thicket_structures
 from .stats_utils import cache_stats_op
 from .ttest import __ttest
@@ -11,6 +13,7 @@ __statistical_tests = {"ttest": __ttest}
 
 
 @cache_stats_op
+@annotate()
 def preference(thicket, columns, comparison_func, *args, test="ttest", **kwargs):
     """Determine a preference between compilers, architecture, platform, etc.
 
@@ -108,12 +111,12 @@ def preference(thicket, columns, comparison_func, *args, test="ttest", **kwargs)
         )
 
         col_name = ["Preference", aggregated_cols]
-        thicket.statsframe.dataframe[
-            (col_name[0], col_name[1] + "_std_preferred")
-        ] = pref_std
-        thicket.statsframe.dataframe[
-            (col_name[0], col_name[1] + "_mean_preferred")
-        ] = pref_mean
+        thicket.statsframe.dataframe[(col_name[0], col_name[1] + "_std_preferred")] = (
+            pref_std
+        )
+        thicket.statsframe.dataframe[(col_name[0], col_name[1] + "_mean_preferred")] = (
+            pref_mean
+        )
 
         output_column_names.append((col_name[0], col_name[1] + "_std_preferred"))
         output_column_names.append((col_name[0], col_name[1] + "_mean_preferred"))

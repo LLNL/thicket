@@ -2,11 +2,14 @@ import math
 
 import numpy as np
 
+from hatchet.util.perf_measure import annotate
+
 import thicket as th
 from ..utils import verify_thicket_structures
 from .stats_utils import cache_stats_op
 
 
+@annotate()
 def _calc_score_delta_mean_delta_stdnorm(means_1, means_2, stds_1, stds_2, num_nodes):
     results = []
 
@@ -23,6 +26,7 @@ def _calc_score_delta_mean_delta_stdnorm(means_1, means_2, stds_1, stds_2, num_n
     return results
 
 
+@annotate()
 def _calc_score_delta_mean_delta_coefficient_of_variation(
     means_1, means_2, stds_1, stds_2, num_nodes
 ):
@@ -38,6 +42,7 @@ def _calc_score_delta_mean_delta_coefficient_of_variation(
     return results
 
 
+@annotate()
 def _calc_score_bhattacharyya(means_1, means_2, stds_1, stds_2, num_nodes):
     results = []
 
@@ -60,6 +65,7 @@ def _calc_score_bhattacharyya(means_1, means_2, stds_1, stds_2, num_nodes):
     return results
 
 
+@annotate()
 def _calc_score_hellinger(means_1, means_2, stds_1, stds_2, num_nodes):
     results = []
 
@@ -79,6 +85,7 @@ def _calc_score_hellinger(means_1, means_2, stds_1, stds_2, num_nodes):
     return results
 
 
+@annotate()
 def score(thicket, columns, output_column_name, scoring_function):
     if isinstance(columns, list) is False:
         raise ValueError("Value passed to 'columns' must be of type list.")
@@ -158,6 +165,7 @@ def score(thicket, columns, output_column_name, scoring_function):
 
 
 @cache_stats_op
+@annotate()
 def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
     r"""
     Apply a mean difference with standard deviation difference algorithm on two
@@ -192,6 +200,7 @@ def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
 
 
 @cache_stats_op
+@annotate()
 def score_delta_mean_delta_coefficient_of_variation(
     thicket, columns, output_column_name=None
 ):
@@ -230,6 +239,7 @@ def score_delta_mean_delta_coefficient_of_variation(
 
 
 @cache_stats_op
+@annotate()
 def score_bhattacharyya(thicket, columns, output_column_name=None):
     r"""
     Apply the Bhattacharrya distance algorithm on two passed columns. The passed columns
@@ -263,6 +273,7 @@ def score_bhattacharyya(thicket, columns, output_column_name=None):
 
 
 @cache_stats_op
+@annotate()
 def score_hellinger(thicket, columns, output_column_name=None):
     r"""
     Apply the Hellinger's distance algorithm on two passed columns. The passed columns

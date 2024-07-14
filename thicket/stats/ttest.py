@@ -7,9 +7,12 @@ import pandas as pd
 from scipy.stats import ttest_ind_from_stats
 from scipy.stats import t
 
+from hatchet.util.perf_measure import annotate
+
 import thicket as th
 
 
+@annotate()
 def __ttest(thicket, columns, alpha=0.05, *args, **kwargs):
     """Perform a ttest on a user-selected thicket and columns.
 

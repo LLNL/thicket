@@ -6,11 +6,14 @@
 import pandas as pd
 import numpy as np
 
+from hatchet.util.perf_measure import annotate
+
 from ..utils import verify_thicket_structures
 from .stats_utils import cache_stats_op
 
 
 @cache_stats_op
+@annotate()
 def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **kwargs):
     """Calculate boxplots lowerfence, q1, q2, q3, iqr, upperfence, and outliers for each
     node in the performance data table.

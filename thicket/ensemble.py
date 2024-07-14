@@ -6,6 +6,7 @@
 from collections import OrderedDict
 
 from hatchet import GraphFrame
+from hatchet.util.perf_measure import annotate
 import pandas as pd
 
 import thicket.helpers as helpers
@@ -18,10 +19,14 @@ from .utils import (
 )
 
 
+_ensemble_annotate = annotate(fmt="Ensemble.{}")
+
+
 class Ensemble:
     """Operations pertaining to ensembling."""
 
     @staticmethod
+    @_ensemble_annotate
     def _unify(thickets, inplace=False, disable_tqdm=False):
         """Create union graph from list of thickets and sync their DataFrames.
 
@@ -83,6 +88,7 @@ class Ensemble:
         return union_graph, _thickets
 
     @staticmethod
+    @_ensemble_annotate
     def _columns(
         thickets,
         headers=None,
@@ -186,9 +192,9 @@ class Ensemble:
             combined_th.profile = [new_mappings[prf] for prf in combined_th.profile]
             profile_mapping_cp = combined_th.profile_mapping.copy()
             for k, v in profile_mapping_cp.items():
-                combined_th.profile_mapping[
-                    new_mappings[k]
-                ] = combined_th.profile_mapping.pop(k)
+                combined_th.profile_mapping[new_mappings[k]] = (
+                    combined_th.profile_mapping.pop(k)
+                )
             combined_th.performance_cols = helpers._get_perf_columns(
                 combined_th.dataframe
             )
@@ -331,6 +337,7 @@ class Ensemble:
         return combined_th
 
     @staticmethod
+    @_ensemble_annotate
     def _index(
         thickets, from_statsframes=False, fill_perfdata=True, disable_tqdm=False
     ):

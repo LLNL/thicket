@@ -6,11 +6,14 @@
 import pandas as pd
 from scipy import stats
 
+from hatchet.util.perf_measure import annotate
+
 from ..utils import verify_thicket_structures
 from .stats_utils import cache_stats_op
 
 
 @cache_stats_op
+@annotate()
 def check_normality(thicket, columns=None):
     """Determine if the data is normal or non-normal for each node in the performance
     data table.

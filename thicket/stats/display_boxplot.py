@@ -7,10 +7,13 @@ import pandas as pd
 import seaborn as sns
 import hatchet as ht
 
+from hatchet.util.perf_measure import annotate
+
 import thicket as th
 from ..utils import verify_thicket_structures
 
 
+@annotate()
 def display_boxplot(thicket, nodes=None, columns=None, **kwargs):
     """Display a boxplot for each user passed node(s) and column(s). The passed nodes
     and columns must be from the performance data table.

@@ -5,11 +5,14 @@
 
 import numpy as np
 
+from hatchet.util.perf_measure import annotate
+
 from ..utils import verify_thicket_structures
 from .stats_utils import cache_stats_op
 
 
 @cache_stats_op
+@annotate()
 def median(thicket, columns=None):
     """Calculate the median for each node in the performance data table.
 

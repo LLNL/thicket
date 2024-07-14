@@ -5,11 +5,14 @@
 
 from scipy import stats
 
+from hatchet.util.perf_measure import annotate
+
 from ..utils import verify_thicket_structures
 from .stats_utils import cache_stats_op
 
 
 @cache_stats_op
+@annotate()
 def correlation_nodewise(thicket, column1=None, column2=None, correlation="pearson"):
     """Calculate the nodewise correlation for each node in the performance data table.
 
@@ -74,9 +77,9 @@ def correlation_nodewise(thicket, column1=None, column2=None, correlation="pears
                 raise ValueError(
                     "Invalid correlation, options are pearson, spearman, and kendall."
                 )
-        thicket.statsframe.dataframe[
-            column1 + "_vs_" + column2 + " " + correlation
-        ] = correlated
+        thicket.statsframe.dataframe[column1 + "_vs_" + column2 + " " + correlation] = (
+            correlated
+        )
         output_column_names.append(column1 + "_vs_" + column2 + " " + correlation)
     # columnar joined thicket object
     else:
