@@ -18,6 +18,7 @@ import numpy as np
 from hatchet import GraphFrame
 from hatchet.graph import Graph
 from hatchet.query import QueryEngine
+from hatchet.util.perf_measure import annotate
 from thicket.query import (
     Query,
     ObjectQuery,
@@ -45,11 +46,15 @@ from .utils import (
 from .external.console import ThicketRenderer
 
 
+_thicket_annotate = annotate(fmt="Thicket.{}")
+
+
 class Thicket(GraphFrame):
     """Ensemble of profiles, includes a graph and three dataframes, performance data,
     metadata, and aggregated statistics.
     """
 
+    @_thicket_annotate
     def __init__(
         self,
         graph,
@@ -101,6 +106,7 @@ class Thicket(GraphFrame):
         else:
             self.statsframe_ops_cache = statsframe_ops_cache
 
+    @_thicket_annotate
     def __eq__(self, other):
         """Compare two thicket objects.
 
@@ -125,6 +131,7 @@ class Thicket(GraphFrame):
             and self.statsframe.dataframe.equals(other.statsframe.dataframe)
         )
 
+    @_thicket_annotate
     def __str__(self):
         s = (
             "graph: "
@@ -154,6 +161,7 @@ class Thicket(GraphFrame):
         return s
 
     @staticmethod
+    @_thicket_annotate
     def profile_hasher(obj, hex_len=8):
         """Convert an object to a profile hash for Thicket.
 
@@ -168,6 +176,7 @@ class Thicket(GraphFrame):
         return int(md5(obj.encode("utf-8")).hexdigest()[:hex_len], 16)
 
     @staticmethod
+    @_thicket_annotate
     def thicketize_graphframe(gf, prf):
         """Necessary function to handle output from using GraphFrame readers.
 
@@ -211,15 +220,18 @@ class Thicket(GraphFrame):
         return th
 
     @staticmethod
+    @_thicket_annotate
     def from_pickle(filename, **kwargs):
         """Read in a Thicket from a pickle file."""
         return pickle.load(open(filename, "rb"), **kwargs)
 
+    @_thicket_annotate
     def to_pickle(self, filename, **kwargs):
         """Write a Thicket to a pickle file."""
         pickle.dump(self, open(filename, "wb"), **kwargs)
 
     @staticmethod
+    @_thicket_annotate
     def from_caliper(
         filename_or_stream,
         query=None,
@@ -247,6 +259,7 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
+    @_thicket_annotate
     def from_hpctoolkit(
         dirname, intersection=False, fill_perfdata=True, disable_tqdm=False
     ):
@@ -271,6 +284,7 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
+    @_thicket_annotate
     def from_caliperreader(
         filename_or_caliperreader,
         intersection=False,
@@ -295,6 +309,7 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
+    @_thicket_annotate
     def from_literal(graph_dict):
         """Create a Thicket from a list of dictionarires.
 
@@ -331,6 +346,7 @@ class Thicket(GraphFrame):
         return tk
 
     @staticmethod
+    @_thicket_annotate
     def reader_dispatch(
         func, intersection, fill_perfdata, disable_tqdm, *args, **kwargs
     ):
@@ -414,6 +430,7 @@ class Thicket(GraphFrame):
         return ens_list.pop(0)
 
     @staticmethod
+    @_thicket_annotate
     def concat_thickets(
         thickets, axis="index", calltree="union", disable_tqdm=False, **kwargs
     ):
@@ -492,18 +509,21 @@ class Thicket(GraphFrame):
         return ct
 
     @staticmethod
+    @_thicket_annotate
     def columnar_join(thicket_list, header_list=None, metadata_key=None):
         raise ValueError(
             "columnar_join is deprecated. Use 'concat_thickets(axis='columns'...)' instead."
         )
 
     @staticmethod
+    @_thicket_annotate
     def unify_ensemble(th_list, from_statsframes=False):
         raise ValueError(
             "unify_ensemble is deprecated. Use 'concat_thickets(axis='index'...)' instead."
         )
 
     @staticmethod
+    @_thicket_annotate
     def from_json(json_thicket):
         # deserialize the json
         thicket_dict = json.loads(json_thicket)
@@ -548,6 +568,7 @@ class Thicket(GraphFrame):
         # make and return thicket?
         return th
 
+    @_thicket_annotate
     def add_ncu(self, ncu_report_mapping, chosen_metrics=None, overwrite=False):
         """Add NCU data into the PerformanceDataFrame
 
@@ -611,6 +632,7 @@ class Thicket(GraphFrame):
             rsuffix="_right",
         )
 
+    @_thicket_annotate
     def metadata_column_to_perfdata(self, metadata_key, overwrite=False, drop=False):
         """Add a column from the metadata table to the performance data table.
 
@@ -641,6 +663,7 @@ class Thicket(GraphFrame):
         if drop:
             self.metadata.drop(metadata_key, axis=1, inplace=True)
 
+    @_thicket_annotate
     def squash(self, update_inc_cols=True, new_statsframe=True):
         """Rewrite the Graph to include only nodes present in the performance
         data table's rows.
@@ -788,6 +811,7 @@ class Thicket(GraphFrame):
 
         return new_tk
 
+    @_thicket_annotate
     def copy(self):
         """Return a partially shallow copy of the Thicket.
 
@@ -819,6 +843,7 @@ class Thicket(GraphFrame):
             statsframe_ops_cache=self.statsframe_ops_cache.copy(),
         )
 
+    @_thicket_annotate
     def deepcopy(self):
         """Return a deep copy of the Thicket.
 
@@ -852,6 +877,7 @@ class Thicket(GraphFrame):
             statsframe_ops_cache=self.statsframe_ops_cache.copy(),
         )
 
+    @_thicket_annotate
     def tree(
         self,
         metric_column=None,
@@ -1003,6 +1029,7 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
+    @_thicket_annotate
     def from_statsframes(tk_list, metadata_key=None, disable_tqdm=False):
         """Compose a list of Thickets with data in their statsframes.
 
@@ -1095,6 +1122,7 @@ class Thicket(GraphFrame):
             tk_copy_list, from_statsframes=True, disable_tqdm=disable_tqdm
         )
 
+    @_thicket_annotate
     def to_json(self, ensemble=True, metadata=True, stats=True):
         jsonified_thicket = {}
 
@@ -1138,6 +1166,7 @@ class Thicket(GraphFrame):
 
         return json.dumps(jsonified_thicket)
 
+    @_thicket_annotate
     def intersection(self):
         """Perform an intersection operation on a thicket.
 
@@ -1161,6 +1190,7 @@ class Thicket(GraphFrame):
 
         return intersected_th
 
+    @_thicket_annotate
     def filter_metadata(self, select_function):
         """Filter thicket object based on a metadata key.
 
@@ -1225,6 +1255,7 @@ class Thicket(GraphFrame):
 
         return new_thicket
 
+    @_thicket_annotate
     def filter_profile(self, profile_list):
         """Filter thicket object based on a list of profiles.
 
@@ -1246,6 +1277,7 @@ class Thicket(GraphFrame):
 
         return new_thicket
 
+    @_thicket_annotate
     def filter(self, filter_func):
         """Overloaded generic filter function.
 
@@ -1255,6 +1287,7 @@ class Thicket(GraphFrame):
             "Invalid function: thicket.filter(), please use thicket.filter_metadata() or thicket.filter_stats()"
         )
 
+    @_thicket_annotate
     def query(
         self, query_obj, squash=True, update_inc_cols=True, multi_index_mode="off"
     ):
@@ -1305,6 +1338,7 @@ class Thicket(GraphFrame):
             return filtered_th.squash(update_inc_cols=update_inc_cols)
         return filtered_th
 
+    @_thicket_annotate
     def query_stats(self, query_obj, squash=True, update_inc_cols=True):
         """Apply a Hatchet query to the Thicket object.
 
@@ -1378,6 +1412,7 @@ class Thicket(GraphFrame):
 
         return filtered_th
 
+    @_thicket_annotate
     def reapply_stats_operations(self):
         """Reapply most recent stats operations."""
 
@@ -1395,6 +1430,7 @@ class Thicket(GraphFrame):
 
             validate_nodes(self)
 
+    @_thicket_annotate
     def groupby(self, by):
         """Create sub-thickets based on unique values in metadata column(s).
 
@@ -1445,6 +1481,7 @@ class Thicket(GraphFrame):
 
         return GroupBy(by, sub_thickets)
 
+    @_thicket_annotate
     def filter_stats(self, filter_function):
         """Filter thicket object based on a stats column.
 
@@ -1477,6 +1514,7 @@ class Thicket(GraphFrame):
 
         return new_thicket
 
+    @_thicket_annotate
     def get_unique_metadata(self):
         """Get unique values per column in metadata.
 
@@ -1514,6 +1552,7 @@ class Thicket(GraphFrame):
 
         return sorted_meta
 
+    @_thicket_annotate
     def _sync_profile_components(self, component):
         """Synchronize the Performance DataFrame, Metadata Dataframe, profile and
         profile mapping objects based on the component's index or a list of profiles.

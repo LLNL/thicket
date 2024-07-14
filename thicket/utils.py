@@ -9,6 +9,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from hatchet.util.perf_measure import annotate
+
 from thicket import helpers
 
 
@@ -29,6 +31,7 @@ class InvalidNameError(ValueError):
     pass
 
 
+@annotate()
 def check_same_frame(n1, n2):
     if n1.frame != n2.frame:
         raise ValueError(
@@ -36,6 +39,7 @@ def check_same_frame(n1, n2):
         )
 
 
+@annotate()
 def check_duplicate_metadata_key(thickets, metadata_key):
     """Check for duplicate values in the metadata of a list of Thickets for column 'metadata_key'.
 
@@ -65,6 +69,7 @@ def check_duplicate_metadata_key(thickets, metadata_key):
         )
 
 
+@annotate()
 def validate_dataframe(df):
     """Check validity of a Thicket DataFrame."""
 
@@ -105,6 +110,7 @@ def validate_dataframe(df):
     _validate_name_column(df)
 
 
+@annotate()
 def validate_profile(tk):
     """Check validity of Thicket objects that rely on profiles. Thicket.dataframe, Thicket.metadata, Thicket.profile, Thicket.profile_mapping."""
 
@@ -163,6 +169,7 @@ def validate_profile(tk):
     _validate_no_duplicates(tk)
 
 
+@annotate()
 def verify_sorted_profile(thicket_component):
     """Assertion to check if profiles are sorted in a thicket dataframe
 
@@ -182,6 +189,7 @@ def verify_sorted_profile(thicket_component):
         )
 
 
+@annotate()
 def verify_thicket_structures(thicket_component, columns=[], index=[]):
     """Assertion for missing input requirements to execute thicket functions.
 
@@ -229,6 +237,7 @@ def verify_thicket_structures(thicket_component, columns=[], index=[]):
         )
 
 
+@annotate()
 def validate_nodes(tk):
     """Check if node objects match between Thicket.graph, Thicket.dataframe, and Thicket.statsframe.dataframe."""
 
@@ -260,6 +269,7 @@ def validate_nodes(tk):
         )
 
 
+@annotate()
 def _fill_perfdata(df):
     """Create full index for DataFrame and fill created rows with NaN's or Nones where applicable.
 

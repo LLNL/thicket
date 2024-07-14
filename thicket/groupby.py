@@ -7,12 +7,19 @@ from collections import defaultdict
 
 import pandas as pd
 
+from hatchet.util.perf_measure import annotate
+
+
+_groupby_annotate = annotate(fmt="GroupBy.{}")
+
 
 class GroupBy(dict):
+    @_groupby_annotate
     def __init__(self, by=None, *args, **kwargs):
         super(GroupBy, self).__init__(*args, **kwargs)
         self.by = by
 
+    @_groupby_annotate
     def agg(self, func, disable_tqdm=False):
         """Aggregate the Thickets' PerfData numerical columns in a GroupBy object.
 
@@ -32,6 +39,7 @@ class GroupBy(dict):
 
         return agg_tk
 
+    @_groupby_annotate
     def aggregate_thicket(self, tk, func):
         """Aggregate a Thicket's numerical columns given a statistical function.
 

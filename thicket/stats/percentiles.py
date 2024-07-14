@@ -5,11 +5,14 @@
 
 import pandas as pd
 
+from hatchet.util.perf_measure import annotate
+
 from ..utils import verify_thicket_structures
 from .stats_utils import cache_stats_op
 
 
 @cache_stats_op
+@annotate()
 def percentiles(thicket, columns=None, percentiles=[0.25, 0.50, 0.75]):
     """Calculate the q-th percentile for each node in the performance data table.
 

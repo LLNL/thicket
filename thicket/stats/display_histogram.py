@@ -4,11 +4,13 @@
 # SPDX-License-Identifier: MIT
 
 import hatchet as ht
+from hatchet.util.perf_measure import annotate
 
 import thicket as th
 from ..utils import verify_thicket_structures
 
 
+@annotate()
 def display_histogram(thicket, node=None, column=None, **kwargs):
     """Display a histogram for a user passed node and column. Node and column must come
     from the performance data table.
