@@ -48,9 +48,11 @@ def thicket_axis_columns(rajaperf_cali_1trial, intersection, fill_perfdata):
     # To check later if modifications were unexpectedly made
     thickets_cp = [t.deepcopy() for t in thickets]
 
+    calltrees = ["union", "intersection"]
     combined_th = Thicket.concat_thickets(
         thickets=thickets,
         axis="columns",
+        calltree=calltrees[intersection],
         headers=headers,
         metadata_key="ProblemSizeRunParam",
         disable_tqdm=True,
