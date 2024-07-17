@@ -570,15 +570,6 @@ class Thicket(GraphFrame):
             else:
                 return col[0]
 
-        # Check if chosen_metrics are in the dataframe
-        dupe_cols = [col for col in chosen_metrics if col in self.dataframe.columns]
-        if overwrite:
-            self.dataframe = self.dataframe.drop(columns=dupe_cols)
-        elif not overwrite and len(dupe_cols) > 0:
-            raise ValueError(
-                f"Columns {dupe_cols} already exist in the performance data table. Set overwrite=True to overwrite."
-            )
-
         # Initialize reader
         ncureader = NCUReader()
 
@@ -601,6 +592,15 @@ class Thicket(GraphFrame):
         # Apply chosen metrics
         if chosen_metrics:
             ncu_df = ncu_df[chosen_metrics]
+
+        # Overwrite check
+        dupe_cols = [col for col in ncu_df.columns if col in self.dataframe.columns]
+        if overwrite:
+            self.dataframe = self.dataframe.drop(columns=dupe_cols)
+        elif not overwrite and len(dupe_cols) > 0:
+            raise ValueError(
+                f"Columns {dupe_cols} already exist in the performance data table. Set overwrite=True to overwrite."
+            )
 
         # Join NCU DataFrame into Thicket
         self.dataframe = self.dataframe.join(
