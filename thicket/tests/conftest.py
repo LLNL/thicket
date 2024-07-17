@@ -27,8 +27,9 @@ def thicket_axis_columns(rajaperf_cali_1trial, intersection, fill_perfdata):
     """Generator for 'concat_thickets(axis="columns")' thicket.
 
     Arguments:
-        mpi_scaling_cali (list): List of Caliper files for MPI scaling study.
-        rajaperf_cuda_block128_1M_cali (list): List of Caliper files for base cuda variant.
+        rajaperf_cali_1trial (list): All tunings and variants for the first trial.
+        intersection (bool): Whether to use intersection or union for calltree.
+        fill_perfdata (bool): Whether to fill perfdata or not.
 
     Returns:
         list: List of original thickets, list of deepcopies of original thickets, and
@@ -69,6 +70,8 @@ def stats_thicket_axis_columns(
 
     Arguments:
         rajaperf_cuda_block128_1M_cali (list): List of Caliper files for base cuda variant.
+        intersection (bool): Whether to use intersection or union for calltree.
+        fill_perfdata (bool): Whether to fill perfdata or not.
 
     Returns:
         list: List of original thickets, list of deepcopies of original thickets, and
