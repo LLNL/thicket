@@ -1147,15 +1147,26 @@ class Thicket(GraphFrame):
             (thicket): intersected thicket
         """
 
-        # Check for padded perfdata
-        if self.dataframe["name"].isnull().any():
-            # Row that didn't exist will contain "None" in the name column.
-            query = Query().match(
-                ".", lambda df: df["name"].apply(lambda n: n is not None).all()
-            )
+        # if concat_thickets(axis="columns")
+        if isinstance(self.dataframe.columns, pd.MultiIndex):
+            rows = []
+            for index in self.dataframe.index:
+                row = self.dataframe.loc[index]
+                rows.append(all([row[header].notna().all() for header in self.dataframe.columns.get_level_values(0)]))
+            tkc = self.deepcopy()
+            tkc.dataframe = tkc.dataframe[rows]
+            tkc = tkc.squash()
+            return tkc
         else:
-            # If perfdata not padded
-            query = Query().match(".", lambda df: len(df) == len(self.profile))
+            # Check for padded perfdata
+            if self.dataframe["name"].isnull().any():
+                # Row that didn't exist will contain "None" in the name column.
+                query = Query().match(
+                    ".", lambda df: df["name"].apply(lambda n: n is not None).all()
+                )
+            else:
+                # If perfdata not padded
+                query = Query().match(".", lambda df: len(df) == len(self.profile))
 
         intersected_th = self.query(query)
 
