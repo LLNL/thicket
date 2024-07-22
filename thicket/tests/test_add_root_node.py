@@ -7,7 +7,7 @@ from hatchet.node import Node
 
 
 def test_add_root_node(literal_thickets):
-    tk, tk2, tk3 = literal_thickets
+    tk, _, _ = literal_thickets
 
     assert len(tk.graph) == 4
 
