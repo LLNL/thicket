@@ -901,6 +901,9 @@ class Thicket(GraphFrame):
         if metric_column is None:
             metric_column = self.default_metric
 
+        if name_column == "name" and isinstance(self.dataframe.columns, pd.MultiIndex):
+            name_column = (name_column, "")
+
         if color is False:
             try:
                 import IPython
