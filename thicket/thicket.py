@@ -1557,17 +1557,15 @@ class Thicket(GraphFrame):
             name (str): name of the node (Node.frame['name']).
 
         Returns:
-            (node): Hatchet Node object
+            (Node or list(Node)): Node object with the given name or list of Node objects
+            with the given name.
         """
         node = [n for n in self.graph.traverse() if n.frame["name"] == name]
 
-        if len(node) > 1:
-            warnings.warn(f'More than one node with name "{name}". Returning a list')
-            return node
-        elif len(node) == 0:
+        if len(node) == 0:
             raise KeyError(f'Node with name "{name}" not found.')
 
-        return node[0]
+        return node[0] if len(node) == 1 else node
 
     def _sync_profile_components(self, component):
         """Synchronize the Performance DataFrame, Metadata Dataframe, profile and
