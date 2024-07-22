@@ -9,7 +9,7 @@ import pytest
 def test_get_node(literal_thickets):
     tk, _, _ = literal_thickets
 
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         tk.get_node("Foo")
 
     baz = tk.get_node("Baz")
