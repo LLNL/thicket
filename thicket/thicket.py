@@ -570,6 +570,9 @@ class Thicket(GraphFrame):
             else:
                 return col[0]
 
+        if not isinstance(chosen_metrics, list):
+            raise TypeError(f"chosen_metrics ({type(chosen_metrics)}) must be a list")
+
         # Initialize reader
         ncureader = NCUReader()
 
