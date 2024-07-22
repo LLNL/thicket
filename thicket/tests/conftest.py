@@ -52,7 +52,7 @@ def thicket_axis_columns(rajaperf_cali_1trial, intersection, fill_perfdata):
     combined_th = Thicket.concat_thickets(
         thickets=thickets,
         axis="columns",
-        calltree=["union", "intersection"][intersection],
+        calltree="intersection" if intersection else "union",
         headers=headers,
         metadata_key="ProblemSizeRunParam",
         disable_tqdm=True,
@@ -98,7 +98,7 @@ def stats_thicket_axis_columns(
     combined_th = Thicket.concat_thickets(
         thickets=thickets,
         axis="columns",
-        calltree=["union", "intersection"][intersection],
+        calltree="intersection" if intersection else "union",
         headers=["Cuda 1", "Cuda 2"],
         disable_tqdm=True,
     )
