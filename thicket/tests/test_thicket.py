@@ -108,18 +108,18 @@ def test_perfdata_column_to_statsframe(literal_thickets, mpi_scaling_cali):
     th_single = literal_thickets[1].deepcopy()
 
     with pytest.raises(KeyError):
-        th_single.move_metrics_to_statsframe("dummy")
+        th_single.move_metrics_to_statsframe(["dummy"])
 
-    th_single.move_metrics_to_statsframe("time")
+    th_single.move_metrics_to_statsframe(["time"])
     assert all(
         th_single.dataframe["time"].values
         == th_single.statsframe.dataframe["time"].values
     )
 
     with pytest.raises(KeyError):
-        th_single.move_metrics_to_statsframe("time")
+        th_single.move_metrics_to_statsframe(["time"])
 
-    th_single.move_metrics_to_statsframe("time", "memory", override=True)
+    th_single.move_metrics_to_statsframe(["time", "memory"], override=True)
     assert all(
         th_single.dataframe["time"].values
         == th_single.statsframe.dataframe["time"].values
@@ -134,9 +134,9 @@ def test_perfdata_column_to_statsframe(literal_thickets, mpi_scaling_cali):
     idx = pd.IndexSlice
 
     with pytest.raises(ValueError):
-        th_mpi.move_metrics_to_statsframe(*metrics, profile="fake")
+        th_mpi.move_metrics_to_statsframe(metrics, profile="fake")
 
-    th_mpi.move_metrics_to_statsframe(*metrics, profile=th_mpi.profile[0])
+    th_mpi.move_metrics_to_statsframe(metrics, profile=th_mpi.profile[0])
     for met in metrics:
         assert all(
             th_mpi.dataframe.loc[idx[:, th_mpi.profile[0]], :][met].values

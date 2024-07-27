@@ -1477,7 +1477,9 @@ class Thicket(GraphFrame):
 
         return new_thicket
 
-    def move_metrics_to_statsframe(self, *metric_columns, profile=None, override=False):
+    def move_metrics_to_statsframe(self, metric_columns, profile=None, override=False):
+        if not isinstance(metric_columns, (list, tuple)):
+            raise TypeError("'metric_columns' must be a list or tuple")
         profile_list = self.dataframe.index.unique(level="profile").tolist()
         if profile is None and len(profile_list) != 1:
             raise ValueError(
