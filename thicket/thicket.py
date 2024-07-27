@@ -1477,6 +1477,35 @@ class Thicket(GraphFrame):
 
         return new_thicket
 
+    def move_metrics_to_statsframe(self, *metric_columns, profile=None, override=False):
+        profile_list = self.dataframe.index.unique(level="profile").tolist()
+        if profile is None and len(profile_list) != 1:
+            raise ValueError(
+                "Cannot move a metric to statsframe when there are multiple profiles. Set the 'profile' argument to the profile you want to move"
+            )
+        if profile not in profile_list:
+            raise ValueError("Invalid profile: {}".format(profile))
+        df_for_profile = None
+        if profile is None:
+            df_for_profile = self.dataframe.reset_index(level="profile", drop=True)
+        else:
+            df_for_profile = self.dataframe.xs(
+                profile, level="profile", drop_level=True
+            )
+        new_statsframe_df = self.statsframe.dataframe.copy(deep=True)
+        for c in metric_columns:
+            if c in new_statsframe_df and not override:
+                raise KeyError(
+                    "Column {} is already in statsframe. To replace the column, run with 'override=True'".format(
+                        c
+                    )
+                )
+            new_statsframe_df[c] = df_for_profile[c]
+        self.statsframe.dataframe = new_statsframe_df
+        verify_thicket_structures(
+            self.statsframe.dataframe, columns=metric_columns, index=["node"]
+        )
+
     def get_unique_metadata(self):
         """Get unique values per column in metadata.
 
