@@ -1483,7 +1483,7 @@ class Thicket(GraphFrame):
             raise ValueError(
                 "Cannot move a metric to statsframe when there are multiple profiles. Set the 'profile' argument to the profile you want to move"
             )
-        if profile not in profile_list:
+        if profile is not None and profile not in profile_list:
             raise ValueError("Invalid profile: {}".format(profile))
         df_for_profile = None
         if profile is None:

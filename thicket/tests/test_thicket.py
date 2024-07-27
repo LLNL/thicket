@@ -104,6 +104,46 @@ def test_metadata_column_to_perfdata(mpi_scaling_cali):
         assert metric in values
 
 
+def test_perfdata_column_to_statsframe(literal_thickets, mpi_scaling_cali):
+    th_single = literal_thickets[1].deepcopy()
+
+    with pytest.raises(KeyError):
+        th_single.move_metrics_to_statsframe("dummy")
+
+    th_single.move_metrics_to_statsframe("time")
+    assert all(
+        th_single.dataframe["time"].values
+        == th_single.statsframe.dataframe["time"].values
+    )
+
+    with pytest.raises(KeyError):
+        th_single.move_metrics_to_statsframe("time")
+
+    th_single.move_metrics_to_statsframe("time", "memory", override=True)
+    assert all(
+        th_single.dataframe["time"].values
+        == th_single.statsframe.dataframe["time"].values
+    )
+    assert all(
+        th_single.dataframe["memory"].values
+        == th_single.statsframe.dataframe["memory"].values
+    )
+
+    th_mpi = Thicket.from_caliperreader(mpi_scaling_cali)
+    metrics = ["Min time/rank", "Max time/rank", "Avg time/rank", "Total time"]
+    idx = pd.IndexSlice
+
+    with pytest.raises(ValueError):
+        th_mpi.move_metrics_to_statsframe(*metrics, profile="fake")
+
+    th_mpi.move_metrics_to_statsframe(*metrics, profile=th_mpi.profile[0])
+    for met in metrics:
+        assert all(
+            th_mpi.dataframe.loc[idx[:, th_mpi.profile[0]], :][met].values
+            == th_mpi.statsframe.dataframe[met].values
+        )
+
+
 def test_thicketize_graphframe(rajaperf_seq_O3_1M_cali):
     ht1 = ht.GraphFrame.from_caliperreader(rajaperf_seq_O3_1M_cali[-1])
     th1 = Thicket.thicketize_graphframe(ht1, rajaperf_seq_O3_1M_cali[-1])
