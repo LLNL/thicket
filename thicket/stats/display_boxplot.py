@@ -131,5 +131,5 @@ def display_boxplot(thicket, nodes=None, columns=None, column_mapping=None, lege
         )
     else:
         return sns.catplot(
-            data=filtered_df, x="node", y=" ", **mod_kargs
+            data=filtered_df, x="node", y=" ", **mod_kwargs
         )
