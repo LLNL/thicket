@@ -554,7 +554,7 @@ class Thicket(GraphFrame):
         # make and return thicket?
         return th
 
-    def add_ncu(self, ncu_report_mapping, chosen_metrics=None, overwrite=False):
+    def add_ncu(self, ncu_report_mapping, chosen_metrics=None, overwrite=False, debug=False):
         """Add NCU data into the PerformanceDataFrame
 
         Arguments:
@@ -589,7 +589,7 @@ class Thicket(GraphFrame):
         ncureader = NCUReader()
 
         # Dictionary of NCU data
-        data_dict, rollup_dict = ncureader._read_ncu(self, ncu_report_mapping)
+        data_dict, rollup_dict = ncureader._read_ncu(self, ncu_report_mapping, debug)
 
         # Create empty df
         ncu_df = pd.DataFrame()
