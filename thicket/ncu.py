@@ -93,7 +93,7 @@ class NCUReader:
 
             # Relevant for kernel matching
             variant = thicket.metadata.loc[ncu_hash, "variant"]
-            raja_cuda = variant.upper() == "RAJA_CUDA"
+            raja_lambda_cuda = variant.upper() == "RAJA_CUDA" or variant.upper() == "LAMBDA_CUDA"
 
             # Load file
             report = ncu_report.load_report(ncu_report_file)
@@ -152,7 +152,7 @@ class NCUReader:
                         kernel_match = re.search(kernel_pattern, demangled_kernel_name)
                         kernel_str = kernel_match.group(1)
 
-                        if raja_cuda:
+                        if raja_lambda_cuda:
                             # RAJA_CUDA variant
                             instance_pattern = r"instance (\d+)"
                             instance_match = re.findall(
@@ -186,14 +186,14 @@ class NCUReader:
                                 if kernel_str in n.frame["name"]
                                 and (
                                     f"#{instance_num}" in n.frame["name"]
-                                    if raja_cuda
+                                    if raja_lambda_cuda
                                     else True
                                 )
                             ]
                             matched_node = matched_nodes[0]
 
                             if debug:
-                                if not raja_cuda:
+                                if not raja_lambda_cuda:
                                     instance_num = "NA"
                                 print(
                                     f"Matched NCU kernel:\n\t{demangled_kernel_name}\nto Caliper Node:\n\t{matched_node}"
