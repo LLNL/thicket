@@ -93,11 +93,18 @@ class NCUReader:
             report = ncu_report.load_report(ncu_report_file)
 
             # Error check
-            if report.num_ranges() > 1:
+            num_ranges = report.num_ranges()
+            if num_ranges > 1:
                 raise ValueError(
                     "NCU report file "
                     + ncu_report_file
                     + " has multiple ranges. Not supported yet."
+                )
+            elif num_ranges == 0:
+                raise ValueError(
+                    "NCU report file "
+                    + ncu_report_file
+                    + " has no ranges (no data)."
                 )
             # Loop through ranges in report
             for range in report:
