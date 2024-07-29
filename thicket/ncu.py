@@ -82,6 +82,9 @@ class NCUReader:
 
         # Loop through NCU files
         for ncu_report_file in ncu_report_mapping:
+            # Set error check flag
+            call_trace_found = False
+
             # NCU hash
             profile_mapping_flipped = {v: k for k, v in thicket.profile_mapping.items()}
             ncu_hash = profile_mapping_flipped[ncu_report_mapping[ncu_report_file]]
@@ -124,6 +127,7 @@ class NCUReader:
                     if len(kernel_call_trace) == 0:
                         continue
                     else:
+                        call_trace_found=True
                         # Add kernel name to the end of the trace tuple
                         kernel_call_trace.append(kernel_name)
 
@@ -154,5 +158,8 @@ class NCUReader:
                         data_dict[(matched_node, ncu_hash)].append(
                             dict(zip(metric_names, metric_values))
                         )
+
+            if not call_trace_found:
+                raise ValueError(f"No kernel call traces found in {ncu_report_file}.\nCheck you are enabling the NVTX Caliper service when running NCU.")
 
         return data_dict, rollup_dict
