@@ -70,6 +70,7 @@ class NCUReader:
         Arguments:
             thicket (Thicket): thicket object to add ncu metrics to
             ncu_report_mapping (dict): mapping from NCU report file to profile
+            debug (bool): whether to print debug statements
 
         Returns:
             data_dict (dict): dictionary of NCU data where key is tuple, (node, profile), mapping to list of dictionaries for per-rep data that is aggregated down to one dictionary.

@@ -554,13 +554,16 @@ class Thicket(GraphFrame):
         # make and return thicket?
         return th
 
-    def add_ncu(self, ncu_report_mapping, chosen_metrics=None, overwrite=False, debug=False):
+    def add_ncu(
+            self, ncu_report_mapping, chosen_metrics=None, overwrite=False, debug=False
+        ):
         """Add NCU data into the PerformanceDataFrame
 
         Arguments:
             ncu_report_mapping (dict): mapping from NCU report file to profile
             chosen_metrics (list): list of metrics to sub-select from NCU report
             overwrite (bool): whether to overwrite existing columns in the Thicket.DataFrame
+            debug (bool): whether to print debug information
         """
 
         def _rep_agg_func(col):
