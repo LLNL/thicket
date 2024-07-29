@@ -551,8 +551,8 @@ class Thicket(GraphFrame):
         return th
 
     def add_ncu(
-            self, ncu_report_mapping, chosen_metrics=None, overwrite=False, debug=False
-        ):
+        self, ncu_report_mapping, chosen_metrics=None, overwrite=False, debug=False
+    ):
         """Add NCU data into the PerformanceDataFrame
 
         Arguments:
