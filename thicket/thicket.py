@@ -16,7 +16,9 @@ from hashlib import md5
 import pandas as pd
 import numpy as np
 from hatchet import GraphFrame
+from hatchet.frame import Frame
 from hatchet.graph import Graph
+from hatchet.node import Node
 from hatchet.query import QueryEngine
 from thicket.query import (
     Query,
@@ -1513,6 +1515,57 @@ class Thicket(GraphFrame):
                 )
 
         return sorted_meta
+
+    def add_root_node(self, attrs):
+        """Add node at root level with given attributes.
+
+        Arguments:
+            attrs (dict): attributes for the new node which will be used to initilize the
+            node.frame.
+        """
+
+        new_node = Node(frame_obj=Frame(attrs=attrs))
+
+        # graph and statsframe.graph
+        self.graph.roots.append(new_node)
+
+        # Set hatchet nid and depth
+        self.graph.enumerate_traverse()
+
+        # dataframe
+        idx_levels = self.dataframe.index.names
+        new_idx = [[new_node]] + [self.profile]
+        new_node_df = pd.DataFrame(
+            index=pd.MultiIndex.from_product(new_idx, names=idx_levels)
+        )
+        new_node_df["name"] = attrs["name"]
+        self.dataframe = pd.concat([self.dataframe, new_node_df])
+
+        # statsframe.dataframe
+        self.statsframe.dataframe = helpers._new_statsframe_df(self.dataframe)
+        # Reapply stats operations after clearing statsframe dataframe
+        self.reapply_stats_operations()
+
+        # Check Thicket state
+        validate_nodes(self)
+
+    def get_node(self, name):
+        """Get a node object in the Thicket by its Node.frame['name']. If more than one
+        node has the same name, a list of nodes is returned.
+
+        Arguments:
+            name (str): name of the node (Node.frame['name']).
+
+        Returns:
+            (Node or list(Node)): Node object with the given name or list of Node objects
+            with the given name.
+        """
+        node = [n for n in self.graph.traverse() if n.frame["name"] == name]
+
+        if len(node) == 0:
+            raise KeyError(f'Node with name "{name}" not found.')
+
+        return node[0] if len(node) == 1 else node
 
     def _sync_profile_components(self, component):
         """Synchronize the Performance DataFrame, Metadata Dataframe, profile and
