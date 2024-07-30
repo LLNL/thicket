@@ -93,7 +93,9 @@ class NCUReader:
 
             # Relevant for kernel matching
             variant = thicket.metadata.loc[ncu_hash, "variant"]
-            raja_lambda_cuda = variant.upper() == "RAJA_CUDA" or variant.upper() == "LAMBDA_CUDA"
+            raja_lambda_cuda = (
+                variant.upper() == "RAJA_CUDA" or variant.upper() == "LAMBDA_CUDA"
+            )
 
             # Load file
             report = ncu_report.load_report(ncu_report_file)
