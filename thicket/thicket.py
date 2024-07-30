@@ -556,7 +556,7 @@ class Thicket(GraphFrame):
         """Add NCU data into the PerformanceDataFrame
 
         Arguments:
-            ncu_report_mapping (dict): mapping from NCU report file to profile
+            ncu_report_mapping (dict): mapping from NCU report file to Caliper CUDA Activity Profile
             chosen_metrics (list): list of metrics to sub-select from NCU report
             overwrite (bool): whether to overwrite existing columns in the Thicket.DataFrame
             debug (bool): whether to print debug information
