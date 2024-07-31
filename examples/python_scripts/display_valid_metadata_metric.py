@@ -6,6 +6,7 @@ sys.path.append("/usr/gapps/spot/dev/hatchet-venv/x86_64/lib/python3.9/site-pack
 sys.path.append("/usr/gapps/spot/dev/hatchet/x86_64/")
 sys.path.append("/usr/gapps/spot/dev/thicket-playground-dev/")
 
+
 def display_valid_metrics_metadata():
     tk = th.Thicket.from_caliperreader(glob(sys.argv[1] + "/**/*.cali", recursive=True))
 

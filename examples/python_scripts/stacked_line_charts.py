@@ -11,7 +11,6 @@ sys.path.append("/usr/gapps/spot/dev/hatchet/x86_64/")
 sys.path.append("/usr/gapps/spot/dev/thicket-playground-dev/")
 
 
-
 def arg_parse():
     parser = argparse.ArgumentParser(
         prog="stacked_line_charts.py",
