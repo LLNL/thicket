@@ -4,12 +4,12 @@ import re
 import sys
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import thicket as th
 
 sys.path.append("/usr/gapps/spot/dev/hatchet-venv/x86_64/lib/python3.9/site-packages/")
 sys.path.append("/usr/gapps/spot/dev/hatchet/x86_64/")
 sys.path.append("/usr/gapps/spot/dev/thicket-playground-dev/")
 
-import thicket as th
 
 
 def arg_parse():

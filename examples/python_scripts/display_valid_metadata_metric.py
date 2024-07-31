@@ -1,14 +1,10 @@
 from glob import glob
 import sys
+import thicket as th
 
 sys.path.append("/usr/gapps/spot/dev/hatchet-venv/x86_64/lib/python3.9/site-packages/")
 sys.path.append("/usr/gapps/spot/dev/hatchet/x86_64/")
 sys.path.append("/usr/gapps/spot/dev/thicket-playground-dev/")
-
-import hatchet as ht
-from hatchet import QueryMatcher
-import thicket as th
-
 
 def display_valid_metrics_metadata():
     tk = th.Thicket.from_caliperreader(glob(sys.argv[1] + "/**/*.cali", recursive=True))
