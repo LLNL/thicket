@@ -9,19 +9,20 @@ import hatchet as ht
 from hatchet import QueryMatcher
 import thicket as th
 
+
 def display_valid_metrics_metadata():
-    tk = th.Thicket.from_caliperreader(glob(sys.argv[1]+"/**/*.cali", recursive=True))
+    tk = th.Thicket.from_caliperreader(glob(sys.argv[1] + "/**/*.cali", recursive=True))
 
-    print('Valid metadata values:\n')
+    print("Valid metadata values:\n")
     for value in tk.metadata.columns:
-        print('\t' + value)
+        print("\t" + value)
 
-    print('\n'+'-'*30+'\n')
-    
-    print('Valid metric values:\n')
+    print("\n" + "-" * 30 + "\n")
+
+    print("Valid metric values:\n")
     for value in tk.dataframe.columns:
-        print('\t' + value)
+        print("\t" + value)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     display_valid_metrics_metadata()
