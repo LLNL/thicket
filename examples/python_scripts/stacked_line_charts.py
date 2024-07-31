@@ -1,19 +1,13 @@
 import argparse
-import copy
 from glob import glob
 import re
 import sys
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 sys.path.append("/usr/gapps/spot/dev/hatchet-venv/x86_64/lib/python3.9/site-packages/")
 sys.path.append("/usr/gapps/spot/dev/hatchet/x86_64/")
 sys.path.append("/usr/gapps/spot/dev/thicket-playground-dev/")
-
-import hatchet as ht
-from hatchet import QueryMatcher
-from IPython.display import display, HTML
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import pandas as pd
 
 import thicket as th
 
@@ -104,8 +98,6 @@ def arg_parse():
 def make_stacked_line_chart(
     df, value, x_axis, title, x_label, y_label, filename, x_axis_scaling
 ):
-    fig = plt.figure()
-
     df.to_csv(filename + ".csv")
 
     tdf = df[[(i, value) for i in x_axis]].T
