@@ -275,6 +275,7 @@ def example_timeseries(data_dir, tmpdir):
     return tmpfile
 
 
+@pytest.fixture
 def example_timeseries_cxx(data_dir, tmpdir):
     """Timeseries Caliper file"""
     cali_timeseries_dir = os.path.join(data_dir, "example-timeseries")

@@ -61,7 +61,7 @@ def test_timeseries_statsframe(example_timeseries):
     # Check length of graph is the same as the dataframe.
     assert len(th.statsframe.graph) == len(th.statsframe.dataframe)
 
-    tt.mean(th, columns=["alloc.region.highwatermark"])
+    tt.stats.mean(th, columns=["alloc.region.highwatermark"])
     stats_nodes = ["main", "lulesh.cycle"]
     th_stats_name = th.filter_stats(lambda x: x["name"] in stats_nodes)
 
@@ -78,8 +78,8 @@ def test_timeseries_temporal_pattern(mem_power_timeseries):
 
     th = tt.Thicket.from_timeseries(mem_power_timeseries)
 
-    tt.calc_temporal_pattern(th, column="memstat.vmrss")
-    tt.calc_temporal_pattern(th, column="variorum.val.power_node_watts")
+    tt.stats.calc_temporal_pattern(th, column="memstat.vmrss")
+    tt.stats.calc_temporal_pattern(th, column="variorum.val.power_node_watts")
 
     # Check that the aggregated statistics table is a Hatchet GraphFrame.
     assert isinstance(th.statsframe, ht.GraphFrame)
