@@ -42,3 +42,15 @@ def test_indices(rajaperf_unique_tunings):
         match=r"The indices, \{\'tuning\': \'hi\'\}, do not exist in the index \'self.dataframe.index\'",
     ):
         tk.tree(metric_column="Avg time/rank", indices=["Base_Seq", "hi"])
+
+
+def test_tree_column_multiindex(thicket_axis_columns):
+    _, _, combined_th = thicket_axis_columns
+
+    # No error
+    combined_th.tree(
+        metric_column=("block_128", "Avg time/rank"), name_column=("name", "")
+    )
+
+    # No error
+    combined_th.tree(metric_column=("block_128", "Avg time/rank"))

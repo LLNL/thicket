@@ -20,12 +20,9 @@ def test_intersection(rajaperf_cali_1trial):
     assert len(intersected_tk.graph) == len(intersected_tk_other.graph)
 
     # Check original and intersected thickets
-    assert len(tk.dataframe) == 444
-    assert len(intersected_tk.dataframe) == 384
+    assert len(intersected_tk.graph) < len(tk.graph)
+    assert len(intersected_tk_other.graph) < len(tk.graph)
 
     # Check that nodes are synced between graph and dataframe
     assert helpers._are_synced(tk.graph, tk.dataframe)
     assert helpers._are_synced(intersected_tk.graph, intersected_tk.dataframe)
-
-    # Check graph length
-    assert len(intersected_tk.graph) < len(tk.graph)

@@ -16,7 +16,9 @@ from hashlib import md5
 import pandas as pd
 import numpy as np
 from hatchet import GraphFrame
+from hatchet.frame import Frame
 from hatchet.graph import Graph
+from hatchet.node import Node
 from hatchet.query import QueryEngine
 from thicket.query import (
     Query,
@@ -28,6 +30,7 @@ from thicket.query import (
 import tqdm
 
 from thicket.ensemble import Ensemble
+from thicket.utils import _fill_perfdata
 
 try:
     from .ncu import NCUReader
@@ -906,7 +909,9 @@ class Thicket(GraphFrame):
             metadata=self.metadata.copy(),
             profile=copy.deepcopy(self.profile),
             profile_mapping=copy.deepcopy(self.profile_mapping),
-            statsframe=self.statsframe.deepcopy(),
+            statsframe=GraphFrame(
+                graph=gf.graph, dataframe=self.statsframe.dataframe.copy(deep=True)
+            ),
             statsframe_ops_cache=self.statsframe_ops_cache.copy(),
         )
 
@@ -959,6 +964,9 @@ class Thicket(GraphFrame):
         if metric_column is None:
             metric_column = self.default_metric
 
+        if name_column == "name" and isinstance(self.dataframe.columns, pd.MultiIndex):
+            name_column = (name_column, "")
+
         if color is False:
             try:
                 import IPython
@@ -995,8 +1003,26 @@ class Thicket(GraphFrame):
         }
         # Slices the DataFrame to simulate a single-level index
         try:
+            # Select only columns used by tree for efficiency in _fill_perfdata
+            df_cols = [
+                col
+                for col in [
+                    *(
+                        metric_column
+                        if isinstance(metric_column, list)
+                        else [metric_column]
+                    ),
+                    annotation_column,
+                    name_column,
+                    context_column,
+                ]
+                if col in self.dataframe.columns
+            ]
+            slice_df = self.dataframe.loc[:, df_cols]
+            # _fill_perfdata to make sure number of nodes in df == graph
+            slice_df = _fill_perfdata(slice_df)
             slice_df = (
-                self.dataframe.loc[(slice(None),) + indices, :]
+                slice_df.loc[(slice(None),) + indices, :]
                 .reset_index()
                 .set_index("node")
             )
@@ -1187,10 +1213,16 @@ class Thicket(GraphFrame):
             (thicket): intersected thicket
         """
 
-        # Row that didn't exist will contain "None" in the name column.
-        query = Query().match(
-            ".", lambda row: row["name"].apply(lambda n: n is not None).all()
-        )
+        # Check for padded perfdata
+        if self.dataframe["name"].isnull().any():
+            # Row that didn't exist will contain "None" in the name column.
+            query = Query().match(
+                ".", lambda df: df["name"].apply(lambda n: n is not None).all()
+            )
+        else:
+            # If perfdata not padded
+            query = Query().match(".", lambda df: len(df) == len(self.profile))
+
         intersected_th = self.query(query)
 
         return intersected_th
@@ -1252,6 +1284,27 @@ class Thicket(GraphFrame):
         validate_profile(new_thicket)
 
         # If fill_perfdata is False, may need to squash
+        if len(new_thicket.graph) != len(
+            new_thicket.dataframe.index.get_level_values("node").unique()
+        ):
+            new_thicket = new_thicket.squash()
+
+        return new_thicket
+
+    def filter_profile(self, profile_list):
+        """Filter thicket object based on a list of profiles.
+
+        Arguments:
+            profile_list (list): list of profiles to filter on
+
+        Returns:
+            (thicket): new thicket object with selected profiles
+        """
+        new_thicket = self.deepcopy()
+
+        new_thicket._sync_profile_components(profile_list)
+        validate_profile(new_thicket)
+
         if len(new_thicket.graph) != len(
             new_thicket.dataframe.index.get_level_values("node").unique()
         ):
@@ -1490,6 +1543,37 @@ class Thicket(GraphFrame):
 
         return new_thicket
 
+    def move_metrics_to_statsframe(self, metric_columns, profile=None, override=False):
+        if not isinstance(metric_columns, (list, tuple)):
+            raise TypeError("'metric_columns' must be a list or tuple")
+        profile_list = self.dataframe.index.unique(level="profile").tolist()
+        if profile is None and len(profile_list) != 1:
+            raise ValueError(
+                "Cannot move a metric to statsframe when there are multiple profiles. Set the 'profile' argument to the profile you want to move"
+            )
+        if profile is not None and profile not in profile_list:
+            raise ValueError("Invalid profile: {}".format(profile))
+        df_for_profile = None
+        if profile is None:
+            df_for_profile = self.dataframe.reset_index(level="profile", drop=True)
+        else:
+            df_for_profile = self.dataframe.xs(
+                profile, level="profile", drop_level=True
+            )
+        new_statsframe_df = self.statsframe.dataframe.copy(deep=True)
+        for c in metric_columns:
+            if c in new_statsframe_df and not override:
+                raise KeyError(
+                    "Column {} is already in statsframe. To replace the column, run with 'override=True'".format(
+                        c
+                    )
+                )
+            new_statsframe_df[c] = df_for_profile[c]
+        self.statsframe.dataframe = new_statsframe_df
+        verify_thicket_structures(
+            self.statsframe.dataframe, columns=metric_columns, index=["node"]
+        )
+
     def get_unique_metadata(self):
         """Get unique values per column in metadata.
 
@@ -1527,24 +1611,74 @@ class Thicket(GraphFrame):
 
         return sorted_meta
 
-    def _sync_profile_components(self, component):
-        """Synchronize the Performance DataFrame, Metadata Dataframe, profile and
-        profile mapping objects based on the component's index. This is useful when a
-        non-Thicket function modifies the profiles in an object and those changes need
-        to be reflected in the other objects.
+    def add_root_node(self, attrs):
+        """Add node at root level with given attributes.
 
         Arguments:
-            component (DataFrame) -> (Thicket.dataframe or Thicket.metadata): The index
-            of this component is used to synchronize the other objects.
+            attrs (dict): attributes for the new node which will be used to initilize the
+            node.frame.
+        """
+
+        new_node = Node(frame_obj=Frame(attrs=attrs))
+
+        # graph and statsframe.graph
+        self.graph.roots.append(new_node)
+
+        # Set hatchet nid and depth
+        self.graph.enumerate_traverse()
+
+        # dataframe
+        idx_levels = self.dataframe.index.names
+        new_idx = [[new_node]] + [self.profile]
+        new_node_df = pd.DataFrame(
+            index=pd.MultiIndex.from_product(new_idx, names=idx_levels)
+        )
+        new_node_df["name"] = attrs["name"]
+        self.dataframe = pd.concat([self.dataframe, new_node_df])
+
+        # statsframe.dataframe
+        self.statsframe.dataframe = helpers._new_statsframe_df(self.dataframe)
+        # Reapply stats operations after clearing statsframe dataframe
+        self.reapply_stats_operations()
+
+        # Check Thicket state
+        validate_nodes(self)
+
+    def get_node(self, name):
+        """Get a node object in the Thicket by its Node.frame['name']. If more than one
+        node has the same name, a list of nodes is returned.
+
+        Arguments:
+            name (str): name of the node (Node.frame['name']).
 
         Returns:
-            (thicket): self
+            (Node or list(Node)): Node object with the given name or list of Node objects
+            with the given name.
+        """
+        node = [n for n in self.graph.traverse() if n.frame["name"] == name]
+
+        if len(node) == 0:
+            raise KeyError(f'Node with name "{name}" not found.')
+
+        return node[0] if len(node) == 1 else node
+
+    def _sync_profile_components(self, component):
+        """Synchronize the Performance DataFrame, Metadata Dataframe, profile and
+        profile mapping objects based on the component's index or a list of profiles.
+        This is useful when a non-Thicket function modifies the profiles in an object
+        and those changes need to be reflected in the other objects.
+
+        Arguments:
+            component (list or DataFrame) -> (list, Thicket.dataframe, or Thicket.metadata): The index
+            of this component is used to synchronize the other objects.
         """
 
         def _profile_truth_from_component(component):
             """Derive the profiles from the component index."""
+            if isinstance(component, list):
+                return component
             # Option A: Columnar-indexed Thicket
-            if isinstance(component.columns, pd.MultiIndex):
+            elif isinstance(component.columns, pd.MultiIndex):
                 # Performance DataFrame
                 if isinstance(component.index, pd.MultiIndex):
                     row_idx = component.index.droplevel(level="node")
@@ -1566,7 +1700,7 @@ class Thicket(GraphFrame):
                     profile_truth = component.index
             return list(set(profile_truth))
 
-        def _sync_indices(component, profile_truth):
+        def _sync_indices(profile_truth):
             """Sync the Thicket attributes"""
             self.profile = profile_truth
             self.profile_mapping = OrderedDict(
@@ -1578,12 +1712,12 @@ class Thicket(GraphFrame):
             )
 
             # For Columnar-indexed Thicket
-            if isinstance(component.columns, pd.MultiIndex):
+            if isinstance(self.dataframe.columns, pd.MultiIndex):
                 # Create powerset from all profiles
                 pset = set()
                 for p in profile_truth:
                     pset.update(helpers._powerset_from_tuple(p))
-                profile_truth = pset
+                profile_truth = list(pset)
 
             self.dataframe = self.dataframe[
                 self.dataframe.index.droplevel(level="node").isin(profile_truth)
@@ -1592,15 +1726,13 @@ class Thicket(GraphFrame):
 
             return self
 
-        if not isinstance(component, pd.DataFrame):
+        if isinstance(component, list) or isinstance(component, pd.DataFrame):
+            profile_truth = _profile_truth_from_component(component)
+            self = _sync_indices(profile_truth)
+        else:
             raise ValueError(
-                "Component must be either Thicket.dataframe or Thicket.metadata"
+                "Component must be either list, Thicket.dataframe, or Thicket.metadata"
             )
-
-        profile_truth = _profile_truth_from_component(component)
-        self = _sync_indices(component, profile_truth)
-
-        return self
 
 
 class InvalidFilter(Exception):
