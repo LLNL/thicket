@@ -23,7 +23,7 @@ Running the Script:
 Script Arguments:
 ===============
 .. list-table:: Table of Arguments
-   :widths: 25 25 50
+   :widths: 50 50
    :header-rows: 1
 
    * - Argument
