@@ -28,6 +28,12 @@ Script Arguments:
 
    * - Argument
      - Description
+   * - --input_files
+     - Directory containing Caliper files. Will read in every single .cali file in directory and subdirectories.
+   * -
+     -
+   * -
+     -
 
 Kripke Example Output Charts:
 ===============
