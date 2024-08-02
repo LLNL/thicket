@@ -25,7 +25,7 @@ def arg_parse():
     )
     parser.add_argument(
         "--x_axis_unique_metadata",
-        default="mpi.world.size",
+        required=True,
         type=str,
         help="Parameter that is varied during the experiment.",
     )

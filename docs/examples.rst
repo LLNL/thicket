@@ -29,11 +29,29 @@ Script Arguments:
    * - Argument
      - Description
    * - --input_files
-     - Directory containing Caliper files. Will read in every single .cali file in directory and subdirectories.
-   * -
-     -
-   * -
-     -
+     - Str: Directory containing Caliper files. Will read in every single .cali file in directory and subdirectories.
+   * - --x_axis_unique_metadata
+     - Str: Parameter that is varied during the experiment.
+   * - --y_axis_metric
+     - Str: Metric to be visualized.
+   * - --chart_type
+     - Str: Specify type of output chart. "percentage_time" | "total_time"
+   * - --x_axis_scaling
+     - Int: Optional: Scaling of x axis values for display on chart. Log_(value) (x)
+   * - --filter_nodes_name_prefix
+     - Str: Optional: Filters only entries with prefix to be included in chart.
+   * - --group_nodes_name
+     - Str: Optional: Specify if nodes with the same name are combined or not.
+   * - --top_n_nodes
+     - Int: Optional: Filters only top n longest time entries to be included in chart.
+   * - --chart_title
+     - Str: Optional: Title of the output chart.
+   * - --chart_xlabel
+     - Str: Optional: X Label of chart.
+   * - --chart_ylabel
+     - Str: Optional: Y Label of chart.
+   * - --chart_file_name
+     - Str: Optional: Output chart file name.
 
 Kripke Example Output Charts:
 ===============
