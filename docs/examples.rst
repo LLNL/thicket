@@ -11,39 +11,54 @@ Analysis Examples
 Scaling Studies
 ===============
 
-.. literalinclude:: ../examples/python_scripts/stacked_line_charts.py
-    :language: python
+Thicket can be used to help display the scaling behavior of an application. In thicket/examples/python_scripts/ the python scripts provide examples for how to generate stacked line charts. The script is intended to help generate visualizations of scaling studies using Caliper and Thicket. It outputs a stacked line chart of Caliper node runtimes, either by percentage or by total run time.
 
-
-To run the script:
+Running the Script:
+===============
 
 .. code:: console
 
-   $ python stacked_line_charts.py --input_files <input file or path> --groupby_parameter <parameter varied between runs> --filter_prefix <optional prefix> --top_ten <optional True|False> --out_graphs <perc|total>
+   $ python stacked_line_charts.py <arguments> 
 
+Script Arguments:
+===============
+.. list-table:: Table of Arguments
+   :widths: 25 25 50
+   :header-rows: 1
 
-Scaling Studies:
+   * - Argument
+     - Description
 
+Kripke Example Output Charts:
+===============
 
-python stacked_line_charts_2.py --input_files "/usr/workspace/hao3/kripke_cuda_combo_7_29_final/kripke/cuda/LLNL-Sierra-IBM-power9-V100-Infiniband/workspace/experiments/kripke/kripke/kripke_cuda_strong*" --x_axis_unique_metadata mpi.world.size --y_axis_metric "Avg time/rank (exc)" --chart_type percentage_time --chart_title "Kripke on Lassen (Strong Scaling)" --chart_file_name kripke_cuda_strong_perc --chart_ylabel "Percentage of Runtime for Average Time (exc)" --x_axis_scaling 2 --top_n_nodes 10
+.. code:: console
+
+   $ python stacked_line_charts.py --input_files "workspace/experiments/kripke/kripke/kripke_cuda_strong*" --x_axis_unique_metadata mpi.world.size --y_axis_metric "Avg time/rank (exc)" --chart_type percentage_time --chart_title "Kripke on Lassen (Strong Scaling)" --chart_file_name kripke_cuda_strong_perc --chart_ylabel "Percentage of Runtime for Average Time (exc)" --x_axis_scaling 2 --top_n_nodes 10
 
 .. figure:: images/kripke_cuda_strong_perc.png
   :width: 800
   :align: center
 
-python stacked_line_charts_2.py --input_files "/usr/workspace/hao3/kripke_cuda_combo_7_29_final/kripke/cuda/LLNL-Sierra-IBM-power9-V100-Infiniband/workspace/experiments/kripke/kripke/kripke_cuda_strong*" --x_axis_unique_metadata mpi.world.size --y_axis_metric "Avg time/rank (exc)" --chart_type total_time --chart_title "Kripke on Lassen (Strong Scaling)" --chart_file_name kripke_cuda_strong_tot --chart_ylabel "Runtime for Average Time (exc)" --x_axis_scaling 2 --top_n_nodes 10
+.. code:: console
+
+   $ python stacked_line_charts.py --input_files "workspace/experiments/kripke/kripke/kripke_cuda_strong*" --x_axis_unique_metadata mpi.world.size --y_axis_metric "Avg time/rank (exc)" --chart_type total_time --chart_title "Kripke on Lassen (Strong Scaling)" --chart_file_name kripke_cuda_strong_tot --chart_ylabel "Runtime for Average Time (exc)" --x_axis_scaling 2 --top_n_nodes 10
 
 .. figure:: images/kripke_cuda_strong_tot.png
   :width: 800
   :align: center
 
-python stacked_line_charts_2.py --input_files "/usr/workspace/hao3/kripke_cuda_combo_7_29_final/kripke/cuda/LLNL-Sierra-IBM-power9-V100-Infiniband/workspace/experiments/kripke/kripke/kripke_cuda_weak*" --x_axis_unique_metadata zones --y_axis_metric "Avg time/rank (exc)" --chart_type percentage_time --chart_title "Kripke on Lassen (Weak Scaling)" --chart_file_name kripke_cuda_weak_perc --chart_ylabel "Percentage of Runtime for Average Time (exc)" --x_axis_scaling 2 --top_n_nodes 10
+.. code:: console
+
+   $ python stacked_line_charts.py --input_files "workspace/experiments/kripke/kripke/kripke_cuda_weak*" --x_axis_unique_metadata zones --y_axis_metric "Avg time/rank (exc)" --chart_type percentage_time --chart_title "Kripke on Lassen (Weak Scaling)" --chart_file_name kripke_cuda_weak_perc --chart_ylabel "Percentage of Runtime for Average Time (exc)" --x_axis_scaling 2 --top_n_nodes 10
 
 .. figure:: images/kripke_cuda_weak_perc.png
   :width: 800
   :align: center
 
-python stacked_line_charts_2.py --input_files "/usr/workspace/hao3/kripke_cuda_combo_7_29_final/kripke/cuda/LLNL-Sierra-IBM-power9-V100-Infiniband/workspace/experiments/kripke/kripke/kripke_cuda_weak*" --x_axis_unique_metadata zones --y_axis_metric "Avg time/rank (exc)" --chart_type total_time --chart_title "Kripke on Lassen (Weak Scaling)" --chart_file_name kripke_cuda_weak_total --chart_ylabel "Runtime for Average Time (exc)" --x_axis_scaling 2 --top_n_nodes 10
+.. code:: console
+
+   $ python stacked_line_charts.py --input_files "workspace/experiments/kripke/kripke/kripke_cuda_weak*" --x_axis_unique_metadata zones --y_axis_metric "Avg time/rank (exc)" --chart_type total_time --chart_title "Kripke on Lassen (Weak Scaling)" --chart_file_name kripke_cuda_weak_total --chart_ylabel "Runtime for Average Time (exc)" --x_axis_scaling 2 --top_n_nodes 10
 
 .. figure:: images/kripke_cuda_weak_total.png
   :width: 800
