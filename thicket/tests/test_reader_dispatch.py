@@ -30,7 +30,7 @@ def test_empty_iterable():
 
 
 def test_file_not_found():
-    with pytest.raises(FileNotFoundError, match="File 'blah' not found"):
+    with pytest.raises(ValueError, match="Path 'blah' not found"):
         Thicket.reader_dispatch(
             GraphFrame.from_caliperreader,
             False,
