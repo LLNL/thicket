@@ -59,8 +59,9 @@ def test_valid_type():
             -1,
         )
 
+
 def test_valid_inputs(rajaperf_cali_1trial, data_dir):
-    
+
     # Works with list
     Thicket.reader_dispatch(
         GraphFrame.from_caliperreader,
