@@ -358,8 +358,8 @@ class Thicket(GraphFrame):
                 if not os.path.isfile(file):
                     raise FileNotFoundError("File '" + file + "' not found")
         elif isinstance(obj, str):
-            if not os.path.isfile(obj):
-                raise FileNotFoundError("File '" + obj + "' not found")
+            if not os.path.exists(obj):
+                raise ValueError("Path '" + obj + "' not found")
         else:
             raise TypeError(
                 "'" + str(type(obj).__name__) + "' is not a valid type to be read from"
