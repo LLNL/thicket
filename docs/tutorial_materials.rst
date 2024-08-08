@@ -9,17 +9,17 @@
 ###############################
 
 This is an introduction to Thicket with a presentation and live demos. It was
-presented as a virtual event at the `2023 RADIUSS Tutorial Series
-<https://software.llnl.gov/radiuss/event/2023/07/11/radiuss-on-aws/>`_,
-August 14, 2023, alongside Caliper.
+presented as a virtual event at the `2024 HPC Innovation Center Tutorial Series
+<https://hpcic.llnl.gov/tutorials/2024-hpc-tutorials/>`_,
+August 8, 2024, alongside Caliper.
 
 .. image:: images/thicket-tutorial-slide-preview.png
-   :target: _static/thicket-radiuss23-tutorial-slides.pdf
+   :target: _static/thicket-radiuss24-tutorial-slides.pdf
    :height: 72px
    :align: left
    :alt: Slide Preview
 
-:download:`Download Slides <_static/thicket-radiuss23-tutorial-slides.pdf>`.
+:download:`Download Slides <_static/thicket-radiuss24-tutorial-slides.pdf>`.
 
 We provide scripts that take you through some of the available features in
 Thicket. They correspond to sections in the slides above.
