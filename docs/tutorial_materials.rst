@@ -14,12 +14,12 @@ presented as a virtual event at the `2024 HPC Innovation Center Tutorial Series
 August 8, 2024, alongside Caliper.
 
 .. image:: images/thicket-tutorial-slide-preview.png
-   :target: _static/thicket-radiuss24-tutorial-slides.pdf
+   :target: _static/2024_08_08_Thicket_Tutorial.pdf
    :height: 72px
    :align: left
    :alt: Slide Preview
 
-:download:`Download Slides <_static/thicket-radiuss24-tutorial-slides.pdf>`.
+:download:`Download Slides <_static/2024_08_08_Thicket_Tutorial.pdf>`.
 
 We provide scripts that take you through some of the available features in
 Thicket. They correspond to sections in the slides above.
