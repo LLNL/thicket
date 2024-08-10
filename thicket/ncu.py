@@ -85,6 +85,7 @@ class NCUReader:
 
         # Loop through NCU files
         for ncu_report_file in ncu_report_mapping:
+            rep = 0
             # Set error check flag
             call_trace_found = False
 
@@ -126,7 +127,7 @@ class NCUReader:
                     name: first_action[name].rollup_operation() for name in metric_names
                 }
 
-                kernel_iter_dict = defaultdict(int)
+                kernel_iter_dict = defaultdict(lambda: [0, 1])
 
                 # Query action in range
                 pbar = tqdm(range, disable=False)
@@ -186,11 +187,15 @@ class NCUReader:
                                 # print(f"Num children: {len(cuda_launch_children)}")
                                 # print(demangled_kernel_name)
 
-                            if kernel_iter_dict[tuple(kernel_call_trace)] >= len(cuda_launch_children):
+                            if kernel_iter_dict[tuple(kernel_call_trace)][0] >= len(cuda_launch_children):
                                 print(kernel_call_trace)
-                                print(f"Skipping kernel\n\t{demangled_kernel_name}\nNo more children to match")
-                                continue
-                            matched_node = cuda_launch_children[kernel_iter_dict[tuple(kernel_call_trace)]]
+                                # print(f"Skipping kernel\n\t{demangled_kernel_name}\nNo more children to match")
+                                # continue
+                                kernel_iter_dict[tuple(kernel_call_trace)][1] += 1
+                                print(f"resetting iterator to 0... Assuming next rep. (rep {kernel_iter_dict[tuple(kernel_call_trace)][1]}?)")
+                                kernel_iter_dict[tuple(kernel_call_trace)][0] = 0
+                                
+                            matched_node = cuda_launch_children[kernel_iter_dict[tuple(kernel_call_trace)][0]]
 
                             # if debug:
                             #     print(matched_node)
@@ -198,7 +203,7 @@ class NCUReader:
                             # if debug:
                             #     print("chose node: ", matched_node)
 
-                            kernel_iter_dict[tuple(kernel_call_trace)] += 1
+                            kernel_iter_dict[tuple(kernel_call_trace)][0] += 1
 
                         if not defaulted:
                             if raja_lambda_cuda:
