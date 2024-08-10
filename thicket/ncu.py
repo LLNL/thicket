@@ -6,6 +6,7 @@
 from collections import defaultdict
 import re
 
+from thicket.query import Query
 from hatchet import QueryMatcher
 import pandas as pd
 from tqdm import tqdm
@@ -125,9 +126,12 @@ class NCUReader:
                     name: first_action[name].rollup_operation() for name in metric_names
                 }
 
+                kernel_iter_dict = defaultdict(int)
+
                 # Query action in range
                 pbar = tqdm(range)
                 for i, action in enumerate(pbar):
+                    defaulted = False
                     pbar.set_description(f"Processing action {i}/{len(range)}")
                     # Demangled name of kernel
                     demangled_kernel_name = action.name(
@@ -152,60 +156,89 @@ class NCUReader:
                         # Pattern ends with ":" if RAJA_CUDA, "<" if Base_CUDA
                         kernel_pattern = rf"{call_trace_str}::(\w+)[<:]"
                         kernel_match = re.search(kernel_pattern, demangled_kernel_name)
-                        kernel_str = kernel_match.group(1)
 
-                        if raja_lambda_cuda:
-                            # RAJA_CUDA variant
-                            instance_pattern = r"instance (\d+)"
-                            instance_match = re.findall(
-                                instance_pattern, demangled_kernel_name
-                            )
-                            instance_num = instance_match[-1]
-                            kernel_name = kernel_str + "_" + instance_num
-                        else:
-                            # Base_CUDA variant
-                            kernel_name = kernel_str
+                        try:
+                            kernel_str = kernel_match.group(1)
+                        except AttributeError:
+                            defaulted = True
+                            if debug:
+                                print(f"Could not match kernel name in NCU report. Defaulting...")
 
-                        # Add kernel name to the end of the trace tuple
-                        kernel_call_trace.append(kernel_str)
+                            kernel_call_trace.append("cudaLaunchKernel")
 
-                        # Match ncu kernel to thicket node
-                        matched_node = None
-                        if kernel_name in kernel_map:
-                            # Skip query building
-                            matched_node = kernel_map[kernel_name]
-                        else:  # kernel hasn't been seen yet
-                            # Build query
                             query = NCUReader._build_query_from_ncu_trace(
                                 kernel_call_trace
                             )
                             # Apply the query
                             node_set = query.apply(thicket)
-                            # Find the correct node. This may also get the parent so we take the last one
-                            matched_nodes = [
-                                n
-                                for n in node_set
-                                if kernel_str in n.frame["name"]
-                                and (
-                                    f"#{instance_num}" in n.frame["name"]
-                                    if raja_lambda_cuda
-                                    else True
-                                )
-                            ]
-                            matched_node = matched_nodes[0]
+
+                            cuda_launch_list = [n for n in node_set if "cudaLaunchKernel" in n.frame["name"]]
+                            if len(cuda_launch_list) > 1:
+                                raise ValueError("Multiple nodes matched. something went wrong")
+                            cuda_launch = cuda_launch_list[0]
+                            
+                            cuda_launch_children = cuda_launch.children
+
+                            matched_node = cuda_launch_children[kernel_iter_dict[tuple(kernel_call_trace)]]
 
                             if debug:
-                                if not raja_lambda_cuda:
-                                    instance_num = "NA"
-                                print(
-                                    f"Matched NCU kernel:\n\t{demangled_kernel_name}\nto Caliper Node:\n\t{matched_node}"
+                                print("chose node: ", matched_node)
+
+                            kernel_iter_dict[tuple(kernel_call_trace)] += 1
+
+                        if not defaulted:
+                            if raja_lambda_cuda:
+                                # RAJA_CUDA variant
+                                instance_pattern = r"instance (\d+)"
+                                instance_match = re.findall(
+                                    instance_pattern, demangled_kernel_name
                                 )
-                                print(
-                                    f"AKA:\n\t{kernel_str} (instance {instance_num}) == {kernel_str} (#{instance_num})\n"
+                                instance_num = instance_match[-1]
+                                kernel_name = kernel_str + "_" + instance_num
+                            else:
+                                # Base_CUDA variant
+                                kernel_name = kernel_str
+
+                            # Add kernel name to the end of the trace tuple
+                            kernel_call_trace.append(kernel_str)
+
+                            # Match ncu kernel to thicket node
+                            matched_node = None
+                            if kernel_name in kernel_map:
+                                # Skip query building
+                                matched_node = kernel_map[kernel_name]
+                            else:  # kernel hasn't been seen yet
+                                # Build query
+                                query = NCUReader._build_query_from_ncu_trace(
+                                    kernel_call_trace
                                 )
-                                print("All matched nodes:")
-                                for node in matched_nodes:
-                                    print("\t", node)
+                                # Apply the query
+                                node_set = query.apply(thicket)
+                                # Find the correct node. This may also get the parent so we take the last one
+                                matched_nodes = [
+                                    n
+                                    for n in node_set
+                                    if kernel_str in n.frame["name"]
+                                    and (
+                                        f"#{instance_num}" in n.frame["name"]
+                                        if raja_lambda_cuda
+                                        else True
+                                    )
+                                ]
+                                matched_node = matched_nodes[0]
+
+                                if debug:
+                                    if not raja_lambda_cuda:
+                                        instance_num = "NA"
+                                    print(
+                                        f"Matched NCU kernel:\n\t{demangled_kernel_name}\nto Caliper Node:\n\t{matched_node}"
+                                    )
+                                    print(
+                                        f"AKA:\n\t{kernel_str} (instance {instance_num}) == {kernel_str} (#{instance_num})\n"
+                                    )
+                                    print("All matched nodes:")
+                                    for node in matched_nodes:
+                                        print("\t", node)
 
                         # Set mapping
                         kernel_map[kernel_name] = matched_node
