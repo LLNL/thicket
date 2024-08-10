@@ -158,16 +158,14 @@ class NCUReader:
                         kernel_pattern = rf"{call_trace_str}::(\w+)[<:]"
                         kernel_match = re.search(kernel_pattern, demangled_kernel_name)
 
-                        try:
-                            kernel_str = kernel_match.group(1)
-                            fail
-                        except:
-                            defaulted = True
-                            # if debug:
-                            #     print(f"Could not match kernel name in NCU report. Defaulting...")
 
-                            kernel_call_trace.append("cudaLaunchKernel")
-
+                        defaulted = True
+                        kernel_call_trace.append("cudaLaunchKernel")
+                        if tuple(kernel_call_trace) in kernel_map:
+                            if debug:
+                                print("Using cached kernel mapping")
+                            cuda_launch_children = kernel_map[tuple(kernel_call_trace)]
+                        else:
                             query = NCUReader._build_query_from_ncu_trace(
                                 kernel_call_trace
                             )
@@ -180,87 +178,22 @@ class NCUReader:
                             cuda_launch = cuda_launch_list[0]
                             
                             cuda_launch_children = cuda_launch.children
-                            
+
+                        if kernel_iter_dict[tuple(kernel_call_trace)][0] >= len(cuda_launch_children):
+                            kernel_iter_dict[tuple(kernel_call_trace)][1] += 1
                             if debug:
                                 print(kernel_call_trace)
-                                # print(kernel_iter_dict[tuple(kernel_call_trace)])
-                                # print(f"Num children: {len(cuda_launch_children)}")
-                                # print(demangled_kernel_name)
-
-                            if kernel_iter_dict[tuple(kernel_call_trace)][0] >= len(cuda_launch_children):
-                                print(kernel_call_trace)
-                                # print(f"Skipping kernel\n\t{demangled_kernel_name}\nNo more children to match")
-                                # continue
-                                kernel_iter_dict[tuple(kernel_call_trace)][1] += 1
                                 print(f"resetting iterator to 0... Assuming next rep. (rep {kernel_iter_dict[tuple(kernel_call_trace)][1]}?)")
-                                kernel_iter_dict[tuple(kernel_call_trace)][0] = 0
-                                
-                            matched_node = cuda_launch_children[kernel_iter_dict[tuple(kernel_call_trace)][0]]
+                            kernel_iter_dict[tuple(kernel_call_trace)][0] = 0
+                            #print(kernel_map)
+                            
+                        matched_node = cuda_launch_children[kernel_iter_dict[tuple(kernel_call_trace)][0]]
 
-                            # if debug:
-                            #     print(matched_node)
-
-                            # if debug:
-                            #     print("chose node: ", matched_node)
-
-                            kernel_iter_dict[tuple(kernel_call_trace)][0] += 1
-
-                        if not defaulted:
-                            if raja_lambda_cuda:
-                                # RAJA_CUDA variant
-                                instance_pattern = r"instance (\d+)"
-                                instance_match = re.findall(
-                                    instance_pattern, demangled_kernel_name
-                                )
-                                instance_num = instance_match[-1]
-                                kernel_name = kernel_str + "_" + instance_num
-                            else:
-                                # Base_CUDA variant
-                                kernel_name = kernel_str
-
-                            # Add kernel name to the end of the trace tuple
-                            kernel_call_trace.append(kernel_str)
-
-                            # Match ncu kernel to thicket node
-                            matched_node = None
-                            if kernel_name in kernel_map:
-                                # Skip query building
-                                matched_node = kernel_map[kernel_name]
-                            else:  # kernel hasn't been seen yet
-                                # Build query
-                                query = NCUReader._build_query_from_ncu_trace(
-                                    kernel_call_trace
-                                )
-                                # Apply the query
-                                node_set = query.apply(thicket)
-                                # Find the correct node. This may also get the parent so we take the last one
-                                matched_nodes = [
-                                    n
-                                    for n in node_set
-                                    if kernel_str in n.frame["name"]
-                                    and (
-                                        f"#{instance_num}" in n.frame["name"]
-                                        if raja_lambda_cuda
-                                        else True
-                                    )
-                                ]
-                                matched_node = matched_nodes[0]
-
-                                if debug:
-                                    if not raja_lambda_cuda:
-                                        instance_num = "NA"
-                                    print(
-                                        f"Matched NCU kernel:\n\t{demangled_kernel_name}\nto Caliper Node:\n\t{matched_node}"
-                                    )
-                                    print(
-                                        f"AKA:\n\t{kernel_str} (instance {instance_num}) == {kernel_str} (#{instance_num})\n"
-                                    )
-                                    print("All matched nodes:")
-                                    for node in matched_nodes:
-                                        print("\t", node)
+                        kernel_iter_dict[tuple(kernel_call_trace)][0] += 1
 
                         # Set mapping
                         #kernel_map[kernel_name] = matched_node
+                        kernel_map[tuple(kernel_call_trace)] = cuda_launch_children
 
                         metric_values = [action[name].value() for name in metric_names]
 
