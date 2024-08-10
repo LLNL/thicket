@@ -129,9 +129,9 @@ class NCUReader:
                 kernel_iter_dict = defaultdict(int)
 
                 # Query action in range
-                pbar = tqdm(range)
+                pbar = tqdm(range, disable=False)
                 for i, action in enumerate(pbar):
-                    defaulted = False
+                    defaulted = True
                     pbar.set_description(f"Processing action {i}/{len(range)}")
                     # Demangled name of kernel
                     demangled_kernel_name = action.name(
@@ -159,10 +159,11 @@ class NCUReader:
 
                         try:
                             kernel_str = kernel_match.group(1)
-                        except AttributeError:
+                            fail
+                        except:
                             defaulted = True
-                            if debug:
-                                print(f"Could not match kernel name in NCU report. Defaulting...")
+                            # if debug:
+                            #     print(f"Could not match kernel name in NCU report. Defaulting...")
 
                             kernel_call_trace.append("cudaLaunchKernel")
 
@@ -178,11 +179,24 @@ class NCUReader:
                             cuda_launch = cuda_launch_list[0]
                             
                             cuda_launch_children = cuda_launch.children
+                            
+                            if debug:
+                                print(kernel_call_trace)
+                                # print(kernel_iter_dict[tuple(kernel_call_trace)])
+                                # print(f"Num children: {len(cuda_launch_children)}")
+                                # print(demangled_kernel_name)
 
+                            if kernel_iter_dict[tuple(kernel_call_trace)] >= len(cuda_launch_children):
+                                print(kernel_call_trace)
+                                print(f"Skipping kernel\n\t{demangled_kernel_name}\nNo more children to match")
+                                continue
                             matched_node = cuda_launch_children[kernel_iter_dict[tuple(kernel_call_trace)]]
 
-                            if debug:
-                                print("chose node: ", matched_node)
+                            # if debug:
+                            #     print(matched_node)
+
+                            # if debug:
+                            #     print("chose node: ", matched_node)
 
                             kernel_iter_dict[tuple(kernel_call_trace)] += 1
 
@@ -241,7 +255,7 @@ class NCUReader:
                                         print("\t", node)
 
                         # Set mapping
-                        kernel_map[kernel_name] = matched_node
+                        #kernel_map[kernel_name] = matched_node
 
                         metric_values = [action[name].value() for name in metric_names]
 
