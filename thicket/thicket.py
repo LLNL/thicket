@@ -211,7 +211,7 @@ class Thicket(GraphFrame):
             th.dataframe.set_index(index_names, inplace=True)
 
         return th
-    
+
     @staticmethod
     def thicketize_timeseries_graphframe(gf, iter_column="loop.start_iteration"):
         """Necessary function to handle output from using GraphFrame readers.
@@ -248,7 +248,6 @@ class Thicket(GraphFrame):
         th.dataframe.set_index(index_names, inplace=True)
 
         return th
-
 
     @staticmethod
     def from_pickle(filename, **kwargs):
@@ -369,7 +368,7 @@ class Thicket(GraphFrame):
         tk = Thicket.thicketize_graphframe(GraphFrame.from_literal(graph_dict), profile)
 
         return tk
-    
+
     def from_timeseries(
         filename_or_caliperreader, level="loop.start_iteration", intersection=False
     ):
