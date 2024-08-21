@@ -181,7 +181,7 @@ def caliper_ordered(data_dir, tmpdir):
 
     shutil.copy(cali_file, str(tmpdir))
     tmpfile = os.path.join(str(tmpdir), "230525-151052_1930517_eWbGeyrlBOPT.cali")
-    return [os.path.join(str(tmpdir), f) for f in files]
+    return tmpfile
 
 
 @pytest.fixture

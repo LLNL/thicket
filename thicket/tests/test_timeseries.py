@@ -62,13 +62,18 @@ def test_timeseries_statsframe(example_timeseries):
     assert len(th.statsframe.graph) == len(th.statsframe.dataframe)
 
     tt.stats.mean(th, columns=["alloc.region.highwatermark"])
-    stats_nodes = ["main", "lulesh.cycle"]
-    th_stats_name = th.filter_stats(lambda x: x["name"] in stats_nodes)
+    # stats_nodes = ["main", "lulesh.cycle"]
+    # th_stats_name = th.filter_stats(lambda x: x["name"] in stats_nodes)
+
+    assert "alloc.region.highwatermark_mean" in th.statsframe.dataframe.columns
+    assert (
+        "alloc.region.highwatermark_mean"
+        in th.statsframe.exc_metrics + th.statsframe.inc_metrics
+    )
+    assert "alloc.region.highwatermark_mean" in th.statsframe.show_metric_columns()
 
     # Expected tree output
-    tree_output = th_stats_name.statsframe.tree(
-        metric_column="alloc.region.highwatermark_mean"
-    )
+    tree_output = th.statsframe.tree(metric_column="alloc.region.highwatermark_mean")
 
     # Check if tree output is correct.
     assert bool(re.search("63732320.000.*lulesh.cycle", tree_output))
@@ -78,16 +83,24 @@ def test_timeseries_temporal_pattern(mem_power_timeseries):
 
     th = tt.Thicket.from_timeseries(mem_power_timeseries)
 
-    tt.stats.calc_temporal_pattern(th, column="memstat.vmrss")
-    tt.stats.calc_temporal_pattern(th, column="variorum.val.power_node_watts")
+    returned_cols = tt.stats.calc_temporal_pattern(
+        th, columns=["memstat.vmrss", "variorum.val.power_node_watts"]
+    )
 
     # Check that the aggregated statistics table is a Hatchet GraphFrame.
     assert isinstance(th.statsframe, ht.GraphFrame)
-    # Check that 'name' column is in dataframe. If not, tree() will not work.
-    assert "memstat.vmrss_pattern" in th.statsframe.dataframe
-    assert "memstat.vmrss_temporal_score" in th.statsframe.dataframe
-    assert "variorum.val.power_node_watts_pattern" in th.statsframe.dataframe
-    assert "variorum.val.power_node_watts_temporal_score" in th.statsframe.dataframe
+
+    expected_cols = [
+        "memstat.vmrss_pattern",
+        "memstat.vmrss_temporal_score",
+        "variorum.val.power_node_watts_pattern",
+        "variorum.val.power_node_watts_temporal_score",
+    ]
+    for col in expected_cols:
+        # Check that expected columns are in statsframe dataframe.
+        assert col in th.statsframe.dataframe
+        # Check the returned columns from calc_temporal_pattern.
+        assert col in returned_cols
 
     # Check some values in the memory pattern column
     assert th.statsframe.dataframe["memstat.vmrss_pattern"].iloc[0] == "none"
