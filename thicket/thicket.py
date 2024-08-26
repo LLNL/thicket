@@ -219,6 +219,10 @@ class Thicket(GraphFrame):
 
     def to_pickle(self, filename, **kwargs):
         """Write a Thicket to a pickle file."""
+
+        # Clear out statsframe to ensure thicket obj is serializable
+        self.statsframe_ops_cache = {}
+
         pickle.dump(self, open(filename, "wb"), **kwargs)
 
     @staticmethod
