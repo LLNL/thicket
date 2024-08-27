@@ -64,6 +64,8 @@ If you encounter bugs while using thicket, you can report them by opening an iss
    :caption: Developer Docs
 
    developer_guide
+   thicket_properties
+   concatenating_thickets
 
 .. toctree::
    :maxdepth: 2
