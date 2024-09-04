@@ -1,4 +1,7 @@
-import math
+# Copyright 2022 Lawrence Livermore National Security, LLC and other
+# Thicket Project Developers. See the top-level LICENSE file for details.
+#
+# SPDX-License-Identifier: MIT
 
 import numpy as np
 
@@ -6,6 +9,18 @@ import thicket as th
 from ..utils import verify_thicket_structures
 from .stats_utils import cache_stats_op
 from thicket.stats import mean
+
+
+# TODO: Perhaps a param that determines what "preferable" means
+def _preference_calc(score_data, columns, preference_threshold):
+    # Creates preferences based on threshold; pref_1, None, Pref_2
+    recc_comp = (
+        lambda x: "None"
+        if abs(x) <= abs(preference_threshold)
+        else (columns[0][0] if x < 0 else columns[1][0])
+    )  # noqa: E731
+
+    return score_data.apply(recc_comp)
 
 
 def _calc_score_delta_mean_delta_stdnorm(means_1, means_2, stds_1, stds_2, num_nodes):
@@ -39,6 +54,34 @@ def _calc_score_delta_mean_delta_coefficient_of_variation(
     return results
 
 
+def _calc_bhattacharyya_score(thicket, columns, comparison_func, characterization_func, **kwargs):
+    stats_column_names = th.stats.bhattacharyya_distance(thicket, columns)
+
+    comp_idx = characterization_func(thicket, columns=columns, **kwargs)
+    comp_data = thicket.statsframe.dataframe[[comp_idx[0], comp_idx[1]]]
+
+    multiplier = comp_data.apply(lambda row: comparison_func(row[comp_idx[0]], row[comp_idx[1]]), axis=1)
+    multiplier = multiplier.apply(lambda x: -1 if x else 1)
+
+    result = thicket.statsframe.dataframe[stats_column_names[0]] * multiplier
+
+    return result
+
+
+def _calc_hellinger_score(thicket, columns, comparison_func, characterization_func, **kwargs):
+    stats_column_names = th.stats.hellinger_distance(thicket, columns)
+
+    comp_idx = characterization_func(thicket, columns=columns, **kwargs)
+    comp_data = thicket.statsframe.dataframe[[comp_idx[0], comp_idx[1]]]
+
+    multiplier = comp_data.apply(lambda row: comparison_func(row[comp_idx[0]], row[comp_idx[1]]), axis=1)
+    multiplier = multiplier.apply(lambda x: -1 if x else 1)
+
+    result = thicket.statsframe.dataframe[stats_column_names[0]] * multiplier
+
+    return result
+
+
 # TODO: Rename this to something more descriptive
 def score(thicket, columns, output_column_name, scoring_function):
     if isinstance(columns, list) is False:
@@ -66,16 +109,13 @@ def score(thicket, columns, output_column_name, scoring_function):
 
     num_nodes = len(thicket.dataframe.index.get_level_values(0).unique())
 
+    # TODO: REMOVE THIS
     if num_nodes < 2:
         raise ValueError("Must have more than one data point per node to score with!")
 
     verify_thicket_structures(thicket.dataframe, columns)
 
     output_column_names = []
-
-    # Calculate means and stds, adds both onto statsframe
-    th.stats.mean(thicket, columns)
-    th.stats.std(thicket, columns)
 
     mean_columns = th.stats.mean(thicket, columns)
     std_columns = th.stats.std(thicket, columns)
@@ -155,25 +195,18 @@ def score_delta_mean_delta_stdnorm(
     if preference_threshold is None:
         return output_column_names
 
-    # TODO: Check this entire section into a function
     score_data = thicket.statsframe.dataframe[output_column_names[0]]
-
-    recc_comp = (
-        lambda x: "None"
-        if abs(x) <= abs(preference_threshold)
-        else (columns[0][0] if x < 0 else columns[1][0])
-    )  # noqa: E731
-
-    reccomendations = score_data.apply(recc_comp)
+    reccomendations = _preference_calc(score_data, columns, preference_threshold)
 
     thicket.statsframe.dataframe[
         ("Scoring", f"{output_column_name}_preference")
     ] = reccomendations
-    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
     output_column_names.append(("Scoring", f"{output_column_name}_preference"))
 
     return output_column_names
+
 
 @cache_stats_op
 def score_delta_mean_delta_coefficient_of_variation(
@@ -217,20 +250,13 @@ def score_delta_mean_delta_coefficient_of_variation(
         return stats_column_names
 
     score_data = thicket.statsframe.dataframe[stats_column_names[0]]
-
-    recc_comp = (
-        lambda x: "None"
-        if abs(x) <= abs(preference_threshold)
-        else (columns[0][0] if x < 0 else columns[1][0])
-    )  # noqa: E731
-
-    reccomendations = score_data.apply(recc_comp)
+    reccomendations = _preference_calc(score_data, columns, preference_threshold)
 
     thicket.statsframe.dataframe[
         ("Scoring", f"{stats_column_names[0][1]}_preference")
     ] = reccomendations
-    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
     stats_column_names.append(("Scoring", f"{output_column_name}_preference"))
 
     return stats_column_names
@@ -247,24 +273,30 @@ def score_bhattacharyya(
     **kwargs,
 ):
     r"""
-    Apply the Bhattacharrya distance algorithm on two passed columns. The passed columns
-    must be from the performance data table.
+    Calculate a score using the Bhattacharyya distance metric along with a characterization function.
 
     Designed to take in a thicket object, specified columns, an output column name, and
-    append the scoring to the thicket statsframe.
+    append the result to the thicket statsframe.
 
-    This provides a quantitative way to compare two columns through the Bhattacharyya distance,
-    which is a measure of the amount of overlap between two statistical samples or populations.
-    It calculates the distance as a function of means and variances. It ranges from 0 to positive
-    infinity, with 0 indicating complete overlap and vice versa. The larger the magnitude of the
-    value, the larger the difference between the two comparisons.
+    To form a proper scoring mechanism, the approach is divided into two steps, magnitude and signage.
+
+    The Bhattacharyya distance metric measures the amount of overlap between two statistical samples or
+    populations. It calculates the distance as a function of means and variances. It ranges from 0 to positive
+    infinity, with 0 indicating complete overlap and vice versa. It only provides a scalar value which is useful
+    for determining how different two samples are but provides no insight on which is preferable.
+
+    Towards this end, a signage is required to indicate a distinction between the samples. A characterization function
+    along with a comparison function is used for this.
 
     Arguments:
         thicket (thicket)   : Thicket object
-        columns (list)      : List of hardware/timing metrics to perform scoring on. A
+        columns (list)      : List of hardware/timing metrics to perform computation on. A
             columnar joined thicket is required and as such  a list of tuples must be
             passed in with the format (column index, column name).
-        output_column_name  : A string that assigns a name to the scoring column.
+        output_column_name  : A string that assigns a name to the resulting column.
+        characterization_func: A stats function that calculates a preference statistic. Used in
+            conjunction with a comparison function.
+        comparison_func: A function used to make a binary comparison determining signage.
 
     Returns:
         (list): returns a list of output statsframe column names
@@ -274,47 +306,28 @@ def score_bhattacharyya(
 
             \text{result} = \frac{1}{4} \cdot \log \left( \frac{1}{4} \cdot \left( \frac{{\sigma_1[i]^2}}{{\sigma_2[i]^2}} + \frac{{\sigma_2[i]^2}}{{\sigma_1[i]^2}} + 2 \right) \right) + \frac{1}{4} \cdot \left( \frac{{(\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}} \right)
     """
-    # TODO: Ensure columnar joined thicket
 
     output_column_names = []
 
     if comparison_func is None:
-        comparison_func = lambda x,y: x < y
-
-    stats_column_names = th.stats.bhattacharyya_distance(thicket, columns)
-    
-    comp_idx = characterization_func(thicket, columns=columns, **kwargs)
-
-    comp_data = thicket.statsframe.dataframe[[comp_idx[0], comp_idx[1]]]
-
-    comp = comp_data.apply(lambda row: comparison_func(row[comp_idx[0]], row[comp_idx[1]]), axis=1)
-    
-    comp = comp.apply(lambda x: -1 if x else 1)
-
-    result = thicket.statsframe.dataframe[stats_column_names[0]] * comp
+        comparison_func = lambda x, y: x < y  # noqa: E731
 
     if output_column_name is None:
         output_column_name = "bhattacharyya"
 
-    pref_colum = ("Scoring", output_column_name)
+    score_column = ("Scoring", output_column_name)
 
-    thicket.statsframe.dataframe[pref_colum] = result
-    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+    result = _calc_bhattacharyya_score(thicket, columns, comparison_func, characterization_func)
 
-    output_column_names.append(pref_colum)
+    thicket.statsframe.dataframe[score_column] = result
+
+    output_column_names.append(score_column)
 
     if preference_threshold is None:
-        return stats_column_names
+        thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+        return output_column_names
 
-    score_data = thicket.statsframe.dataframe[pref_colum]
-
-    recc_comp = (
-        lambda x: "None"
-        if abs(x) <= abs(preference_threshold)
-        else (columns[0][0] if x < 0 else columns[1][0])
-    )  # noqa: E731
-
-    reccomendations = score_data.apply(recc_comp)
+    reccomendations = _preference_calc(result, columns, preference_threshold)
 
     thicket.statsframe.dataframe[
         ("Scoring", f"{output_column_name}_preference")
@@ -322,6 +335,8 @@ def score_bhattacharyya(
     thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
     output_column_names.append(("Scoring", f"{output_column_name}_preference"))
+
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
     return output_column_names
 
@@ -337,11 +352,12 @@ def score_hellinger(
     **kwargs,
 ):
     r"""
-    Apply the Hellinger's distance algorithm on two passed columns. The passed columns
-    must be from the performance data table.
+    Calculate a score using the Hellinger distance metric along with a characterization function.
 
     Designed to take in a thicket object, specified columns, an output column name, and
-    append the scoring to the thicket statsframe.
+    append the result to the thicket statsframe.
+
+    To form a proper scoring mechanism, the approach is divided into two steps, magnitude and signage.
 
     This provides a quantitative way to compare two columns through the Hellinger distance,
     which is used to quantify the similarity between two probability distributions. It is based
@@ -349,71 +365,53 @@ def score_hellinger(
     themselves. Helliger distance ranges from 0 to 1, with 0 indicating identical distributions
     and 1 indicating completely different distribution.
 
+    The Hellinger distance quantifies the similarity between two probability distributions. It is based
+    on comparing the square roots of the probability densities rather than the probabilites themselves.
+    It ranges is based on comparing the square roots of the probability densities rather than the probabilites
+    themselves. It only provides a scalar value which is useful for determining how different two samples are but provides no insight on which is preferable.
+
+    Towards this end, a signage is required to indicate a distinction between the samples. A characterization function
+    along with a comparison function is used for this.
+
     Arguments:
-        thicket (thicket)   : Thicket object.
-        columns (list)      : List of hardware/timing metrics to perform scoring on. A
+        thicket (thicket)   : Thicket object
+        columns (list)      : List of hardware/timing metrics to perform computation on. A
             columnar joined thicket is required and as such  a list of tuples must be
             passed in with the format (column index, column name).
-        output_column_name  : A string that assigns a name to the scoring column.
+        output_column_name  : A string that assigns a name to the resulting column.
+        characterization_func: A stats function that calculates a preference statistic. Used in
+            conjunction with a comparison function.
+        comparison_func: A function used to make a binary comparison determining signage.
 
     Returns:
         (list): returns a list of output statsframe column names
 
     Equation:
-
         .. math::
 
             \text{result} = 1 - \sqrt{\frac{{2 \sigma_1[i]\sigma_2[i]}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}} \cdot \mathrm{e}^{-\frac{1}{4}\frac{{ (\mu_1[i] - \mu_2[i])^2}}{{\sigma_1[i]^2 + \sigma_2[i]^2}}}
     """
-
     output_column_names = []
 
     if comparison_func is None:
-        comparison_func = lambda x,y: x < y
-
-    stats_column_names = th.stats.hellinger_distance(thicket, columns)
-
-    comp_idx = characterization_func(thicket, columns=columns, **kwargs)
-
-    comp_data = thicket.statsframe.dataframe[[comp_idx[0], comp_idx[1]]]
-
-    comp = comp_data.apply(lambda row: comparison_func(row[comp_idx[0]], row[comp_idx[1]]), axis=1)
-
-    # This could pose issues
-    comp = comp.apply(lambda x: -1 if x else 1)
-
-    result = thicket.statsframe.dataframe[stats_column_names[0]] * comp
+        comparison_func = lambda x, y: x < y  # noqa: E731
 
     if output_column_name is None:
         output_column_name = "hellinger"
 
-    pref_colum = ("Scoring", output_column_name)
+    score_column = ("Scoring", output_column_name)
 
-    thicket.statsframe.dataframe[pref_colum] = result
-    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+    result = _calc_hellinger_score(thicket, columns, comparison_func, characterization_func)
 
-    if output_column_name is None:
-        output_column_name = "bhattacharyya"
+    thicket.statsframe.dataframe[score_column] = result
 
-    pref_colum = ("Scoring", output_column_name)
-
-    thicket.statsframe.dataframe[pref_colum] = result
-    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
-
-    output_column_names.append(pref_colum)
+    output_column_names.append(score_column)
 
     if preference_threshold is None:
-        return stats_column_names
+        thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+        return output_column_names
 
-    score_data = thicket.statsframe.dataframe[pref_colum]
-
-    recc_comp = (
-        lambda x: "None"
-        if abs(x) <= abs(preference_threshold)
-        else (columns[0][0] if x < 0 else columns[1][0])
-    )  # noqa: E731
-
-    reccomendations = score_data.apply(recc_comp)
+    reccomendations = _preference_calc(result, columns, preference_threshold)
 
     thicket.statsframe.dataframe[
         ("Scoring", f"{output_column_name}_preference")
@@ -421,5 +419,7 @@ def score_hellinger(
     thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
     output_column_names.append(("Scoring", f"{output_column_name}_preference"))
+
+    thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
     return output_column_names
