@@ -9,6 +9,8 @@ import hatchet as ht
 
 import thicket as tt
 
+from test_filter_stats import check_filter_stats
+
 
 def test_from_timeseries_cxx(example_timeseries_cxx):
     """Sanity test a thicket timeseries object"""
@@ -51,6 +53,7 @@ def test_from_timeseries_lulesh(example_timeseries):
 
 
 def test_timeseries_statsframe(example_timeseries):
+    """Test the creation of a statsframe with timeseries thicket"""
 
     th = tt.Thicket.from_timeseries(example_timeseries)
 
@@ -62,8 +65,6 @@ def test_timeseries_statsframe(example_timeseries):
     assert len(th.statsframe.graph) == len(th.statsframe.dataframe)
 
     tt.stats.mean(th, columns=["alloc.region.highwatermark"])
-    # stats_nodes = ["main", "lulesh.cycle"]
-    # th_stats_name = th.filter_stats(lambda x: x["name"] in stats_nodes)
 
     assert "alloc.region.highwatermark_mean" in th.statsframe.dataframe.columns
     assert (
@@ -80,6 +81,9 @@ def test_timeseries_statsframe(example_timeseries):
 
 
 def test_timeseries_temporal_pattern(mem_power_timeseries):
+    """
+    Test the stats temporal pattern calculation with timeseries thicket, should add new columns to stats frame and score appropriately
+    """
 
     th = tt.Thicket.from_timeseries(mem_power_timeseries)
 
