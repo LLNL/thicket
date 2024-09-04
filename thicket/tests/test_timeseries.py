@@ -9,8 +9,6 @@ import hatchet as ht
 
 import thicket as tt
 
-from test_filter_stats import check_filter_stats
-
 
 def test_from_timeseries_cxx(example_timeseries_cxx):
     """Sanity test a thicket timeseries object"""
