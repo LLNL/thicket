@@ -30,7 +30,7 @@ def test_empty_iterable():
 
 
 def test_file_not_found():
-    with pytest.raises(FileNotFoundError, match="File 'blah' not found"):
+    with pytest.raises(ValueError, match="Path 'blah' not found"):
         Thicket.reader_dispatch(
             GraphFrame.from_caliperreader,
             False,
@@ -58,3 +58,33 @@ def test_valid_type():
             True,
             -1,
         )
+
+
+def test_valid_inputs(rajaperf_cali_1trial, data_dir):
+
+    # Works with list
+    Thicket.reader_dispatch(
+        GraphFrame.from_caliperreader,
+        False,
+        True,
+        True,
+        rajaperf_cali_1trial,
+    )
+
+    # Works with single file
+    Thicket.reader_dispatch(
+        GraphFrame.from_caliperreader,
+        False,
+        True,
+        True,
+        rajaperf_cali_1trial[0],
+    )
+
+    # Works with directory
+    Thicket.reader_dispatch(
+        GraphFrame.from_caliperreader,
+        False,
+        True,
+        True,
+        f"{data_dir}/rajaperf/lassen/clang10.0.1_nvcc10.2.89_1048576/1/",
+    )
