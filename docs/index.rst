@@ -57,6 +57,7 @@ If you encounter bugs while using thicket, you can report them by opening an iss
    extrap-with-metadata-aggregated.ipynb
    stats-functions.ipynb
    query_language.ipynb
+   groupby_aggregate.ipynb
    vis_docs
 
 .. toctree::
