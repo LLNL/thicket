@@ -117,7 +117,7 @@ def bhattacharyya_distance(thicket, columns=None, output_column_name=None):
             stats_frame_column_name = "{}_{}_{}".format(
                 columns[0],
                 columns[1],
-                "bhattacharrya_distance",
+                "bhattacharyya_distance",
             )
         else:
             stats_frame_column_name = "{}_{}_{}_{}_{}".format(
@@ -125,7 +125,7 @@ def bhattacharyya_distance(thicket, columns=None, output_column_name=None):
                 columns[0][1],
                 columns[1][0],
                 columns[1][1],
-                "bhattacharrya_distance",
+                "bhattacharyya_distance",
             )
     else:
         stats_frame_column_name = output_column_name
@@ -147,8 +147,8 @@ def hellinger_distance(thicket, columns=None, output_column_name=None):
 
     This provides a quantitative way to compare two columns through the Hellinger distance,
     which is used to quantify the similarity between two probability distributions. It is based
-    on comparing the square roots of the probability densities rather than the probabilites
-    themselves. Helliger distance ranges from 0 to 1, with 0 indicating identical distributions
+    on comparing the square roots of the probability densities rather than the probabilities
+    themselves. Hellinger distance ranges from 0 to 1, with 0 indicating identical distributions
     and 1 indicating completely different distribution.
 
     Arguments:

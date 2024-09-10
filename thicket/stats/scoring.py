@@ -333,13 +333,13 @@ def score_hellinger(
 
     This provides a quantitative way to compare two columns through the Hellinger distance,
     which is used to quantify the similarity between two probability distributions. It is based
-    on comparing the square roots of the probability densities rather than the probabilites
-    themselves. Helliger distance ranges from 0 to 1, with 0 indicating identical distributions
+    on comparing the square roots of the probability densities rather than the probabilities
+    themselves. Hellinger distance ranges from 0 to 1, with 0 indicating identical distributions
     and 1 indicating completely different distribution.
 
     The Hellinger distance quantifies the similarity between two probability distributions. It is based
-    on comparing the square roots of the probability densities rather than the probabilites themselves.
-    It ranges is based on comparing the square roots of the probability densities rather than the probabilites
+    on comparing the square roots of the probability densities rather than the probabilities themselves.
+    It ranges is based on comparing the square roots of the probability densities rather than the probabilities
     themselves. It only provides a scalar value which is useful for determining how different two samples are but provides no insight on which is preferable.
 
     Towards this end, a signage is required to indicate a distinction between the samples. A characterization function
