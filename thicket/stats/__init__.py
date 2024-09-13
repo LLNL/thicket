@@ -22,6 +22,8 @@ from .scoring import score_bhattacharyya
 from .scoring import score_hellinger
 from .preference import preference
 from .calc_temporal_pattern import calc_temporal_pattern
+from .distance import bhattacharyya_distance
+from .distance import hellinger_distance
 
 
 try:
