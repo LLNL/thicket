@@ -21,6 +21,7 @@ from .scoring import score_delta_mean_delta_coefficient_of_variation
 from .scoring import score_bhattacharyya
 from .scoring import score_hellinger
 from .preference import preference
+from .calc_temporal_pattern import calc_temporal_pattern
 from .distance import bhattacharyya_distance
 from .distance import hellinger_distance
 
