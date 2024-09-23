@@ -6,8 +6,13 @@
 from thicket import Thicket
 
 
-def test_copy(rajaperf_seq_O3_1M_cali):
-    self = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0], disable_tqdm=True)
+def test_copy(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
+    self = Thicket.from_caliperreader(
+        rajaperf_seq_O3_1M_cali[0],
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
     self.exc_metrics.append("value")
     other = self.copy()
 
@@ -67,8 +72,13 @@ def test_copy(rajaperf_seq_O3_1M_cali):
     )
 
 
-def test_deepcopy(rajaperf_seq_O3_1M_cali):
-    self = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0], disable_tqdm=True)
+def test_deepcopy(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
+    self = Thicket.from_caliperreader(
+        rajaperf_seq_O3_1M_cali[0],
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
     self.exc_metrics.append("value")
     other = self.deepcopy()
 

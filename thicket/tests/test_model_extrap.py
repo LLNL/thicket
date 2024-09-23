@@ -32,10 +32,15 @@ if not extrap_avail:
     pytest.skip("Extra-P package not available", allow_module_level=True)
 
 
-def test_model_extrap(mpi_scaling_cali):
+def test_model_extrap(mpi_scaling_cali, intersection, fill_perfdata):
     from thicket.model_extrap import Modeling
 
-    t_ens = Thicket.from_caliperreader(mpi_scaling_cali, disable_tqdm=True)
+    t_ens = Thicket.from_caliperreader(
+        mpi_scaling_cali,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
 
     # Method 1: Model created using metadata column
     mdl = Modeling(
@@ -73,10 +78,15 @@ def test_model_extrap(mpi_scaling_cali):
     )
 
 
-def test_componentize_functions(mpi_scaling_cali):
+def test_componentize_functions(mpi_scaling_cali, intersection, fill_perfdata):
     from thicket.model_extrap import Modeling
 
-    t_ens = Thicket.from_caliperreader(mpi_scaling_cali, disable_tqdm=True)
+    t_ens = Thicket.from_caliperreader(
+        mpi_scaling_cali,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
 
     mdl = Modeling(
         t_ens,

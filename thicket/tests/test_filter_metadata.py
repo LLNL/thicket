@@ -163,8 +163,13 @@ def filter_multiple_or(th, columns_values):
     assert "name" in new_th.statsframe.dataframe.columns
 
 
-def test_check_errors(rajaperf_seq_O3_1M_cali):
-    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
+def test_check_errors(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
+    th = Thicket.from_caliperreader(
+        rajaperf_seq_O3_1M_cali,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
 
     # check for invalid filter exception
     with pytest.raises(InvalidFilter):
@@ -192,9 +197,14 @@ def test_check_errors(rajaperf_seq_O3_1M_cali):
         th.filter_metadata(lambda x: x["cluster"] == "quartz")
 
 
-def test_filter_metadata(rajaperf_seq_O3_1M_cali):
+def test_filter_metadata(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     # example thicket
-    th = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali, disable_tqdm=True)
+    th = Thicket.from_caliperreader(
+        rajaperf_seq_O3_1M_cali,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
     # columns and corresponding values to filter by
     columns_values = {"ProblemSizeRunParam": [1048576.0], "cluster": ["quartz"]}
     filter_one_column(th, columns_values)
