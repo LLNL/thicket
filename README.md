@@ -7,9 +7,13 @@
 
 # Thicket
 
-A Python-based toolkit for Exploratory Data Analysis (EDA) of parallel performance data that enables performance optimization and understanding of applications’ performance on supercomputers. It bridges the performance tool gap between being able to consider only a single instance of a simulation run (e.g., single platform, single measurement tool, or single scale) and finding actionable insights in multi-dimensional, multi-scale, multi-architecture, and multi-tool performance datasets.
-You can find
-detailed documentation, along with tutorials of Thicket in the
+A Python-based toolkit for Exploratory Data Analysis (EDA) of parallel performance data
+that enables performance optimization and understanding of applications’ performance on
+supercomputers. It bridges the performance tool gap between being able to consider only
+a single instance of a simulation run (e.g., single platform, single measurement tool,
+or single scale) and finding actionable insights in multi-dimensional, multi-scale,
+multi-architecture, and multi-tool performance datasets. You can find detailed
+documentation, along with tutorials of Thicket in the
 [ReadtheDocs](https://thicket.readthedocs.io/en/latest/).
 
 ### Installation
