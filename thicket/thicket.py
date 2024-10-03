@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import collections
 import copy
 import os
 import pickle
@@ -575,6 +576,17 @@ class Thicket(GraphFrame):
                 return agg_func(col)
             else:
                 return col[0]
+
+        # Remove duplicate metrics in chosen_metrics if the user provided duplicates
+        unique_metrics = list(set(chosen_metrics))
+        if len(unique_metrics) != len(chosen_metrics):
+            dupe_mets = [
+                met
+                for met, count in collections.Counter(chosen_metrics).items()
+                if count > 1
+            ]
+            warnings.warn(f"Removing duplicate metrics in chosen_metrics: {dupe_mets}")
+        chosen_metrics = unique_metrics
 
         # Check if chosen_metrics are in the dataframe
         dupe_cols = [col for col in chosen_metrics if col in self.dataframe.columns]
