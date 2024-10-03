@@ -129,6 +129,8 @@ class NCUReader:
                 pbar = tqdm(range)
                 for i, action in enumerate(pbar):
                     pbar.set_description(f"Processing action {i}/{len(range)}")
+                    if debug:
+                        print(f"Action: {i}")
                     # Demangled name of kernel
                     demangled_kernel_name = action.name(
                         ncu_report.IAction.NameBase_DEMANGLED
@@ -148,14 +150,22 @@ class NCUReader:
                         # (last elem usually not useful for matching)
                         temp_call_trace = kernel_call_trace[:-1]
                         call_trace_str = "::".join([s.lower() for s in temp_call_trace])
+                        if debug:
+                            print(f"\tKernel Call Trace: {call_trace_str}")
 
                         # Pattern ends with ":" if RAJA_CUDA, "<" if Base_CUDA
                         kernel_pattern = rf"{call_trace_str}::(\w+)[<:]"
                         kernel_match = re.search(kernel_pattern, demangled_kernel_name)
-                        kernel_str = kernel_match.group(1)
+                        # Found match
+                        if kernel_match:
+                            kernel_str = kernel_match.group(1)
+                        else:
+                            if debug:
+                                print(f"\tCould not match {demangled_kernel_name}")
+                            continue
 
                         if raja_lambda_cuda:
-                            # RAJA_CUDA variant
+                            # RAJA_CUDA/Lambda_CUDA variant
                             instance_pattern = r"instance (\d+)"
                             instance_match = re.findall(
                                 instance_pattern, demangled_kernel_name
@@ -198,12 +208,12 @@ class NCUReader:
                                 if not raja_lambda_cuda:
                                     instance_num = "NA"
                                 print(
-                                    f"Matched NCU kernel:\n\t{demangled_kernel_name}\nto Caliper Node:\n\t{matched_node}"
+                                    f"\tMatched NCU kernel:\n\t\t{demangled_kernel_name}\n\tto Caliper Node:\n\t\t{matched_node}"
                                 )
                                 print(
-                                    f"AKA:\n\t{kernel_str} (instance {instance_num}) == {kernel_str} (#{instance_num})\n"
+                                    f"\tAKA:\n\t\t{kernel_str} (instance {instance_num}) == {kernel_str} (#{instance_num})\n"
                                 )
-                                print("All matched nodes:")
+                                print("\tAll matched nodes:")
                                 for node in matched_nodes:
                                     print("\t", node)
 
