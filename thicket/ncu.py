@@ -149,9 +149,16 @@ class NCUReader:
                         # Call trace with last element removed
                         # (last elem usually not useful for matching)
                         temp_call_trace = kernel_call_trace[:-1]
-                        call_trace_str = "::".join([s.lower() for s in temp_call_trace])
+                        # Special case to match "cub" kernels
+                        if "cub" in demangled_kernel_name:
+                            call_trace_str = "cub"
+                        else:
+                            call_trace_str = "::".join(
+                                [s.lower() for s in temp_call_trace]
+                            )
                         if debug:
                             print(f"\tKernel Call Trace: {call_trace_str}")
+                            print(action.name())
 
                         # Pattern ends with ":" if RAJA_CUDA, "<" if Base_CUDA
                         kernel_pattern = rf"{call_trace_str}::(\w+)[<:]"
@@ -164,17 +171,19 @@ class NCUReader:
                                 print(f"\tCould not match {demangled_kernel_name}")
                             continue
 
-                        if raja_lambda_cuda:
-                            # RAJA_CUDA/Lambda_CUDA variant
-                            instance_pattern = r"instance (\d+)"
-                            instance_match = re.findall(
-                                instance_pattern, demangled_kernel_name
-                            )
+                        # RAJA_CUDA/Lambda_CUDA variant
+                        instance_pattern = r"instance (\d+)"
+                        instance_match = re.findall(
+                            instance_pattern, demangled_kernel_name
+                        )
+                        if instance_match:
                             instance_num = instance_match[-1]
                             kernel_name = kernel_str + "_" + instance_num
+                            instance_exists = True
                         else:
                             # Base_CUDA variant
                             kernel_name = kernel_str
+                            instance_exists = False
 
                         # Add kernel name to the end of the trace tuple
                         kernel_call_trace.append(kernel_str)
@@ -198,14 +207,14 @@ class NCUReader:
                                 if kernel_str in n.frame["name"]
                                 and (
                                     f"#{instance_num}" in n.frame["name"]
-                                    if raja_lambda_cuda
+                                    if raja_lambda_cuda and instance_exists
                                     else True
                                 )
                             ]
                             matched_node = matched_nodes[0]
 
                             if debug:
-                                if not raja_lambda_cuda:
+                                if not raja_lambda_cuda or not instance_exists:
                                     instance_num = "NA"
                                 print(
                                     f"\tMatched NCU kernel:\n\t\t{demangled_kernel_name}\n\tto Caliper Node:\n\t\t{matched_node}"
