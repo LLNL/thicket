@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 from collections import defaultdict
+from difflib import SequenceMatcher
 import re
 
 from hatchet import QueryMatcher
@@ -152,12 +153,19 @@ class NCUReader:
                         # Special case to match "cub" kernels
                         if "cub" in demangled_kernel_name:
                             call_trace_str = "cub"
+                            # Replace substrings that may cause mismatch
+                            demangled_kernel_name = demangled_kernel_name.replace(
+                                "(bool)1", "true"
+                            )
+                            demangled_kernel_name = demangled_kernel_name.replace(
+                                "(bool)0", "false"
+                            )
                         else:
                             call_trace_str = "::".join(
                                 [s.lower() for s in temp_call_trace]
                             )
                         if debug:
-                            print(f"\tKernel Call Trace: {call_trace_str}")
+                            print(f"\tKernel Call Trace: {kernel_call_trace}")
                             print(action.name())
 
                         # Pattern ends with ":" if RAJA_CUDA, "<" if Base_CUDA
@@ -190,9 +198,9 @@ class NCUReader:
 
                         # Match ncu kernel to thicket node
                         matched_node = None
-                        if kernel_name in kernel_map:
+                        if demangled_kernel_name in kernel_map:
                             # Skip query building
-                            matched_node = kernel_map[kernel_name]
+                            matched_node = kernel_map[demangled_kernel_name]
                         else:  # kernel hasn't been seen yet
                             # Build query
                             query = NCUReader._build_query_from_ncu_trace(
@@ -211,7 +219,25 @@ class NCUReader:
                                     else True
                                 )
                             ]
-                            matched_node = matched_nodes[0]
+                            if len(matched_nodes) > 1:
+                                # Attempt to match using similarity
+                                match_dict = {}
+                                for node in matched_nodes:
+                                    match_ratio = SequenceMatcher(
+                                        None, node.frame["name"], demangled_kernel_name
+                                    ).ratio()
+                                    match_dict[node] = match_ratio
+                                matched_node = max(match_dict, key=match_dict.get)
+                                if debug:
+                                    print(
+                                        f"NOTICE: Multiple matches ({len(matched_nodes)}) found for kernel. Matching using string similarity..."
+                                    )
+                            elif len(matched_nodes) == 1:
+                                matched_node = matched_nodes[0]
+                            else:
+                                raise ValueError(
+                                    "No node found for kernel: " + kernel_str
+                                )
 
                             if debug:
                                 if not raja_lambda_cuda or not instance_exists:
@@ -227,7 +253,7 @@ class NCUReader:
                                     print("\t", node)
 
                         # Set mapping
-                        kernel_map[kernel_name] = matched_node
+                        kernel_map[demangled_kernel_name] = matched_node
 
                         metric_values = [action[name].value() for name in metric_names]
 
