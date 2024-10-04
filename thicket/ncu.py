@@ -186,11 +186,9 @@ class NCUReader:
                         )
                         if instance_match:
                             instance_num = instance_match[-1]
-                            kernel_name = kernel_str + "_" + instance_num
                             instance_exists = True
                         else:
                             # Base_CUDA variant
-                            kernel_name = kernel_str
                             instance_exists = False
 
                         # Add kernel name to the end of the trace tuple
