@@ -277,6 +277,126 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
+    def from_hpctoolkit_latest(
+        dirname,
+        intersection=False,
+        disable_tqdm=False,
+        directory_mapping=None,
+        parallel_profiles_mode=False,
+        max_depth=None,
+        min_percentage_of_application_time=None,
+        exclude_mpi_function_details=False,
+        exclude_openmp_function_details=False,
+        exclude_cuda_function_details=False,
+        exclude_system_libraries_source_code=False,
+        exclude_function_call_lines=False,
+        exclude_no_source_code_instructions=False,
+        exclude_instructions=False,
+        exclude_non_function_nodes=False,
+        label_function_nodes=True,
+        metric_names=None,
+        metric_scopes=None,
+        summary_metrics=None,
+        profile_ranks=None,
+        sort_method="nodes",
+    ):
+        """Create a GraphFrame using hatchet's HPCToolkit reader and use its attributes
+        to make a new thicket.
+
+        Arguments:
+            dirname (str): directory containing HPCToolkit performance data
+            intersection (bool): whether to perform intersection or union (default)
+            disable_tqdm (bool): whether to display tqdm progress bar
+
+        Returns:
+            (thicket): new thicket containing HPCToolkit profile data
+        """
+
+        if parallel_profiles_mode:
+            graphframe = GraphFrame.from_hpctoolkit_latest(
+                dirname,
+                directory_mapping=directory_mapping,
+                parallel_profiles_mode=True,
+                max_depth=max_depth,
+                min_percentage_of_application_time=min_percentage_of_application_time,
+                exclude_mpi_function_details=exclude_mpi_function_details,
+                exclude_openmp_function_details=exclude_openmp_function_details,
+                exclude_cuda_function_details=exclude_cuda_function_details,
+                exclude_system_libraries_source_code=exclude_system_libraries_source_code,
+                exclude_function_call_lines=exclude_function_call_lines,
+                exclude_no_source_code_instructions=exclude_no_source_code_instructions,
+                exclude_instructions=exclude_instructions,
+                exclude_non_function_nodes=exclude_non_function_nodes,
+                label_function_nodes=label_function_nodes,
+                metric_names=metric_names,
+                metric_scopes=metric_scopes,
+                summary_metrics=summary_metrics,
+                profile_ranks=profile_ranks,
+            )
+
+            profile_ids = (
+                graphframe.dataframe.index.get_level_values(1).unique().to_numpy()
+            )
+            diff_dataframe = []
+
+            def visit_node(node) -> None:
+                temp = graphframe.dataframe.loc[node, :].index.unique().to_numpy()
+
+                for profile in np.setdiff1d(profile_ids, temp):
+                    diff_dataframe.append({"node": node, "profile": profile})
+
+                for child in node.children:
+                    visit_node(child)
+
+            root = graphframe.graph.roots[0]
+            visit_node(root)
+
+            if len(diff_dataframe):
+                diff_dataframe = pd.DataFrame(diff_dataframe).set_index(
+                    ["node", "profile"]
+                )
+                graphframe.dataframe = pd.concat([graphframe.dataframe, diff_dataframe])
+
+            return Thicket.thicketize_graphframe(graphframe, None)
+
+        else:
+
+            thicket = Thicket.reader_dispatch(
+                GraphFrame.from_hpctoolkit_latest,
+                intersection,
+                disable_tqdm,
+                dirname,
+                directory_mapping=directory_mapping,
+                max_depth=max_depth,
+                min_percentage_of_application_time=min_percentage_of_application_time,
+                exclude_mpi_function_details=exclude_mpi_function_details,
+                exclude_openmp_function_details=exclude_openmp_function_details,
+                exclude_cuda_function_details=exclude_cuda_function_details,
+                exclude_system_libraries_source_code=exclude_system_libraries_source_code,
+                exclude_function_call_lines=exclude_function_call_lines,
+                exclude_no_source_code_instructions=exclude_no_source_code_instructions,
+                exclude_instructions=exclude_instructions,
+                metric_names=metric_names,
+                metric_scopes=metric_scopes,
+                summary_metrics=summary_metrics,
+                profile_ranks=profile_ranks,
+            )
+            thicket.dataframe = (
+                thicket.dataframe.reset_index()
+                .merge(
+                    thicket.metadata[["nodes" if sort_method == "nodes" else "date"]],
+                    how="left",
+                    left_on="profile",
+                    right_on="profile",
+                )
+                .set_index(["node", "profile"])
+                .sort_values("nodes" if sort_method == "nodes" else "date")
+                .drop("nodes" if sort_method == "nodes" else "date", axis=1)
+            )
+
+            return thicket
+
+    @staticmethod
     def from_caliperreader(
         filename_or_caliperreader,
         intersection=False,
