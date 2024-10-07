@@ -6,6 +6,7 @@
 import math
 
 import numpy as np
+import pytest
 
 import thicket as th
 
@@ -1217,3 +1218,49 @@ def test_cache_decorator(rajaperf_seq_O3_1M_cali):
     assert (
         len(th_1.statsframe_ops_cache[list(th_1.statsframe_ops_cache.keys())[0]]) == 1
     )
+
+
+def test_confidence_interval(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+
+    idx = list(combined_th.dataframe.columns.levels[0][0:2])
+    columns = [(idx[0], "Min time/rank"), (idx[1], "Min time/rank")]
+
+    with pytest.raises(
+        ValueError, match="Value passed to 'columns' must be of type list."
+    ):
+        th.stats.confidence_interval(combined_th, columns="columns")
+
+    with pytest.raises(
+        ValueError,
+        match="Value passed to 'confidence_level' must be of type float or int.",
+    ):
+        th.stats.confidence_interval(
+            combined_th, columns=columns, confidence_level="0.95"
+        )
+
+    with pytest.raises(
+        ValueError,
+        match=r"Value passed to 'confidence_level' must be in the range of \(0, 1\).",
+    ):
+        th.stats.confidence_interval(combined_th, columns=columns, confidence_level=95)
+
+    # Hardcoded cases
+    columns = [("block_128", "Avg time/rank"), ("default", "Avg time/rank")]
+
+    th.stats.confidence_interval(combined_th, columns=columns)
+
+    correct_data = {
+        ("block_128", "confidence_interval_0.95_Avg time/rank"): [
+            (1.0128577358974717, 4.149184264102528),
+            (0.0049270306443246845, 0.012615969355675315),
+        ],
+        ("default", "confidence_interval_0.95_Avg time/rank"): [
+            (43.443961386963, 288.581029613037),
+            (1.858945913805485, 10.117062086194515),
+        ],
+    }
+
+    for col in correct_data.keys():
+        for idx, val in enumerate(correct_data[col]):
+            assert combined_th.statsframe.dataframe[col][idx] == val
