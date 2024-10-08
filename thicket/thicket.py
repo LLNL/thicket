@@ -282,6 +282,7 @@ class Thicket(GraphFrame):
         intersection=False,
         fill_perfdata=True,
         disable_tqdm=False,
+        **kwargs,
     ):
         """Helper function to read one caliper file.
 
@@ -298,6 +299,7 @@ class Thicket(GraphFrame):
             fill_perfdata,
             disable_tqdm,
             filename_or_caliperreader,
+            **kwargs,
         )
 
     @staticmethod
