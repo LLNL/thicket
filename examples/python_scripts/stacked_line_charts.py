@@ -201,6 +201,7 @@ def process_thickets(
     if top_n_nodes != -1:
         ctk.dataframe = ctk.dataframe.nlargest(top_n_nodes, [(x_axis[0], "Total time")])
 
+    # Set default label to x_axis_unique_metadata if not provided
     if not additional_args["chart_xlabel"]:
         additional_args["chart_xlabel"] = x_axis_unique_metadata
 
