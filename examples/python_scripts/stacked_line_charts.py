@@ -30,10 +30,10 @@ def arg_parse():
         help="Parameter that is varied during the experiment.",
     )
     parser.add_argument(
-        "--x_axis_scaling",
+        "--x_axis_log_scaling_base",
         default=-1,
         type=int,
-        help="Scaling of x axis values for display on chart.",
+        help="logarithmic scaling base value for x axis on chart. Default is linear scaling.",
     )
     parser.add_argument(
         "--y_axis_metric",
@@ -74,13 +74,11 @@ def arg_parse():
     )
     parser.add_argument(
         "--chart_xlabel",
-        default="no_label",
         type=str,
         help="Optional: X Label of chart.",
     )
     parser.add_argument(
         "--chart_ylabel",
-        default="no_label",
         type=str,
         help="Optional: Y Label of chart.",
     )
@@ -94,23 +92,34 @@ def arg_parse():
         "--chart_figsize",
         nargs="+",
         type=int,
-        default=None,
         help="Optional: Size of the output chart (xdim, ydim). Ex: --chart_figsize 10 5",
     )
     parser.add_argument(
         "--chart_fontsize",
         type=int,
-        default=None,
         help="Optional: Font size of the output chart.",
     )
     args = parser.parse_args()
     return args
 
 
-def make_stacked_line_chart(
-    df, value, x_axis, title, x_label, y_label, filename, x_axis_scaling, **kwargs
-):
-    df.to_csv(filename + ".csv")
+def make_stacked_line_chart(df, chart_type, x_axis, **kwargs):
+    if chart_type == "percentage_time":
+        value = "perc"
+        y_label = (
+            kwargs["chart_ylabel"]
+            if kwargs["chart_ylabel"]
+            else "Percentage of Runtime"
+        )
+    elif chart_type == "total_time":
+        value = "Total time"
+        y_label = kwargs["chart_ylabel"] if kwargs["chart_ylabel"] else "Total Time"
+    else:
+        raise ValueError(
+            "Invalid chart_type value. Please choose from 'percentage_time' or 'total_time'."
+        )
+
+    df.to_csv(kwargs["chart_file_name"] + ".csv")
 
     tdf = df[[(i, value) for i in x_axis]].T
     tdf.index = [int(re.sub(r"\D", "", str(item))) for item in tdf.index]
@@ -135,14 +144,14 @@ def make_stacked_line_chart(
 
     ax = tdf.plot(
         kind="area",
-        title=title,
-        xlabel=x_label,
+        title=kwargs["chart_title"],
+        xlabel=kwargs["chart_xlabel"],
         ylabel=y_label,
         figsize=tuple(kwargs["chart_figsize"]) if kwargs["chart_figsize"] else (10, 5),
     )
 
-    if x_axis_scaling != -1:
-        ax.set_xscale("log", base=x_axis_scaling)
+    if kwargs["x_axis_log_scaling_base"] != -1:
+        ax.set_xscale("log", base=kwargs["x_axis_log_scaling_base"])
 
     ax.tick_params(axis="x", rotation=45)
     handles, labels = ax.get_legend_handles_labels()
@@ -150,7 +159,7 @@ def make_stacked_line_chart(
     ax.legend(reversed(handles), reversed(labels), bbox_to_anchor=(1.1, 1.05))
 
     plt.tight_layout()
-    plt.savefig(filename + ".png")
+    plt.savefig(kwargs["chart_file_name"] + ".png")
 
 
 def process_thickets(
@@ -159,12 +168,12 @@ def process_thickets(
     y_axis_metric,
     filter_nodes_name_prefix,
     top_n_nodes,
-    output_charts,
-    additional_args,
+    chart_type,
+    **additional_args,
 ):
     tk = th.Thicket.from_caliperreader(glob(input_files + "/**/*.cali", recursive=True))
 
-    f = open(additional_args.chart_file_name + ".txt", "w")
+    f = open(additional_args["chart_file_name"] + ".txt", "w")
     f.write(tk.tree(metric_column=y_axis_metric))
     f.close()
 
@@ -178,7 +187,7 @@ def process_thickets(
         axis="columns",
     )
 
-    if additional_args.group_nodes_name:
+    if additional_args["group_nodes_name"]:
         ctk.dataframe = ctk.dataframe.groupby("name").sum()
 
     for i in x_axis:
@@ -192,53 +201,16 @@ def process_thickets(
     if top_n_nodes != -1:
         ctk.dataframe = ctk.dataframe.nlargest(top_n_nodes, [(x_axis[0], "Total time")])
 
-    if additional_args.chart_xlabel == "no_label":
-        additional_args.chart_xlabel = x_axis_unique_metadata
+    if not additional_args["chart_xlabel"]:
+        additional_args["chart_xlabel"] = x_axis_unique_metadata
 
-    if output_charts == "percentage_time":
-        make_stacked_line_chart(
-            df=ctk.dataframe,
-            value="perc",
-            x_axis=x_axis,
-            title=additional_args.chart_title,
-            x_label=additional_args.chart_xlabel,
-            y_label=(
-                "Percentage of Runtime"
-                if additional_args.chart_ylabel == "no_label"
-                else additional_args.chart_ylabel
-            ),
-            filename=additional_args.chart_file_name,
-            x_axis_scaling=additional_args.x_axis_scaling,
-            chart_figsize=additional_args.chart_figsize,
-            chart_fontsize=additional_args.chart_fontsize,
-        )
-    elif output_charts == "total_time":
-        make_stacked_line_chart(
-            df=ctk.dataframe,
-            value="Total time",
-            x_axis=x_axis,
-            title=additional_args.chart_title,
-            x_label=additional_args.chart_xlabel,
-            y_label=(
-                "Total Time"
-                if additional_args.chart_ylabel == "no_label"
-                else additional_args.chart_ylabel
-            ),
-            filename=additional_args.chart_file_name,
-            x_axis_scaling=additional_args.x_axis_scaling,
-            chart_figsize=additional_args.chart_figsize,
-            chart_fontsize=additional_args.chart_fontsize,
-        )
+    make_stacked_line_chart(
+        df=ctk.dataframe, chart_type=chart_type, x_axis=x_axis, **additional_args
+    )
 
 
 if __name__ == "__main__":
     args = arg_parse()
     process_thickets(
-        input_files=args.input_files,
-        x_axis_unique_metadata=args.x_axis_unique_metadata,
-        y_axis_metric=args.y_axis_metric,
-        filter_nodes_name_prefix=args.filter_nodes_name_prefix,
-        top_n_nodes=args.top_n_nodes,
-        output_charts=args.chart_type,
-        additional_args=args,
+        **vars(args),
     )
