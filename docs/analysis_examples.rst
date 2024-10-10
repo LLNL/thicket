@@ -4,12 +4,9 @@
 
    SPDX-License-Identifier: MIT
 
-*****************
-Analysis Examples
-*****************
-
-Scaling Studies
-===============
+#####################################
+1. Stacked Charts for Scaling Studies
+#####################################
 
 Thicket can be used to help display the scaling behavior of an application.
 In thicket/examples/python_scripts/ the python scripts provide examples
@@ -20,14 +17,14 @@ It outputs a stacked line chart of Caliper node runtimes, either by
 percentage or by total run time.
 
 Running the Script:
-===================
+*******************
 
 .. code:: console
 
    $ python stacked_line_charts.py <arguments>
 
 Script Arguments:
-=================
+*****************
 .. list-table:: Table of Arguments
    :widths: 50 50
    :header-rows: 1
@@ -65,7 +62,7 @@ Script Arguments:
 
 
 Kripke Example Output Charts:
-=============================
+*****************************
 
 .. code:: console
 
