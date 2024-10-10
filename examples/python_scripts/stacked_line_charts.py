@@ -30,6 +30,13 @@ def arg_parse():
         help="Parameter that is varied during the experiment.",
     )
     parser.add_argument(
+        "--chart_type",
+        required=True,
+        choices=["percentage_time", "total_time"],
+        type=str,
+        help="Specify type of output chart.",
+    )
+    parser.add_argument(
         "--x_axis_log_scaling_base",
         default=-1,
         type=int,
@@ -58,13 +65,6 @@ def arg_parse():
         default=-1,
         type=int,
         help="Optional: Filters only top n longest time entries to be included in chart.",
-    )
-    parser.add_argument(
-        "--chart_type",
-        required=True,
-        choices=["percentage_time", "total_time"],
-        type=str,
-        help="Specify type of output chart.",
     )
     parser.add_argument(
         "--chart_title",
