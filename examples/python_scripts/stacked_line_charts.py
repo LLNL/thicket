@@ -117,7 +117,7 @@ def make_stacked_line_chart(
 
     # Hard coded color map
     color = [
-        "#377eb8",
+        "#00FFFF",
         "#ff7f00",
         "#4daf4a",
         "#f781bf",
@@ -126,6 +126,7 @@ def make_stacked_line_chart(
         "#999999",
         "#e41a1c",
         "#dede00",
+        "#377eb8",
     ]
     mpl.rcParams["axes.prop_cycle"] = mpl.cycler(color=color)
 
@@ -149,7 +150,6 @@ def make_stacked_line_chart(
     ax.legend(reversed(handles), reversed(labels), bbox_to_anchor=(1.1, 1.05))
 
     plt.tight_layout()
-
     plt.savefig(filename + ".png")
 
 
