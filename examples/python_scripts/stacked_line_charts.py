@@ -152,10 +152,11 @@ def make_stacked_line_chart(df, chart_type, x_axis, **kwargs):
 
     if kwargs["x_axis_log_scaling_base"] != -1:
         ax.set_xscale("log", base=kwargs["x_axis_log_scaling_base"])
+    else:
+        ax.set_xticks(tdf.index)
 
     ax.tick_params(axis="x", rotation=45)
     handles, labels = ax.get_legend_handles_labels()
-    plt.xticks(tdf.index)
     ax.legend(reversed(handles), reversed(labels), bbox_to_anchor=(1.1, 1.05))
 
     plt.tight_layout()
