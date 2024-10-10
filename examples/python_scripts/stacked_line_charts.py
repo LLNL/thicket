@@ -202,9 +202,11 @@ def process_thickets(
             x_axis=x_axis,
             title=additional_args.chart_title,
             x_label=additional_args.chart_xlabel,
-            y_label="Percentage of Runtime"
-            if additional_args.chart_ylabel == "no_label"
-            else additional_args.chart_ylabel,
+            y_label=(
+                "Percentage of Runtime"
+                if additional_args.chart_ylabel == "no_label"
+                else additional_args.chart_ylabel
+            ),
             filename=additional_args.chart_file_name,
             x_axis_scaling=additional_args.x_axis_scaling,
             chart_figsize=additional_args.chart_figsize,
@@ -217,9 +219,11 @@ def process_thickets(
             x_axis=x_axis,
             title=additional_args.chart_title,
             x_label=additional_args.chart_xlabel,
-            y_label="Total Time"
-            if additional_args.chart_ylabel == "no_label"
-            else additional_args.chart_ylabel,
+            y_label=(
+                "Total Time"
+                if additional_args.chart_ylabel == "no_label"
+                else additional_args.chart_ylabel
+            ),
             filename=additional_args.chart_file_name,
             x_axis_scaling=additional_args.x_axis_scaling,
             chart_figsize=additional_args.chart_figsize,
