@@ -103,17 +103,21 @@ def arg_parse():
     return args
 
 
-def make_stacked_line_chart(df, chart_type, x_axis, **kwargs):
+def make_stacked_line_chart(df, chart_type, x_axis, y_axis_metric, **kwargs):
     if chart_type == "percentage_time":
         value = "perc"
         y_label = (
             kwargs["chart_ylabel"]
             if kwargs["chart_ylabel"]
-            else "Percentage of Runtime"
+            else "Percentage " + y_axis_metric
         )
     elif chart_type == "total_time":
         value = "Total time"
-        y_label = kwargs["chart_ylabel"] if kwargs["chart_ylabel"] else "Total Time"
+        y_label = (
+            kwargs["chart_ylabel"]
+            if kwargs["chart_ylabel"]
+            else "Total " + y_axis_metric
+        )
     else:
         raise ValueError(
             "Invalid chart_type value. Please choose from 'percentage_time' or 'total_time'."
@@ -139,25 +143,33 @@ def make_stacked_line_chart(df, chart_type, x_axis, **kwargs):
     ]
     mpl.rcParams["axes.prop_cycle"] = mpl.cycler(color=color)
 
+    # Set font size of text
     if kwargs["chart_fontsize"]:
         mpl.rcParams.update({"font.size": kwargs["chart_fontsize"]})
 
-    ax = tdf.plot(
+    # Plotting
+    fig, ax = plt.subplots()
+    tdf.plot(
         kind="area",
         title=kwargs["chart_title"],
         xlabel=kwargs["chart_xlabel"],
         ylabel=y_label,
         figsize=tuple(kwargs["chart_figsize"]) if kwargs["chart_figsize"] else (10, 5),
+        ax=ax,
     )
 
+    # Set scaling of x-axis
     if kwargs["x_axis_log_scaling_base"] != -1:
         ax.set_xscale("log", base=kwargs["x_axis_log_scaling_base"])
     else:
         ax.set_xticks(tdf.index)
 
-    ax.tick_params(axis="x", rotation=45)
+    # Reverse legend order
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(reversed(handles), reversed(labels), bbox_to_anchor=(1.1, 1.05))
+
+    # Try to fix xlabel spacing automatically
+    fig.autofmt_xdate()
 
     plt.tight_layout()
     plt.savefig(kwargs["chart_file_name"] + ".png")
@@ -172,6 +184,7 @@ def process_thickets(
     chart_type,
     **additional_args,
 ):
+
     tk = th.Thicket.from_caliperreader(glob(input_files + "/**/*.cali", recursive=True))
 
     f = open(additional_args["chart_file_name"] + ".txt", "w")
@@ -207,12 +220,14 @@ def process_thickets(
         additional_args["chart_xlabel"] = x_axis_unique_metadata
 
     make_stacked_line_chart(
-        df=ctk.dataframe, chart_type=chart_type, x_axis=x_axis, **additional_args
+        df=ctk.dataframe,
+        chart_type=chart_type,
+        x_axis=x_axis,
+        y_axis_metric=y_axis_metric,
+        **additional_args,
     )
 
 
 if __name__ == "__main__":
     args = arg_parse()
-    process_thickets(
-        **vars(args),
-    )
+    process_thickets(**vars(args))
