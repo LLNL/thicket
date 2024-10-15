@@ -26,3 +26,12 @@ Tutorials
 - HPCIC Tutorials: Caliper, Hatchet, and Thicket. Virtual. August 8, 2024. `YouTube <https://youtu.be/qVmxDOxM9Ws?si=CL6MjN0mvQcivVXA>`_
 
 - RADIUSS AWS Tutorials: Caliper, Hatchet, and Thicket. Virtual. August 14, 2023. `YouTube <https://youtu.be/_Ch4pik5QCs?si=HCd8D4oJlyiSvzg1>`_
+
+Presentations
+==========
+
+- Scalable Tools Workshop: Thicket: Growth of the Heterogeneous Performance Experiment Forest. August 12, 2024. `Slides <https://dyninst.github.io/scalable_tools_workshop/petascale2024/assets/slides/2024_08_12_Thicket_ScalableTools.pdf>`_
+
+- Scalable Tools Workshop: Programmatic Analysis of Large-Scale Performance Data. August, 12, 2024. `Slides <https://dyninst.github.io/scalable_tools_workshop/petascale2024/assets/slides/STW-2024-Grbic.pdf>`_
+
+- Scalable Tools Workshop: Thicket: Seeing the Performance Experiment Forest for the Individual Run Trees. June 20, 2023. `Slides <https://dyninst.github.io/scalable_tools_workshop/petascale2023/assets/slides/2023_06_20_Thicket_ScalableTools.pdf>`_
