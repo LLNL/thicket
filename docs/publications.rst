@@ -16,6 +16,8 @@ Posters
 
 - Befikir Bogale. Cluster-based Methodology for Characterizing the Performance of Portable Applications. Presented at SC '24.
 
+- Dewi Yokelson, David Boehme, Stephanie Brink, Olga Pearce, Allen Malony. Timeseries Visualization of Performance Metrics. Presented at ISC '24.
+
 - Ian Lumsden, Jakob Luettgau, Vanessa Lama, Connor Scully-Allison, Stephanie Brink, Katherine E. Issacs, Olga Pearce, Michela Taufer. Identifying Performance Bottlenecks in Scientific Applications with Call Path Querying. Presented at the 2023 Salishan Conference.
 
 Tutorials
