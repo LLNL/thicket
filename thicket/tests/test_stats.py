@@ -1233,7 +1233,7 @@ def test_confidence_interval(thicket_axis_columns):
 
     with pytest.raises(
         ValueError,
-        match="Value passed to 'confidence_level' must be of type float or int.",
+        match="Value passed to 'confidence_level' must be of type float.",
     ):
         th.stats.confidence_interval(
             combined_th, columns=columns, confidence_level="0.95"
@@ -1243,7 +1243,7 @@ def test_confidence_interval(thicket_axis_columns):
         ValueError,
         match=r"Value passed to 'confidence_level' must be in the range of \(0, 1\).",
     ):
-        th.stats.confidence_interval(combined_th, columns=columns, confidence_level=95)
+        th.stats.confidence_interval(combined_th, columns=columns, confidence_level=1.2)
 
     # Hardcoded cases
     columns = [("block_128", "Avg time/rank"), ("default", "Avg time/rank")]

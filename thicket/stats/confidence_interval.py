@@ -29,7 +29,7 @@ def confidence_interval(thicket, columns=None, confidence_level=0.95):
         columns (list): List of hardware/timing metrics to perform confidence interval
             calculation on. Note, if using a columnar_joined thicket a list of tuples
             must be passed in with the format (column index, column name).
-        confidence_level (int,float):  The confidence level (often 0.90, 0.95, or 0.99)
+        confidence_level (float):  The confidence level (often 0.90, 0.95, or 0.99)
             indicates the degree of confidence that the true parameter lies within the interval.
 
     Returns:
@@ -44,9 +44,7 @@ def confidence_interval(thicket, columns=None, confidence_level=0.95):
         raise ValueError("Value passed to 'columns' must be of type list.")
 
     if not isinstance(confidence_level, float):
-        raise ValueError(
-            r"Value passed to 'confidence_level' must be of type float or int."
-        )
+        raise ValueError(r"Value passed to 'confidence_level' must be of type float.")
 
     if confidence_level >= 1 or confidence_level <= 0:
         raise ValueError(
