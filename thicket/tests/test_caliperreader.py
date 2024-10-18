@@ -6,9 +6,14 @@
 from thicket import Thicket
 
 
-def test_from_caliperreader(rajaperf_seq_O3_1M_cali):
+def test_from_caliperreader(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     """Sanity test a thicket object with known data."""
-    tk = Thicket.from_caliperreader(rajaperf_seq_O3_1M_cali[0], disable_tqdm=True)
+    tk = Thicket.from_caliperreader(
+        rajaperf_seq_O3_1M_cali[0],
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
 
     # Check the object type
     assert isinstance(tk, Thicket)
@@ -25,10 +30,15 @@ def test_from_caliperreader(rajaperf_seq_O3_1M_cali):
     )
 
 
-def test_node_ordering_from_caliper(caliper_ordered):
+def test_node_ordering_from_caliper(caliper_ordered, intersection, fill_perfdata):
     """Check the order of output from the native Caliper reader by examining a known input with node order column."""
 
-    tk = Thicket.from_caliperreader(caliper_ordered)
+    tk = Thicket.from_caliperreader(
+        caliper_ordered,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
 
     expected_order = [
         "main",

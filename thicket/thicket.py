@@ -1156,15 +1156,37 @@ class Thicket(GraphFrame):
             (thicket): intersected thicket
         """
 
-        # Check for padded perfdata
-        if self.dataframe["name"].isnull().any():
-            # Row that didn't exist will contain "None" in the name column.
-            query = Query().match(
-                ".", lambda df: df["name"].apply(lambda n: n is not None).all()
-            )
+        # if concat_thickets(axis="columns")
+        if isinstance(self.dataframe.columns, pd.MultiIndex):
+            rows = []
+            nodes = self.dataframe.index.get_level_values("node").unique()
+            extend_len = len(self.dataframe) // len(nodes)
+            for node in nodes:
+                df = self.dataframe.loc[node]
+                keep = all(
+                    [
+                        df[header]
+                        .notna()  # We are checking for NA
+                        .all()  # For all values in a row
+                        .all()  # For all rows in the slice
+                        for header in self.dataframe.columns.get_level_values(0)
+                    ]  # For each column header df[header] == slice
+                )
+                rows.extend([keep] * extend_len)  # Extend by extend_len for MultiIndex
+            tkc = self.deepcopy()
+            tkc.dataframe = tkc.dataframe[rows]
+            tkc = tkc.squash()
+            return tkc
         else:
-            # If perfdata not padded
-            query = Query().match(".", lambda df: len(df) == len(self.profile))
+            # Check for padded perfdata
+            if self.dataframe["name"].isnull().any():
+                # Row that didn't exist will contain "None" in the name column.
+                query = Query().match(
+                    ".", lambda df: df["name"].apply(lambda n: n is not None).all()
+                )
+            else:
+                # If perfdata not padded
+                query = Query().match(".", lambda df: len(df) == len(self.profile))
 
         intersected_th = self.query(query)
 

@@ -12,19 +12,35 @@ import pytest
 from thicket import Thicket
 
 
+@pytest.fixture(params=[True, False], ids=["FillPerfdata", "NoFillPerfdata"])
+def fill_perfdata(request):
+    return request.param
+
+
+@pytest.fixture(params=[True, False], ids=["Intersection", "Union"])
+def intersection(request):
+    return request.param
+
+
 @pytest.fixture
-def thicket_axis_columns(rajaperf_cali_1trial):
+def thicket_axis_columns(rajaperf_cali_1trial, intersection, fill_perfdata):
     """Generator for 'concat_thickets(axis="columns")' thicket.
 
     Arguments:
-        mpi_scaling_cali (list): List of Caliper files for MPI scaling study.
-        rajaperf_cuda_block128_1M_cali (list): List of Caliper files for base cuda variant.
+        rajaperf_cali_1trial (list): All tunings and variants for the first trial.
+        intersection (bool): Whether to use intersection or union for calltree.
+        fill_perfdata (bool): Whether to fill perfdata or not.
 
     Returns:
         list: List of original thickets, list of deepcopies of original thickets, and
             column-joined thicket.
     """
-    tk = Thicket.from_caliperreader(rajaperf_cali_1trial, disable_tqdm=True)
+    tk = Thicket.from_caliperreader(
+        rajaperf_cali_1trial,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
 
     gb = tk.groupby("tuning")
 
@@ -36,6 +52,7 @@ def thicket_axis_columns(rajaperf_cali_1trial):
     combined_th = Thicket.concat_thickets(
         thickets=thickets,
         axis="columns",
+        calltree="intersection" if intersection else "union",
         headers=headers,
         metadata_key="ProblemSizeRunParam",
         disable_tqdm=True,
@@ -45,21 +62,31 @@ def thicket_axis_columns(rajaperf_cali_1trial):
 
 
 @pytest.fixture
-def stats_thicket_axis_columns(rajaperf_cuda_block128_1M_cali):
+def stats_thicket_axis_columns(
+    rajaperf_cuda_block128_1M_cali, intersection, fill_perfdata
+):
     """Generator for 'concat_thickets(axis="columns")' thicket for test_stats.py.
 
     Arguments:
         rajaperf_cuda_block128_1M_cali (list): List of Caliper files for base cuda variant.
+        intersection (bool): Whether to use intersection or union for calltree.
+        fill_perfdata (bool): Whether to fill perfdata or not.
 
     Returns:
         list: List of original thickets, list of deepcopies of original thickets, and
             column-joined thicket.
     """
     th_cuda128_1 = Thicket.from_caliperreader(
-        rajaperf_cuda_block128_1M_cali[0:4], disable_tqdm=True
+        rajaperf_cuda_block128_1M_cali[0:4],
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
     )
     th_cuda128_2 = Thicket.from_caliperreader(
-        rajaperf_cuda_block128_1M_cali[5:9], disable_tqdm=True
+        rajaperf_cuda_block128_1M_cali[5:9],
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
     )
 
     # To check later if modifications were unexpectedly made
@@ -71,6 +98,7 @@ def stats_thicket_axis_columns(rajaperf_cuda_block128_1M_cali):
     combined_th = Thicket.concat_thickets(
         thickets=thickets,
         axis="columns",
+        calltree="intersection" if intersection else "union",
         headers=["Cuda 1", "Cuda 2"],
         disable_tqdm=True,
     )
