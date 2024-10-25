@@ -43,7 +43,6 @@ If you are new to thicket and want to start using it, see :doc:`Getting Started
    getting_started
    user_guide
    generating_data
-   publications
 
 If you encounter bugs while using thicket, you can report them by opening an issue on
 `GitHub <http://github.com/llnl/thicket/issues>`_.
@@ -60,6 +59,12 @@ If you encounter bugs while using thicket, you can report them by opening an iss
    query_language.ipynb
    groupby_aggregate.ipynb
    vis_docs
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+
+   publications
 
 .. toctree::
    :maxdepth: 2

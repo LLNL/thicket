@@ -12,7 +12,7 @@ Publications
 Posters
 =======
 
-- Dragana Gbric. Integrating HPCToolkit with Tools for Automated Analysis. Presented at SC '24. Best Poster Candidate.
+- Dragana Grbic. Integrating HPCToolkit with Tools for Automated Analysis. Presented at SC '24. Best Poster Candidate.
 
 - Befikir Bogale. Cluster-based Methodology for Characterizing the Performance of Portable Applications. Presented at SC '24.
 
@@ -28,7 +28,7 @@ Tutorials
 - RADIUSS AWS Tutorials: Caliper, Hatchet, and Thicket. Virtual. August 14, 2023. `YouTube <https://youtu.be/_Ch4pik5QCs?si=HCd8D4oJlyiSvzg1>`_
 
 Presentations
-==========
+=============
 
 - Scalable Tools Workshop: Thicket: Growth of the Heterogeneous Performance Experiment Forest. August 12, 2024. `Slides <https://dyninst.github.io/scalable_tools_workshop/petascale2024/assets/slides/2024_08_12_Thicket_ScalableTools.pdf>`_
 
