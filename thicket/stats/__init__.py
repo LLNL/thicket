@@ -23,6 +23,7 @@ from .scoring import score_hellinger
 from .preference import preference
 from .distance import bhattacharyya_distance
 from .distance import hellinger_distance
+from .confidence_interval import confidence_interval
 
 
 try:
