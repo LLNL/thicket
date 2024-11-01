@@ -1,0 +1,82 @@
+name: Run unit tests with Pandas 3.0
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop, releases/** ]
+
+jobs:
+  run_pandas_3_unit_tests:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11 
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11 
+    
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: node
+    
+    - name: Install Pandas 3.0 (i.e., Nightly)
+      run: |
+        python3 -m pip install --upgrade pip pytest
+        python3 -m pip install --upgrade --force-reinstall --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple pandas
+    
+    - name: Install Python 3 dependencies
+      run: | 
+        python3 -m pip install --upgrade --force-reinstall git+https://github.com/LLNL/hatchet.git@develop
+        python3 -m pip install -r requirements.txt
+        python3 -m pip install .
+        python3 -m pip list
+    
+    # From here on, I'm making use of the trick from the following
+    # GitHub repo to not fail the full CI/CD pipeline if this fails:
+    # https://github.com/burningmantech/ranger-ims-server/pull/1347/files
+    - name: Basic test with PyTest
+      id: test
+      run: |
+        PYTHONPATH . $(which pytest)
+        status=$?
+        if [ $status -ne 0 ]; then
+            echo "::warning::Optional CI test with Pandas 3 failed"
+            echo "optional_fail=true" >> "${GITHUB_OUTPUT}"
+            echo "optional_fail_status=${status}" >> "${GITHUB_OUTPUT}"
+        fi
+        exit 0
+
+    - name: Add comment to PR if test failed
+      if: ${{ steps.test.outputs.optional_fail == 'true' }}
+      uses: thollander/actions-comment-pull-request@v3
+      with:
+        comment-tag: "pandas-3.0-test-notice"
+        message: |
+          ### Pandas 3.0 Unit Tests Failed!
+          Due to breaking changes in Pandas 3.0 (namely, copy-on-write), we are performing optional
+          tests of Thicket against the nightly release of Pandas 3.0.
+
+          This is not a full testing failure, and it will not prevent your PR from being merged
+          at this time. However, as we prepare for the release of Pandas 3.0, we encourage
+          all developers to design their code to work with Pandas 3.0, if possible.
+          
+          Pytest status code: ${{ steps.test.outputs.optional_fail_status }}
+        mode: 'upsert'
+
+    - name: Add comment to PR if test passed
+      if: ${{ steps.test.outputs.optional_fail == 'false' }}
+      uses: thollander/actions-comment-pull-request@v3
+      with:
+        comment-tag: "pandas-3.0-test-notice"
+        message: |
+          ### Pandas 3.0 Unit Tests Passed!
+          Due to breaking changes in Pandas 3.0 (namely, copy-on-write), we are performing optional
+          tests of Thicket against the nightly release of Pandas 3.0.
+
+          This PR passed unit tests when run with Pandas 3.0!
+        mode: 'upsert'
