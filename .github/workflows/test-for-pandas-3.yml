@@ -47,9 +47,16 @@ jobs:
         PYTHONPATH=. $(which pytest)
         status=$?
         if [ ${status} -ne 0 ]; then
+            echo "=================================="
+            echo "Unit tests with Pandas 3.0 FAILED!"
+            echo "=================================="
             echo "::warning::Optional CI test with Pandas 3 failed"
             echo "optional_fail=true" >> "${GITHUB_OUTPUT}"
             echo "optional_fail_status=${status}" >> "${GITHUB_OUTPUT}"
+        else
+            echo "=================================="
+            echo "Unit tests with Pandas 3.0 PASSED!"
+            echo "=================================="
         fi
         exit 0
     
