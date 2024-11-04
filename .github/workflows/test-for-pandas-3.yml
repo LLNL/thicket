@@ -1,9 +1,10 @@
 name: Run unit tests with Pandas 3.0
 
 on: 
-  pull_request_target:
   push:
     branches: [ develop ]
+  pull_request:
+    branches: [ develop, releases/** ]
 
 jobs:
   run_pandas_3_unit_tests:
@@ -51,13 +52,23 @@ jobs:
             echo "optional_fail_status=${status}" >> "${GITHUB_OUTPUT}"
         fi
         exit 0
+    
+    - name: Find issue comment
+      if: github.event_name == 'push'
+      uses: peter-evans/find-comment@v3
+      id: find_comment
+      with:
+        issue-number: 221
+        comment-author: 'github-actions[bot]'
+        body-includes: Pandas 3.0 Unit Tests
 
     - name: Add comment to PR if test failed
-      if: ${{ steps.test.outputs.optional_fail == 'true' }}
-      uses: thollander/actions-comment-pull-request@v3
+      if: github.event_name == 'push' && steps.test.outputs.optional_fail == 'true'
+      uses: peter-evans/create-or-update-comment@v4
       with:
-        comment-tag: "pandas-3.0-test-notice"
-        message: |
+        comment-id: ${{ steps.find_comment.outputs.comment-id }}
+        issue-number: 221
+        body: |
           ### Pandas 3.0 Unit Tests Failed!
           Due to breaking changes in Pandas 3.0 (namely, copy-on-write), we are performing optional
           tests of Thicket against the nightly release of Pandas 3.0.
@@ -68,19 +79,18 @@ jobs:
           
           Pytest status code: ${{ steps.test.outputs.optional_fail_status }}
           Action log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        mode: 'upsert'
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        edit-mode: 'replace'
 
     - name: Add comment to PR if test passed
-      if: ${{ steps.test.outputs.optional_fail == 'false' }}
-      uses: thollander/actions-comment-pull-request@v3
+      if: github.event_name == 'push' && steps.test.outputs.optional_fail == 'false'
+      uses: peter-evans/create-or-update-comment@v4
       with:
-        comment-tag: "pandas-3.0-test-notice"
-        message: |
+        comment-id: ${{ steps.find_comment.outputs.comment-id }}
+        issue-number: 221
+        body: |
           ### Pandas 3.0 Unit Tests Passed!
           Due to breaking changes in Pandas 3.0 (namely, copy-on-write), we are performing optional
           tests of Thicket against the nightly release of Pandas 3.0.
 
           This PR passed unit tests when run with Pandas 3.0!
-        mode: 'upsert'
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        edit-mode: 'replace'
