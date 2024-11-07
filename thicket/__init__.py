@@ -16,6 +16,7 @@ from . import (
 )
 
 from .ensemble import Ensemble
+from .query import QueryMatcher
 from .thicket import Thicket
 from .thicket import InvalidFilter
 from .thicket import EmptyMetadataTable
