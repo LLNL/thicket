@@ -53,6 +53,7 @@ class ThicketRenderer(ConsoleRenderer):
         self.min_value = kwargs["min_value"]
         self.max_value = kwargs["max_value"]
         self.indices = kwargs["indices"]
+        self.full_df = kwargs["full_df"]
 
         if self.color:
             self.colors = self.colors_enabled
@@ -271,6 +272,23 @@ class ThicketRenderer(ConsoleRenderer):
             result = "{indent}{metric_str} {name_str}".format(
                 indent=indent, metric_str=metric_str, name_str=name_str
             )
+
+            min = self.full_df.loc[df_index].min()
+            max = self.full_df.loc[df_index].max()
+            sub = max-min
+            result += f" ({min:.{self.precision}f}, {max:.{self.precision}f})"
+
+            bar_list = ["\u2581", "\u2582", "\u2583", "\u2584", "\u2585", "\u2586", "\u2587", "\u2588"]
+
+            values = np.linspace(0, 1, len(bar_list)+1, endpoint=True)
+            intervals = []
+            for i in range(len(values)-1):
+                intervals.append(pd.Interval(values[i], values[i+1], closed="right"))
+            interval_index = pd.IntervalIndex(intervals)
+            for row in self.full_df.loc[df_index]:
+                val = (row-min)/sub
+                result += bar_list[interval_index.contains(val).argmax()]
+
             if self.context in dataframe.columns:
                 result += " {c.faint}{context}{c.end}\n".format(
                     context=dataframe.loc[df_index, self.context], c=self.colors

@@ -170,7 +170,6 @@ class Thicket(GraphFrame):
         Returns:
             (int): hash of the object
         """
-
         return int(md5(obj.encode("utf-8")).hexdigest()[:hex_len], 16)
 
     @staticmethod
@@ -1132,6 +1131,7 @@ class Thicket(GraphFrame):
             min_value=min_value,
             max_value=max_value,
             indices=idx_dict,
+            full_df=self.dataframe[metric_column],
         )
 
     @staticmethod
