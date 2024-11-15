@@ -305,7 +305,6 @@ class ThicketRenderer(ConsoleRenderer):
                     * (hist - hist.min())
                     / (hist.max() - hist.min())
                 )
-                print(normalized_hist)
                 try:
                     normalized_hist = normalized_hist.apply(np.ceil).astype(int)
                     # Add histogram to tree
