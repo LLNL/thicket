@@ -276,12 +276,13 @@ class ThicketRenderer(ConsoleRenderer):
             )
 
             if self.histogram:
-                nprofs = len(self.hist_data.loc[df_index])
+                hist_data = self.hist_data.loc[df_index]
+                nprofs = len(hist_data)
                 # Auto choose num bins
-                nintervals = math.ceil(math.sqrt(nprofs))
+                nintervals = min(math.ceil(math.sqrt(nprofs)), 20)
                 # Add min/max to tree
-                min = self.hist_data.loc[df_index].min()
-                max = self.hist_data.loc[df_index].max()
+                min = hist_data.min()
+                max = hist_data.max()
                 result += f" ({min:.{self.precision}f}, {max:.{self.precision}f}) "
                 # Define unicode bars
                 bar_list = [
@@ -296,16 +297,20 @@ class ThicketRenderer(ConsoleRenderer):
                     "\u2588",
                 ]
                 # Compute histogram intervals using pandas binning
-                binned = pd.cut(self.hist_data.loc[df_index], bins=nintervals)
+                binned = pd.cut(hist_data, bins=nintervals)
                 hist = binned.value_counts().sort_index()
                 # Normalize values to the number of bars
                 normalized_hist = (
                     (len(bar_list) - 1) * (hist - hist.min()) / (hist.max() - hist.min())
                 )
-                normalized_hist = normalized_hist.apply(np.ceil).astype(int)
-                # Add histogram to tree
-                for idx in normalized_hist.values:
-                    result += bar_list[idx]
+                print(normalized_hist)
+                try:
+                    normalized_hist = normalized_hist.apply(np.ceil).astype(int)
+                    # Add histogram to tree
+                    for idx in normalized_hist.values:
+                        result += bar_list[idx]
+                except:
+                    pass
 
             if self.context in dataframe.columns:
                 result += " {c.faint}{context}{c.end}\n".format(
