@@ -999,6 +999,7 @@ class Thicket(GraphFrame):
         min_value=None,
         max_value=None,
         indices=None,
+        histogram=True,
     ):
         """Visualize the Thicket as a tree
 
@@ -1020,6 +1021,7 @@ class Thicket(GraphFrame):
             min_value (int, optional): Overwrites the min value for the coloring legend. Defaults to None.
             max_value (int, optional): Overwrites the max value for the coloring legend. Defaults to None.
             indices(tuple, list, optional): Index/indices to display on the DataFrame. Defaults to None.
+            histogram (bool, optional): Whether to show a histogram next to each node of the data for all profiles. Defaults to True.
 
         Returns:
             (str): String representation of the tree, ready to print
@@ -1131,7 +1133,8 @@ class Thicket(GraphFrame):
             min_value=min_value,
             max_value=max_value,
             indices=idx_dict,
-            full_df=self.dataframe[metric_column],
+            hist_data=self.dataframe[metric_column],
+            histogram=histogram,
         )
 
     @staticmethod
