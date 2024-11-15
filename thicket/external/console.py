@@ -1,3 +1,4 @@
+import math
 import warnings
 
 import numpy as np
@@ -273,21 +274,24 @@ class ThicketRenderer(ConsoleRenderer):
                 indent=indent, metric_str=metric_str, name_str=name_str
             )
 
+            nprofs = len(self.full_df.loc[df_index])
+            # Auto choose num bins
+            nintervals = math.ceil(math.sqrt(nprofs))
+            # Add min/max to tree
             min = self.full_df.loc[df_index].min()
             max = self.full_df.loc[df_index].max()
-            sub = max-min
             result += f" ({min:.{self.precision}f}, {max:.{self.precision}f})"
-
-            bar_list = ["\u2581", "\u2582", "\u2583", "\u2584", "\u2585", "\u2586", "\u2587", "\u2588"]
-
-            values = np.linspace(0, 1, len(bar_list)+1, endpoint=True)
-            intervals = []
-            for i in range(len(values)-1):
-                intervals.append(pd.Interval(values[i], values[i+1], closed="right"))
-            interval_index = pd.IntervalIndex(intervals)
-            for row in self.full_df.loc[df_index]:
-                val = (row-min)/sub
-                result += bar_list[interval_index.contains(val).argmax()]
+            # Define unicode bars
+            bar_list = ["_", "\u2581", "\u2582", "\u2583", "\u2584", "\u2585", "\u2586", "\u2587", "\u2588"]
+            # Compute histogram intervals using pandas binning
+            binned = pd.cut(self.full_df.loc[df_index], bins=nintervals)
+            hist = binned.value_counts().sort_index()
+            # Normalize values to the number of bars
+            normalized_hist = (len(bar_list) - 1) * (hist - hist.min()) / (hist.max() - hist.min())
+            normalized_hist = normalized_hist.apply(np.ceil).astype(int)
+            # Add histogram to tree
+            for idx in normalized_hist.values:
+                result += bar_list[idx]
 
             if self.context in dataframe.columns:
                 result += " {c.faint}{context}{c.end}\n".format(
