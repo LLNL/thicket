@@ -282,12 +282,24 @@ class ThicketRenderer(ConsoleRenderer):
             max = self.full_df.loc[df_index].max()
             result += f" ({min:.{self.precision}f}, {max:.{self.precision}f})"
             # Define unicode bars
-            bar_list = ["_", "\u2581", "\u2582", "\u2583", "\u2584", "\u2585", "\u2586", "\u2587", "\u2588"]
+            bar_list = [
+                "_",
+                "\u2581",
+                "\u2582",
+                "\u2583",
+                "\u2584",
+                "\u2585",
+                "\u2586",
+                "\u2587",
+                "\u2588",
+            ]
             # Compute histogram intervals using pandas binning
             binned = pd.cut(self.full_df.loc[df_index], bins=nintervals)
             hist = binned.value_counts().sort_index()
             # Normalize values to the number of bars
-            normalized_hist = (len(bar_list) - 1) * (hist - hist.min()) / (hist.max() - hist.min())
+            normalized_hist = (
+                (len(bar_list) - 1) * (hist - hist.min()) / (hist.max() - hist.min())
+            )
             normalized_hist = normalized_hist.apply(np.ceil).astype(int)
             # Add histogram to tree
             for idx in normalized_hist.values:
