@@ -283,7 +283,9 @@ class ThicketRenderer(ConsoleRenderer):
                 # Add min/max to tree
                 min_num = hist_data.min()
                 max_num = hist_data.max()
-                result += f" ({min_num:.{self.precision}f}, {max_num:.{self.precision}f}) "
+                result += (
+                    f" ({min_num:.{self.precision}f}, {max_num:.{self.precision}f}) "
+                )
                 # Define unicode bars
                 bar_list = [
                     "_",
