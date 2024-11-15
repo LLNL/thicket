@@ -301,7 +301,9 @@ class ThicketRenderer(ConsoleRenderer):
                 hist = binned.value_counts().sort_index()
                 # Normalize values to the number of bars
                 normalized_hist = (
-                    (len(bar_list) - 1) * (hist - hist.min()) / (hist.max() - hist.min())
+                    (len(bar_list) - 1)
+                    * (hist - hist.min())
+                    / (hist.max() - hist.min())
                 )
                 print(normalized_hist)
                 try:
