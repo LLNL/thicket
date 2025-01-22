@@ -34,7 +34,7 @@ def test_node_ordering_from_caliper(caliper_ordered, intersection, fill_perfdata
     """Check the order of output from the native Caliper reader by examining a known input with node order column."""
 
     tk = Thicket.from_caliperreader(
-        caliper_ordered,
+        caliper_ordered[0],
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -99,3 +99,12 @@ def test_node_ordering_from_caliper(caliper_ordered, intersection, fill_perfdata
         location = output.find(str(i) + ".000")
         assert location != -1
         output = output[location:]
+
+    # test node ordering True for multiple profiles
+    tk_multi = Thicket.from_caliperreader(
+        caliper_ordered,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
+    assert tk_multi.graph.node_ordering == True

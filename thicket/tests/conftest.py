@@ -205,12 +205,15 @@ def rajaperf_unique_tunings(data_dir, tmpdir):
 def caliper_ordered(data_dir, tmpdir):
     """Builds a temporary directory containing the lulesh cali file."""
     cali_json_dir = os.path.join(data_dir, "caliper-ordered")
-    cali_file = os.path.join(cali_json_dir, "230525-151052_1930517_eWbGeyrlBOPT.cali")
 
-    shutil.copy(cali_file, str(tmpdir))
-    tmpfile = os.path.join(str(tmpdir), "230525-151052_1930517_eWbGeyrlBOPT.cali")
+    cali_files = [
+        cali_json_dir + "/230525-151052_1930517_eWbGeyrlBOPT.cali",
+        cali_json_dir + "/230525-151052_1930517_eWbGeyrlBOPT_copy.cali",
+    ]
 
-    return tmpfile
+    for cf in cali_files:
+        shutil.copy(cf, str(tmpdir))
+    return [os.path.join(str(tmpdir), f) for f in cali_files]
 
 
 @pytest.fixture
