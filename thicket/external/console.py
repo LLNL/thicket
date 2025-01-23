@@ -312,7 +312,7 @@ class ThicketRenderer(ConsoleRenderer):
                     # Add histogram to tree
                     for idx in normalized_hist.values:
                         result += bar_list[idx]
-                except:
+                except pd.errors.IntCastingNaNError:  # NA or inf cannot be binned
                     pass
 
             if self.context in dataframe.columns:
