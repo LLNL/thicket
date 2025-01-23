@@ -298,21 +298,23 @@ class ThicketRenderer(ConsoleRenderer):
                     "\u2587",
                     "\u2588",
                 ]
-                # Compute histogram intervals using pandas binning
-                binned = pd.cut(hist_data, bins=nintervals)
-                hist = binned.value_counts().sort_index()
-                # Normalize values to the number of bars
-                normalized_hist = (
-                    (len(bar_list) - 1)
-                    * (hist - hist.min())
-                    / (hist.max() - hist.min())
-                )
                 try:
+                    # Compute histogram intervals using pandas binning
+                    binned = pd.cut(hist_data, bins=nintervals)
+                    hist = binned.value_counts().sort_index()
+                    # Normalize values to the number of bars
+                    normalized_hist = (
+                        (len(bar_list) - 1)
+                        * (hist - hist.min())
+                        / (hist.max() - hist.min())
+                    )
                     normalized_hist = normalized_hist.apply(np.ceil).astype(int)
                     # Add histogram to tree
                     for idx in normalized_hist.values:
                         result += bar_list[idx]
-                except pd.errors.IntCastingNaNError:  # NA or inf cannot be binned
+                except (
+                    ValueError or pd.errors.IntCastingNaNError
+                ):  # NA or inf cannot be binned
                     pass
 
             if self.context in dataframe.columns:
