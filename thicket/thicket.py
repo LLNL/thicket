@@ -364,6 +364,7 @@ class Thicket(GraphFrame):
             thicket = Thicket.reader_dispatch(
                 GraphFrame.from_hpctoolkit_latest,
                 intersection,
+                None,
                 disable_tqdm,
                 dirname,
                 directory_mapping=directory_mapping,
