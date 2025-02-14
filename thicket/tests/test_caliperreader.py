@@ -107,4 +107,4 @@ def test_node_ordering_from_caliper(caliper_ordered, intersection, fill_perfdata
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
     )
-    assert tk_multi.graph.node_ordering == True
+    assert tk_multi.graph.node_ordering
