@@ -125,7 +125,9 @@ def test_node_ordering_from_caliper(caliper_ordered, intersection, fill_perfdata
     )
     assert (
         abs(
-            tk.dataframe.loc[tk.get_node("LagrangeElements"), "Avg time/rank (inc)"].iloc[0]
+            tk.dataframe.loc[
+                tk.get_node("LagrangeElements"), "Avg time/rank (inc)"
+            ].iloc[0]
             - 1.91470
         )
         < 1e-4
