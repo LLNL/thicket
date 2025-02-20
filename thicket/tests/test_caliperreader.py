@@ -115,4 +115,10 @@ def test_node_ordering_from_caliper(caliper_ordered, intersection, fill_perfdata
 
     # Test update_inclusive_columns
     tk.update_inclusive_columns()
-    assert abs(tk.dataframe.loc[tk.get_node("main"), "Avg time/rank (inc)"].iloc[0] - 8.16487) < 1e-4
+    assert (
+        abs(
+            tk.dataframe.loc[tk.get_node("main"), "Avg time/rank (inc)"].iloc[0]
+            - 8.16487
+        )
+        < 1e-4
+    )
