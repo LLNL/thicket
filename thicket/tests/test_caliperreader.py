@@ -114,11 +114,19 @@ def test_node_ordering_from_caliper(caliper_ordered, intersection, fill_perfdata
         assert node_tk.frame["name"] == node_tk_multi.frame["name"]
 
     # Test update_inclusive_columns
+    # This data is inclusive already, but sufficient for testing.
     tk.update_inclusive_columns()
     assert (
         abs(
             tk.dataframe.loc[tk.get_node("main"), "Avg time/rank (inc)"].iloc[0]
             - 8.16487
+        )
+        < 1e-4
+    )
+    assert (
+        abs(
+            tk.dataframe.loc[tk.get_node("LagrangeElements"), "Avg time/rank (inc)"].iloc[0]
+            - 1.91470
         )
         < 1e-4
     )
