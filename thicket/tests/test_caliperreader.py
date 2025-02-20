@@ -108,3 +108,7 @@ def test_node_ordering_from_caliper(caliper_ordered, intersection, fill_perfdata
         disable_tqdm=True,
     )
     assert tk_multi.graph.node_ordering
+
+    # Because these two profiles have the same graph, nodes should be exactly the same
+    for node_tk, node_tk_multi in zip(tk.graph.traverse(), tk_multi.graph.traverse()):
+        assert node_tk.frame["name"] == node_tk_multi.frame["name"]
