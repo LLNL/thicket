@@ -999,7 +999,7 @@ class Thicket(GraphFrame):
         min_value=None,
         max_value=None,
         indices=None,
-        histogram=True,
+        histogram=False,
     ):
         """Visualize the Thicket as a tree
 
