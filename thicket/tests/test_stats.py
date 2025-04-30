@@ -54,6 +54,77 @@ def test_mean_columnar_join(thicket_axis_columns):
     assert (idx, "Min time/rank_mean") in combined_th.statsframe.show_metric_columns()
 
 
+def test_sum(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
+    th_ens = th.Thicket.from_caliperreader(
+        rajaperf_seq_O3_1M_cali,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
+
+    assert sorted(th_ens.dataframe.index.get_level_values(0).unique()) == sorted(
+        th_ens.statsframe.dataframe.index.values
+    )
+
+    assert list(th_ens.statsframe.dataframe.columns) == ["name"]
+
+    th.stats.sum(th_ens, columns=["Min time/rank"])
+
+    print(th_ens.dataframe["Min time/rank"])
+
+    print(
+        th_ens.statsframe.dataframe.loc[
+            th_ens.get_node("RAJAPerf"), "Min time/rank_sum"
+        ]
+    )
+
+    assert (
+        abs(
+            th_ens.statsframe.dataframe.loc[
+                th_ens.get_node("RAJAPerf"), "Min time/rank_sum"
+            ]
+            - 399.65
+        )
+        < 1e-2
+    )
+
+    assert "Min time/rank_sum" in th_ens.statsframe.dataframe.columns
+    assert (
+        "Min time/rank_sum"
+        in th_ens.statsframe.exc_metrics + th_ens.statsframe.inc_metrics
+    )
+    assert "Min time/rank_sum" in th_ens.statsframe.show_metric_columns()
+
+
+def test_sum_columnar_join(thicket_axis_columns):
+    thicket_list, thicket_list_cp, combined_th = thicket_axis_columns
+    idx = combined_th.dataframe.columns.levels[0][0]
+    assert sorted(combined_th.dataframe.index.get_level_values(0).unique()) == sorted(
+        combined_th.statsframe.dataframe.index.values
+    )
+
+    assert list(combined_th.statsframe.dataframe.columns) == [("name", "")]
+
+    th.stats.sum(combined_th, columns=[(idx, "Min time/rank")])
+
+    assert (
+        abs(
+            combined_th.statsframe.dataframe.loc[
+                combined_th.get_node("RAJAPerf"), (idx, "Min time/rank_sum")
+            ]
+            - 5.16
+        )
+        < 1e-2
+    )
+
+    assert (idx, "Min time/rank_sum") in combined_th.statsframe.dataframe.columns
+    assert (
+        idx,
+        "Min time/rank_sum",
+    ) in combined_th.statsframe.exc_metrics + combined_th.statsframe.inc_metrics
+    assert (idx, "Min time/rank_sum") in combined_th.statsframe.show_metric_columns()
+
+
 def test_median(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
