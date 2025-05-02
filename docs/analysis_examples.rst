@@ -64,9 +64,29 @@ Script Arguments:
 Kripke Example Output Charts:
 *****************************
 
+Generate the Strong dataset:
+
 .. code:: console
 
-   $ python stacked_line_charts.py --input_files "workspace/experiments/kripke/kripke/kripke_cuda_strong*" --x_axis_unique_metadata mpi.world.size --y_axis_metric "Avg time/rank (exc)" --chart_type percentage_time --chart_title "Kripke on Lassen (Strong Scaling)" --chart_file_name kripke_cuda_strong_perc --chart_ylabel "Percentage of Runtime for Average Time (exc)" --x_axis_log_scaling_base 2 --top_n_nodes 10
+  $ benchpark experiment init --dest=kripke/cuda/strong kripke+cuda+strong~single_node caliper=time
+  $ benchpark system init --dest=lassen llnl-sierra
+  $ benchpark setup kripke/cuda/strong lassen/ wkp
+  // Follow ramble instructions ...
+
+Run canned analysis:
+
+.. code:: console
+
+  $ python stacked_line_charts.py \
+    --input_files "kripke-strong" \
+    --x_axis_unique_metadata "mpi.world.size" \
+    --chart_type "percentage_time" \
+    --x_axis_log_scaling_base 2 \
+    --y_axis_metric "Avg time/rank (exc)" \
+    --chart_title "Kripke on Lassen (Strong Scaling)" \
+    --chart_file_name kripke_cuda_strong_perc \
+    --chart_ylabel "Percentage of Runtime for Average Time (exc)" \
+    --top_n_nodes 10
 
 .. figure:: images/kripke_cuda_strong_perc.png
   :width: 800
@@ -74,15 +94,43 @@ Kripke Example Output Charts:
 
 .. code:: console
 
-   $ python stacked_line_charts.py --input_files "workspace/experiments/kripke/kripke/kripke_cuda_strong*" --x_axis_unique_metadata mpi.world.size --y_axis_metric "Avg time/rank (exc)" --chart_type total_time --chart_title "Kripke on Lassen (Strong Scaling)" --chart_file_name kripke_cuda_strong_tot --chart_ylabel "Runtime for Average Time (exc)" --x_axis_log_scaling_base 2 --top_n_nodes 10
+   $ python stacked_line_charts.py \
+    --input_files "kripke-strong" \
+    --x_axis_unique_metadata "mpi.world.size" \
+    --chart_type "total_time" \
+    --x_axis_log_scaling_base 2 \
+    --y_axis_metric "Avg time/rank (exc)" \
+    --chart_title "Kripke on Lassen (Strong Scaling)" \
+    --chart_file_name "kripke_cuda_strong_tot" \
+    --chart_ylabel "Runtime for Average Time (exc)" \
+    --top_n_nodes 10
 
 .. figure:: images/kripke_cuda_strong_tot.png
   :width: 800
   :align: center
 
+Generate the Weak dataset:
+
 .. code:: console
 
-   $ python stacked_line_charts.py --input_files "workspace/experiments/kripke/kripke/kripke_cuda_weak*" --x_axis_unique_metadata zones --y_axis_metric "Avg time/rank (exc)" --chart_type percentage_time --chart_title "Kripke on Lassen (Weak Scaling)" --chart_file_name kripke_cuda_weak_perc --chart_ylabel "Percentage of Runtime for Average Time (exc)" --x_axis_log_scaling_base 2 --top_n_nodes 10
+  $ benchpark experiment init --dest=kripke/cuda/weak kripke+cuda+weak~single_node caliper=time
+  $ benchpark setup kripke/cuda/weak lassen/ wkp
+  // Follow ramble instructions ...
+
+Run canned analysis:
+
+.. code:: console
+
+   $ python stacked_line_charts.py \
+    --input_files "kripke-weak" \
+    --x_axis_unique_metadata "zones" \
+    --chart_type "percentage_time" \
+    --x_axis_log_scaling_base 2 \
+    --y_axis_metric "Avg time/rank (exc)" \
+    --chart_title "Kripke on Lassen (Weak Scaling)" \
+    --chart_file_name "kripke_cuda_weak_perc" \
+    --chart_ylabel "Percentage of Runtime for Average Time (exc)" \
+    --top_n_nodes 10
 
 .. figure:: images/kripke_cuda_weak_perc.png
   :width: 800
@@ -90,7 +138,16 @@ Kripke Example Output Charts:
 
 .. code:: console
 
-   $ python stacked_line_charts.py --input_files "workspace/experiments/kripke/kripke/kripke_cuda_weak*" --x_axis_unique_metadata zones --y_axis_metric "Avg time/rank (exc)" --chart_type total_time --chart_title "Kripke on Lassen (Weak Scaling)" --chart_file_name kripke_cuda_weak_total --chart_ylabel "Runtime for Average Time (exc)" --x_axis_log_scaling_base 2 --top_n_nodes 10
+   $ python stacked_line_charts.py \
+    --input_files "kripke-weak" \
+    --x_axis_unique_metadata "zones" \
+    --chart_type "total_time" \
+    --x_axis_log_scaling_base 2 \
+    --y_axis_metric "Avg time/rank (exc)" \
+    --chart_title "Kripke on Lassen (Weak Scaling)" \
+    --chart_file_name "kripke_cuda_weak_total" \
+    --chart_ylabel "Runtime for Average Time (exc)" \
+    --top_n_nodes 10
 
 .. figure:: images/kripke_cuda_weak_total.png
   :width: 800

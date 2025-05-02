@@ -166,7 +166,7 @@ def make_stacked_line_chart(df, chart_type, x_axis, y_axis_metric, **kwargs):
 
     # Reverse legend order
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(reversed(handles), reversed(labels), bbox_to_anchor=(1.1, 1.05))
+    ax.legend(list(reversed(handles)), list(reversed(labels)), bbox_to_anchor=(1.1, 1.05))
 
     # Try to fix xlabel spacing automatically
     fig.autofmt_xdate()
