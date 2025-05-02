@@ -14,7 +14,7 @@ for how to generate stacked line charts.
 The script is intended to help generate visualizations of scaling studies
 using Caliper and Thicket.
 It outputs a stacked line chart of Caliper node runtimes, either by
-percentage or by total run time.
+percentage or by run time.
 
 Running the Script:
 *******************
@@ -36,7 +36,7 @@ Script Arguments:
    * - --x_axis_unique_metadata
      - Str: Required. Parameter that is varied during the experiment.
    * - --chart_type
-     - Str: Required. Specify type of output chart. Choices: "percentage_time" | "total_time".
+     - Str: Required. Specify type of output chart. Choices: "percentage_time" | "time".
    * - --y_axis_metric
      - Str: Optional. Metric to be visualized. Default is "Avg time/rank (exc)".
    * - --filter_nodes_name_prefix
@@ -94,11 +94,11 @@ Run canned analysis:
    $ python stacked_line_charts.py \
     --input_files "kripke-strong" \
     --x_axis_unique_metadata "mpi.world.size" \
-    --chart_type "total_time" \
+    --chart_type "time" \
     --y_axis_metric "Avg time/rank (exc)" \
     --top_n_nodes 10
 
-.. figure:: images/kripke_cuda_strong_total_time.png
+.. figure:: images/kripke_cuda_strong_time.png
   :width: 800
   :align: center
 
@@ -133,11 +133,11 @@ Run canned analysis:
    $ python stacked_line_charts.py \
     --input_files "kripke-weak" \
     --x_axis_unique_metadata "mpi.world.size" \
-    --chart_type "total_time" \
+    --chart_type "time" \
     --y_axis_metric "Avg time/rank (exc)" \
     --top_n_nodes 10
 
-.. figure:: images/kripke_cuda_weak_total_time.png
+.. figure:: images/kripke_cuda_weak_time.png
   :width: 800
   :align: center
 
@@ -172,10 +172,10 @@ Run canned analysis:
    $ python stacked_line_charts.py \
     --input_files "kripke-throughput" \
     --x_axis_unique_metadata "zones" \
-    --chart_type "total_time" \
+    --chart_type "time" \
     --y_axis_metric "Avg time/rank (exc)" \
     --top_n_nodes 10
 
-.. figure:: images/kripke_cuda_throughput_total_time.png
+.. figure:: images/kripke_cuda_throughput_time.png
   :width: 800
   :align: center

@@ -35,7 +35,7 @@ def arg_parse():
     parser.add_argument(
         "--chart_type",
         required=True,
-        choices=["percentage_time", "total_time"],
+        choices=["percentage_time", "time"],
         type=str,
         help="Specify type of output chart.",
     )
@@ -108,16 +108,16 @@ def make_stacked_line_chart(df, chart_type, x_axis, y_axis_metric, **kwargs):
             if kwargs["chart_ylabel"]
             else "Percentage of " + y_axis_metric
         )
-    elif chart_type == "total_time":
-        value = "Total time"
+    elif chart_type == "time":
+        value = y_axis_metric
         y_label = (
             kwargs["chart_ylabel"]
             if kwargs["chart_ylabel"]
-            else "Total of " + y_axis_metric
+            else y_axis_metric
         )
     else:
         raise ValueError(
-            "Invalid chart_type value. Please choose from 'percentage_time' or 'total_time'."
+            "Invalid chart_type value. Please choose from 'percentage_time' or 'time'."
         )
 
     df.to_csv(kwargs["chart_file_name"] + ".csv")
@@ -265,7 +265,7 @@ def process_thickets(
         ctk.dataframe = ctk.dataframe.filter(like=filter_nodes_name_prefix, axis=0)
 
     if top_n_nodes != -1:
-        ctk.dataframe = ctk.dataframe.nlargest(top_n_nodes, [(x_axis[0], "Total time")])
+        ctk.dataframe = ctk.dataframe.nlargest(top_n_nodes, [(x_axis[0], y_axis_metric)])
 
     # Set default label to x_axis_unique_metadata if not provided
     if not additional_args["chart_xlabel"]:
