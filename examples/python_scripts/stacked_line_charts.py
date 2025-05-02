@@ -1,7 +1,10 @@
 import argparse
+from collections.abc import Iterable
+from functools import reduce
 from glob import glob
 import re
 import sys
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import thicket as th
@@ -21,7 +24,7 @@ def arg_parse():
         "--input_files",
         required=True,
         type=str,
-        help="Directory of Caliper file input, including all subdirectories.",
+        help="Directory of Caliper file input, including all subdirectories. Will search for all .cali files.",
     )
     parser.add_argument(
         "--x_axis_unique_metadata",
@@ -35,12 +38,6 @@ def arg_parse():
         choices=["percentage_time", "total_time"],
         type=str,
         help="Specify type of output chart.",
-    )
-    parser.add_argument(
-        "--x_axis_log_scaling_base",
-        default=-1,
-        type=int,
-        help="logarithmic scaling base value for x axis on chart. Default is linear scaling.",
     )
     parser.add_argument(
         "--y_axis_metric",
@@ -68,7 +65,7 @@ def arg_parse():
     )
     parser.add_argument(
         "--chart_title",
-        default="Application Runtime Components",
+        default=None,
         type=str,
         help="Optional: Title of the output chart.",
     )
@@ -86,7 +83,7 @@ def arg_parse():
         "--chart_file_name",
         default="stacked_line_chart",
         type=str,
-        help="Optional: Output chart file name.",
+        help="Optional: Set output chart file name.",
     )
     parser.add_argument(
         "--chart_figsize",
@@ -109,14 +106,14 @@ def make_stacked_line_chart(df, chart_type, x_axis, y_axis_metric, **kwargs):
         y_label = (
             kwargs["chart_ylabel"]
             if kwargs["chart_ylabel"]
-            else "Percentage " + y_axis_metric
+            else "Percentage of " + y_axis_metric
         )
     elif chart_type == "total_time":
         value = "Total time"
         y_label = (
             kwargs["chart_ylabel"]
             if kwargs["chart_ylabel"]
-            else "Total " + y_axis_metric
+            else "Total of " + y_axis_metric
         )
     else:
         raise ValueError(
@@ -159,20 +156,24 @@ def make_stacked_line_chart(df, chart_type, x_axis, y_axis_metric, **kwargs):
     )
 
     # Set scaling of x-axis
-    if kwargs["x_axis_log_scaling_base"] != -1:
-        ax.set_xscale("log", base=kwargs["x_axis_log_scaling_base"])
+    if "scaling-factor" in kwargs:
+        ax.set_xscale("log", base=kwargs["scaling-factor"])
     else:
         ax.set_xticks(tdf.index)
 
     # Reverse legend order
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(list(reversed(handles)), list(reversed(labels)), bbox_to_anchor=(1.1, 1.05))
+    ax.legend(
+        list(reversed(handles)), list(reversed(labels)), bbox_to_anchor=(1.1, 1.05)
+    )
 
     # Try to fix xlabel spacing automatically
     fig.autofmt_xdate()
 
     plt.tight_layout()
-    plt.savefig(kwargs["chart_file_name"] + ".png")
+    filename = kwargs["chart_file_name"] + ".png"
+    print(filename)
+    plt.savefig(filename)
 
 
 def process_thickets(
@@ -191,6 +192,17 @@ def process_thickets(
     f.write(tk.tree(metric_column=y_axis_metric))
     f.close()
 
+    # Convert string to iterable
+    if all(isinstance(v, str) for v in tk.metadata[x_axis_unique_metadata]):
+        tk.metadata[x_axis_unique_metadata] = tk.metadata[x_axis_unique_metadata].apply(
+            lambda x: list(map(int, x.strip("{[]}").split(",")))
+        )
+    # Convert iterable to int by multiplying values
+    if all(isinstance(v, Iterable) for v in tk.metadata[x_axis_unique_metadata]):
+        tk.metadata[x_axis_unique_metadata] = tk.metadata[x_axis_unique_metadata].apply(
+            lambda iterable: reduce(lambda x, y: x * y, iterable)
+        )
+
     gb = tk.groupby(x_axis_unique_metadata)
 
     thickets = list(gb.values())
@@ -199,6 +211,46 @@ def process_thickets(
         thickets=thickets,
         headers=x_axis,
         axis="columns",
+    )
+
+    if len(tk.metadata["application_name"].unique()) == 1:
+        app_name = tk.metadata["application_name"].unique()[0]
+    else:
+        raise ValueError(
+            f"Expected data for one application, instead got: {list(tk.metadata['application_name'].unique())}"
+        )
+
+    if len(tk.metadata["cluster"].unique()) == 1:
+        cluster = tk.metadata["cluster"].unique()[0]
+    else:
+        raise ValueError(
+            f"Expected data for one cluster, instead got: {list(tk.metadata['cluster'].unique())}"
+        )
+
+    if len(tk.metadata["version"].unique()) == 1:
+        version = tk.metadata["version"].unique()[0]
+    else:
+        raise ValueError(
+            f"Expected data for one version, instead got: {list(tk.metadata['version'].unique())}"
+        )
+
+    spec = tk.metadata["benchpark_spec"].iloc[0][0]
+    for keyword in ["+strong", "+throughput", "+weak", "+single_node"]:
+        if keyword in spec:
+            scaling = keyword.lstrip("+")
+
+    programming_model = "mpi"
+    for keyword in ["+cuda", "+rocm", "+openmp"]:
+        if keyword in spec:
+            programming_model = keyword.lstrip("+")
+
+    if not additional_args["chart_title"]:
+        additional_args["chart_title"] = (
+            f"{app_name}@{version} on {cluster} ({scaling} scaling)"
+        )
+
+    additional_args["chart_file_name"] = (
+        f"{app_name}_{programming_model}_{scaling}_{chart_type}"
     )
 
     if additional_args["group_nodes_name"]:
@@ -218,6 +270,16 @@ def process_thickets(
     # Set default label to x_axis_unique_metadata if not provided
     if not additional_args["chart_xlabel"]:
         additional_args["chart_xlabel"] = x_axis_unique_metadata
+
+    if (
+        "scaling-factor" in tk.metadata.columns
+        and len(tk.metadata["scaling-factor"].unique()) == 1
+    ):
+        additional_args["scaling-factor"] = tk.metadata["scaling-factor"].unique()[0]
+    elif len(tk.metadata["scaling-factor"].unique()) > 1:
+        raise ValueError(
+            f"Multiple scaling factors in metadata, expected singular value: {list(tk.metadata['scaling-factor'].unique())}"
+        )
 
     make_stacked_line_chart(
         df=ctk.dataframe,
