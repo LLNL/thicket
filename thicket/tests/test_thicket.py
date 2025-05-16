@@ -230,3 +230,53 @@ def test_different_profile_idx_name():
         profile_idx_name="profile2",
     )
     assert th.profile_idx_name == "profile2"
+
+
+def test_replace_profile_index(mpi_scaling_cali, intersection, fill_perfdata):
+    th = Thicket.from_caliperreader(
+        mpi_scaling_cali[-1],
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
+
+    assert th.profile_idx_name == "profile"
+    assert th.dataframe.index.names[1] == "profile"
+    assert th.metadata.index.name == "profile"
+
+    th = th.replace_profile_index(
+        metadata_key="mpi.world.size",
+    )
+
+    assert th.profile_idx_name == "mpi.world.size"
+    assert th.dataframe.index.names[1] == "mpi.world.size"
+    assert th.metadata.index.name == "mpi.world.size"
+
+    th2 = Thicket.from_caliperreader(
+        mpi_scaling_cali,
+        intersection=intersection,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=True,
+    )
+
+    th2 = th2.replace_profile_index(
+        metadata_key="mpi.world.size",
+    )
+
+    # Check new profile
+    assert sorted(th2.profile) == [27, 64, 125, 216, 343]
+    # check "343" mapped correctly to ".../343_cores.cali"
+    for ranks, file in th2.profile_mapping.items():
+        assert str(ranks) in file
+    # Check metadata
+    assert int(th2.metadata.loc[27, "elapsed_time"]) == 47
+    assert int(th2.metadata.loc[64, "elapsed_time"]) == 55
+    assert int(th2.metadata.loc[125, "elapsed_time"]) == 56
+    assert int(th2.metadata.loc[216, "elapsed_time"]) == 42
+    assert int(th2.metadata.loc[343, "elapsed_time"]) == 52
+    # Check PerfData
+    assert int(th2.dataframe.loc[(th2.get_node("main"), 27), "Avg time/rank"]) == 47
+    assert int(th2.dataframe.loc[(th2.get_node("main"), 64), "Avg time/rank"]) == 55
+    assert int(th2.dataframe.loc[(th2.get_node("main"), 125), "Avg time/rank"]) == 56
+    assert int(th2.dataframe.loc[(th2.get_node("main"), 216), "Avg time/rank"]) == 42
+    assert int(th2.dataframe.loc[(th2.get_node("main"), 343), "Avg time/rank"]) == 52

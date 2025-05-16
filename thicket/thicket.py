@@ -1842,6 +1842,49 @@ class Thicket(GraphFrame):
                 "Component must be either list, Thicket.dataframe, or Thicket.metadata"
             )
 
+    def replace_profile_index(self, metadata_key, inplace=True):
+        """Replace the profile index, i.e., self.profile_idx_name with a column from the metadata.
+
+        Arguments:
+            metadata_key (str): name of the metadata column to use as the new index.
+
+        Returns:
+            (thicket): new thicket object with replaced index
+        """
+        if metadata_key not in self.metadata.columns:
+            raise KeyError(
+                f"Metadata key '{metadata_key}' not found in metadata table."
+            )
+        elif not self.metadata[metadata_key].is_unique:
+            raise ValueError(
+                f"Values in metadata column '{metadata_key}' are not unique."
+            )
+
+        new_thicket = self
+        if not inplace:
+            new_thicket = self.deepcopy()
+
+        # Create mapping from profile to metadata_key
+        idx_col_dict = new_thicket.metadata[metadata_key].to_dict()
+        # Set new index in performance data
+        new_thicket.metadata_columns_to_perfdata(metadata_key)
+        new_thicket.dataframe = new_thicket.dataframe.reset_index().set_index(
+            ["node", metadata_key]
+        )
+        # Set new index in metadata
+        new_thicket.metadata = new_thicket.metadata.set_index(metadata_key)
+        # Set new profile_idx_name
+        new_thicket.profile_idx_name = metadata_key
+        # Create new profile_mapping
+        new_thicket.profile_mapping = OrderedDict(
+            (idx_col_dict.get(k), v) for k, v in new_thicket.profile_mapping.items()
+        )
+
+        new_thicket._sync_profile_components(new_thicket.metadata)
+        validate_profile(new_thicket)
+
+        return new_thicket
+
 
 class InvalidFilter(Exception):
     """Raised when an invalid argument is passed to the filter function."""
