@@ -112,9 +112,9 @@ def test_object_dialect_column_multi_index(
     match = list(
         set(
             [
-                root,  # RAJAPerf
-                root.children[3],  # RAJAPerf.Lcals
-                root.children[4],  # RAJAPerf.Polybench
+                th_cj.get_node("RAJAPerf"),
+                th_cj.get_node("Lcals"),
+                th_cj.get_node("Polybench"),
             ]
         )
     )
@@ -178,9 +178,9 @@ def test_string_dialect_column_multi_index(
     match = list(
         set(
             [
-                root,  # RAJAPerf
-                root.children[3],  # RAJAPerf.Lcals
-                root.children[4],  # RAJAPerf.Polybench
+                th_cj.get_node("RAJAPerf"),
+                th_cj.get_node("Lcals"),
+                th_cj.get_node("Polybench")
             ]
         )
     )

@@ -100,12 +100,12 @@ def test_object_dialect_column_multi_index(
     match = list(
         set(
             [
-                root,  # RAJAPerf
-                root.children[1],  # RAJAPerf.Apps
-                root.children[2],  # RAJAPerf.Basic
-                root.children[3],  # RAJAPerf.Lcals
-                root.children[3].children[0],  # RAJAPerf.Lcals.Lcals_DIFF_PREDICT
-                root.children[4],  # RAJAPerf.Polybench
+                th_cj.get_node("RAJAPerf"),
+                th_cj.get_node("Basic"),
+                th_cj.get_node("Lcals"),
+                th_cj.get_node("Lcals_DIFF_PREDICT"),
+                th_cj.get_node("Polybench"),
+                th_cj.get_node("Apps"),
             ]
         )
     )
@@ -150,15 +150,16 @@ def test_string_dialect_column_multi_index(
     match = list(
         set(
             [
-                root,  # RAJAPerf
-                root.children[1],  # RAJAPerf.Apps
-                root.children[2],  # RAJAPerf.Basic
-                root.children[3],  # RAJAPerf.Lcals
-                root.children[3].children[0],  # RAJAPerf.Lcals.Lcals_DIFF_PREDICT
-                root.children[4],  # RAJAPerf.Polybench
+                th_cj.get_node("RAJAPerf"),
+                th_cj.get_node("Basic"),
+                th_cj.get_node("Lcals"),
+                th_cj.get_node("Lcals_DIFF_PREDICT"),
+                th_cj.get_node("Polybench"),
+                th_cj.get_node("Apps"),
             ]
         )
     )
+
 
     new_th = th_cj.query(query, multi_index_mode="all")
     queried_nodes = list(new_th.graph.traverse())
