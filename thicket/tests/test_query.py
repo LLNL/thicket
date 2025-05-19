@@ -160,7 +160,6 @@ def test_string_dialect_column_multi_index(
         )
     )
 
-
     new_th = th_cj.query(query, multi_index_mode="all")
     queried_nodes = list(new_th.graph.traverse())
 

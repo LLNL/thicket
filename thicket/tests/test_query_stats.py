@@ -180,7 +180,7 @@ def test_string_dialect_column_multi_index(
             [
                 th_cj.get_node("RAJAPerf"),
                 th_cj.get_node("Lcals"),
-                th_cj.get_node("Polybench")
+                th_cj.get_node("Polybench"),
             ]
         )
     )
