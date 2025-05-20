@@ -96,16 +96,15 @@ def test_object_dialect_column_multi_index(
         ("+", {(0, "Avg time/rank"): "> 10.0", (1, "Avg time/rank"): "> 10.0"}),
     ]
 
-    root = th_cj.graph.roots[0]
     match = list(
         set(
             [
-                root,  # RAJAPerf
-                root.children[1],  # RAJAPerf.Apps
-                root.children[2],  # RAJAPerf.Basic
-                root.children[3],  # RAJAPerf.Lcals
-                root.children[3].children[0],  # RAJAPerf.Lcals.Lcals_DIFF_PREDICT
-                root.children[4],  # RAJAPerf.Polybench
+                th_cj.get_node("RAJAPerf"),
+                th_cj.get_node("Basic"),
+                th_cj.get_node("Lcals"),
+                th_cj.get_node("Lcals_DIFF_PREDICT"),
+                th_cj.get_node("Polybench"),
+                th_cj.get_node("Apps"),
             ]
         )
     )
@@ -146,16 +145,15 @@ def test_string_dialect_column_multi_index(
     WHERE p.(0, "Avg time/rank") > 10.0 AND p.(1, "Avg time/rank") > 10.0
     """
 
-    root = th_cj.graph.roots[0]
     match = list(
         set(
             [
-                root,  # RAJAPerf
-                root.children[1],  # RAJAPerf.Apps
-                root.children[2],  # RAJAPerf.Basic
-                root.children[3],  # RAJAPerf.Lcals
-                root.children[3].children[0],  # RAJAPerf.Lcals.Lcals_DIFF_PREDICT
-                root.children[4],  # RAJAPerf.Polybench
+                th_cj.get_node("RAJAPerf"),
+                th_cj.get_node("Basic"),
+                th_cj.get_node("Lcals"),
+                th_cj.get_node("Lcals_DIFF_PREDICT"),
+                th_cj.get_node("Polybench"),
+                th_cj.get_node("Apps"),
             ]
         )
     )

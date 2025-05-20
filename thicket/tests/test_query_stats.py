@@ -108,13 +108,12 @@ def test_object_dialect_column_multi_index(
         ),
     ]
 
-    root = th_cj.graph.roots[0]
     match = list(
         set(
             [
-                root,  # RAJAPerf
-                root.children[3],  # RAJAPerf.Lcals
-                root.children[4],  # RAJAPerf.Polybench
+                th_cj.get_node("RAJAPerf"),
+                th_cj.get_node("Lcals"),
+                th_cj.get_node("Polybench"),
             ]
         )
     )
@@ -174,13 +173,12 @@ def test_string_dialect_column_multi_index(
     WHERE p.(0, "Min time/rank_mean") > 30.0 AND p.(1, "Min time/rank_mean") > 30.0
     """
 
-    root = th_cj.graph.roots[0]
     match = list(
         set(
             [
-                root,  # RAJAPerf
-                root.children[3],  # RAJAPerf.Lcals
-                root.children[4],  # RAJAPerf.Polybench
+                th_cj.get_node("RAJAPerf"),
+                th_cj.get_node("Lcals"),
+                th_cj.get_node("Polybench"),
             ]
         )
     )
