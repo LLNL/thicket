@@ -96,7 +96,6 @@ def test_object_dialect_column_multi_index(
         ("+", {(0, "Avg time/rank"): "> 10.0", (1, "Avg time/rank"): "> 10.0"}),
     ]
 
-    root = th_cj.graph.roots[0]
     match = list(
         set(
             [
@@ -146,7 +145,6 @@ def test_string_dialect_column_multi_index(
     WHERE p.(0, "Avg time/rank") > 10.0 AND p.(1, "Avg time/rank") > 10.0
     """
 
-    root = th_cj.graph.roots[0]
     match = list(
         set(
             [
