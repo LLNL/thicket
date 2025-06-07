@@ -43,7 +43,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "scipy",
-        "numpy < 2.0.0",
+        "numpy",
         "pandas >= 1.1",
         "llnl-hatchet",
         "tqdm",

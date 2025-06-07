@@ -1,8 +1,7 @@
 scipy
-numpy < 2.0.0
+numpy
 pandas>=1.1
 llnl-hatchet
-extrap
 matplotlib
 seaborn
 beautifulsoup4
