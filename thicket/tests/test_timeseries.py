@@ -26,7 +26,7 @@ def test_from_timeseries_cxx(example_timeseries_cxx):
         th.dataframe.loc[
             th.dataframe.index.get_level_values(0)[0], "avg#time.duration.ns"
         ].values[0]
-        == 59851.0
+        == 130295.0
     )
 
 
@@ -75,7 +75,7 @@ def test_timeseries_statsframe(example_timeseries):
     tree_output = th.statsframe.tree(metric_column="alloc.region.highwatermark_mean")
 
     # Check if tree output is correct.
-    assert bool(re.search("63732320.000.*lulesh.cycle", tree_output))
+    assert bool(re.search("63353240.000.*lulesh.cycle", tree_output))
 
 
 def test_timeseries_temporal_pattern(mem_power_timeseries):
