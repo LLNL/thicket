@@ -622,35 +622,40 @@ class Thicket(GraphFrame):
         # make and return thicket?
         return th
 
-
     def add_remark_data(
         self,
         caliper_file,
-        disable_tqdm=False,
     ):
         if not isinstance(caliper_file, str):
-            raise ValueError(
-                "Parameter 'caliper_file' must be a string."
-            )
+            raise ValueError("Parameter 'caliper_file' must be a string.")
 
         remark_data_thicket = self.from_caliperreader(caliper_file)
 
-        remark_column_list = remark_data_thicket.metadata.loc[:, "remark_columns"].iloc[0]
+        remark_column_list = remark_data_thicket.metadata.loc[:, "remark_columns"].iloc[
+            0
+        ]
 
         remark_column_list = [remark.strip('"') for remark in remark_column_list]
 
-        remark_column_list = list(set(remark_column_list).intersection(remark_data_thicket.dataframe.columns.to_list()))
+        remark_column_list = list(
+            set(remark_column_list).intersection(
+                remark_data_thicket.dataframe.columns.to_list()
+            )
+        )
 
-        remark_data_thicket.dataframe = remark_data_thicket.dataframe.reindex(remark_data_thicket.dataframe.index.repeat(len(self.profile)))
+        remark_data_thicket.dataframe = remark_data_thicket.dataframe.reindex(
+            remark_data_thicket.dataframe.index.repeat(len(self.profile))
+        )
 
         remark_data_thicket.dataframe.index = self.dataframe.index
-        
-        self.dataframe[remark_column_list] = remark_data_thicket.dataframe[remark_column_list]
+
+        self.dataframe[remark_column_list] = remark_data_thicket.dataframe[
+            remark_column_list
+        ]
 
         self.metadata["remark_columns"] = str(remark_column_list)
 
         self.dataframe.sort_index(inplace=True)
-
 
     def add_ncu(
         self,
