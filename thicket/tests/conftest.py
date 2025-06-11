@@ -189,6 +189,30 @@ def rajaperf_seq_O3_1M_cali(data_dir, tmpdir):
 
 
 @pytest.fixture
+def dane_rajaperf_seq_O3_8M_cali(data_dir, tmpdir):
+    """All trials of for Base Sequential optimization level O3 and problem size 8388608."""
+    cali_files = sorted(
+        glob(
+            f"{data_dir}/rajaperf/dane/clang14.0.6_8388608/O3/**/Base_Seq-default.cali",
+            recursive=True,
+        )
+    )
+    for cf in cali_files:
+        shutil.copy(cf, str(tmpdir))
+    return [os.path.join(str(tmpdir), f) for f in cali_files]
+
+
+@pytest.fixture
+def dane_rajaperf_seq_O3_8M_remark_cali(data_dir, tmpdir):
+    """Remark caliper file for Base Sequential optimization level O3 and problem size 8388608."""
+    cali_file = f"{data_dir}/rajaperf/dane/clang14.0.6_8388608/O3/remark_data/remark_output.cali"
+
+    shutil.copy(cali_file, str(tmpdir))
+
+    return os.path.join(str(tmpdir), cali_file)
+
+
+@pytest.fixture
 def rajaperf_unique_tunings(data_dir, tmpdir):
     """1 trial of each unique tuning in the dataset"""
     cali_files = [

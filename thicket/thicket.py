@@ -627,7 +627,12 @@ class Thicket(GraphFrame):
         caliper_file,
     ):
         if not isinstance(caliper_file, str):
-            raise ValueError("Parameter 'caliper_file' must be a string.")
+            raise ValueError("Parameter 'caliper_file' must be of type string.")
+
+        if self.dataframe.columns.nlevels != 1:
+            raise ValueError(
+                "Cannot run 'run_remark_data' on columnar joined thickets."
+            )
 
         remark_data_thicket = self.from_caliperreader(caliper_file)
 
@@ -653,7 +658,7 @@ class Thicket(GraphFrame):
             remark_column_list
         ]
 
-        self.metadata["remark_columns"] = str(remark_column_list)
+        self.metadata["remark_columns"] = [remark_column_list] * len(self.profile)
 
         self.dataframe.sort_index(inplace=True)
 
