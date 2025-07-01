@@ -344,6 +344,31 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
+    def from_timemory(
+        filename,
+        intersection=False,
+        fill_perfdata=True,
+        disable_tqdm=False,
+        **kwargs,
+    ):
+        """Helper function to read one timemory file
+
+        Arguments:
+            filename (str): name of a timemory json file
+            intersection (bool): whether to perform intersection or union (default)
+            fill_perfdata (bool): whether to fill missing performance data with NaNs
+            disable_tqdm (bool): whether to display tqdm progress bar
+        """
+        return Thicket.reader_dispatch(
+            GraphFrame.from_timemory,
+            intersection,
+            fill_perfdata,
+            disable_tqdm,
+            filename,
+            **kwargs,
+        )
+
+    @staticmethod
     def from_literal(graph_dict):
         """Create a Thicket from a list of dictionarires.
 
