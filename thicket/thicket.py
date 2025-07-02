@@ -6,6 +6,7 @@
 import collections
 import copy
 import os
+import re
 import pickle
 import sys
 import json
@@ -634,31 +635,84 @@ class Thicket(GraphFrame):
                 "Cannot run 'run_remark_data' on columnar joined thickets."
             )
 
-        remark_data_thicket = self.from_caliperreader(caliper_file)
+        def process_remarks(remark_data_thicket):
+            
+            static_remark_columns = set()
+            dynamic_remark_columns = set()
 
-        remark_column_list = remark_data_thicket.metadata.loc[:, "remark_columns"].iloc[
-            0
-        ]
+            # TODO: Change this so that you use row directly
+            for index, row in remark_data_thicket.dataframe.iterrows():
 
-        remark_column_list = [remark.strip('"') for remark in remark_column_list]
+                num_nodes = len(remark_data_thicket.graph)
 
-        remark_column_list = list(
-            set(remark_column_list).intersection(
-                remark_data_thicket.dataframe.columns.to_list()
-            )
-        )
+                static_freq_dict = {}
+                dynamic_freq_dict = {}
 
+                node = index[0]
+
+                remark_data_thicket.dataframe.loc[node, "Remark_Attribute"].iloc[0] = re.findall(r"'([^']*)'", remark_data_thicket.dataframe.loc[node, "Remark_Attribute"].iloc[0])
+
+                for parent in node.parents:
+                    # TODO: Delete, might be unnecessary???
+                    if isinstance(remark_data_thicket.dataframe.loc[parent, "Remark_Attribute"].iloc[0], str):
+                        remark_data_thicket.dataframe.loc[parent, "Remark_Attribute"].iloc[0] = re.findall(r"'([^']*)'", remark_data_thicket.dataframe.loc[parent, "Remark_Attribute"].iloc[0])
+                    for value in remark_data_thicket.dataframe.loc[parent, "Remark_Attribute"].iloc[0]:
+                        try:
+                            remark_data_thicket.dataframe.loc[node, "Remark_Attribute"].iloc[0].remove(value)
+                            # print(f"Removed value: {value} for region: {node.name}")
+                        except Exception:
+                            pass
+
+                static_remarks = list(set(remark_data_thicket.dataframe.loc[node, "Remark_Attribute"].iloc[0]))
+                dynamic_remarks = list(remark_data_thicket.dataframe.loc[node, "Remark_Attribute"].iloc[0])
+
+                static_remarks = ["~".join(i.split("~")[:3]) for i in static_remarks]
+                dynamic_remarks = ["~".join(i.split("~")[:3]) for i in dynamic_remarks]
+
+                unique_remarks = list(set(static_remarks))
+
+                for remark in static_remarks:
+                    static_remark_name = f"{remark}~static"
+                    static_remark_columns.add(static_remark_name)
+                    if static_remark_name not in static_freq_dict.keys():
+                        static_freq_dict[static_remark_name] = 1
+                        continue
+
+                    static_freq_dict[static_remark_name] += 1
+
+                for remark in dynamic_remarks:
+                    dynamic_remark_name = f"{remark}~dynamic"
+                    dynamic_remark_columns.add(dynamic_remark_name)
+                    if dynamic_remark_name not in dynamic_freq_dict.keys():
+                        dynamic_freq_dict[dynamic_remark_name] = 1
+                        continue
+                    dynamic_freq_dict[dynamic_remark_name] += 1
+
+                remark_data_thicket.dataframe.loc[node, static_freq_dict.keys()] = list(static_freq_dict.values())
+                remark_data_thicket.dataframe.loc[node, dynamic_freq_dict.keys()] = list(dynamic_freq_dict.values())
+                
+            return list(static_remark_columns), list(dynamic_remark_columns)
+
+        remark_data_thicket = self.from_caliperreader(caliper_file, string_attributes="Remark_Attribute")
+
+        static_remark_columns, dynamic_remark_columns = process_remarks(remark_data_thicket)
+        
         remark_data_thicket.dataframe = remark_data_thicket.dataframe.reindex(
             remark_data_thicket.dataframe.index.repeat(len(self.profile))
         )
-
+        
         remark_data_thicket.dataframe.index = self.dataframe.index
-
-        self.dataframe[remark_column_list] = remark_data_thicket.dataframe[
-            remark_column_list
+        
+        self.dataframe[static_remark_columns] = remark_data_thicket.dataframe[
+            static_remark_columns
+        ]
+        
+        self.dataframe[dynamic_remark_columns] = remark_data_thicket.dataframe[
+            dynamic_remark_columns
         ]
 
-        self.metadata["remark_columns"] = [remark_column_list] * len(self.profile)
+        self.metadata["remark_columns_static"] = [static_remark_columns] * len(self.profile)
+        self.metadata["remark_columns_dynamic"] = [dynamic_remark_columns] * len(self.profile)
 
         self.dataframe.sort_index(inplace=True)
 
