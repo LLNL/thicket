@@ -1021,7 +1021,7 @@ class Thicket(GraphFrame):
             min_value (int, optional): Overwrites the min value for the coloring legend. Defaults to None.
             max_value (int, optional): Overwrites the max value for the coloring legend. Defaults to None.
             indices(tuple, list, optional): Index/indices to display on the DataFrame. Defaults to None.
-            histogram (bool, optional): Whether to show a histogram next to each node of the data for all profiles. Defaults to True.
+            histogram (bool, optional): Whether to show a histogram next to each node of the data for all profiles. Defaults to False.
 
         Returns:
             (str): String representation of the tree, ready to print
