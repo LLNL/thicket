@@ -1,3 +1,4 @@
+import math
 import warnings
 
 import numpy as np
@@ -53,6 +54,8 @@ class ThicketRenderer(ConsoleRenderer):
         self.min_value = kwargs["min_value"]
         self.max_value = kwargs["max_value"]
         self.indices = kwargs["indices"]
+        self.hist_data = kwargs["hist_data"]
+        self.histogram = kwargs["histogram"]
 
         if self.color:
             self.colors = self.colors_enabled
@@ -271,6 +274,49 @@ class ThicketRenderer(ConsoleRenderer):
             result = "{indent}{metric_str} {name_str}".format(
                 indent=indent, metric_str=metric_str, name_str=name_str
             )
+
+            if self.histogram:
+                hist_data = self.hist_data.loc[df_index]
+                nprofs = len(hist_data)
+                # Auto choose num bins
+                nintervals = min(math.ceil(math.sqrt(nprofs)), 20)
+                # Add min/max to tree
+                min_num = hist_data.min()
+                max_num = hist_data.max()
+                result += (
+                    f" ({min_num:.{self.precision}f}, {max_num:.{self.precision}f}) "
+                )
+                # Define unicode bars
+                bar_list = [
+                    "_",
+                    "\u2581",
+                    "\u2582",
+                    "\u2583",
+                    "\u2584",
+                    "\u2585",
+                    "\u2586",
+                    "\u2587",
+                    "\u2588",
+                ]
+                try:
+                    # Compute histogram intervals using pandas binning
+                    binned = pd.cut(hist_data, bins=nintervals)
+                    hist = binned.value_counts().sort_index()
+                    # Normalize values to the number of bars
+                    normalized_hist = (
+                        (len(bar_list) - 1)
+                        * (hist - hist.min())
+                        / (hist.max() - hist.min())
+                    )
+                    normalized_hist = normalized_hist.apply(np.ceil).astype(int)
+                    # Add histogram to tree
+                    for idx in normalized_hist.values:
+                        result += bar_list[idx]
+                except (
+                    ValueError or pd.errors.IntCastingNaNError
+                ):  # NA or inf cannot be binned
+                    pass
+
             if self.context in dataframe.columns:
                 result += " {c.faint}{context}{c.end}\n".format(
                     context=dataframe.loc[df_index, self.context], c=self.colors
