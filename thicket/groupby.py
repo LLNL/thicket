@@ -105,11 +105,13 @@ class GroupBy(dict):
             new_profile_label_mapping_series = new_profile_label_mapping_df.apply(
                 tuple, axis=1
             )
-        else: # Squeeze single column df into series
+        else:  # Squeeze single column df into series
             new_profile_label_mapping_series = new_profile_label_mapping_df.squeeze()
         # Single profile, single column squeeze results in single value, not series
         if len(tk_c.profile) == 1:
-            new_profile_label_mapping = {tk_c.profile[0]: new_profile_label_mapping_series}
+            new_profile_label_mapping = {
+                tk_c.profile[0]: new_profile_label_mapping_series
+            }
         else:
             new_profile_label_mapping = (
                 new_profile_label_mapping_series.to_dict()
