@@ -9,20 +9,17 @@
 ###############################
 
 This is an introduction to Thicket with a presentation and live demos. It was
-presented as a virtual event at the `2024 HPC Innovation Center Tutorial Series
-<https://hpcic.llnl.gov/tutorials/2024-hpc-tutorials/>`_,
-August 8, 2024, alongside Caliper.
+presented as an in-person half-day event at the `2025 Symposium on High-Performance Parallel and Distributed Computing (HPDC) <https://hpdc.sci.utah.edu/2025/workshops.html>`_,
+July 20, 2025, alongside Caliper and Benchpark.
 
-.. image:: images/thicket-tutorial-slide-preview.png
-   :target: _static/2024_08_08_Thicket_Tutorial.pdf
+.. image:: images/thicket-hpdc25-tutorial-slide-preview.jpg
+   :target: _static/2025_07_20_Thicket_HPDC25_Tutorial.pdf
    :height: 72px
    :align: left
    :alt: Slide Preview
 
-:download:`Download Slides <_static/2024_08_08_Thicket_Tutorial.pdf>`.
+:download:`Download Slides <_static/2025_07_20_Thicket_HPDC25_Tutorial.pdf>`.
 
-We provide scripts that take you through some of the available features in
-Thicket. They correspond to sections in the slides above.
-
-To run through the scripts, you can follow the instructions to build the docker
-image in `thicket-tutorial <https://github.com/llnl/thicket-tutorial>`_.
+We provide an AWS instance containing Jupyter notebooks that will take you
+through some of the available features in Thicket. They correspond to sections
+in the slides above.
