@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 import pytest
+import re
 
 import thicket as th
 
@@ -58,3 +59,23 @@ def test_tree_column_multiindex(thicket_axis_columns):
 
     # No error
     combined_th.tree(metric_column=("block_128", "Avg time/rank"))
+
+
+def test_tree_multi_metrics(rajaperf_unique_tunings):
+    tk = th.Thicket.from_caliperreader(
+        rajaperf_unique_tunings,
+        disable_tqdm=True,
+    )
+
+    out1 = tk.tree(
+        metric_column=["Avg time/rank", "Max time/rank"], indices=tk.profile[0]
+    )
+    out2 = tk.tree(
+        metric_column=["Avg time/rank", "Max time/rank", "Min time/rank"],
+        indices=tk.profile[0],
+    )
+
+    pattern1 = r"103\.476.*103\.476.*RAJAPerf"
+    pattern2 = r"103\.476.*103\.476.*103\.476.*RAJAPerf"
+    assert re.search(pattern1, out1)
+    assert re.search(pattern2, out2)
