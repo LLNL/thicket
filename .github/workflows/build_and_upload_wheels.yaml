@@ -36,7 +36,7 @@ jobs:
       - name: Build wheel for Python ${{ matrix.python_version }}
         run: python -m build -w
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: dist/*.whl
 
@@ -59,7 +59,7 @@ jobs:
   #         CIBW_SKIP: pp* *musllinux*
   #         CIBW_ARCHS_LINUX: auto aarch64 ppc64le
 
-  #     - uses: actions/upload-artifact@v3
+  #     - uses: actions/upload-artifact@v4
   #       with:
   #         path: ./wheelhouse/*.whl
 
@@ -76,7 +76,7 @@ jobs:
   #         CIBW_ARCHS_LINUX: auto
   #         CIBW_PROJECT_REQUIRES_PYTHON: "~=2.7"
 
-  #     - uses: actions/upload-artifact@v3
+  #     - uses: actions/upload-artifact@v4
   #       with:
   #         path: ./wheelhouse/*.whl
 
@@ -93,7 +93,7 @@ jobs:
   #         CIBW_ARCHS_MACOS: x86_64
   #         CIBW_PROJECT_REQUIRES_PYTHON: ">=3.6,<3.8"
 
-  #     - uses: actions/upload-artifact@v3
+  #     - uses: actions/upload-artifact@v4
   #       with:
   #         path: ./wheelhouse/*.whl
 
@@ -109,7 +109,7 @@ jobs:
   #         CIBW_ARCHS_MACOS: x86_64 universal2 arm64
   #         CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
 
-  #     - uses: actions/upload-artifact@v3
+  #     - uses: actions/upload-artifact@v4
   #       with:
   #         path: ./wheelhouse/*.whl
 
@@ -125,7 +125,7 @@ jobs:
   #         CIBW_SKIP: pp*
   #         CIBW_BUILD: cp27-macosx_x86_64
 
-  #     - uses: actions/upload-artifact@v3
+  #     - uses: actions/upload-artifact@v4
   #       with:
   #         path: ./wheelhouse/*.whl
 
@@ -141,7 +141,7 @@ jobs:
       - name: Build sdist
         run: python -m build -s
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
 
