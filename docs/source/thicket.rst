@@ -54,6 +54,14 @@ thicket.ncu module
    :undoc-members:
    :show-inheritance:
 
+thicket.query module
+--------------------
+
+.. automodule:: thicket.query
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 thicket.thicket module
 ----------------------
 
