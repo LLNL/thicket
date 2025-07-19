@@ -12,10 +12,26 @@ thicket.stats.calc\_boxplot\_statistics module
    :undoc-members:
    :show-inheritance:
 
+thicket.stats.calc\_temporal\_pattern module
+--------------------------------------------
+
+.. automodule:: thicket.stats.calc_temporal_pattern
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 thicket.stats.check\_normality module
 -------------------------------------
 
 .. automodule:: thicket.stats.check_normality
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+thicket.stats.confidence\_interval module
+-----------------------------------------
+
+.. automodule:: thicket.stats.confidence_interval
    :members:
    :undoc-members:
    :show-inheritance:
@@ -48,6 +64,22 @@ thicket.stats.display\_histogram module
 ---------------------------------------
 
 .. automodule:: thicket.stats.display_histogram
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+thicket.stats.display\_violinplot module
+----------------------------------------
+
+.. automodule:: thicket.stats.display_violinplot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+thicket.stats.distance module
+-----------------------------
+
+.. automodule:: thicket.stats.distance
    :members:
    :undoc-members:
    :show-inheritance:
@@ -100,10 +132,34 @@ thicket.stats.preference module
    :undoc-members:
    :show-inheritance:
 
+thicket.stats.scoring module
+----------------------------
+
+.. automodule:: thicket.stats.scoring
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+thicket.stats.stats\_utils module
+---------------------------------
+
+.. automodule:: thicket.stats.stats_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 thicket.stats.std module
 ------------------------
 
 .. automodule:: thicket.stats.std
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+thicket.stats.sum module
+------------------------
+
+.. automodule:: thicket.stats.sum
    :members:
    :undoc-members:
    :show-inheritance:
