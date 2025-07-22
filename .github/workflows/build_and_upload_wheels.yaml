@@ -36,8 +36,9 @@ jobs:
       - name: Build wheel for Python ${{ matrix.python_version }}
         run: python -m build -w
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: thicket_build_artifacts_wheel
           path: dist/*.whl
 
   # TODO: if we ever add compiled code to Thicket (e.g., Cython modules),
@@ -141,8 +142,9 @@ jobs:
       - name: Build sdist
         run: python -m build -s
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: thicket_build_artifacts_sdist
           path: dist/*.tar.gz
 
   test_upload_to_pypi:
@@ -157,9 +159,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: artifact
+          pattern: thicket_build_artifacts_*
+          merge_multiple: true
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@v1.5.0
@@ -180,9 +183,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: artifact
+          pattern: thicket_build_artifacts_*
+          merge_multiple: true
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@v1.5.0
