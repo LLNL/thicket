@@ -18,10 +18,10 @@ jobs:
   #       remove the build_wheels job
   build_wheels:
     name: Build wheels for Linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9, '3.10', 3.11]
+        python-version: [3.7, 3.8, 3.9, '3.10', 3.11]
     steps:
       - uses: actions/checkout@v3
 
@@ -132,7 +132,7 @@ jobs:
 
   build_sdist:
     name: Build sdist
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
@@ -156,7 +156,7 @@ jobs:
         # - build_wheels_macos_27
       - build_wheels
       - build_sdist
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     steps:
       - uses: actions/download-artifact@v4
@@ -180,7 +180,7 @@ jobs:
         # - build_wheels_macos_27
       - build_wheels
       - build_sdist
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v4
