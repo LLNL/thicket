@@ -1662,7 +1662,10 @@ class Thicket(GraphFrame):
         ]
 
         # filter nodes in the graphframe based on the dataframe nodes
+        # We want to preserve columns, so "new_statsframe=False",
+        # however to match graph filter we update statsframe.graph
         new_thicket = new_thicket.squash(new_statsframe=False)
+        new_thicket.statsframe.graph = new_thicket.graph
 
         return new_thicket
 
