@@ -47,8 +47,9 @@ def _match_call_trace_regex(
         kernel_str = kernel_match.group(1)
     else:
         if debug:
-            print(f"\tCould not match {demangled_kernel_name}")
-        return None, None, None, True
+            print(f"\tCould not match {demangled_kernel_name}\n\tWill still attempt to match with query from kernel call trace (unsafe)")
+        kernel_str = None
+        #return None, None, None, None, True
 
     # RAJA_CUDA/Lambda_CUDA variant
     instance_pattern = r"instance (\d+)"
@@ -79,16 +80,23 @@ def _match_kernel_str_to_cali(
         raja_lambda_cuda (bool): True if RAJA_CUDA or Lambda_CUDA, False if Base_CUDA
         instance_exists (bool): True if instance number exists, False if not
     """
-    return [
-        n
-        for n in node_set
-        if kernel_str in n.frame["name"]
-        and (
-            f"#{instance_num}" in n.frame["name"]
-            if raja_lambda_cuda and instance_exists
-            else True
-        )
-    ]
+    if kernel_str:
+        return [
+            n
+            for n in node_set
+            if kernel_str in n.frame["name"]
+            and (
+                f"#{instance_num}" in n.frame["name"]
+                if raja_lambda_cuda and instance_exists
+                else True
+            )
+        ]
+    else:
+        return[
+            n 
+            for n in node_set
+            if n.frame["type"] == "kernel"
+        ]
 
 
 def _multi_match_fallback_similarity(matched_nodes, demangled_kernel_name, debug):
@@ -119,7 +127,7 @@ def _multi_match_fallback_similarity(matched_nodes, demangled_kernel_name, debug
     return matched_node
 
 
-def _build_query_from_ncu_trace(kernel_call_trace):
+def _build_query_from_ncu_trace(kernel_call_trace, debug):
     """Build QueryLanguage query from an NCU kernel call trace
 
     Arguments:
@@ -151,9 +159,13 @@ def _build_query_from_ncu_trace(kernel_call_trace):
             query.match(".", _predicate_builder(kernel))
         elif i == len(kernel_call_trace) - 1:
             query.rel("*")
-            query.rel(".", _predicate_builder(kernel, is_regex=True))
+            query.rel(".", _predicate_builder(kernel, is_regex=True)).rel("*")
         else:
             query.rel(".", _predicate_builder(kernel))
+
+    if debug:
+        print(query)
+        print(kernel_call_trace)
 
     return query
 
@@ -201,10 +213,11 @@ class NCUReader:
             ncu_hash = profile_mapping_flipped[ncu_report_mapping[ncu_report_file]]
 
             # Relevant for kernel matching
-            variant = thicket.metadata.loc[ncu_hash, "variant"]
-            raja_lambda_cuda = (
-                variant.upper() == "RAJA_CUDA" or variant.upper() == "LAMBDA_CUDA"
-            )
+            # variant = thicket.metadata.loc[ncu_hash, "variant"]
+            # raja_lambda_cuda = (
+            #     variant.upper() == "RAJA_CUDA" or variant.upper() == "LAMBDA_CUDA"
+            # )
+            raja_lambda_cuda = (True)
 
             # Load file
             report = ncu_report.load_report(ncu_report_file)
@@ -268,16 +281,19 @@ class NCUReader:
                             continue
 
                         # Add kernel name to the end of the trace tuple
-                        kernel_call_trace.append(kernel_str)
+                        if kernel_str:
+                            kernel_call_trace.append(kernel_str)
 
                         # Match ncu kernel to thicket node
                         matched_node = None
-                        if demangled_kernel_name in kernel_map:
+                        if demangled_kernel_name in kernel_map and kernel_str:
                             # Skip query building
                             matched_node = kernel_map[demangled_kernel_name]
+                            if debug:
+                                print(f"\tKernel already in mapping: {demangled_kernel_name}")
                         else:  # kernel hasn't been seen yet
                             # Build query
-                            query = _build_query_from_ncu_trace(kernel_call_trace)
+                            query = _build_query_from_ncu_trace(kernel_call_trace, debug)
                             # Apply the query
                             node_set = query.apply(thicket)
                             # Find the correct node. This may also get the parent so we take the last one
