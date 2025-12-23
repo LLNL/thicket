@@ -63,6 +63,7 @@ def test_multi_trial(
 ):
     tk = th.Thicket.from_caliperreader(
         rajaperf_cali_alltrials,
+        node_ordering=True,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
