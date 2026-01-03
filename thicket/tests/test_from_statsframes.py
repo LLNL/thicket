@@ -15,6 +15,7 @@ def test_single_trial(mpi_scaling_cali, intersection, fill_perfdata):
         th_list.append(
             th.Thicket.from_caliperreader(
                 file,
+                node_ordering=False,
                 intersection=intersection,
                 fill_perfdata=fill_perfdata,
                 disable_tqdm=True,
@@ -63,7 +64,7 @@ def test_multi_trial(
 ):
     tk = th.Thicket.from_caliperreader(
         rajaperf_cali_alltrials,
-        node_ordering=True,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,

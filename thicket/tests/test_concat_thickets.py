@@ -20,12 +20,14 @@ from thicket.utils import DuplicateIndexError
 def test_concat_thickets_index(mpi_scaling_cali, intersection, fill_perfdata):
     th_27 = Thicket.from_caliperreader(
         mpi_scaling_cali[0],
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
     )
     th_64 = Thicket.from_caliperreader(
         mpi_scaling_cali[1],
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -52,6 +54,7 @@ def test_concat_thickets_index(mpi_scaling_cali, intersection, fill_perfdata):
     ):
         Thicket.from_caliperreader(
             [mpi_scaling_cali[0], mpi_scaling_cali[0]],
+            node_ordering=False,
             intersection=intersection,
             fill_perfdata=fill_perfdata,
             disable_tqdm=True,

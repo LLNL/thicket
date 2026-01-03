@@ -55,6 +55,7 @@ def test_query(rajaperf_cuda_block128_1M_cali, intersection, fill_perfdata):
     # test thicket
     th = Thicket.from_caliperreader(
         rajaperf_cuda_block128_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -80,12 +81,14 @@ def test_object_dialect_column_multi_index(
 ):
     th1 = Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali[0],
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
     )
     th2 = Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali[1],
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -129,12 +132,14 @@ def test_string_dialect_column_multi_index(
 ):
     th1 = Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali[0],
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
     )
     th2 = Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali[1],
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
