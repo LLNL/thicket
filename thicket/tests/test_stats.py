@@ -14,6 +14,7 @@ import thicket as th
 def test_mean(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -57,6 +58,7 @@ def test_mean_columnar_join(thicket_axis_columns):
 def test_sum(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -128,6 +130,7 @@ def test_sum_columnar_join(thicket_axis_columns):
 def test_median(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -171,6 +174,7 @@ def test_median_columnar_join(thicket_axis_columns):
 def test_minimum(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -214,6 +218,7 @@ def test_minimum_columnar_join(thicket_axis_columns):
 def test_maximum(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -257,6 +262,7 @@ def test_maximum_columnar_join(thicket_axis_columns):
 def test_std(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -300,6 +306,7 @@ def test_std_columnar_join(thicket_axis_columns):
 def test_percentiles(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -336,6 +343,7 @@ def test_percentiles(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
 def test_percentiles_none(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -351,6 +359,7 @@ def test_percentiles_none(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
 def test_percentiles_single_value(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -480,6 +489,7 @@ def test_percentiles_columnar_join(thicket_axis_columns):
 def test_variance(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -523,6 +533,7 @@ def test_variance_columnar_join(thicket_axis_columns, intersection, fill_perfdat
 def test_normality(rajaperf_cuda_block128_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_cuda_block128_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -583,6 +594,7 @@ def test_normality_columnar_join(thicket_axis_columns, stats_thicket_axis_column
 def test_correlation(rajaperf_cuda_block128_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_cuda_block128_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -628,6 +640,7 @@ def test_correlation_columnar_join(thicket_axis_columns):
 def test_boxplot(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_ens = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -1322,6 +1335,7 @@ def test_reapply_statsframe_operations(
 ):
     th_1 = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=False,
@@ -1346,6 +1360,7 @@ def test_reapply_statsframe_operations(
 def test_cache_decorator(rajaperf_seq_O3_1M_cali, intersection, fill_perfdata):
     th_1 = th.Thicket.from_caliperreader(
         rajaperf_seq_O3_1M_cali,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=False,
