@@ -38,7 +38,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: thicket_build_artifacts_wheel
+          name: thicket_build_artifacts_wheel-${{ matrix.python-version }}
           path: dist/*.whl
           overwrite: true
 
