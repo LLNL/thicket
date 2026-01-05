@@ -443,6 +443,7 @@ class Thicket(GraphFrame):
         intersection=False,
         fill_perfdata=True,
         disable_tqdm=False,
+        node_ordering=False,
         **kwargs,
     ):
         """Helper function to read one caliper file.
@@ -453,6 +454,7 @@ class Thicket(GraphFrame):
             intersection (bool): whether to perform intersection or union (default)
             fill_perfdata (bool): whether to fill missing performance data with NaNs
             disable_tqdm (bool): whether to display tqdm progress bar
+            node_ordering (bool): whether to apply node ordering to the graph
         """
         return Thicket.reader_dispatch(
             GraphFrame.from_caliperreader,
@@ -460,6 +462,7 @@ class Thicket(GraphFrame):
             fill_perfdata,
             disable_tqdm,
             filename_or_caliperreader,
+            node_ordering=node_ordering,
             **kwargs,
         )
 
