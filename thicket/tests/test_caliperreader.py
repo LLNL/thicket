@@ -35,6 +35,7 @@ def test_node_ordering_from_caliper(caliper_ordered, intersection, fill_perfdata
 
     tk = Thicket.from_caliperreader(
         caliper_ordered[0],
+        node_ordering=True,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
@@ -103,6 +104,7 @@ def test_node_ordering_from_caliper(caliper_ordered, intersection, fill_perfdata
     # test node ordering True for multiple profiles
     tk_multi = Thicket.from_caliperreader(
         caliper_ordered,
+        node_ordering=True,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
