@@ -76,9 +76,8 @@ jobs:
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
-      env:
-        CODECOV_TOKEN: ${{ secrets.THICKET_CODECOV_TOKEN }}
       with:
+        token: ${{ secrets.THICKET_CODECOV_TOKEN }}
         directory: ./coverage/reports/
         env_vars: OS,PYTHON
         files: /home/runner/work/thicket/thicket/coverage.xml
