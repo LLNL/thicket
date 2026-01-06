@@ -79,14 +79,14 @@ def stats_thicket_axis_columns(
     """
     th_cuda128_1 = Thicket.from_caliperreader(
         rajaperf_cuda_block128_1M_cali[0:4],
-        node_ordering=True,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
     )
     th_cuda128_2 = Thicket.from_caliperreader(
         rajaperf_cuda_block128_1M_cali[5:9],
-        node_ordering=True,
+        node_ordering=False,
         intersection=intersection,
         fill_perfdata=fill_perfdata,
         disable_tqdm=True,
