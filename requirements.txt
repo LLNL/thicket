@@ -5,3 +5,4 @@ llnl-hatchet
 matplotlib
 seaborn
 beautifulsoup4
+more-itertools
