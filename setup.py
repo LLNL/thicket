@@ -44,7 +44,7 @@ setup(
     install_requires=[
         "scipy",
         "numpy",
-        "pandas >= 1.1",
+        "pandas >= 1.1,<3",
         "llnl-hatchet",
         "tqdm",
         "more-itertools",
