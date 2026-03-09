@@ -6,3 +6,4 @@ matplotlib
 seaborn
 beautifulsoup4
 more-itertools
+tqdm
