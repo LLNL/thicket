@@ -177,6 +177,6 @@ def calc_boxplot_statistics(thicket, columns=[], quartiles=[0.25, 0.5, 0.75], **
             thicket.statsframe.dataframe = thicket.statsframe.dataframe.join(df_box)
 
         # sort columns in index
-        thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
+        # thicket.statsframe.dataframe = thicket.statsframe.dataframe.sort_index(axis=1)
 
     return output_column_names
