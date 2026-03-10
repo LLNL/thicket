@@ -38,10 +38,7 @@ try:
 except ModuleNotFoundError:
     pass
 
-try:
-    from .compiler_static_info_reader import CompilerStaticInfoAdder
-except ModuleNotFoundError:
-    pass
+from .compiler_static_info_reader import CompilerStaticInfoReader
 
 import thicket.helpers as helpers
 from .groupby import GroupBy
@@ -50,6 +47,7 @@ from .utils import (
     check_duplicate_metadata_key,
     validate_profile,
     validate_nodes,
+    validate_dataframe,
 )
 from .external.console import ThicketRenderer
 
@@ -876,25 +874,34 @@ class Thicket(GraphFrame):
 
     def add_compiler_static_info(
         self,
-        extraction_plugin_output_path,
-        trace_file,
+        preprocessed_file,
     ):
-        """Add static from the compiler collected through the extraction llvm pass plugin and related to Caliper regions
-           through the association llvm pass plugin
+        """Add static compiler info to the Thicket from a preprocessed file produced
+        by the compiler_static_info preprocessor script.
 
         Arguments:
-            extraction_plugin_output_path (str): Path to directory including static information. Specified as EXTRACTION_OUT_PATH
-            in extraction plugin
-            trace_file (str): Path to trace log file generated at runtime through the association plugin. Contains mappings of functions
-            to Caliper regions
+            preprocessed_file (str): Path to the JSON file produced by the preprocessor.
+                Accepts both flat and nested output formats.
         """
+        if self.dataframe.columns.nlevels != 1:
+            raise ValueError(
+                "Concatenated Thicket detected. "
+                "'add_compiler_static_info()' requires a Thicket that has not been concatenated along the 'column' axis."
+            )
 
-        adder = CompilerStaticInfoAdder(
-            extraction_plugin_out_dir=extraction_plugin_output_path,
-            trace_file=trace_file,
-        )
+        if not isinstance(preprocessed_file, str):
+            raise TypeError("'preprocessed_file' must be a string path")
 
-        adder.add_to_thicket(self)
+        if not os.path.isfile(preprocessed_file):
+            raise FileNotFoundError(
+                f"'preprocessed_file' does not exist: {preprocessed_file}"
+            )
+
+        CompilerStaticInfoReader(preprocessed_file).add_to_thicket(self)
+
+        validate_nodes(self)
+        validate_profile(self)
+        validate_dataframe(self.dataframe)
 
     def metadata_columns_to_perfdata(
         self, metadata_columns, overwrite=False, drop=False, join_key=None
