@@ -37,6 +37,12 @@ try:
     from .ncu import NCUReader
 except ModuleNotFoundError:
     pass
+
+try:
+    from .compiler_static_info_reader import CompilerStaticInfoAdder
+except ModuleNotFoundError:
+    pass
+
 import thicket.helpers as helpers
 from .groupby import GroupBy
 from .utils import (
@@ -867,6 +873,28 @@ class Thicket(GraphFrame):
             lsuffix="_left",
             rsuffix="_right",
         )
+
+    def add_compiler_static_info(
+        self,
+        extraction_plugin_output_path,
+        trace_file,
+    ):
+        """Add static from the compiler collected through the extraction llvm pass plugin and related to Caliper regions
+           through the association llvm pass plugin
+
+        Arguments:
+            extraction_plugin_output_path (str): Path to directory including static information. Specified as EXTRACTION_OUT_PATH
+            in extraction plugin
+            trace_file (str): Path to trace log file generated at runtime through the association plugin. Contains mappings of functions
+            to Caliper regions
+        """
+
+        adder = CompilerStaticInfoAdder(
+            extraction_plugin_out_dir=extraction_plugin_output_path,
+            trace_file=trace_file,
+        )
+
+        adder.add_to_thicket(self)
 
     def metadata_columns_to_perfdata(
         self, metadata_columns, overwrite=False, drop=False, join_key=None
