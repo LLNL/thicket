@@ -51,7 +51,6 @@ def _match_call_trace_regex(
                 f"\tCould not match {demangled_kernel_name}\n\tWill still attempt to match with query from kernel call trace (unsafe)"
             )
         kernel_str = None
-        # return None, None, None, None, True
 
     # RAJA_CUDA/Lambda_CUDA variant
     instance_pattern = r"instance (\d+)"
@@ -67,9 +66,7 @@ def _match_call_trace_regex(
     return kernel_str, demangled_kernel_name, instance_num, instance_exists, False
 
 
-def _match_kernel_str_to_cali(
-    node_set, kernel_str, instance_num, raja_lambda_cuda, instance_exists
-):
+def _match_kernel_str_to_cali(node_set, kernel_str, instance_num, instance_exists):
     """Given a set of nodes, node_set, from querying the Caliper call
     tree using the NCU call trace, match the kernel_str to one of the
     node names. Additionally, use the instance number, instance_num to
@@ -79,7 +76,6 @@ def _match_kernel_str_to_cali(
         node_set (list): List of Hatchet nodes from querying the call tree
         kernel_str (str): Kernel name from _match_call_trace_regex
         instance_num (int): Instance number of kernel, if applicable
-        raja_lambda_cuda (bool): True if RAJA_CUDA or Lambda_CUDA, False if Base_CUDA
         instance_exists (bool): True if instance number exists, False if not
     """
     if kernel_str:
@@ -87,11 +83,7 @@ def _match_kernel_str_to_cali(
             n
             for n in node_set
             if kernel_str in n.frame["name"]
-            and (
-                f"#{instance_num}" in n.frame["name"]
-                if raja_lambda_cuda and instance_exists
-                else True
-            )
+            and (f"#{instance_num}" in n.frame["name"] if instance_exists else True)
         ]
     else:
         return [n for n in node_set if n.frame["type"] == "kernel"]
@@ -161,10 +153,6 @@ def _build_query_from_ncu_trace(kernel_call_trace, debug):
         else:
             query.rel(".", _predicate_builder(kernel))
 
-    if debug:
-        print(query)
-        print(kernel_call_trace)
-
     return query
 
 
@@ -209,13 +197,6 @@ class NCUReader:
             # NCU hash
             profile_mapping_flipped = {v: k for k, v in thicket.profile_mapping.items()}
             ncu_hash = profile_mapping_flipped[ncu_report_mapping[ncu_report_file]]
-
-            # Relevant for kernel matching
-            # variant = thicket.metadata.loc[ncu_hash, "variant"]
-            # raja_lambda_cuda = (
-            #     variant.upper() == "RAJA_CUDA" or variant.upper() == "LAMBDA_CUDA"
-            # )
-            raja_lambda_cuda = True
 
             # Load file
             report = ncu_report.load_report(ncu_report_file)
@@ -303,7 +284,6 @@ class NCUReader:
                                 node_set,
                                 kernel_str,
                                 instance_num,
-                                raja_lambda_cuda,
                                 instance_exists,
                             )
                             if len(matched_nodes) > 1:
@@ -318,7 +298,7 @@ class NCUReader:
                                 )
 
                             if debug:
-                                if not raja_lambda_cuda or not instance_exists:
+                                if not instance_exists:
                                     instance_num = "NA"
                                 print(
                                     f"\tMatched NCU kernel:\n\t\t{demangled_kernel_name}\n\tto Caliper Node:\n\t\t{matched_node}"
