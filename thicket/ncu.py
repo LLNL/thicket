@@ -16,8 +16,7 @@ def _match_call_trace_regex(
     kernel_call_trace, demangled_kernel_name, debug, action=None
 ):
     """Use the NCU call trace to regex match the kernel name from the demangled
-    kernel string. Also modifies the demangled kernel name in certain cases. Returns
-    the matched kernel string, if match is possible.
+    kernel string. Returns the matched kernel string, if match is possible.
 
     Arguments:
         kernel_call_trace (list): List of strings from NCU representing the call trace
@@ -45,6 +44,10 @@ def _match_call_trace_regex(
     # Found match
     if kernel_match:
         kernel_str = kernel_match.group(1)
+        if debug:
+            print(
+                f"\tMatched {demangled_kernel_name} to kernel {kernel_str} (safe)"
+            )
     else:
         if debug:
             print(
