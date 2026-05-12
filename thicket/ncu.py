@@ -45,9 +45,7 @@ def _match_call_trace_regex(
     if kernel_match:
         kernel_str = kernel_match.group(1)
         if debug:
-            print(
-                f"\tMatched {demangled_kernel_name} to kernel {kernel_str} (safe)"
-            )
+            print(f"\tMatched {demangled_kernel_name} to kernel {kernel_str} (safe)")
     else:
         if debug:
             print(
