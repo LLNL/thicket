@@ -189,6 +189,10 @@ class NCUReader:
         rollup_dict = {}
         # Kernel mapping from NCU kernel to thicket node to save re-querying
         kernel_map = {}
+        # Query results keyed by normalized NCU call trace so the same thicket
+        # tree query is only executed once.
+        query_cache = {}
+        profile_mapping_flipped = {v: k for k, v in thicket.profile_mapping.items()}
 
         # Loop through NCU files
         for ncu_report_file in ncu_report_mapping:
@@ -196,7 +200,6 @@ class NCUReader:
             call_trace_found = False
 
             # NCU hash
-            profile_mapping_flipped = {v: k for k, v in thicket.profile_mapping.items()}
             ncu_hash = profile_mapping_flipped[ncu_report_mapping[ncu_report_file]]
 
             # Load file
@@ -274,12 +277,18 @@ class NCUReader:
                                     f"\tKernel already in mapping: {demangled_kernel_name}"
                                 )
                         else:  # kernel hasn't been seen yet
-                            # Build query
-                            query = _build_query_from_ncu_trace(
-                                kernel_call_trace, debug
-                            )
-                            # Apply the query
-                            node_set = query.apply(thicket)
+                            query_key = tuple(kernel_call_trace)
+                            if query_key in query_cache:
+                                node_set = query_cache[query_key]
+                                if debug:
+                                    print(f"\tQuery already in mapping: {query_key}")
+                            else:
+                                # Build and apply the query once per unique trace.
+                                query = _build_query_from_ncu_trace(
+                                    kernel_call_trace, debug
+                                )
+                                node_set = query.apply(thicket)
+                                query_cache[query_key] = node_set
                             # Find the correct node. This may also get the parent so we take the last one
                             matched_nodes = _match_kernel_str_to_cali(
                                 node_set,
