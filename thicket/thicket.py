@@ -13,6 +13,7 @@ import warnings
 import itertools
 from collections import defaultdict, OrderedDict
 from hashlib import md5
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 
 import pandas as pd
 import numpy as np
@@ -46,6 +47,27 @@ from .utils import (
     validate_nodes,
 )
 from .external.console import ThicketRenderer
+
+
+# Must be at module top-level for ProcessPool pickling
+def _read_and_thicketize_one(path, func, extra_args, kwargs):
+    # Runs in worker: call func, then thicketize, return final Thicket + path
+    gf = func(path, *extra_args, **kwargs)
+    return Thicket.thicketize_graphframe(gf, path), path
+
+
+# Top-level helper for merging a single pair (must be importable/pickleable)
+def _merge_pair_thicket(a, b, calltree, fill_perfdata, disable_tqdm):
+    # If b is None (odd number of items), pass through a unchanged
+    if b is None:
+        return a
+    return Thicket.concat_thickets(
+        thickets=[a, b],
+        axis="index",
+        calltree=calltree,
+        fill_perfdata=fill_perfdata,
+        disable_tqdm=disable_tqdm,
+    )
 
 
 class Thicket(GraphFrame):
@@ -551,7 +573,7 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def reader_dispatch(
-        func, intersection, fill_perfdata, disable_tqdm, *args, **kwargs
+        func, intersection, fill_perfdata, disable_tqdm, *args, parallel=True, max_workers=14, use_threads=False, **kwargs
     ):
         """Create a thicket from a list, directory of files, or a single file.
 
@@ -585,25 +607,76 @@ class Thicket(GraphFrame):
         # Parse the input object
         # if a list of files
         if isinstance(obj, (list, tuple)):
-            pbar = tqdm.tqdm(obj, disable=disable_tqdm)
-            for file in pbar:
+            files = list(obj)
+
+            if not parallel:
+                pbar = tqdm.tqdm(files, disable=disable_tqdm)
+                for file in pbar:
+                    pbar.set_description(pbar_desc)
+                    try:
+                        gf = func(file, *extra_args, **kwargs)
+                    except Exception as e:
+                        raise Exception(f"Failed to read file: {file}") from e
+                    ens_list.append(Thicket.thicketize_graphframe(gf, file))
+            else:
+                # Parallel read path (preserves input order)
+                Executor = ThreadPoolExecutor if use_threads else ProcessPoolExecutor
+                pbar = tqdm.tqdm(total=len(files), disable=disable_tqdm)
                 pbar.set_description(pbar_desc)
-                try:
-                    gf = func(file, *extra_args, **kwargs)
-                except Exception as e:
-                    raise Exception(f"Failed to read file: {file}") from e
-                ens_list.append(Thicket.thicketize_graphframe(gf, file))
+                # Map file -> index to restore order
+                idx_of = {f: i for i, f in enumerate(files)}
+                results = [None] * len(files)
+                # Submit all
+                with Executor(max_workers=max_workers) as ex:
+                    futures = {ex.submit(_read_and_thicketize_one, f, func, extra_args, kwargs): f
+                               for f in files}
+                    for fut in as_completed(futures):
+                        f = futures[fut]
+                        try:
+                            tk, path = fut.result()
+                        except Exception as e:
+                            # Raise with filename context like your serial path
+                            raise Exception(f"Failed to read file: {f}") from e
+                        results[idx_of[path]] = tk
+                        pbar.update(1)
+                pbar.close()
+                # Extend ens_list in original order
+                ens_list.extend(results)
         # if directory of files
         elif os.path.isdir(obj):
-            pbar = tqdm.tqdm(os.listdir(obj), disable=disable_tqdm)
-            for file in pbar:
+            dir_entries = os.listdir(obj)  # snapshot once
+            files = [os.path.join(obj, file) for file in dir_entries]
+
+            if not parallel:
+                pbar = tqdm.tqdm(dir_entries, disable=disable_tqdm)
+                for file in pbar:
+                    pbar.set_description(pbar_desc)
+                    f = os.path.join(obj, file)
+                    try:
+                        gf = func(f, *extra_args, **kwargs)
+                    except Exception as e:
+                        raise Exception(f"Failed to read file: {f}") from e
+                    ens_list.append(Thicket.thicketize_graphframe(gf, f))
+            else:
+                # Parallel read path (preserves directory listing order)
+                Executor = ThreadPoolExecutor if use_threads else ProcessPoolExecutor
+                pbar = tqdm.tqdm(total=len(files), disable=disable_tqdm)
                 pbar.set_description(pbar_desc)
-                f = os.path.join(obj, file)
-                try:
-                    gf = func(f, *extra_args, **kwargs)
-                except Exception as e:
-                    raise Exception(f"Failed to read file: {f}") from e
-                ens_list.append(Thicket.thicketize_graphframe(gf, f))
+                idx_of = {f: i for i, f in enumerate(files)}
+                results = [None] * len(files)
+                with Executor(max_workers=max_workers) as ex:
+                    futures = {ex.submit(_read_and_thicketize_one, f, func, extra_args, kwargs): f
+                               for f in files}
+                    for fut in as_completed(futures):
+                        f = futures[fut]
+                        try:
+                            tk, path = fut.result()
+                        except Exception as e:
+                            raise Exception(f"Failed to read file: {f}") from e
+                        results[idx_of[path]] = tk
+                        pbar.update(1)
+                pbar.close()
+                ens_list.extend(results)
         # if single file
         elif os.path.isfile(obj):
             return Thicket.thicketize_graphframe(func(*args, **kwargs), args[0])
@@ -617,22 +690,58 @@ class Thicket(GraphFrame):
         # Each non-leaf Thicket (parent) is a result of a concat_thickets, therefore
         # we have t-1 concat_thickets operations. t == len(ens_list)
         pbar = tqdm.tqdm(total=len(ens_list) - 1, disable=disable_tqdm)
-        # We start with t Thickets with 1 prof each until 1 Thicket with t profs.
-        # Each iteration is concatenating 2 Thickets with n, m profs into 1 Thicket
-        # with n+m profs, appending the new Thicket to the back of the ens_list.
-        while len(ens_list) > 1:
-            pbar.set_description("(2/2) Creating Thicket")
-            new_tk = Thicket.concat_thickets(
-                thickets=[ens_list.pop(0), ens_list.pop(0)],
-                axis="index",
-                calltree=calltree,
-                fill_perfdata=fill_perfdata,
-                disable_tqdm=disable_tqdm,
-            )
-            ens_list.append(new_tk)
-            pbar.update(1)
 
-        return ens_list.pop(0)
+        if not parallel:
+            # We start with t Thickets with 1 prof each until 1 Thicket with t profs.
+            # Each iteration is concatenating 2 Thickets with n, m profs into 1 Thicket
+            # with n+m profs, appending the new Thicket to the back of the ens_list.
+            while len(ens_list) > 1:
+                pbar.set_description("(2/2) Creating Thicket")
+                new_tk = Thicket.concat_thickets(
+                    thickets=[ens_list.pop(0), ens_list.pop(0)],
+                    axis="index",
+                    calltree=calltree,
+                    fill_perfdata=fill_perfdata,
+                    disable_tqdm=disable_tqdm,
+                )
+                ens_list.append(new_tk)
+                pbar.update(1)
+            pbar.close()
+            return ens_list.pop(0)
+        else:
+            # Parallel pairwise tree-reduction per level
+            pbar.set_description("(2/2) Creating Thicket (parallel)")
+            current = list(ens_list)
+            Executor = ThreadPoolExecutor if use_threads else ProcessPoolExecutor
+            with Executor(max_workers=max_workers) as ex:
+                while len(current) > 1:
+                    # Pair up (0,1), (2,3), ... ; if odd, last pair is (a, None)
+                    it = iter(current)
+                    pairs = list(itertools.zip_longest(it, it, fillvalue=None))
+
+                    # Submit merges; track which futures correspond to real merges (b is not None)
+                    futures = []
+                    is_merge = []
+                    for a, b in pairs:
+                        futures.append(ex.submit(
+                            _merge_pair_thicket, a, b, calltree, fill_perfdata, disable_tqdm
+                        ))
+                        is_merge.append(b is not None)
+
+                    # Collect results as they complete and update progress for real merges
+                    next_round = []
+                    for fut in as_completed(futures):
+                        res = fut.result()
+                        next_round.append(res)
+                        # Update once for each completed "real" merge
+                        # (This keeps total updates at t-1 over all rounds)
+                        idx = futures.index(fut)
+                        if is_merge[idx]:
+                            pbar.update(1)
+
+                    current = next_round
+            pbar.close()
+            return current[0]
 
     @staticmethod
     def concat_thickets(
