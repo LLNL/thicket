@@ -120,7 +120,7 @@ def test_match_kernel_str_to_cali():
         ),
     ]
     matched_nodes = _match_kernel_str_to_cali(
-        node_set, kernel_str, instance_num, True, instance_exists
+        node_set, kernel_str, instance_num, instance_exists
     )
     assert len(matched_nodes) == 1
     # energy4
@@ -170,7 +170,7 @@ def test_multi_match_fallback_similarity():
         ),
     ]
     matched_nodes = _match_kernel_str_to_cali(
-        node_set, kernel_str, instance_num, True, instance_exists
+        node_set, kernel_str, instance_num, instance_exists
     )
     matched_node = _multi_match_fallback_similarity(
         matched_nodes, demangled_kernel_name, debug=False
@@ -178,4 +178,81 @@ def test_multi_match_fallback_similarity():
     assert (
         matched_node.frame["name"]
         == "void cub::DeviceRadixSortUpsweepKernel<cub::DeviceRadixSortPolicy<double, cub::NullType, int>::Policy700, true, false, double, int>(double const*, int*, int, int, int, cub::GridEvenShare<int>)"
+    )
+
+
+def test_match_call_trace_regex_kripke_uses_unsafe_fallback():
+    (
+        kernel_str,
+        demangled_kernel_name,
+        instance_num,
+        instance_exists,
+        skip_kernel,
+    ) = _match_call_trace_regex(
+        ["main", "Solve", "solve", "LTimes", "ltimes_kernel_0", "ltimessdom_kernel"],
+        "void RAJA::internal::CudaKernelLauncherFixed<(int)1024, (int)1, RAJA::internal::LoopData<camp::tuple<RAJA::Span<RAJA::Iterators::numeric_iterator<Kripke::Moment, long, Kripke::Moment *>, long>, RAJA::Span<RAJA::Iterators::numeric_iterator<Kripke::Direction, long, Kripke::Direction *>, long>, RAJA::Span<RAJA::Iterators::numeric_iterator<Kripke::Group, long, Kripke::Group *>, long>, RAJA::Span<RAJA::Iterators::numeric_iterator<Kripke::Zone, long, Kripke::Zone *>, long>>, camp::tuple<>, camp::resources::v1::Cuda, void LTimesSdom::operator ()<Kripke::ArchLayoutT<Kripke::ArchT_CUDA, Kripke::LayoutT_ZGD>>(T1, Kripke::SdomId, const Kripke::Core::Set &, const Kripke::Core::Set &, const Kripke::Core::Set &, const Kripke::Core::Set &, Kripke::Core::Field<double, Kripke::Direction, Kripke::Group, Kripke::Zone> &, Kripke::Core::Field<double, Kripke::Moment, Kripke::Group, Kripke::Zone> &, Kripke::Core::Field<double, Kripke::Moment, Kripke::Direction> &, unsigned long) const::[lambda(Kripke::Moment, Kripke::Direction, Kripke::Group, Kripke::Zone) (instance 1)]>, RAJA::internal::CudaStatementListExecutor<RAJA::internal::LoopData<camp::tuple<RAJA::Span<RAJA::Iterators::numeric_iterator<Kripke::Moment, long, Kripke::Moment *>, long>, RAJA::Span<RAJA::Iterators::numeric_iterator<Kripke::Direction, long, Kripke::Direction *>, long>, RAJA::Span<RAJA::Iterators::numeric_iterator<Kripke::Group, long, Kripke::Group *>, long>, RAJA::Span<RAJA::Iterators::numeric_iterator<Kripke::Zone, long, Kripke::Zone *>, long>>, camp::tuple<>, camp::resources::v1::Cuda, void LTimesSdom::operator ()<Kripke::ArchLayoutT<Kripke::ArchT_CUDA, Kripke::LayoutT_ZGD>>(T1, Kripke::SdomId, const Kripke::Core::Set &, const Kripke::Core::Set &, const Kripke::Core::Set &, const Kripke::Core::Set &, Kripke::Core::Field<double, Kripke::Direction, Kripke::Group, Kripke::Zone> &, Kripke::Core::Field<double, Kripke::Moment, Kripke::Group, Kripke::Zone> &, Kripke::Core::Field<double, Kripke::Moment, Kripke::Direction> &, unsigned long) const::[lambda(Kripke::Moment, Kripke::Direction, Kripke::Group, Kripke::Zone) (instance 1)]>, camp::list<RAJA::statement::For<(long)3, RAJA::policy::cuda::cuda_indexer<RAJA::iteration_mapping::StridedLoop<(unsigned long)0>, (RAJA::kernel_sync_requirement)0, RAJA::cuda::IndexGlobal<(RAJA::named_dim)0, (int)-1, (int)0>>, RAJA::statement::For<(long)2, RAJA::policy::cuda::cuda_indexer<RAJA::iteration_mapping::StridedLoop<(unsigned long)0>, (RAJA::kernel_sync_requirement)0, RAJA::cuda::IndexGlobal<(RAJA::named_dim)1, (int)-1, (int)0>>, RAJA::statement::For<(long)0, RAJA::policy::cuda::cuda_indexer<RAJA::iteration_mapping::StridedLoop<(unsigned long)0>, (RAJA::kernel_sync_requirement)0, RAJA::cuda::IndexGlobal<(RAJA::named_dim)0, (int)0, (int)-1>>, RAJA::statement::For<(long)1, RAJA::policy::sequential::seq_exec, RAJA::statement::Lambda<(long)0, >>>>>>, RAJA::internal::LoopTypes<camp::list<void, void, void, void>, camp::list<void, void, void, void>>>>(T3)",
+        debug=False,
+    )
+    assert kernel_str is None
+    assert instance_num == "1"
+    assert instance_exists is True
+    assert skip_kernel is False
+
+
+def test_match_kernel_str_to_cali_kripke_unsafe_returns_all_kernel_candidates():
+    node_set = [
+        Node({"name": "main", "type": "function"}),
+        Node({"name": "Solve", "type": "function"}),
+        Node({"name": "void kernel one()", "type": "kernel"}),
+        Node({"name": "void kernel two()", "type": "kernel"}),
+    ]
+    matched_nodes = _match_kernel_str_to_cali(
+        node_set, kernel_str=None, instance_num="1", instance_exists=True
+    )
+    assert len(matched_nodes) == 2
+    assert all(node.frame["type"] == "kernel" for node in matched_nodes)
+
+
+def test_laghos_kernel_uses_similarity_fallback_after_safe_wrapper_match():
+    (
+        kernel_str,
+        demangled_kernel_name,
+        instance_num,
+        instance_exists,
+        skip_kernel,
+    ) = _match_call_trace_regex(
+        ["main"],
+        "void mfem::CuKernel1D<mfem::SparseMatrix::BooleanMult(const mfem::Array<int> &, mfem::Array<int> &) const::[lambda(int) (instance 1)]>(int, T1)",
+        debug=False,
+    )
+    assert kernel_str == "CuKernel1D"
+    assert instance_num == "1"
+    assert instance_exists is True
+    assert skip_kernel is False
+
+    node_set = [
+        Node(
+            {
+                "name": "void mfem::CuKernel1D<mfem::Vector::operator=(double)::{lambda(int)#1}>(int, mfem::Vector::operator=(double)::{lambda(int)#1})",
+                "type": "kernel",
+            }
+        ),
+        Node(
+            {
+                "name": "void mfem::CuKernel1D<mfem::SparseMatrix::BooleanMult(mfem::Array<int> const&, mfem::Array<int>&) const::{lambda(int)#1}>(int, mfem::SparseMatrix::BooleanMult(mfem::Array<int> const&, mfem::Array<int>&) const::{lambda(int)#1})",
+                "type": "kernel",
+            }
+        ),
+    ]
+    matched_nodes = _match_kernel_str_to_cali(
+        node_set, kernel_str, instance_num, instance_exists
+    )
+    assert len(matched_nodes) == 2
+
+    matched_node = _multi_match_fallback_similarity(
+        matched_nodes, demangled_kernel_name, debug=False
+    )
+    assert (
+        matched_node.frame["name"]
+        == "void mfem::CuKernel1D<mfem::SparseMatrix::BooleanMult(mfem::Array<int> const&, mfem::Array<int>&) const::{lambda(int)#1}>(int, mfem::SparseMatrix::BooleanMult(mfem::Array<int> const&, mfem::Array<int>&) const::{lambda(int)#1})"
     )
