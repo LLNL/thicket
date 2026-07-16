@@ -50,15 +50,20 @@ from .external.console import ThicketRenderer
 
 
 # Must be at module top-level for ProcessPool pickling
-def _read_and_thicketize_one(path, func, extra_args, kwargs):
+def _read_and_thicketize_one(f_pair, func, extra_args, kwargs):
     # Runs in worker: call func, then thicketize, return final Thicket + path
+    file_idx=f_pair[0]
+    path=f_pair[1]
     gf = func(path, *extra_args, **kwargs)
-    return Thicket.thicketize_graphframe(gf, path), path
-
+    return Thicket.thicketize_graphframe(gf, path), path, file_idx
 
 # Top-level helper for merging a single pair (must be importable/pickleable)
 def _merge_pair_thicket(a, b, calltree, fill_perfdata, disable_tqdm):
-    # If b is None (odd number of items), pass through a unchanged
+    # Validate both parameters
+    if a is None and b is None:
+        raise ValueError("Cannot merge: both thickets are None")
+    if a is None:
+        return b
     if b is None:
         return a
     return Thicket.concat_thickets(
@@ -624,20 +629,20 @@ class Thicket(GraphFrame):
                 pbar = tqdm.tqdm(total=len(files), disable=disable_tqdm)
                 pbar.set_description(pbar_desc)
                 # Map file -> index to restore order
-                idx_of = {f: i for i, f in enumerate(files)}
+                enum_files=list(enumerate(files))
                 results = [None] * len(files)
                 # Submit all
                 with Executor(max_workers=max_workers) as ex:
                     futures = {ex.submit(_read_and_thicketize_one, f, func, extra_args, kwargs): f
-                               for f in files}
+                               for f in enum_files}
                     for fut in as_completed(futures):
                         f = futures[fut]
                         try:
-                            tk, path = fut.result()
+                            tk, path, f_idx = fut.result()
                         except Exception as e:
                             # Raise with filename context like your serial path
                             raise Exception(f"Failed to read file: {f}") from e
-                        results[idx_of[path]] = tk
+                        results[f_idx] = tk
                         pbar.update(1)
                 pbar.close()
                 # Extend ens_list in original order
@@ -662,7 +667,7 @@ class Thicket(GraphFrame):
                 Executor = ThreadPoolExecutor if use_threads else ProcessPoolExecutor
                 pbar = tqdm.tqdm(total=len(files), disable=disable_tqdm)
                 pbar.set_description(pbar_desc)
-                idx_of = {f: i for i, f in enumerate(files)}
+                enum_files=list(enumerate(files))
                 results = [None] * len(files)
                 with Executor(max_workers=max_workers) as ex:
                     futures = {ex.submit(_read_and_thicketize_one, f, func, extra_args, kwargs): f
@@ -670,10 +675,10 @@ class Thicket(GraphFrame):
                     for fut in as_completed(futures):
                         f = futures[fut]
                         try:
-                            tk, path = fut.result()
+                            tk, path, f_idx = fut.result()
                         except Exception as e:
                             raise Exception(f"Failed to read file: {f}") from e
-                        results[idx_of[path]] = tk
+                        results[f_idx] = tk
                         pbar.update(1)
                 pbar.close()
                 ens_list.extend(results)
