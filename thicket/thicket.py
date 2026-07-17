@@ -52,10 +52,11 @@ from .external.console import ThicketRenderer
 # Must be at module top-level for ProcessPool pickling
 def _read_and_thicketize_one(f_pair, func, extra_args, kwargs):
     # Runs in worker: call func, then thicketize, return final Thicket + path
-    file_idx=f_pair[0]
-    path=f_pair[1]
+    file_idx = f_pair[0]
+    path = f_pair[1]
     gf = func(path, *extra_args, **kwargs)
     return Thicket.thicketize_graphframe(gf, path), path, file_idx
+
 
 # Top-level helper for merging a single pair (must be importable/pickleable)
 def _merge_pair_thicket(a, b, calltree, fill_perfdata, disable_tqdm):
@@ -578,7 +579,15 @@ class Thicket(GraphFrame):
 
     @staticmethod
     def reader_dispatch(
-        func, intersection, fill_perfdata, disable_tqdm, *args, parallel=True, max_workers=14, use_threads=False, **kwargs
+        func,
+        intersection,
+        fill_perfdata,
+        disable_tqdm,
+        *args,
+        parallel=True,
+        max_workers=14,
+        use_threads=False,
+        **kwargs,
     ):
         """Create a thicket from a list, directory of files, or a single file.
 
@@ -629,12 +638,16 @@ class Thicket(GraphFrame):
                 pbar = tqdm.tqdm(total=len(files), disable=disable_tqdm)
                 pbar.set_description(pbar_desc)
                 # Map file -> index to restore order
-                enum_files=list(enumerate(files))
+                enum_files = list(enumerate(files))
                 results = [None] * len(files)
                 # Submit all
                 with Executor(max_workers=max_workers) as ex:
-                    futures = {ex.submit(_read_and_thicketize_one, f, func, extra_args, kwargs): f
-                               for f in enum_files}
+                    futures = {
+                        ex.submit(
+                            _read_and_thicketize_one, f, func, extra_args, kwargs
+                        ): f
+                        for f in enum_files
+                    }
                     for fut in as_completed(futures):
                         f = futures[fut]
                         try:
@@ -667,11 +680,15 @@ class Thicket(GraphFrame):
                 Executor = ThreadPoolExecutor if use_threads else ProcessPoolExecutor
                 pbar = tqdm.tqdm(total=len(files), disable=disable_tqdm)
                 pbar.set_description(pbar_desc)
-                enum_files=list(enumerate(files))
+                enum_files = list(enumerate(files))
                 results = [None] * len(files)
                 with Executor(max_workers=max_workers) as ex:
-                    futures = {ex.submit(_read_and_thicketize_one, f, func, extra_args, kwargs): f
-                               for f in files}
+                    futures = {
+                        ex.submit(
+                            _read_and_thicketize_one, f, func, extra_args, kwargs
+                        ): f
+                        for f in files
+                    }
                     for fut in as_completed(futures):
                         f = futures[fut]
                         try:
@@ -728,9 +745,16 @@ class Thicket(GraphFrame):
                     futures = []
                     is_merge = []
                     for a, b in pairs:
-                        futures.append(ex.submit(
-                            _merge_pair_thicket, a, b, calltree, fill_perfdata, disable_tqdm
-                        ))
+                        futures.append(
+                            ex.submit(
+                                _merge_pair_thicket,
+                                a,
+                                b,
+                                calltree,
+                                fill_perfdata,
+                                disable_tqdm,
+                            )
+                        )
                         is_merge.append(b is not None)
 
                     # Collect results as they complete and update progress for real merges
