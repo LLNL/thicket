@@ -687,7 +687,7 @@ class Thicket(GraphFrame):
                         ex.submit(
                             _read_and_thicketize_one, f, func, extra_args, kwargs
                         ): f
-                        for f in files
+                        for f in enum_files
                     }
                     for fut in as_completed(futures):
                         f = futures[fut]
