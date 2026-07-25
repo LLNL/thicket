@@ -520,6 +520,30 @@ class Thicket(GraphFrame):
         )
 
     @staticmethod
+    def from_perfflowaspect(
+        filename, intersection=False, fill_perfdata=True, disable_tqdm=False
+    ):
+        """Create a GraphFrame using hatchet's PerfFlowAspect reader and use
+        its attributes to make a new thicket.
+
+        Arguments:
+            filename (str): name of a PerfFlowAspect output file in .pfw format
+            intersection (bool): whether to perform intersection or union (default)
+            fill_perfdata (bool): whether to fill missing performance data with NaNs
+            disable_tqdm (bool): whether to display tqdm progress bar
+
+        Returns:
+            (thicket): new thicket containing PerfFlowAspect profile data
+        """
+        return Thicket.reader_dispatch(
+            GraphFrame.from_perfflowaspect,
+            intersection,
+            fill_perfdata,
+            disable_tqdm,
+            filename,
+        )
+
+    @staticmethod
     def from_literal(graph_dict):
         """Create a Thicket from a list of dictionarires.
 
