@@ -10,15 +10,15 @@
 
 This is an introduction to Thicket with a presentation and live demos. It was
 presented virtually at the `HPCIC Tutorial Series <https://hpcic.llnl.gov/tutorials>`_,
-August 26, 2025, alongside Caliper.
+August 4, 2026, alongside Caliper.
 
-.. image:: images/thicket-hpcic25-tutorial-slide-preview.jpg
-   :target: _static/2025_08_26_Thicket_HPCIC25_Tutorial.pdf
+.. image:: images/thicket-hpcic26-tutorial-slide-preview.jpg
+   :target: _static/2026_Thicket_Tutorial_HPCIC.pdf
    :height: 72px
    :align: left
    :alt: Slide Preview
 
-:download:`Download Slides <_static/2025_08_26_Thicket_HPDC25_Tutorial.pdf>`.
+:download:`Download Slides <_static/2026_Thicket_Tutorial_HPCIC.pdf>`.
 
 We provide an AWS instance containing Jupyter notebooks that will take you
 through some of the available features in Thicket. They correspond to sections
