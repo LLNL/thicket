@@ -205,6 +205,37 @@ def rajaperf_unique_tunings(data_dir, tmpdir):
 
 
 @pytest.fixture
+def rajaperf_hip_O2_32M_cali(data_dir, tmpdir):
+    """All trials of for RAJA HIP optimization level O2 and total node problem size 536870912."""
+    cali_files = sorted(
+        glob(
+            f"{data_dir}/rajaperf-comp-static-data/tuolumne/runtime/O2/**/RAJA_HIP-block_256.cali",
+            recursive=True,
+        )
+    )
+    for cf in cali_files:
+        shutil.copy(cf, str(tmpdir))
+    return [os.path.join(str(tmpdir), f) for f in cali_files]
+
+
+@pytest.fixture
+def rajaperf_hip_O2_32M_compiler_static_info(data_dir, tmpdir):
+    """Trace log and extraction plugin output for RAJA HIP at optimization level O2 and problem size 512M"""
+    postprocessed_file = os.path.join(
+        data_dir,
+        "rajaperf-comp-static-data/tuolumne/llvm_pass_plugins/data.json",
+    )
+
+    dest_postprocessed_file = os.path.join(
+        str(tmpdir), os.path.basename(postprocessed_file)
+    )
+
+    shutil.copy(postprocessed_file, dest_postprocessed_file)
+
+    return dest_postprocessed_file
+
+
+@pytest.fixture
 def caliper_ordered(data_dir, tmpdir):
     """Builds a temporary directory containing the lulesh cali file."""
     cali_json_dir = os.path.join(data_dir, "caliper-ordered")

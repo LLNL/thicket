@@ -38,6 +38,9 @@ try:
     from .ncu import NCUReader
 except ModuleNotFoundError:
     pass
+
+from .compiler_static_info_reader import CompilerStaticInfoReader
+
 import thicket.helpers as helpers
 from .groupby import GroupBy
 from .utils import (
@@ -45,6 +48,7 @@ from .utils import (
     check_duplicate_metadata_key,
     validate_profile,
     validate_nodes,
+    validate_dataframe,
 )
 from .external.console import ThicketRenderer
 
@@ -1029,6 +1033,37 @@ class Thicket(GraphFrame):
             lsuffix="_left",
             rsuffix="_right",
         )
+
+    def add_compiler_static_info(
+        self,
+        preprocessed_file,
+    ):
+        """Add static compiler info to the Thicket from a preprocessed file produced
+        by the compiler_static_info preprocessor script.
+
+        Arguments:
+            preprocessed_file (str): Path to the JSON file produced by the preprocessor.
+                Accepts both flat and nested output formats.
+        """
+        if self.dataframe.columns.nlevels != 1:
+            raise ValueError(
+                "Concatenated Thicket detected. "
+                "'add_compiler_static_info()' requires a Thicket that has not been concatenated along the 'column' axis."
+            )
+
+        if not isinstance(preprocessed_file, str):
+            raise TypeError("'preprocessed_file' must be a string path")
+
+        if not os.path.isfile(preprocessed_file):
+            raise FileNotFoundError(
+                f"'preprocessed_file' does not exist: {preprocessed_file}"
+            )
+
+        CompilerStaticInfoReader(preprocessed_file).add_to_thicket(self)
+
+        validate_nodes(self)
+        validate_profile(self)
+        validate_dataframe(self.dataframe)
 
     def metadata_columns_to_perfdata(
         self, metadata_columns, overwrite=False, drop=False, join_key=None
